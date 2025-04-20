@@ -1,0 +1,9 @@
+key.fishyaddons.open_gui=Open Keybind List
+key.fishyaddons.custom_command=Custom Keybind
+category.fishyaddons=FishyAddons
+gui.fishyaddons.select_key=Press a key...
+gui.fishyaddons.save=Save
+gui.fishyaddons.title=Set a Keybind
+gui.fishyaddons.error_invalid_input=Please select a valid key and enter a command.
+gui.fishyaddons.success_keybind_saved=Keybind saved: %s -> %s
+gui.fishyaddons.error_saving_keybind=Error saving keybind: %s

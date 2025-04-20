@@ -1,0 +1,10 @@
+[
+  {
+    "modid": "fishyaddons",
+    "name": "FishyAddons",
+    "description": "Custom keybinds, commands, particles + clear lava.",
+    "version": "${version}",
+    "mcversion": "1.8.9",
+    "authorList": ["valkeea"]
+  }
+]

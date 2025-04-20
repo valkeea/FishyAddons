@@ -1,0 +1,61 @@
+package me.wait.fishyaddons;
+
+import me.wait.fishyaddons.config.ConfigHandler;
+import me.wait.fishyaddons.config.ParticleColorConfig;
+import me.wait.fishyaddons.handlers.KeybindHandler;
+import me.wait.fishyaddons.handlers.AliasHandler;
+import me.wait.fishyaddons.handlers.FishyLavaHandler;
+import me.wait.fishyaddons.command.KeybindCommand;
+import me.wait.fishyaddons.command.CommandListCommand;
+import me.wait.fishyaddons.command.FishyAddonsCommand;
+import net.minecraft.client.settings.KeyBinding;
+import net.minecraftforge.fml.client.registry.ClientRegistry;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.client.ClientCommandHandler;
+import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.common.event.FMLInitializationEvent;
+import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
+import net.minecraftforge.fml.common.event.FMLServerStoppingEvent;
+import org.lwjgl.input.Keyboard;
+
+
+@Mod(modid = "fishyaddons", name = "FishyAddons", version = FishyAddons.VERSION, clientSideOnly = true)
+public class FishyAddons {
+    public static final String MODID = "fishyaddons";
+    public static final String NAME = "FishyAddons";
+    public static final String VERSION = "@VERSION@";
+
+    public static final KeyBinding openGUI = new KeyBinding("Open Keybind List", Keyboard.KEY_NONE, "FishyAddons");
+
+    @Mod.EventHandler
+    public void preInit(FMLPreInitializationEvent event) {
+
+        ConfigHandler.initConfigPath(event.getModConfigurationDirectory());
+        ConfigHandler.loadConfig();
+
+        ParticleColorConfig.invalidateCache();
+    }
+
+    @Mod.EventHandler
+    public void init(FMLInitializationEvent event) {
+
+        MinecraftForge.EVENT_BUS.register(this);
+
+        ClientRegistry.registerKeyBinding(openGUI);
+
+        FishyLavaHandler.updateRegistration();
+        KeybindHandler.updateRegistration();
+
+        KeybindHandler.refreshKeybindCache();
+        AliasHandler.refreshCommandCache();
+
+        ClientCommandHandler.instance.registerCommand(new KeybindCommand());
+        ClientCommandHandler.instance.registerCommand(new FishyAddonsCommand());
+        ClientCommandHandler.instance.registerCommand(new CommandListCommand());
+    }
+
+    @Mod.EventHandler
+    public void onServerStopping(FMLServerStoppingEvent event) {
+        ConfigHandler.saveConfig();
+    }
+}

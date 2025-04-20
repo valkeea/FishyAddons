@@ -1,0 +1,86 @@
+buildscript {
+    repositories {
+        jcenter()
+        maven { name = "forge"; url = "http://files.minecraftforge.net/maven" }
+        maven { name = "spongepowered"; url = "https://repo.spongepowered.org/maven" }
+    }
+    dependencies {
+        classpath 'net.minecraftforge.gradle:ForgeGradle:2.1-SNAPSHOT'
+        classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.4'
+    }
+}
+
+apply plugin: 'net.minecraftforge.gradle.forge'
+apply plugin: 'com.github.johnrengelman.shadow'
+
+version = "1.1"
+group = "me.wait"
+archivesBaseName = "FishyAddons"
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+minecraft {
+    version = "1.8.9-11.15.1.2318-1.8.9"
+    runDir = "run"
+    mappings = "stable_22"
+    makeObfSourceJar = false
+}
+
+repositories {
+    mavenCentral()
+    maven { name = "spongepowered"; url = "https://repo.spongepowered.org/maven" }
+}
+
+configurations {
+    shade
+    compile.extendsFrom shade
+    processor
+}
+
+dependencies {
+    // Runtime
+    shade 'org.spongepowered:mixin:0.7.11-SNAPSHOT'
+
+    // AP with Mixin 0.8.5
+    compile 'org.spongepowered:mixin:0.8.5'
+    processor 'org.spongepowered:mixin:0.8.5'
+
+    processor 'com.google.code.gson:gson:2.8.9'
+    processor 'com.google.guava:guava:21.0'
+    processor 'org.ow2.asm:asm:5.2'
+    processor 'org.ow2.asm:asm-tree:5.2'
+
+    compile 'net.minecraft:launchwrapper:1.12'
+}
+
+tasks.withType(JavaCompile).all {
+    def processorPath = configurations.processor.asPath
+    options.encoding = "UTF-8"
+    options.compilerArgs += [
+        "-Xlint:unchecked",
+        "-processorpath", processorPath,
+        "-AreobfSrgFile=${rootProject.projectDir}/mappings/joined.srg",
+        "-AinMapFileSearge=${rootProject.projectDir}/mappings/joined.srg",
+        "-AoutRefMapFile=build/resources/main/mixins.fishyaddons.refmap.json",
+        "-verbose"
+    ]
+}
+
+processResources {
+    inputs.property "version", project.version
+    inputs.property "mcversion", "1.8.9"
+    from(sourceSets.main.resources.srcDirs) {
+        include 'mcmod.info'
+        expand 'version': project.version, 'mcversion': "1.8.9", 'modid': "fishyaddons"
+    }
+    from(sourceSets.main.resources.srcDirs) {
+        exclude 'mcmod.info'
+    }
+}
+
+jar {
+    classifier = "src"
+}
+
+build.dependsOn shadowJar

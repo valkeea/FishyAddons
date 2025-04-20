@@ -1,0 +1,15 @@
+{
+    "required": true,
+    "minVersion": "0.7.11",
+    "compatibilityLevel": "JAVA_8",
+    "package": "me.wait.fishymixin.mixin",
+    "refmap": "mixins.fishyaddons.refmap.json",
+    "mixins": [],
+    "client": [
+      "MixinEntityReddustFX",
+      "MixinEntityFX",
+      "MixinEntityPlayerSP"
+    ],
+    "server": []
+  }
+  

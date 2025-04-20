@@ -1,0 +1,38 @@
+buildscript {
+    repositories {
+        jcenter()
+        maven { name = "forge"; url = "http://files.minecraftforge.net/maven" }
+        maven { name = "spongepowered"; url = "https://repo.spongepowered.org/maven" }
+    }
+    dependencies {
+        classpath 'net.minecraftforge.gradle:ForgeGradle:2.1-SNAPSHOT'
+        classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.4'
+    }
+}
+
+apply from: 'build.gradle'
+
+shadowJar {
+    classifier = "standalone"
+    configurations = [project.configurations.shade]
+    dependencies {
+        include(dependency("org.spongepowered:mixin"))
+    }
+    relocate 'org.spongepowered.tools', 'me.wait.fishymixin.shadowed.tools'
+}
+
+reobf {
+    shadowJar {}
+}
+
+jar {
+    manifest {
+        attributes(
+            "Main-Class": "net.minecraft.launchwrapper.Launch",
+            "TweakClass": "me.wait.fishymixin.companion.MixinTweaker",
+            "MixinConfigs": "mixins.fishyaddons.json",
+            "FMLCorePluginContainsFMLMod": "true",
+            "ForceLoadAsMod": "true"
+        )
+    }
+}

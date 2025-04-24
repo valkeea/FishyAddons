@@ -27,7 +27,6 @@ public abstract class MixinEntityPlayerSP {
         String remapped = AliasHandler.getActualCommand(original);
         if (remapped != null && !remapped.equals(original)) {
             Minecraft.getMinecraft().thePlayer.sendChatMessage(remapped); // re-send with remapped
-            System.out.println("[FA] Alias intercepted: " + original + " → " + remapped);
             ci.cancel(); // Cancel original send
         }
     }

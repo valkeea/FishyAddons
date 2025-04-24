@@ -67,7 +67,6 @@ public class KeybindHandler {
             String command = entry.getValue();
 
             if (!ConfigHandler.getKeybinds().containsKey(key)) {
-                System.err.println("Keybind not found: " + key);
                 continue;
             }
 

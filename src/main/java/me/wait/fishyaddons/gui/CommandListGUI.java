@@ -2,6 +2,7 @@ package me.wait.fishyaddons.gui;
 
 import me.wait.fishyaddons.config.ConfigHandler;
 import me.wait.fishyaddons.gui.FishyAddonsGUI;
+import me.wait.fishyaddons.util.FishyNotis;
 import net.minecraft.client.gui.*;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.EnumChatFormatting;
@@ -98,19 +99,19 @@ public class CommandListGUI extends GuiScreen {
 
     private void handleEditButton(GuiButton button) {
         if (!(button instanceof AliasButton)) {
-            mc.thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "Error: Invalid button type."));
+            FishyNotis.send(EnumChatFormatting.RED + "Error: Invalid button type.");
             return;
         }
         String alias = ((AliasButton) button).alias;
 
         if (alias == null) {
-            mc.thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "Error: Could not extract alias from button."));
+            FishyNotis.send(EnumChatFormatting.RED + "Error: Could not extract alias from button.");
             return;
         }
 
         String command = ConfigHandler.getCommandAlias(alias);
         if (command == null) {
-            mc.thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "Error: No command found for alias '" + alias + "'."));
+            FishyNotis.send(EnumChatFormatting.RED + "Error: No command found for alias '" + alias + "'.");
             return;
         }
 
@@ -119,7 +120,7 @@ public class CommandListGUI extends GuiScreen {
 
     private void handleDeleteButton(GuiButton button) {
         if (!(button instanceof AliasButton)) {
-            mc.thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "Error: Invalid button type."));
+            FishyNotis.send(EnumChatFormatting.RED + "Error: Invalid button type.");
             return;
         }
         String alias = ((AliasButton) button).alias;
@@ -132,7 +133,7 @@ public class CommandListGUI extends GuiScreen {
 
     private void handleToggleButton(GuiButton button) {
         if (!(button instanceof AliasButton)) {
-            mc.thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "Error: Invalid button type."));
+            FishyNotis.send(EnumChatFormatting.RED + "Error: Invalid button type.");
             return;
         }
         String alias = ((AliasButton) button).alias;

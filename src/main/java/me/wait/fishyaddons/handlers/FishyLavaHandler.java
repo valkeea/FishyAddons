@@ -84,7 +84,6 @@ public class FishyLavaHandler {
         try {
             if (getMc().getCurrentServerData() == null || !getMc().getCurrentServerData().serverIP.toLowerCase().contains("hypixel")) {
                 cachedIsInHypixelSkyblock = false;
-                System.out.println("Not connected to Hypixel.");
                 return;
             }
 

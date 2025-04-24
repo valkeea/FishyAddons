@@ -273,14 +273,4 @@ public class ConfigHandler {
     public static String getCommandAlias(String alias) {
         return commandAliases.get(alias);
     }
-
-    public static boolean isDebugEnabled() {
-        return debugEnabled;
-    }
-
-    public static void setDebugEnabled(boolean enabled) {
-        debugEnabled = enabled;
-        markConfigChanged();
-    }
-
 }

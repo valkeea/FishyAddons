@@ -4,16 +4,19 @@ import me.wait.fishyaddons.config.ConfigHandler;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 
-/**
- * ParticleColorConfig.java
- * Handles the color configuration for MixinEntityReddustFX
-**/
+
 public class ParticleColorConfig {
 
     private static final Map<Integer, float[]> COLOR_MAP = new HashMap<>();
+    private static final float RANDOMIZATION_INTENSITY = 0.4f;
     private static int lastIndex = -1;
     private static float[] cachedColor = null;
+
+    private ParticleColorConfig() {
+        // Private constructor to enforce singleton
+    }
 
     static {
         COLOR_MAP.put(1, new float[]{0.4F, 1.0F, 1.0F}); // Aqua
@@ -27,7 +30,7 @@ public class ParticleColorConfig {
         cachedColor = null;
     }
 
-    private static int cachedIndex() {
+    public static int cachedIndex() {
         if (lastIndex != -1) {
             return lastIndex;
         }
@@ -51,12 +54,23 @@ public class ParticleColorConfig {
         int index = cachedIndex();
 
         if (index == 0) {
-            return null;
+            return new float[0];
         }
 
         if (index != lastIndex) {
             lastIndex = index;
             cachedColor = COLOR_MAP.get(index);
+        }
+
+        // Randomize the color slightly
+        if (cachedColor != null) {
+            Random random = new Random();
+            float[] randomizedColor = new float[3];
+            for (int i = 0; i < 3; i++) {
+                float variation = (random.nextFloat() - 0.5f) * RANDOMIZATION_INTENSITY; // Random offset between -0.1 and 0.1
+                randomizedColor[i] = Math.max(0.0f, Math.min(1.0f, cachedColor[i] + variation)); // Clamp between 0 and 1
+            }
+            return randomizedColor;
         }
 
         return cachedColor;

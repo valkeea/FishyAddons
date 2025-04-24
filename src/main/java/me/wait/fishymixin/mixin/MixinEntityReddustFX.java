@@ -17,10 +17,12 @@ public abstract class MixinEntityReddustFX {
 
     @Inject(method = "<init>(Lnet/minecraft/world/World;DDDFFF)V", at = @At("RETURN"))
     private void onInit(World world, double x, double y, double z, float r, float g, float b, CallbackInfo ci) {
-    
+        if (ParticleColorConfig.cachedIndex() == 0) {
+            return;
+        }
+
         float[] newColor = ParticleColorConfig.getCustomColor();
         if (newColor != null && ParticleColorConfig.shouldReplace(r, g, b)) {
-    
             ((ParticleColorAccessor) this).setParticleColor(newColor);
         }
     }

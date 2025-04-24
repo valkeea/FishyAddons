@@ -8,7 +8,10 @@
     "client": [
       "MixinEntityReddustFX",
       "MixinEntityFX",
-      "MixinEntityPlayerSP"
+      "MixinEntityPlayerSP",
+      "MixinEntityPlayerSPDrop", 
+      "MixinGuiContainer",
+      "MixinTooltip"   
     ],
     "server": []
   }

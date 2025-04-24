@@ -1,0 +1,12 @@
+{
+    "custom.protect_trigger": {
+      "category": "player",
+      "sounds": [
+        {
+          "name": "fishyaddons:custom/protect_trigger",
+          "stream": false
+        }
+      ]
+    }
+  }
+  

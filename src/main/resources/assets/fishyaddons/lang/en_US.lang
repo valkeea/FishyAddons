@@ -7,3 +7,7 @@ gui.fishyaddons.title=Set a Keybind
 gui.fishyaddons.error_invalid_input=Please select a valid key and enter a command.
 gui.fishyaddons.success_keybind_saved=Keybind saved: %s -> %s
 gui.fishyaddons.error_saving_keybind=Error saving keybind: %s
+blacklist.salvage_items=Block salvaging
+blacklist.create_auction=Block Auctions
+blacklist.coins_transaction=Block Trades
+blacklist.sell_item=Block NPC selling

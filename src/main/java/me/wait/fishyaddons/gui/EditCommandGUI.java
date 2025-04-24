@@ -1,6 +1,7 @@
 package me.wait.fishyaddons.gui;
 
 import me.wait.fishyaddons.config.ConfigHandler;
+import me.wait.fishyaddons.util.FishyNotis;
 import net.minecraft.client.gui.*;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.EnumChatFormatting;
@@ -73,14 +74,14 @@ public class EditCommandGUI extends GuiScreen {
                 ConfigHandler.removeCommandAlias(originalAlias);
                 ConfigHandler.setCommandAlias(originalAlias, commandField.getText());
 
-                mc.thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.AQUA + "[FishyAddons] " + EnumChatFormatting.RESET + EnumChatFormatting.GRAY + "Command alias updated: " + originalAlias + " -> " + commandField.getText()));
+                FishyNotis.send(EnumChatFormatting.GRAY + "Command alias updated: " + originalAlias + " -> " + commandField.getText());
                 mc.displayGuiScreen(new CommandListGUI());
             } catch (Exception e) {
-                mc.thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.AQUA + "[FishyAddons] " + EnumChatFormatting.RESET + EnumChatFormatting.RED + "Error updating command alias: " + e.getMessage()));
+                FishyNotis.send(EnumChatFormatting.RED + "Error updating command alias: " + e.getMessage());
                 e.printStackTrace();
             }
         } else {
-            mc.thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.AQUA + "[FishyAddons] " + EnumChatFormatting.RESET + EnumChatFormatting.YELLOW + "Please enter a valid command."));
+            FishyNotis.send(EnumChatFormatting.YELLOW + "Please enter a valid command.");
         }
     }
 

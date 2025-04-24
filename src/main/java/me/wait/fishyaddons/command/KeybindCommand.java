@@ -4,6 +4,7 @@ import me.wait.fishyaddons.config.ConfigHandler;
 import me.wait.fishyaddons.handlers.KeybindHandler;
 import me.wait.fishyaddons.gui.KeybindGUI;
 import me.wait.fishyaddons.gui.KeybindListGUI;
+import me.wait.fishyaddons.util.GuiScheduler;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiChat;
@@ -38,16 +39,6 @@ public class KeybindCommand extends CommandBase {
         return EnumChatFormatting.AQUA + "[FA] " + EnumChatFormatting.RESET + message;
     }
 
-    private void scheduleGuiOpening(GuiScreen gui) {
-        MinecraftForge.EVENT_BUS.register(new Object() {
-            @SubscribeEvent
-            public void onClientTick(TickEvent.ClientTickEvent event) {
-                Minecraft.getMinecraft().displayGuiScreen(gui);
-                MinecraftForge.EVENT_BUS.unregister(this);
-            }
-        });
-    }
-
     @Override
     public void processCommand(ICommandSender sender, String[] args) {
         if (Minecraft.getMinecraft().currentScreen != null 
@@ -57,7 +48,7 @@ public class KeybindCommand extends CommandBase {
         }
 
         if (args.length == 1 && args[0].equalsIgnoreCase("add")) {
-            scheduleGuiOpening(new KeybindGUI());
+            GuiScheduler.scheduleGui(new KeybindGUI());
 
 
         } else if (args.length == 1 && args[0].equalsIgnoreCase("on")) {
@@ -71,13 +62,7 @@ public class KeybindCommand extends CommandBase {
             KeybindHandler.refreshKeybindCache();
             sender.addChatMessage(new ChatComponentText(formatMessage("Custom keybinds " + EnumChatFormatting.RED + "OFF.")));
         } else {
-            MinecraftForge.EVENT_BUS.register(new Object() {
-                @SubscribeEvent
-                public void onClientTick(TickEvent.ClientTickEvent event) {
-                    Minecraft.getMinecraft().displayGuiScreen(new KeybindListGUI());
-                    MinecraftForge.EVENT_BUS.unregister(this);
-                }
-            });
+            GuiScheduler.scheduleGui(new KeybindListGUI());
         }
     }
 

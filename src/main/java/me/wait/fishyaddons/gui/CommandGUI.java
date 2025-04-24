@@ -1,6 +1,7 @@
 package me.wait.fishyaddons.gui;
 
 import me.wait.fishyaddons.config.ConfigHandler;
+import me.wait.fishyaddons.util.FishyNotis;
 import net.minecraft.client.gui.*;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.EnumChatFormatting;
@@ -52,14 +53,14 @@ public class CommandGUI extends GuiScreen {
         if (isValidCommandAlias()) {
             try {
                 ConfigHandler.setCommandAlias(aliasField.getText(), commandField.getText());
-                mc.thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.AQUA + "[FA] " + EnumChatFormatting.RESET + EnumChatFormatting.GRAY + "Command alias added: " + aliasField.getText() + " -> " + commandField.getText()));
+                FishyNotis.send(EnumChatFormatting.GRAY + "Command alias added: " + aliasField.getText() + " -> " + commandField.getText());
                 mc.displayGuiScreen(new CommandListGUI());
             } catch (Exception e) {
-                mc.thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.AQUA + "[FA] " + EnumChatFormatting.RESET + EnumChatFormatting.RED + "Error adding command alias: " + e.getMessage()));
+                FishyNotis.send(EnumChatFormatting.RED + "Error adding command alias: " + e.getMessage());
                 e.printStackTrace();
             }
         } else {
-            mc.thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.AQUA + "[FA] " + EnumChatFormatting.RESET + EnumChatFormatting.YELLOW + "Please enter a valid alias and command."));
+            FishyNotis.send(EnumChatFormatting.YELLOW + "Please enter a valid alias and command.");
         }
     }
 

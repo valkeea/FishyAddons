@@ -3,6 +3,7 @@ package me.wait.fishyaddons.command;
 import me.wait.fishyaddons.config.ConfigHandler;
 import me.wait.fishyaddons.gui.CommandGUI;
 import me.wait.fishyaddons.gui.CommandListGUI;
+import me.wait.fishyaddons.util.GuiScheduler;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiChat;
@@ -45,32 +46,19 @@ public class CommandListCommand extends CommandBase {
         }
 
         if (args.length == 1 && args[0].equalsIgnoreCase("add")) {
-            // Schedule GUI opening on the client tick to work with server restrictions
-            MinecraftForge.EVENT_BUS.register(new Object() {
-                @SubscribeEvent
-                public void onClientTick(TickEvent.ClientTickEvent event) {
-                    Minecraft.getMinecraft().displayGuiScreen(new CommandGUI());
-                    MinecraftForge.EVENT_BUS.unregister(this);
-                }
-            });
-        } else if (args.length == 1 && args[0].equalsIgnoreCase("on")) {
+            GuiScheduler.scheduleGui(new CommandGUI());
 
+        } else if (args.length == 1 && args[0].equalsIgnoreCase("on")) {
             ConfigHandler.getCommandAliases().keySet().forEach(alias -> ConfigHandler.toggleCommand(alias, true));
             sender.addChatMessage(new ChatComponentText(formatMessage("Custom commands " + EnumChatFormatting.GREEN + "ON.")));
 
         } else if (args.length == 1 && args[0].equalsIgnoreCase("off")) {
-
             ConfigHandler.getCommandAliases().keySet().forEach(alias -> ConfigHandler.toggleCommand(alias, false));
             sender.addChatMessage(new ChatComponentText(formatMessage("Custom commands " + EnumChatFormatting.RED + "OFF.")));
             
         } else {
-            MinecraftForge.EVENT_BUS.register(new Object() {
-                @SubscribeEvent
-                public void onClientTick(TickEvent.ClientTickEvent event) {
-                    Minecraft.getMinecraft().displayGuiScreen(new CommandListGUI());
-                    MinecraftForge.EVENT_BUS.unregister(this);
-                }
-            });
+            GuiScheduler.scheduleGui(new CommandListGUI());
+            return;
         }
     }
 

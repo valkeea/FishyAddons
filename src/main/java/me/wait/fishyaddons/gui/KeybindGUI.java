@@ -2,6 +2,7 @@ package me.wait.fishyaddons.gui;
 
 import me.wait.fishyaddons.config.ConfigHandler;
 import me.wait.fishyaddons.handlers.KeybindHandler;
+import me.wait.fishyaddons.util.FishyNotis;
 import net.minecraft.client.gui.*;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.EnumChatFormatting;
@@ -66,14 +67,14 @@ public class KeybindGUI extends GuiScreen {
                 KeybindHandler.refreshKeybindCache();
                 ConfigHandler.saveConfigIfNeeded();
 
-                mc.thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.AQUA + "[FA] " + EnumChatFormatting.RESET + EnumChatFormatting.GRAY + "Keybind added: " + selectedKey + " -> " + commandField.getText()));
+                FishyNotis.send(EnumChatFormatting.GRAY + "Keybind added: " + selectedKey + " -> " + commandField.getText());
                 mc.displayGuiScreen(new KeybindListGUI());
             } catch (Exception e) {
-                mc.thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.AQUA + "[FA] " + EnumChatFormatting.RESET + EnumChatFormatting.RED + "Error adding keybind: " + e.getMessage()));
+                FishyNotis.send(EnumChatFormatting.RED + "Error adding keybind: " + e.getMessage());
                 e.printStackTrace();
             }
         } else {
-            mc.thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.AQUA + "[FA] " + EnumChatFormatting.RESET + EnumChatFormatting.YELLOW + "Please select a valid key and enter a command."));
+            FishyNotis.send(EnumChatFormatting.YELLOW + "Please select a valid key and enter a command.");
         }
     }
 

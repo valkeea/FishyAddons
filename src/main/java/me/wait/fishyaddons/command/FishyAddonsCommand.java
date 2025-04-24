@@ -2,8 +2,10 @@ package me.wait.fishyaddons.command;
 
 import me.wait.fishyaddons.FishyAddons;
 import me.wait.fishyaddons.gui.FishyAddonsGUI;
+import me.wait.fishyaddons.gui.SellProtectionGUI;
 import me.wait.fishyaddons.config.ConfigHandler;
 import me.wait.fishyaddons.gui.CustomGuiSlider;
+import me.wait.fishyaddons.util.GuiScheduler;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiChat;
@@ -19,12 +21,17 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraft.util.BlockPos;
 
 import java.util.Arrays;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Collections;
 
 
 public class FishyAddonsCommand extends CommandBase {
+    private static final EnumChatFormatting GRAY = EnumChatFormatting.GRAY;
+    private static final EnumChatFormatting RESET = EnumChatFormatting.RESET;
+    private static final EnumChatFormatting AQUA = EnumChatFormatting.AQUA;
+
+
     @Override
     public String getCommandName() {
         return "fa";
@@ -41,17 +48,7 @@ public class FishyAddonsCommand extends CommandBase {
     }
 
     private String formatMessage(String message) {
-        return EnumChatFormatting.AQUA + "[FA] " + EnumChatFormatting.RESET + message;
-    }
-
-    private void scheduleGuiOpening(GuiScreen gui) {
-        MinecraftForge.EVENT_BUS.register(new Object() {
-            @SubscribeEvent
-            public void onClientTick(TickEvent.ClientTickEvent event) {
-                Minecraft.getMinecraft().displayGuiScreen(gui);
-                MinecraftForge.EVENT_BUS.unregister(this);
-            }
-        });
+        return AQUA + "[FA] " + RESET + message;
     }
 
     @Override
@@ -63,18 +60,18 @@ public class FishyAddonsCommand extends CommandBase {
         }
 
         if (args.length == 0) {
-            scheduleGuiOpening(new FishyAddonsGUI());
-
-
+            GuiScheduler.scheduleGui(new FishyAddonsGUI());
+            return;
+            
         } else if (args.length == 1 && args[0].equalsIgnoreCase("help")) {
 
-            sender.addChatMessage(new ChatComponentText(EnumChatFormatting.AQUA + " " + EnumChatFormatting.BOLD + "[FA] Available Commands:"));
-            sender.addChatMessage(new ChatComponentText(EnumChatFormatting.GRAY + "/fishyaddons = /fa"));
-            sender.addChatMessage(new ChatComponentText(EnumChatFormatting.GRAY + "/fa" + EnumChatFormatting.RESET + " - Open the FishyAddons GUI."));
-            sender.addChatMessage(new ChatComponentText(EnumChatFormatting.GRAY + "/fakey | /facmd" + EnumChatFormatting.RESET + " - Open Keybind/Command List."));
-            sender.addChatMessage(new ChatComponentText(EnumChatFormatting.GRAY + "/fakey | facmd + on | off" + EnumChatFormatting.RESET + " - Toggle all custom keybinds/commands."));
-            sender.addChatMessage(new ChatComponentText(EnumChatFormatting.GRAY + "/fakey | facmd + add" + EnumChatFormatting.RESET + " - Add a new keybind/command."));
-            sender.addChatMessage(new ChatComponentText(EnumChatFormatting.GRAY + "/fa lava on | off" + EnumChatFormatting.RESET + " - Toggle clear lava."));
+            sender.addChatMessage(new ChatComponentText(AQUA + " " + EnumChatFormatting.BOLD + "[FA] Available Commands:"));
+            sender.addChatMessage(new ChatComponentText(GRAY + "/fishyaddons = /fa, /faprotect = /fapr"));
+            sender.addChatMessage(new ChatComponentText(GRAY + "/fapr clear | add | remove" + RESET + " - Clear/add/remove protected items."));
+            sender.addChatMessage(new ChatComponentText(GRAY + "/fakey | /facmd | /fapr " + RESET + " - Open Keybind/Command/FAprotect List."));
+            sender.addChatMessage(new ChatComponentText(GRAY + "/fakey | facmd + on | off" + RESET + " - Toggle all custom keybinds/commands."));
+            sender.addChatMessage(new ChatComponentText(GRAY + "/fakey | facmd | fapr + add" + RESET + " - Add a new keybind/command."));
+            sender.addChatMessage(new ChatComponentText(GRAY + "/fa lava on | off" + RESET + " - Toggle clear lava."));
 
         } else if (args.length == 2 && args[0].equalsIgnoreCase("lava")) {
 

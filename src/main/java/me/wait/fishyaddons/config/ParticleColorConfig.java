@@ -1,7 +1,5 @@
 package me.wait.fishyaddons.config;
 
-import me.wait.fishyaddons.config.ConfigHandler;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
@@ -14,15 +12,13 @@ public class ParticleColorConfig {
     private static int lastIndex = -1;
     private static float[] cachedColor = null;
 
-    private ParticleColorConfig() {
-        // Private constructor to enforce singleton
-    }
+    private ParticleColorConfig() {}
 
     static {
         COLOR_MAP.put(1, new float[]{0.4F, 1.0F, 1.0F}); // Aqua
         COLOR_MAP.put(2, new float[]{0.4F, 1.0F, 0.6F}); // Mint
         COLOR_MAP.put(3, new float[]{1.0F, 0.8F, 1.0F}); // Pink
-        COLOR_MAP.put(4, new float[]{0.9F, 0.9F, 1.0F}); // Light Blue
+        COLOR_MAP.put(4, new float[]{0.9F, 0.9F, 1.0F}); // Light Blue/Prism
     }
 
     public static void invalidateCache() {

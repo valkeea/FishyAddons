@@ -4,7 +4,7 @@ import me.wait.fishyaddons.config.ConfigHandler;
 import me.wait.fishyaddons.handlers.KeybindHandler;
 import me.wait.fishyaddons.gui.KeybindGUI;
 import me.wait.fishyaddons.gui.KeybindListGUI;
-import me.wait.fishyaddons.util.GuiScheduler;
+import me.wait.fishyaddons.tool.GuiScheduler;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiChat;

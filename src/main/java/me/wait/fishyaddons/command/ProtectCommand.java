@@ -5,7 +5,7 @@ import me.wait.fishyaddons.gui.CommandListGUI;
 import me.wait.fishyaddons.gui.FishyAddonsGUI;
 import me.wait.fishyaddons.gui.SellProtectionGUI;
 import me.wait.fishyaddons.handlers.ProtectedItemHandler;
-import me.wait.fishyaddons.util.GuiScheduler;
+import me.wait.fishyaddons.tool.GuiScheduler;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiChat;
@@ -26,17 +26,17 @@ public class ProtectCommand extends CommandBase {
 
     @Override
     public String getCommandName() {
-        return "faprotect";
+        return "fasafeguard";
     }
 
     @Override
     public String getCommandUsage(ICommandSender sender) {
-        return "/faprotect <add|remove|list|clear>";
+        return "/fasafeguard <add|remove|list|clear>";
     }
 
     @Override
     public List<String> getCommandAliases() {
-        return Arrays.asList("fapr");
+        return Arrays.asList("fg");
     }
 
     private String formatMessage(String message) {
@@ -49,7 +49,6 @@ public class ProtectCommand extends CommandBase {
 
         if (Minecraft.getMinecraft().currentScreen != null 
             && !(Minecraft.getMinecraft().currentScreen instanceof GuiChat)) {
-            sender.addChatMessage(new ChatComponentText(formatMessage(EnumChatFormatting.RED + "Don't try to open any mod GUI while another GUI is open.")));
             return;
         }
 

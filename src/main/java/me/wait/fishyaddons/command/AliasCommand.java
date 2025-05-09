@@ -3,7 +3,7 @@ package me.wait.fishyaddons.command;
 import me.wait.fishyaddons.config.ConfigHandler;
 import me.wait.fishyaddons.gui.CommandGUI;
 import me.wait.fishyaddons.gui.CommandListGUI;
-import me.wait.fishyaddons.util.GuiScheduler;
+import me.wait.fishyaddons.tool.GuiScheduler;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiChat;
@@ -22,7 +22,7 @@ import java.util.Collections;
 import java.util.List;
 
 
-public class CommandListCommand extends CommandBase {
+public class AliasCommand extends CommandBase {
     @Override
     public String getCommandName() {
         return "facmd";

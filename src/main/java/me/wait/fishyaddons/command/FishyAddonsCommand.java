@@ -3,10 +3,12 @@ package me.wait.fishyaddons.command;
 import me.wait.fishyaddons.FishyAddons;
 import me.wait.fishyaddons.gui.FishyAddonsGUI;
 import me.wait.fishyaddons.gui.SellProtectionGUI;
+import me.wait.fishyaddons.handlers.RetexHandler;
+import me.wait.fishyaddons.gui.VisualSettingsGUI;
 import me.wait.fishyaddons.config.ConfigHandler;
-import me.wait.fishyaddons.gui.CustomGuiSlider;
-import me.wait.fishyaddons.util.GuiScheduler;
-
+import me.wait.fishyaddons.config.TextureConfig;
+import me.wait.fishyaddons.tool.GuiScheduler;
+import me.wait.fishyaddons.util.FishyNotis;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiChat;
 import net.minecraft.client.gui.GuiScreen;
@@ -44,7 +46,7 @@ public class FishyAddonsCommand extends CommandBase {
 
     @Override
     public String getCommandUsage(ICommandSender sender) {
-        return "/fa [lava on|lava off|help] or /fishyaddons";
+        return "/fa [lava on|lava off|retex on|retex off|help|guide] or /fishyaddons";
     }
 
     private String formatMessage(String message) {
@@ -55,7 +57,6 @@ public class FishyAddonsCommand extends CommandBase {
     public void processCommand(ICommandSender sender, String[] args) {
         if (Minecraft.getMinecraft().currentScreen != null 
             && !(Minecraft.getMinecraft().currentScreen instanceof GuiChat)) {
-            sender.addChatMessage(new ChatComponentText(formatMessage(EnumChatFormatting.RED + "Don't try to open any mod GUI while another GUI is open.")));
             return;
         }
 
@@ -64,17 +65,12 @@ public class FishyAddonsCommand extends CommandBase {
             return;
             
         } else if (args.length == 1 && args[0].equalsIgnoreCase("help")) {
+            FishyNotis.helpNoti();
 
-            sender.addChatMessage(new ChatComponentText(AQUA + " " + EnumChatFormatting.BOLD + "[FA] Available Commands:"));
-            sender.addChatMessage(new ChatComponentText(GRAY + "/fishyaddons = /fa, /faprotect = /fapr"));
-            sender.addChatMessage(new ChatComponentText(GRAY + "/fapr clear | add | remove" + RESET + " - Clear/add/remove protected items."));
-            sender.addChatMessage(new ChatComponentText(GRAY + "/fakey | /facmd | /fapr " + RESET + " - Open Keybind/Command/FAprotect List."));
-            sender.addChatMessage(new ChatComponentText(GRAY + "/fakey | facmd + on | off" + RESET + " - Toggle all custom keybinds/commands."));
-            sender.addChatMessage(new ChatComponentText(GRAY + "/fakey | facmd | fapr + add" + RESET + " - Add a new keybind/command."));
-            sender.addChatMessage(new ChatComponentText(GRAY + "/fa lava on | off" + RESET + " - Toggle clear lava."));
+        } else if (args.length == 1 && args[0].equalsIgnoreCase("guide")) {
+            FishyNotis.guideNoti();
 
         } else if (args.length == 2 && args[0].equalsIgnoreCase("lava")) {
-
             if (args[1].equalsIgnoreCase("on")) {
 
                 ConfigHandler.setFishyLavaEnabled(true);
@@ -83,7 +79,6 @@ public class FishyAddonsCommand extends CommandBase {
                 sender.addChatMessage(new ChatComponentText(formatMessage("Clear lava " + EnumChatFormatting.GREEN + "ON.")));
 
             } else if (args[1].equalsIgnoreCase("off")) {
-                
                 ConfigHandler.setFishyLavaEnabled(false);
                 ConfigHandler.setCustomParticlesEnabled(false);
                 ConfigHandler.saveConfigIfNeeded();
@@ -91,6 +86,19 @@ public class FishyAddonsCommand extends CommandBase {
 
             } else {
                 sender.addChatMessage(new ChatComponentText(formatMessage(EnumChatFormatting.YELLOW + "Invalid argument. Use '/fa lava on' or '/fa lava off'.")));
+            }
+        } else if (args.length == 2 && args[0].equalsIgnoreCase("retex")) {
+            String island = RetexHandler.getIsland();
+            
+            if (args[1].equalsIgnoreCase("on")) {
+
+                TextureConfig.toggleIslandTexture(island, true);
+
+            } else if (args[1].equalsIgnoreCase("off")) {
+                TextureConfig.toggleIslandTexture(island, false);
+
+            } else {
+                GuiScheduler.scheduleGui(new VisualSettingsGUI());
             }
         } else {
             sender.addChatMessage(new ChatComponentText(formatMessage(EnumChatFormatting.YELLOW + "Invalid usage. Use '/fa help' for a list of commands.")));
@@ -105,9 +113,12 @@ public class FishyAddonsCommand extends CommandBase {
     @Override
     public List<String> addTabCompletionOptions(ICommandSender sender, String[] args, BlockPos pos) {
         if (args.length == 1) {
-            return getListOfStringsMatchingLastWord(args, "lava", "help");
+            return getListOfStringsMatchingLastWord(args, "lava", "help", "guide", "retex");
 
         } else if (args.length == 2 && args[0].equalsIgnoreCase("lava")) {
+            return getListOfStringsMatchingLastWord(args, "on", "off");
+        }
+        else if (args.length == 2 && args[0].equalsIgnoreCase("retex")) {
             return getListOfStringsMatchingLastWord(args, "on", "off");
         }
         return Collections.emptyList();

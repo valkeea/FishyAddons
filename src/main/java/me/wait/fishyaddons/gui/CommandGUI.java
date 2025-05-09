@@ -2,11 +2,15 @@ package me.wait.fishyaddons.gui;
 
 import me.wait.fishyaddons.config.ConfigHandler;
 import me.wait.fishyaddons.util.FishyNotis;
+import me.wait.fishyaddons.util.GuiUtils;
 import net.minecraft.client.gui.*;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.EnumChatFormatting;
+import net.minecraft.client.resources.I18n;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 
 public class CommandGUI extends GuiScreen {
     private GuiTextField aliasField, commandField;
@@ -94,5 +98,18 @@ public class CommandGUI extends GuiScreen {
         aliasField.drawTextBox();
         commandField.drawTextBox();
         super.drawScreen(mouseX, mouseY, partialTicks);
+
+        if (isMouseOverTextField(commandField, mouseX, mouseY)) {
+            List<String> tooltip = Arrays.asList(
+                "Note:", "§8Text without / will be sent in the currently ", "§8toggled chat as is."
+            );
+
+            GuiUtils.drawTooltip(tooltip, mouseX, mouseY, fontRendererObj);
+        }
+    }
+
+    private boolean isMouseOverTextField(GuiTextField textField, int mouseX, int mouseY) {
+        return mouseX >= textField.xPosition && mouseX < textField.xPosition + textField.width &&
+               mouseY >= textField.yPosition && mouseY < textField.yPosition + textField.height;
     }
 }

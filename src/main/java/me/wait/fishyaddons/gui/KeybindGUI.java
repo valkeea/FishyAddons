@@ -3,6 +3,7 @@ package me.wait.fishyaddons.gui;
 import me.wait.fishyaddons.config.ConfigHandler;
 import me.wait.fishyaddons.handlers.KeybindHandler;
 import me.wait.fishyaddons.util.FishyNotis;
+import me.wait.fishyaddons.util.GuiUtils;
 import net.minecraft.client.gui.*;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.EnumChatFormatting;
@@ -10,6 +11,8 @@ import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 
 public class KeybindGUI extends GuiScreen {
     private GuiTextField commandField;
@@ -115,5 +118,17 @@ public class KeybindGUI extends GuiScreen {
         drawCenteredString(fontRendererObj, "Add a Keybind:", width / 2, height / 2 - 60, 0xFF55FFFF);
         commandField.drawTextBox();
         super.drawScreen(mouseX, mouseY, partialTicks);
+        if (isMouseOverTextField(commandField, mouseX, mouseY)) {
+            List<String> tooltip = Arrays.asList(
+                "Note:", "§8Text without / will be sent in the currently ", "§8toggled chat as is."
+            );
+
+            GuiUtils.drawTooltip(tooltip, mouseX, mouseY, fontRendererObj);
+        }
+    }
+
+    private boolean isMouseOverTextField(GuiTextField textField, int mouseX, int mouseY) {
+        return mouseX >= textField.xPosition && mouseX < textField.xPosition + textField.width &&
+               mouseY >= textField.yPosition && mouseY < textField.yPosition + textField.height;
     }
 }

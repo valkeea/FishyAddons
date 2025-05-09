@@ -1,7 +1,7 @@
 package me.wait.fishymixin.mixin;
 
 import me.wait.fishyaddons.util.FishyNotis;
-import me.wait.fishyaddons.util.GuiClick;
+import me.wait.fishyaddons.tool.GuiClick;
 import me.wait.fishyaddons.util.PlaySound;
 import me.wait.fishyaddons.handlers.ProtectedItemHandler;
 import net.minecraft.client.gui.inventory.GuiContainer;

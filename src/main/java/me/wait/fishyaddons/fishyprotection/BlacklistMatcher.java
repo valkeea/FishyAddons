@@ -1,7 +1,6 @@
 package me.wait.fishyaddons.fishyprotection;
 
-import me.wait.fishyaddons.util.GuiBlacklistEntry;
-import me.wait.fishyaddons.fishyprotection.BlacklistStore;
+import me.wait.fishyaddons.tool.GuiBlacklistEntry;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.inventory.GuiChest;
 import net.minecraft.client.gui.inventory.GuiContainer;
@@ -84,27 +83,6 @@ public class BlacklistMatcher {
     // Combine default and user-defined entries
     private static List<GuiBlacklistEntry> getMergedBlacklist() {
         return BlacklistStore.getMergedBlacklist();
-    }
-    
-
-    private static GuiBlacklistEntry findUserOverride(GuiBlacklistEntry def, List<GuiBlacklistEntry> userList) {
-        for (String id : def.identifiers) {
-            for (GuiBlacklistEntry userEntry : userList) {
-                if (matchesIdentifier(userEntry, id)) {
-                    return userEntry;
-                }
-            }
-        }
-        return null;
-    }
-
-    private static boolean matchesIdentifier(GuiBlacklistEntry entry, String identifier) {
-        for (String id : entry.identifiers) {
-            if (id.equalsIgnoreCase(identifier)) {
-                return true;
-            }
-        }
-        return false;
     }
 
     private static String getGuiTitle(GuiContainer guiContainer) {

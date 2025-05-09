@@ -2,7 +2,6 @@ package me.wait.fishyaddons.gui;
 
 import me.wait.fishyaddons.config.ConfigHandler;
 import me.wait.fishyaddons.handlers.KeybindHandler;
-import me.wait.fishyaddons.gui.KeybindListGUI;
 import me.wait.fishyaddons.util.FishyNotis;
 import net.minecraft.client.gui.*;
 import net.minecraft.util.ChatComponentText;

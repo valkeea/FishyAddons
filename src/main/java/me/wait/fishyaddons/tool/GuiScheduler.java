@@ -1,4 +1,4 @@
-package me.wait.fishyaddons.util;
+package me.wait.fishyaddons.tool;
 
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.Minecraft;

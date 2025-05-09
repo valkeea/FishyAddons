@@ -1,8 +1,7 @@
 package me.wait.fishyaddons.gui;
 
 import me.wait.fishyaddons.config.UUIDConfigHandler;
-import me.wait.fishyaddons.gui.FishyAddonsGUI;
-import me.wait.fishyaddons.util.GuiBlacklistEntry;
+import me.wait.fishyaddons.tool.GuiBlacklistEntry;
 import me.wait.fishyaddons.fishyprotection.BlacklistStore;
 import me.wait.fishyaddons.fishyprotection.BlacklistConfigHandler;
 import net.minecraft.client.gui.GuiButton;
@@ -15,25 +14,19 @@ import java.util.Map;
 public class SellProtectionGUI extends GuiScreen {
     private static final int BACK_BUTTON_ID = 0;
     private static final int CLOSE_BUTTON_ID = 1;
-    private static final int TOGGLE_SELL_PROTECTION_BUTTON_ID = 100;
-    private static final int TOGGLE_TOOLTIP_BUTTON_ID = 101;
-    private static final int TOGGLE_SOUND_BUTTON_ID = 102;
-    private static final int TOGGLE_NOTI_BUTTON_ID = 103;
+    private static final int GUARD_BUTTON_ID = 100;
+    private static final int TOOLTIP_BUTTON_ID = 101;
+    private static final int ALERT_BUTTON_ID = 102;
+    private static final int NOTI_BUTTON_ID = 103;
     private static final int BLACKLIST_BUTTON_OFFSET = 2; // Start blacklist button IDs after special buttons
 
-    private GuiButton backButton;
-    private GuiButton closeButton;
-    private GuiButton toggleSellProtectionButton;
-    private GuiButton toggleTooltipButton;
-    private GuiButton toggleSoundButton;
-    private GuiButton toggleNotiButton;
-
+    private GuiButton guardButton;
 
     private final Map<Integer, GuiBlacklistEntry> buttonIdToBlacklistEntry = new HashMap<>();
 
     private void updateToggleSellProtectionButton() {
-        toggleSellProtectionButton.displayString = getToggleButtonText();
-        toggleSellProtectionButton.packedFGColour = UUIDConfigHandler.isSellProtectionEnabled() ? 0xFFCCFFCC : 0xFFFF8080;
+        guardButton.displayString = getToggleButtonText();
+        guardButton.packedFGColour = UUIDConfigHandler.isSellProtectionEnabled() ? 0xFFCCFFCC : 0xFFFF8080;
     }
 
     private String getToggleButtonText() {
@@ -47,11 +40,11 @@ public class SellProtectionGUI extends GuiScreen {
     }
 
     private String getTooltipToggleText() {
-        return UUIDConfigHandler.isTooltipEnabled() ? "FAprotect Tooltip §aON" : "FAprotect Tooltip §cOFF";
+        return UUIDConfigHandler.isTooltipEnabled() ? "Tooltip §aON" : "Tooltip §cOFF";
     }
 
     private String getSoundToggleText() {
-        return UUIDConfigHandler.isProtectTriggerEnabled() ? "Soundeffects §aON" : "Soundeffects §cOFF";
+        return UUIDConfigHandler.isProtectTriggerEnabled() ? "Soundeffect §aON" : "Soundeffect §cOFF";
     }
 
     private String getNotiToggleText() {
@@ -64,30 +57,30 @@ public class SellProtectionGUI extends GuiScreen {
         buttonIdToBlacklistEntry.clear();
 
         // Add Back and Close buttons
-        backButton = new GuiButton(BACK_BUTTON_ID, width / 2 - 100, height - 30, 80, 20, "Back");
-        closeButton = new GuiButton(CLOSE_BUTTON_ID, width / 2 + 20, height - 30, 80, 20, "Close");
+        GuiButton backButton = new GuiButton(BACK_BUTTON_ID, width / 2 - 100, height - 30, 80, 20, "Back");
+        GuiButton closeButton = new GuiButton(CLOSE_BUTTON_ID, width / 2 + 20, height - 30, 80, 20, "Close");
         buttonList.add(backButton);
         buttonList.add(closeButton);
 
         // Add toggle button for Sell Protection
-        toggleSellProtectionButton = new GuiButton(TOGGLE_SELL_PROTECTION_BUTTON_ID, width / 2 - 240, height / 3 - 30, 120, 20, getToggleButtonText());
-        toggleSellProtectionButton.packedFGColour = UUIDConfigHandler.isSellProtectionEnabled() ? 0xFFCCFFCC : 0xFFFF8080;
-        buttonList.add(toggleSellProtectionButton);
+        guardButton = new GuiButton(GUARD_BUTTON_ID, width / 2 - 240, height / 3 - 30, 120, 20, getToggleButtonText());
+        guardButton.packedFGColour = UUIDConfigHandler.isSellProtectionEnabled() ? 0xFFCCFFCC : 0xFFFF8080;
+        buttonList.add(guardButton);
 
         // Add toggle button for Tooltip
-        toggleTooltipButton = new GuiButton(TOGGLE_TOOLTIP_BUTTON_ID, width / 2 - 120, height / 3 -30, 120, 20, getTooltipToggleText());
-        toggleTooltipButton.packedFGColour = UUIDConfigHandler.isTooltipEnabled() ? 0xFFCCFFCC : 0xFFFF8080;
-        buttonList.add(toggleTooltipButton);
+        GuiButton tooltipButton = new GuiButton(TOOLTIP_BUTTON_ID, width / 2 - 120, height / 3 -30, 120, 20, getTooltipToggleText());
+        tooltipButton.packedFGColour = UUIDConfigHandler.isTooltipEnabled() ? 0xFFCCFFCC : 0xFFFF8080;
+        buttonList.add(tooltipButton);
 
         // Add toggle button for Sound Effects
-        toggleSoundButton = new GuiButton(TOGGLE_SOUND_BUTTON_ID, width / 2, height / 3 - 30, 120, 20, getSoundToggleText());
-        toggleSoundButton.packedFGColour = UUIDConfigHandler.isProtectTriggerEnabled() ? 0xFFCCFFCC : 0xFFFF8080;
-        buttonList.add(toggleSoundButton);
+        GuiButton alertButton = new GuiButton(ALERT_BUTTON_ID, width / 2, height / 3 - 30, 120, 20, getSoundToggleText());
+        alertButton.packedFGColour = UUIDConfigHandler.isProtectTriggerEnabled() ? 0xFFCCFFCC : 0xFFFF8080;
+        buttonList.add(alertButton);
 
         // Add toggle button for Notifications
-        toggleNotiButton = new GuiButton(TOGGLE_NOTI_BUTTON_ID, width / 2 + 120, height / 3 - 30, 120, 20, getNotiToggleText());
-        toggleNotiButton.packedFGColour = UUIDConfigHandler.isProtectNotiEnabled() ? 0xFFCCFFCC : 0xFFFF8080;
-        buttonList.add(toggleNotiButton);
+        GuiButton notiButton = new GuiButton(NOTI_BUTTON_ID, width / 2 + 120, height / 3 - 30, 120, 20, getNotiToggleText());
+        notiButton.packedFGColour = UUIDConfigHandler.isProtectNotiEnabled() ? 0xFFCCFFCC : 0xFFFF8080;
+        buttonList.add(notiButton);
 
         // Add buttons for blacklist entries
         int id = BLACKLIST_BUTTON_OFFSET;
@@ -116,21 +109,21 @@ public class SellProtectionGUI extends GuiScreen {
             mc.displayGuiScreen(new FishyAddonsGUI());
         } else if (button.id == CLOSE_BUTTON_ID) {
             mc.displayGuiScreen(null);
-        } else if (button.id == TOGGLE_SELL_PROTECTION_BUTTON_ID) {
+        } else if (button.id == GUARD_BUTTON_ID) {
             UUIDConfigHandler.setSellProtectionEnabled(!UUIDConfigHandler.isSellProtectionEnabled());
             UUIDConfigHandler.saveConfigIfNeeded();
             updateToggleSellProtectionButton();
-        } else if (button.id == TOGGLE_TOOLTIP_BUTTON_ID) {
+        } else if (button.id == TOOLTIP_BUTTON_ID) {
             UUIDConfigHandler.setTooltipEnabled(!UUIDConfigHandler.isTooltipEnabled());
             UUIDConfigHandler.saveConfigIfNeeded();
             button.displayString = getTooltipToggleText();
             button.packedFGColour = UUIDConfigHandler.isTooltipEnabled() ? 0xFFCCFFCC : 0xFFFF8080;
-        } else if (button.id == TOGGLE_SOUND_BUTTON_ID) {
+        } else if (button.id == ALERT_BUTTON_ID) {
             UUIDConfigHandler.setProtectTriggerEnabled(!UUIDConfigHandler.isProtectTriggerEnabled());
             UUIDConfigHandler.saveConfigIfNeeded();
             button.displayString = getSoundToggleText();
             button.packedFGColour = UUIDConfigHandler.isProtectTriggerEnabled() ? 0xFFCCFFCC : 0xFFFF8080;
-        } else if (button.id == TOGGLE_NOTI_BUTTON_ID) {
+        } else if (button.id == NOTI_BUTTON_ID) {
             UUIDConfigHandler.setProtectNotiEnabled(!UUIDConfigHandler.isProtectNotiEnabled());
             UUIDConfigHandler.saveConfigIfNeeded();
             button.displayString = getNotiToggleText();
@@ -141,14 +134,14 @@ public class SellProtectionGUI extends GuiScreen {
 
             BlacklistConfigHandler.updateBlacklistEntry(entry.identifiers.get(0), entry.enabled);
             updateBlacklistButton(button, entry);
-            BlacklistConfigHandler.loadUserBlacklist();
+            BlacklistConfigHandler.saveUserBlacklist();
         }
     }
 
     @Override
     public void drawScreen(int mouseX, int mouseY, float partialTicks) {
         drawDefaultBackground();
-        drawCenteredString(fontRendererObj, "FAprotect configuration", width / 2, height / 3 - 60, 0xFF55FFFF);
+        drawCenteredString(fontRendererObj, "FA safeguard", width / 2, height / 3 - 60, 0xFF55FFFF);
         super.drawScreen(mouseX, mouseY, partialTicks);
     }
 }

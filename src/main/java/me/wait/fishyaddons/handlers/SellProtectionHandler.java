@@ -2,7 +2,7 @@ package me.wait.fishyaddons.handlers;
 
 import me.wait.fishyaddons.config.ConfigHandler;
 import me.wait.fishyaddons.config.UUIDConfigHandler;
-import me.wait.fishyaddons.util.GuiClick;
+import me.wait.fishyaddons.tool.GuiClick;
 import me.wait.fishyaddons.util.PlaySound;
 
 import java.util.Map;

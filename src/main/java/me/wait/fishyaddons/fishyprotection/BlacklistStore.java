@@ -1,6 +1,6 @@
 package me.wait.fishyaddons.fishyprotection;
 
-import me.wait.fishyaddons.util.GuiBlacklistEntry;
+import me.wait.fishyaddons.tool.GuiBlacklistEntry;
 import me.wait.fishyaddons.config.UUIDConfigHandler;
 import net.minecraft.item.ItemStack;
 import net.minecraft.client.gui.inventory.GuiContainer;
@@ -103,6 +103,6 @@ public class BlacklistStore {
 
     public static void saveUserBlacklist() {
         BlacklistConfigHandler.getUserBlacklist();
-        UUIDConfigHandler.markConfigChanged();
+        UUIDConfigHandler.save();
     }  
 }

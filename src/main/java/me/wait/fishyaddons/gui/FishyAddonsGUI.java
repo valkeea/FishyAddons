@@ -2,6 +2,7 @@ package me.wait.fishyaddons.gui;
 
 import me.wait.fishyaddons.FishyAddons;
 import me.wait.fishyaddons.config.ConfigHandler;
+import me.wait.fishyaddons.util.ScoreboardUtils;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
 
@@ -12,19 +13,14 @@ public class FishyAddonsGUI extends GuiScreen {
     private GuiButton openCommandAliasesButton;
     private GuiButton closeButton;
 
-    private void updateToggleFishyLavaButton() {
-        toggleFishyLavaButton.displayString = getToggleButtonText();
-        toggleFishyLavaButton.packedFGColour = ConfigHandler.isFishyLavaEnabled() ? 0xFFCCFFCC : 0xFFFF8080;
-    }
-
     @Override
     public void initGui() {
         int centerX = width / 2;
         int centerY = height / 2;
 
-        toggleFishyLavaButton = new GuiButton(0, centerX - 100, centerY - 80, 200, 20, getToggleButtonText());
-        toggleFishyLavaButton.packedFGColour = ConfigHandler.isFishyLavaEnabled() ? 0xFFCCFFCC : 0xFFFF8080;
-        buttonList.add(toggleFishyLavaButton);
+        GuiButton visualSettings = new GuiButton(0, centerX - 100, centerY - 80, 200, 20, "Visual Settings");
+        visualSettings.packedFGColour = 0xFFE2CAE9;
+        buttonList.add(visualSettings);
 
         openKeybindListButton = new GuiButton(1, centerX - 100, centerY - 50, 200, 20, "Keybind List");
         openKeybindListButton.packedFGColour = 0xFFE2CAE9;
@@ -48,10 +44,7 @@ public class FishyAddonsGUI extends GuiScreen {
     @Override
     protected void actionPerformed(GuiButton button) {
         if (button.id == 0) {
-            ConfigHandler.setFishyLavaEnabled(!ConfigHandler.isFishyLavaEnabled());
-            ConfigHandler.saveConfigIfNeeded();
-            updateToggleFishyLavaButton();
-            toggleFishyLavaButton.packedFGColour = ConfigHandler.isFishyLavaEnabled() ? 0xFFCCFFCC : 0xFFFF8080;
+            mc.displayGuiScreen(new VisualSettingsGUI());
         } else if (button.id == 1) {
             mc.displayGuiScreen(new KeybindListGUI());
         } else if (button.id == 4) {
@@ -60,6 +53,7 @@ public class FishyAddonsGUI extends GuiScreen {
             mc.displayGuiScreen(new SellProtectionGUI());
         } else if (button.id == 2) {
             mc.displayGuiScreen(null);
+            ScoreboardUtils.logSidebar();
         } else if (button.id == 3) {
             int newIndex = particleColorSlider.getValueInt();
             if (newIndex != ConfigHandler.getCustomParticleColorIndex()) { // Update only if the value has changed
@@ -74,9 +68,5 @@ public class FishyAddonsGUI extends GuiScreen {
         drawDefaultBackground();
         drawCenteredString(fontRendererObj, "FishyAddons", width / 2, height / 2 - 110, 0xFF55FFFF); // Adjusted header position
         super.drawScreen(mouseX, mouseY, partialTicks);
-    }
-
-    private String getToggleButtonText() {
-        return ConfigHandler.isFishyLavaEnabled() ? "Clear Lava ON" : "Clear Lava OFF";
     }
 }

@@ -29,6 +29,10 @@ public class SkyblockCheck {
         this.cachedIsInSkyblock = value;
     }
 
+    public void setInHypixel(boolean value) {
+        this.cachedIsInHypixel = value;
+    }    
+
     public boolean isInSkyblock() {
         return cachedIsInSkyblock;
     }
@@ -61,19 +65,6 @@ public class SkyblockCheck {
         } catch (Exception e) {
             cachedIsInSkyblock = false;
             System.err.println("Error in Skyblock detection: " + e.getMessage());
-        }
-    }
-
-    public void updateHypixelStatus(boolean isInHypixel) {
-        this.cachedIsInHypixel = isInHypixel;
-    }
-
-    public static boolean refreshServerData() {
-        if (getMc().getCurrentServerData() != null) {
-            getMc().getCurrentServerData().serverIP.toLowerCase().contains("hypixel");
-            return true;
-        } else {
-            return false;
         }
     }
 

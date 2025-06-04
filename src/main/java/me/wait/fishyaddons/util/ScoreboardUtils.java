@@ -31,7 +31,6 @@ public class ScoreboardUtils {
         
     
         if (sidebar == null) return Collections.emptyList();
-        System.out.println("Sidebar objective: " + sidebar.getName());
     
         List<Score> scores = new ArrayList<Score>(scoreboard.getSortedScores(sidebar));
         List<String> lines = new ArrayList<String>();

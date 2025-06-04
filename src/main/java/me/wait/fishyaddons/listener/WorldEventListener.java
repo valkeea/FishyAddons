@@ -18,8 +18,10 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 public class WorldEventListener {
     private boolean updateRulesNextTick = false;
     private int scoreboardDelay = 0;
-    private boolean checkedInitialIsland = false;
+    private boolean checkedIsland = false;
     private boolean checkBypass = false;
+    private boolean pendingBypass = false;
+    private boolean timedCheck = false;
 
     private static final WorldEventListener INSTANCE = new WorldEventListener();
     private WorldEventListener() {}
@@ -28,7 +30,7 @@ public class WorldEventListener {
     }
 
     public static void init() {
-        MinecraftForge.EVENT_BUS.register(new WorldEventListener());
+        MinecraftForge.EVENT_BUS.register(getInstance());
     }
 
     private static Minecraft getMc() {
@@ -36,28 +38,42 @@ public class WorldEventListener {
     }
 
     public void bypass() {
-        checkBypass = true;
+        pendingBypass = true;
+    }
+
+    public void reCheck(int delay) {
+        timedCheck = true;
+        scoreboardDelay = delay;
+    }
+
+    public void reset() {
+        timedCheck = false;
     }
 
     @SubscribeEvent
     public void onWorldLoad(WorldEvent.Load event) {
         updateRulesNextTick = true;
-        scoreboardDelay = 20;
-        checkedInitialIsland = checkBypass;
+        scoreboardDelay = 180;
+        if (pendingBypass) {
+            checkBypass = true;
+            pendingBypass = false;
+        }
+        checkedIsland = checkBypass;
     }
 
     @SubscribeEvent
     public void onTick(TickEvent.ClientTickEvent event) {
         if (event.phase == TickEvent.Phase.END || event.type != TickEvent.Type.CLIENT) return;
         if (getMc().theWorld == null || getMc().thePlayer == null) return;
-
-        if (!checkedInitialIsland) {
-            ScoreboardUtils.logSidebar();
+        if (!checkedIsland && !checkBypass) {
             AreaUtils.updateIsland();
-            checkedInitialIsland = true;
+            checkedIsland = true;
+        } else if (checkBypass) {
+            checkedIsland = true;
+            checkBypass = false;
         }
 
-        if (updateRulesNextTick) {
+        if (updateRulesNextTick || timedCheck) {
             if (scoreboardDelay > 0) {
                 scoreboardDelay--;
             }
@@ -65,9 +81,8 @@ public class WorldEventListener {
             if (scoreboardDelay == 0) {
                 SkyblockCheck.getInstance().updateSkyblockCache();
                 ZoneUtils.update();
-                updateRulesNextTick = false;
-                checkBypass = false;
                 ClientConnectedToServer.triggerAction();
+                updateRulesNextTick = false;
             }
         }
     }

@@ -128,10 +128,35 @@ public class ProtectCommand extends CommandBase {
 
     private void handleListCommand(ICommandSender sender) {
         notify(sender, formatMessage("Protected Items:"));
-        for (java.util.Map.Entry<String, String> entry : UUIDConfigHandler.getProtectedUUIDs().entrySet()) {
+        List<java.util.Map.Entry<String, String>> entries = new java.util.ArrayList<>(UUIDConfigHandler.getProtectedUUIDs().entrySet());
+
+        String colorOrder = "4a956dbc\0"; // '\0' represents no color code
+
+        entries.sort((a, b) -> {
+            String aShown = (a.getValue() != null && !a.getValue().isEmpty()) ? a.getValue() : a.getKey();
+            String bShown = (b.getValue() != null && !b.getValue().isEmpty()) ? b.getValue() : b.getKey();
+
+            char aColor = (aShown.length() > 1 && aShown.charAt(0) == '§') ? aShown.charAt(1) : '\0';
+            char bColor = (bShown.length() > 1 && bShown.charAt(0) == '§') ? bShown.charAt(1) : '\0';
+
+            int aIndex = colorOrder.indexOf(aColor);
+            int bIndex = colorOrder.indexOf(bColor);
+
+            if (aIndex == -1) aIndex = colorOrder.length();
+            if (bIndex == -1) bIndex = colorOrder.length();
+
+            if (aIndex != bIndex) {
+                return Integer.compare(aIndex, bIndex);
+            }
+            // Sort alphabeticlly
+            String aAlpha = (aColor != '\0') ? aShown.substring(2) : aShown;
+            String bAlpha = (bColor != '\0') ? bShown.substring(2) : bShown;
+            return aAlpha.compareToIgnoreCase(bAlpha);
+        });
+
+        for (java.util.Map.Entry<String, String> entry : entries) {
             String displayName = entry.getValue();
             String uuid = entry.getKey();
-            // Show display name, fallback to UUID if display name is empty
             String shown = (displayName != null && !displayName.isEmpty()) ? displayName : uuid;
             notify(sender, " - " + EnumChatFormatting.GRAY + shown);
         }
@@ -186,7 +211,7 @@ public class ProtectCommand extends CommandBase {
             notify(sender, formatMessage(EnumChatFormatting.GRAY + "All protected items have been cleared."));
             awaitingClearConfirmation = false;
         } else if ("cancelclear".equals(action)) {
-            notify(sender, formatMessage(EnumChatFormatting.GRAY + "/faprotect clear was canceled."));
+            notify(sender, formatMessage(EnumChatFormatting.GRAY + "/faguard clear was canceled."));
             awaitingClearConfirmation = false;
         }
     }

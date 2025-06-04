@@ -42,7 +42,7 @@ public abstract class MixinTooltip {
                 for (int i = 0; i < tooltip.size(); i++) {
                     String strippedLine = BlacklistMatcher.stripColor(tooltip.get(i));
                     if (strippedLine.startsWith("NBT:")) {
-                        tooltip.add(i + 1, "§8§oFA protected");
+                        tooltip.add(i - 2, "§8§oFA Guarded");
                         break;
                     }
                 }

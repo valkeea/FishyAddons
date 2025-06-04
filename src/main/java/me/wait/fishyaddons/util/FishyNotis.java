@@ -48,7 +48,7 @@ public class FishyNotis {
         alert(GRAY + "/fakey | facmd + on | off" + RESET + " - Toggle all custom keybinds / commands.");
         alert(GRAY + "/fakey | facmd | fg + add" + RESET + " - Add a new keybind / command / guarded item.");
         alert(GRAY + "/fa lava on | off" + RESET + " - Toggle clear lava.");
-        alert(GRAY + "/faretex on | off" + RESET + " - Toggle retexturing on the current island");
+        alert(GRAY + "/fa retex on | off" + RESET + " - Toggle retexturing on the current island");
         alert(GRAY + "/fa guide" + RESET + " - Send introduction message");
 
     }
@@ -69,8 +69,8 @@ public class FishyNotis {
         alert(YELLOW + " - " + GRAY + "Clear lava (under), custom redstone particles");
         alert(space + GRAY + "for Jawbus laser and Flaming Flay.");
         alert(YELLOW + " - " + GRAY + "Alternative for island CTM retexturing from ValksfullSBpack.");
-        alert(DARK_AQUA + format + AQUA + "/faretex" + DARK_AQUA + " ] " + WHITE + "Open GUI");
-        alert(DARK_AQUA + format + AQUA + "/faretex on | off" + DARK_AQUA + " ] " + WHITE + "Toggle for the current island");
+        alert(DARK_AQUA + format + AQUA + "/fa retex" + DARK_AQUA + " ] " + WHITE + "Open GUI");
+        alert(DARK_AQUA + format + AQUA + "/fa retex on | off" + DARK_AQUA + " ] " + WHITE + "Toggle for the current island");
     
         send(GOLD + "General QoL:");
         alert(YELLOW + " - " + GRAY + "Custom keybinds and command aliases.");

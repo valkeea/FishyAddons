@@ -140,7 +140,7 @@ public class TextureConfig {
         RetexHandler.reloadOverrides();
     }
 
-     public static boolean isIslandTextureEnabled(String island) {
+    public static boolean isIslandTextureEnabled(String island) {
         return enabledIslands.contains(island);
     }
 
@@ -158,22 +158,12 @@ public class TextureConfig {
         save();
     }
 
-    /**
-     * Completely enables or disables retexturing (persistent).
-     * Dynamically updates the registration of handlers.
-     * @param enabled Whether to enable or disable retexturing completely.
-     */
     public static void setRetexStatus(boolean enabled) {
         retexStatus = enabled;
         save();
         updateRegistration();
-        System.out.println("[FishyAddons] Retexturing status set to: " + enabled);
     }
 
-    /**
-     * Dynamically updates the registration of ModelBakeHandler and TextureStitchHandler.
-     * Disabling ModelBakeHAndler will influence initial loading of models.
-     */
     public static void updateRegistration() {
         if (retexStatus) {
             MinecraftForge.EVENT_BUS.register(ModelBakeHandler.INSTANCE);

@@ -2,7 +2,6 @@ package me.wait.fishyaddons.command;
 
 import me.wait.fishyaddons.FishyAddons;
 import me.wait.fishyaddons.gui.FishyAddonsGUI;
-import me.wait.fishyaddons.gui.SellProtectionGUI;
 import me.wait.fishyaddons.handlers.RetexHandler;
 import me.wait.fishyaddons.gui.VisualSettingsGUI;
 import me.wait.fishyaddons.config.ConfigHandler;
@@ -32,6 +31,7 @@ public class FishyAddonsCommand extends CommandBase {
     private static final EnumChatFormatting GRAY = EnumChatFormatting.GRAY;
     private static final EnumChatFormatting RESET = EnumChatFormatting.RESET;
     private static final EnumChatFormatting AQUA = EnumChatFormatting.AQUA;
+    private static final EnumChatFormatting YELLOW = EnumChatFormatting.YELLOW;
 
 
     @Override
@@ -46,7 +46,7 @@ public class FishyAddonsCommand extends CommandBase {
 
     @Override
     public String getCommandUsage(ICommandSender sender) {
-        return "/fa [lava on|lava off|retex on|retex off|help|guide] or /fishyaddons";
+        return "/fa [lava on|lava off|retex on|retex off|retex set <island>|help|guide] or /fishyaddons";
     }
 
     private String formatMessage(String message) {
@@ -85,23 +85,36 @@ public class FishyAddonsCommand extends CommandBase {
                 sender.addChatMessage(new ChatComponentText(formatMessage("Clear lava " + EnumChatFormatting.RED + "OFF.")));
 
             } else {
-                sender.addChatMessage(new ChatComponentText(formatMessage(EnumChatFormatting.YELLOW + "Invalid argument. Use '/fa lava on' or '/fa lava off'.")));
+                sender.addChatMessage(new ChatComponentText(formatMessage(YELLOW + "Invalid argument. Use '/fa lava on' or '/fa lava off'.")));
             }
+
         } else if (args.length == 2 && args[0].equalsIgnoreCase("retex")) {
-            String island = RetexHandler.getIsland();
             
             if (args[1].equalsIgnoreCase("on")) {
-
+                String island = RetexHandler.getIsland();
                 TextureConfig.toggleIslandTexture(island, true);
 
             } else if (args[1].equalsIgnoreCase("off")) {
+                String island = RetexHandler.getIsland();
                 TextureConfig.toggleIslandTexture(island, false);
 
-            } else {
-                GuiScheduler.scheduleGui(new VisualSettingsGUI());
             }
+
+        } else if (args.length >= 2 && args[0].equalsIgnoreCase("retex") && args[1].equalsIgnoreCase("set")) {
+            if (args.length == 3) {
+                String island = args[2];
+                if (RetexHandler.getKnownIslands().contains(island)) {
+                    RetexHandler.setIsland(island);
+                    sender.addChatMessage(new ChatComponentText(formatMessage(GRAY + "Set retexturing to " + island + ".")));
+                } else {
+                    sender.addChatMessage(new ChatComponentText(formatMessage(YELLOW + "Invalid island name.")));
+                }
+            } else {
+                sender.addChatMessage(new ChatComponentText(formatMessage(YELLOW + "Usage: /fa retex set <island>.")));
+            }
+
         } else {
-            sender.addChatMessage(new ChatComponentText(formatMessage(EnumChatFormatting.YELLOW + "Invalid usage. Use '/fa help' for a list of commands.")));
+            GuiScheduler.scheduleGui(new VisualSettingsGUI());
         }
     }
 
@@ -119,7 +132,10 @@ public class FishyAddonsCommand extends CommandBase {
             return getListOfStringsMatchingLastWord(args, "on", "off");
         }
         else if (args.length == 2 && args[0].equalsIgnoreCase("retex")) {
-            return getListOfStringsMatchingLastWord(args, "on", "off");
+            return getListOfStringsMatchingLastWord(args, "on", "off", "set");
+        }
+        else if (args.length == 3 && args[0].equalsIgnoreCase("retex") && args[1].equalsIgnoreCase("set")) {
+            return getListOfStringsMatchingLastWord(args, RetexHandler.getKnownIslands().toArray(new String[0]));
         }
         return Collections.emptyList();
     }

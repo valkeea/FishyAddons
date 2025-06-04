@@ -1,8 +1,8 @@
 package me.wait.fishyaddons.gui;
 
 import me.wait.fishyaddons.config.ConfigHandler;
-//import me.wait.fishyaddons.config.TextureConfig;
-//import me.wait.fishyaddons.handlers.RetexHandler;
+import me.wait.fishyaddons.config.TextureConfig;
+import me.wait.fishyaddons.handlers.RetexHandler;
 import me.wait.fishyaddons.util.GuiUtils;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
@@ -51,7 +51,7 @@ public class VisualSettingsGUI extends GuiScreen {
 
         int id = ISLAND_BUTTON_OFFSET;
         for (String island : RetexHandler.getKnownIslands()) {
-            if ("default".equals(island)) continue; // Skip "default"
+            if (("default".equals(island)) || "mineshaft".equals(island)) continue;
             GuiButton islandButton = new GuiButton(id, centerX - 100, y, 200, 20, getIslandButtonText(island));
             buttonList.add(islandButton);
             buttonIdToIsland.put(id, island);
@@ -121,7 +121,10 @@ public class VisualSettingsGUI extends GuiScreen {
     @Override
     public void drawScreen(int mouseX, int mouseY, float partialTicks) {
         drawDefaultBackground();
-        drawCenteredString(fontRendererObj, "§bVisual Settings", width / 2, height / 4 - 20, 0xFFFFFF);
+        String title = "§bVisual Settings";
+        int titleX = width / 2;
+        int titleY = height / 4 - 20;
+        drawCenteredString(fontRendererObj, title, titleX, titleY, 0xFFFFFF);
 
         allToggleButton.packedFGColour = TextureConfig.isAllToggled() ? 0xFFCCFFCC : 0xFFFF8080;
         statusToggleButton.packedFGColour = TextureConfig.isRetexStatus() ? 0xFFCCFFCC : 0xFFFF8080;
@@ -129,27 +132,36 @@ public class VisualSettingsGUI extends GuiScreen {
 
         super.drawScreen(mouseX, mouseY, partialTicks);
 
+        int titleWidth = fontRendererObj.getStringWidth(title);
+        int titleHeight = fontRendererObj.FONT_HEIGHT;
+        int titleLeft = titleX - titleWidth / 2;
+        int titleRight = titleX + titleWidth / 2;
+        int titleTop = titleY;
+        int titleBottom = titleY + titleHeight;
+
+        if (mouseX >= titleLeft && mouseX <= titleRight && mouseY >= titleTop && mouseY <= titleBottom) {
+            List<String> tooltip = Arrays.asList(
+                "Island retexturing:",
+                     "- §7An alternative to ValksfullSBpack biome-based retexturing",
+                     "  §7but not intended to be a full replacement for the texture pack.",
+                     "- §7The logic used for special blocks (sandstone slabs, glass panes)",
+                     "  §7is §cnot compatible §7with OptiFine shaders.");
+
+            GuiUtils.drawTooltip(tooltip, mouseX, mouseY, fontRendererObj);
+        }
+
         if (allToggleButton.isMouseOver()) {
             List<String> tooltip = Arrays.asList(
-                "Shortcut to toggle everything.", "- §8With this you can re-enable retexturing anytime.");
+                "Shortcut to toggle everything.", "- §8Wont prevent models from being overwritten.");
 
-            int tooltipX = mouseX + 10;
-            int tooltipY = mouseY + 10;
-            int width = 250;
-            int height = tooltip.size() * 10 + 5;
-
-            drawRect(tooltipX - 3, tooltipY - 3, tooltipX + width + 3, tooltipY + height + 3, 0x90000000);
-    
-            for (int i = 0; i < tooltip.size(); i++) {
-                fontRendererObj.drawString(tooltip.get(i), tooltipX, tooltipY + i * 10, 0xFFE2CAE9);
-            }
+            GuiUtils.drawTooltip(tooltip, mouseX, mouseY, fontRendererObj);
 
         } else if (statusToggleButton.isMouseOver()) {
             List<String> tooltip = Arrays.asList(
                 "Enable/disable retexturing completely. Note:",
-                "- §8Full changes will take effect after a restart. Leaving this off",
-                "  will disable everything next session", "- §8Re-enabling requires a restart.",
-                "- §8Only use this if you never want to retexture anything");
+                "- §8Full toggle for retexturing features.",
+                "- §8Same effect as toggling all islands but",
+                "  §8this will fully prevent the code from running.");
                 
             GuiUtils.drawTooltip(tooltip, mouseX, mouseY, fontRendererObj);
         }

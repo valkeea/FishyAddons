@@ -21,7 +21,7 @@ public class UUIDConfigHandler {
     private static final File BACKUP_DIR = new File("config/fishyaddons/backup");
     private static final File BACKUP_FILE = new File(BACKUP_DIR, "fishyitems.json");
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-    private static final Set<String> protectedUUIDs = new HashSet<>();
+    private static final Map<String, String> protectedUUIDs = new HashMap<>();
 
     private static boolean configChanged = false;
     private static boolean initialized = false;
@@ -48,15 +48,16 @@ public class UUIDConfigHandler {
         }
     }
 
-    public static synchronized void addUUID(String uuid) {
-        if (protectedUUIDs.add(uuid)) {
+    public static synchronized void addUUID(String uuid, String displayName) {
+        if (!protectedUUIDs.containsKey(uuid) || !Objects.equals(protectedUUIDs.get(uuid), displayName)) {
+            protectedUUIDs.put(uuid, displayName);
             configChanged = true;
             saveConfigIfNeeded();
         }
     }
 
     public static synchronized void removeUUID(String uuid) {
-        if (protectedUUIDs.remove(uuid)) {
+        if (protectedUUIDs.remove(uuid) != null) {
             configChanged = true;
             saveConfigIfNeeded();
         }
@@ -69,11 +70,15 @@ public class UUIDConfigHandler {
     }
 
     public static synchronized boolean isProtected(String uuid) {
-        return protectedUUIDs.contains(uuid);
+        return protectedUUIDs.containsKey(uuid);
     }
 
-    public static synchronized Set<String> getProtectedUUIDs() {
-        return new HashSet<>(protectedUUIDs);
+    public static synchronized String getDisplayName(String uuid) {
+        return protectedUUIDs.get(uuid);
+    }
+
+    public static synchronized Map<String, String> getProtectedUUIDs() {
+        return new HashMap<>(protectedUUIDs);
     }
 
     public static boolean isSellProtectionEnabled() {
@@ -124,7 +129,7 @@ public class UUIDConfigHandler {
             return;
         }
 
-        try (Reader reader = new FileReader(CONFIG_FILE)) {
+        try (Reader reader = new InputStreamReader(new FileInputStream(CONFIG_FILE), "UTF-8")) { // <-- Use UTF-8
             Type configType = new TypeToken<Map<String, Object>>() {}.getType();
             Map<String, Object> config = GSON.fromJson(reader, configType);
 
@@ -134,7 +139,6 @@ public class UUIDConfigHandler {
                 return;
             }
 
-            // Load configuration values
             if (config.containsKey("sellProtectionEnabled")) {
                 isSellProtectionEnabled = (Boolean) config.get("sellProtectionEnabled");
             }
@@ -153,11 +157,19 @@ public class UUIDConfigHandler {
 
             if (config.containsKey("protectedUUIDs")) {
                 Object uuidsObj = config.get("protectedUUIDs");
-                if (uuidsObj instanceof List) {
-                    protectedUUIDs.clear();
+                protectedUUIDs.clear();
+                if (uuidsObj instanceof Map) {
+                    Map<?, ?> uuidMap = (Map<?, ?>) uuidsObj;
+                    for (Map.Entry<?, ?> entry : uuidMap.entrySet()) {
+                        if (entry.getKey() instanceof String && entry.getValue() instanceof String) {
+                            protectedUUIDs.put((String) entry.getKey(), (String) entry.getValue());
+                        }
+                    }
+                } else if (uuidsObj instanceof List) {
+                    // Backward compatibility: old format was a list of UUIDs
                     for (Object uuidObj : (List<?>) uuidsObj) {
                         if (uuidObj instanceof String) {
-                            protectedUUIDs.add((String) uuidObj);
+                            protectedUUIDs.put((String) uuidObj, "");
                         }
                     }
                 }
@@ -173,7 +185,7 @@ public class UUIDConfigHandler {
                             entries.add((Map<String, Object>) o);
                         }
                     }
-                    BlacklistConfigHandler.loadUserBlacklistFromJson(entries); // Properly load the blacklist
+                    BlacklistConfigHandler.loadUserBlacklistFromJson(entries);
                 } else {
                     System.err.println("[UUIDConfigHandler] Blacklist is not a valid list.");
                 }
@@ -188,21 +200,20 @@ public class UUIDConfigHandler {
     }
 
     public static synchronized void save() {
-                    Map<String, Object> config = new HashMap<>();
-            config.put("protectedUUIDs", new ArrayList<>(protectedUUIDs));
-            config.put("sellProtectionEnabled", isSellProtectionEnabled);
-            config.put("tooltipEnabled", isTooltipEnabled);
-            config.put("protectTriggerEnabled", isProtectTriggerEnabled);
-            config.put("protectNotiEnabled", isProtectNotiEnabled);
+        Map<String, Object> config = new HashMap<>();
+        config.put("protectedUUIDs", new HashMap<>(protectedUUIDs));
+        config.put("sellProtectionEnabled", isSellProtectionEnabled);
+        config.put("tooltipEnabled", isTooltipEnabled);
+        config.put("protectTriggerEnabled", isProtectTriggerEnabled);
+        config.put("protectNotiEnabled", isProtectNotiEnabled);
 
-            // Serialize the blacklist properly
-            List<Map<String, Object>> serializedBlacklist = BlacklistConfigHandler.getUserBlacklistAsJson();
-            config.put("blacklist", serializedBlacklist);
-            System.out.println("[UUIDConfigHandler] Saving blacklist to config...");
+        List<Map<String, Object>> serializedBlacklist = BlacklistConfigHandler.getUserBlacklistAsJson();
+        config.put("blacklist", serializedBlacklist);
+        System.out.println("[UUIDConfigHandler] Saving blacklist to config...");
 
-            try (Writer writer = new FileWriter(CONFIG_FILE)) {
-                GSON.toJson(config, writer);
-                    } catch (IOException e) {
+        try (Writer writer = new OutputStreamWriter(new FileOutputStream(CONFIG_FILE), "UTF-8")) {
+            GSON.toJson(config, writer);
+        } catch (IOException e) {
             System.err.println("[UUIDConfigHandler] Failed to save config: " + e.getMessage());
         }
     }
@@ -211,6 +222,7 @@ public class UUIDConfigHandler {
         try {
             if (CONFIG_FILE.exists()) {
                 Files.copy(CONFIG_FILE.toPath(), BACKUP_FILE.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                System.out.println("[UUIDConfigHandler] Backup saved successfully.");
             }
         } catch (IOException e) {
             System.err.println("[UUIDConfigHandler] Failed to save backup: " + e.getMessage());
@@ -236,7 +248,6 @@ public class UUIDConfigHandler {
     }
 
     private static boolean validate(Map<String, Object> config) {
-        // Example validation: Check for required fields
         return config.containsKey("sellProtectionEnabled") && config.containsKey("tooltipEnabled") &&
                config.containsKey("protectTriggerEnabled") && config.containsKey("protectNotiEnabled") &&
                config.containsKey("protectedUUIDs");

@@ -26,12 +26,12 @@ public class ProtectCommand extends CommandBase {
 
     @Override
     public String getCommandName() {
-        return "fasafeguard";
+        return "faguard";
     }
 
     @Override
     public String getCommandUsage(ICommandSender sender) {
-        return "/fasafeguard <add|remove|list|clear>";
+        return "/faguard <add|remove|list|clear>";
     }
 
     @Override
@@ -99,9 +99,10 @@ public class ProtectCommand extends CommandBase {
         }
 
         String uuidToAdd = getUUIDFromItem(held);
+        String displayName = held.getDisplayName();
         if (uuidToAdd != null) {
-            UUIDConfigHandler.addUUID(uuidToAdd);
-            notify(sender, formatMessage(EnumChatFormatting.GRAY + "Your " + EnumChatFormatting.RESET + held.getDisplayName() + EnumChatFormatting.GRAY + " is now protected."));
+            UUIDConfigHandler.addUUID(uuidToAdd, displayName); // Pass display name!
+            notify(sender, formatMessage(EnumChatFormatting.GRAY + "Your " + EnumChatFormatting.RESET + displayName + EnumChatFormatting.GRAY + " is now protected."));
         } else {
             notify(sender, formatMessage(EnumChatFormatting.GRAY + "Held item doesn't have a UUID."));
         }
@@ -126,9 +127,13 @@ public class ProtectCommand extends CommandBase {
     }
 
     private void handleListCommand(ICommandSender sender) {
-        notify(sender, formatMessage("Protected UUIDs:"));
-        for (String uuid : UUIDConfigHandler.getProtectedUUIDs()) {
-            notify(sender, " - " + EnumChatFormatting.GRAY + uuid);
+        notify(sender, formatMessage("Protected Items:"));
+        for (java.util.Map.Entry<String, String> entry : UUIDConfigHandler.getProtectedUUIDs().entrySet()) {
+            String displayName = entry.getValue();
+            String uuid = entry.getKey();
+            // Show display name, fallback to UUID if display name is empty
+            String shown = (displayName != null && !displayName.isEmpty()) ? displayName : uuid;
+            notify(sender, " - " + EnumChatFormatting.GRAY + shown);
         }
     }
 
@@ -138,16 +143,16 @@ public class ProtectCommand extends CommandBase {
             notify(sender, formatMessage(EnumChatFormatting.GRAY + "Are you SURE you want to clear all protected items?"));
             sendClickableConfirmation(sender);
         } else {
-            notify(sender, formatMessage(EnumChatFormatting.GRAY + "Please respond to the confirmation prompt for: /faprotect clear."));
+            notify(sender, formatMessage(EnumChatFormatting.GRAY + "Please respond to the confirmation prompt for: /faguard clear."));
         }
     }
 
     private void sendClickableConfirmation(ICommandSender sender) {
         ChatComponentText yesButton = new ChatComponentText(EnumChatFormatting.GREEN + "[Yes]");
-        yesButton.getChatStyle().setChatClickEvent(new net.minecraft.event.ClickEvent(net.minecraft.event.ClickEvent.Action.RUN_COMMAND, "/faprotect confirmclear"));
+        yesButton.getChatStyle().setChatClickEvent(new net.minecraft.event.ClickEvent(net.minecraft.event.ClickEvent.Action.RUN_COMMAND, "/faguard confirmclear"));
 
         ChatComponentText noButton = new ChatComponentText(EnumChatFormatting.RED + "[No]");
-        noButton.getChatStyle().setChatClickEvent(new net.minecraft.event.ClickEvent(net.minecraft.event.ClickEvent.Action.RUN_COMMAND, "/faprotect cancelclear"));
+        noButton.getChatStyle().setChatClickEvent(new net.minecraft.event.ClickEvent(net.minecraft.event.ClickEvent.Action.RUN_COMMAND, "/faguard cancelclear"));
 
         ChatComponentText message = new ChatComponentText(" ");
         message.appendSibling(yesButton);

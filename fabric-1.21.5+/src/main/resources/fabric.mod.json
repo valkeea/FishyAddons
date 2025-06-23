@@ -1,0 +1,31 @@
+{
+	"schemaVersion": 1,
+	"id": "fishyaddons",
+	"version": "${version}",
+	"name": "FishyAddons",
+	"description": "Client-side utility mod ported from 1.8.9.",
+	"authors": [
+		"valkeea"
+	],
+	"contact": {
+		"homepage": "https://fabricmc.net/",
+		"sources": "https://github.com/valkeea/FishyAddons"
+	},
+	"license": "MIT",
+	"icon": "assets/fishyaddons/icon.png",
+	"environment": "client",
+	"entrypoints": {
+		"client": [
+			"me.valkeea.fishyaddons.FishyAddons"
+		]
+	},
+	"mixins": [
+		"fishyaddons.mixins.json"
+	],
+	"depends": {
+		"fabricloader": ">=0.16.10",
+		"minecraft": "~1.21.5",
+		"java": ">=21",
+		"fabric-api": "*"
+	}
+}

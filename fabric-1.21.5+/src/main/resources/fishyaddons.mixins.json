@@ -1,0 +1,27 @@
+{
+	"required": true,
+	"package": "me.valkeea.fishyaddons.mixin",
+	"compatibilityLevel": "JAVA_21",
+	"mixins": [
+		"HandledScreenAccessor",
+		"PlayerInventoryAccessor",
+		"MixinBackgroundRenderer",
+		"MixinClientPlayerEntity",
+		"MixinClientPlayNetworkHandler",
+		"MixinHandledScreenKey",
+		"MixinHandledScreenMouse",
+		"MixinHandledScreenMouseRelease",
+		"MixinHandledScreenTooltip",
+		"MixinHandledScreenSlot",
+		"MixinHandledScreenSlotOverlay",
+		"MixinParticle",
+		"MixinParticleManager",
+		"MixinPerspective",
+		"MixinRedDustParticle",
+		"MixinSoundManager"
+	],	
+	"refmap": "client-FishyAddons.refmap.json",
+	"injectors": {
+		"defaultRequire": 1
+	}
+}

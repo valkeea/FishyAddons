@@ -1,0 +1,10 @@
+{
+  "protect_trigger": {
+    "sounds": [
+      {
+        "name": "fishyaddons:protect_trigger",
+        "stream": false
+      }
+    ]
+  }
+}

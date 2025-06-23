@@ -1,16 +1,22 @@
 # FishyAddons
 
 This mod was created for my personal needs, more features may or may not be added.
+Note: 1.21.5+ support with the Fabric version, use Forge for 1.8.9
 
-## **Version 1.3.1, Features:** 
+## **Version 2.0.0, Features:**
 
 ### Visual
 - Custom Redstone particle color; mainly to enhance Jawbus laser and Flay ability
 - Lava visibility
-- Island-specific block retexturing (Textures from ValksfullSBpack, WIP)
+- Island-specific block retexturing (Textures from ValksfullSBpack, 1.8.9 only)
 
 ### Qol
-- Custom keybinds
-- Custom command aliases
-- Dynamically configurable GUI for keybinds & commands
-- Drop/gui protection for items
+- Configurable keybinds, command aliases and chat-text replacements
+
+### 1.21.5 Only:
+- Custom f5 (No front perspective)
+- Ping command and display
+- Clean Wither Impact (particles, sound)
+- Mute Phantoms
+- Send and render player coordinates
+- Moonglade Beacon timer and hud display

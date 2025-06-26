@@ -10,7 +10,7 @@ public class KeyUtil {
     static {
         GLFW_KEY_NAMES.put(GLFW.GLFW_KEY_A, "GLFW_KEY_A");
         GLFW_KEY_NAMES.put(GLFW.GLFW_KEY_B, "GLFW_KEY_B");
-        // Or use reflection once to fill the map, then use the map for lookups
+        // Use reflection once to fill the map
         for (java.lang.reflect.Field field : GLFW.class.getFields()) {
             if (field.getType() == int.class && field.getName().startsWith("GLFW_KEY_")) {
                 try {
@@ -49,7 +49,6 @@ public class KeyUtil {
     }
 
     public static int getKeyCodeFromString(String key) {
-        // Example: "GLFW_KEY_L" -> GLFW.GLFW_KEY_L
         try {
             return (int) org.lwjgl.glfw.GLFW.class.getField(key).get(null);
         } catch (Exception e) {

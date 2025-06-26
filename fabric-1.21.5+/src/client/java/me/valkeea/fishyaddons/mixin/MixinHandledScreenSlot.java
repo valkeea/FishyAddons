@@ -30,7 +30,6 @@ public class MixinHandledScreenSlot {
         boolean isLocked = SlotProtectionManager.isSlotLocked(invIndex);
         boolean isBound = SlotProtectionManager.isSlotBound(invIndex);
 
-        // Block all clicks on locked slots
         if (isLocked) {
             cir.setReturnValue(false);
             return;
@@ -49,7 +48,7 @@ public class MixinHandledScreenSlot {
 
             int boundSlotId = SlotProtectionManager.getBoundSlot(invIndex);
             ScreenHandler handler = screen.getScreenHandler();
-            if (handler == null) {
+            if (handler == null || boundSlotId < 0 || boundSlotId >= handler.slots.size()) {
                 cir.setReturnValue(false);
                 return;
             }

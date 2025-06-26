@@ -6,8 +6,8 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import me.valkeea.fishyaddons.safeguard.SlotProtectionManager;
+import me.valkeea.fishyaddons.tool.FishyMode;
 import me.valkeea.fishyaddons.util.HelpUtil;
-import me.valkeea.fishyaddons.gui.GuiUtil;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.render.RenderLayer;
@@ -17,8 +17,6 @@ import net.minecraft.util.Identifier;
 
 @Mixin(HandledScreen.class)
 public abstract class MixinHandledScreenSlotOverlay {
-    private static final Identifier LOCKED_OVERLAY = Identifier.of("fishyaddons", "gui/falocked");
-    private static final Identifier BOUND_OVERLAY = Identifier.of("fishyaddons", "gui/fabound");
 
     @Inject(method = "drawSlot", at = @At("TAIL"))
     private void drawSlotOverlay(DrawContext context, Slot slot, CallbackInfo ci) {
@@ -32,23 +30,24 @@ public abstract class MixinHandledScreenSlotOverlay {
         }
 
         if (SlotProtectionManager.isSlotLocked(invIndex)) {
-            GuiUtil.lockedOverlay(context, slot.x, slot.y);
+            overlay(context, slot, "falocked");
         }
 
         else if (SlotProtectionManager.isSlotBound(invIndex)) {
-           GuiUtil.boundOverlay(context, slot.x, slot.y);
+           overlay(context, slot, "fabound");
         }
     }
 
-    // to-do
-    private void overlay(DrawContext context, Slot slot, Identifier textureId) {      
+    private void overlay(DrawContext context, Slot slot, String textureName) {
+        String mode = FishyMode.getTheme();
+        Identifier texture = Identifier.of("fishyaddons", "textures/gui/" + mode + "/" + textureName + ".png");
         context.drawTexture(
             RenderLayer::getGuiTextured,
-            textureId,
+            texture,
             slot.x, slot.y,
-            0, 0,
+            0.0F, 0.0F,
             16, 16,
             16, 16
         );
-    }    
+    } 
 }

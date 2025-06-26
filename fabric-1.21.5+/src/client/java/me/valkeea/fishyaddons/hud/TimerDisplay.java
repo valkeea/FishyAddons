@@ -2,7 +2,6 @@ package me.valkeea.fishyaddons.hud;
 
 import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.handler.ChatTimers;
-import me.valkeea.fishyaddons.listener.ClientChat;
 import net.fabricmc.fabric.api.client.rendering.v1.HudLayerRegistrationCallback;
 import net.fabricmc.fabric.api.client.rendering.v1.IdentifiedLayer;
 import net.minecraft.client.MinecraftClient;
@@ -37,14 +36,27 @@ public class TimerDisplay implements HudElement {
         int size = FishyConfig.getHudSize(HUD_KEY, 12);
         int color = FishyConfig.getHudColor(HUD_KEY, 0xFFFFFF);
 
+        float scale = size / 12.0F;
         Text timerLabel = Text.literal("Moonglade:").styled(style -> style.withColor(color));
         Text timerValue = Text.literal(" " + formatTime(secondsLeft));
         Text fullText = Text.empty().append(timerLabel).append(timerValue);
-        context.fill(hudX + 4, hudY + 2, hudX + size + 55, hudY + 8, 0x80000000);        
-        context.drawText(mc.textRenderer, fullText, hudX, hudY, 0xFFFFFF, true);
+
+        int textWidth = mc.textRenderer.getWidth(fullText);
+
+        int shadowX1 = hudX + 1;
+        int shadowY1 = hudY + 2;
+        int shadowX2 = hudX + (int)(textWidth * scale) + 2;
+        int shadowY2 = hudY + (int)(size * 0.8F) - 1;
+        context.fill(shadowX1, shadowY1, shadowX2, shadowY2, 0x80000000);
+
+        context.getMatrices().push();
+        context.getMatrices().translate(hudX, hudY, 0);
+        context.getMatrices().scale(scale, scale, 1.0F);
+        context.drawText(mc.textRenderer, fullText, 0, 0, 0xFFFFFF, true);
+        context.getMatrices().pop();
 
         if (editingMode) {
-            context.fill(hudX - 2, hudY - 2, hudX + 80, hudY + size + 4, 0x80FFFFFF);
+            context.fill(hudX - 2, hudY - 2, hudX + (int)(textWidth * scale) + 18, hudY + (int)(size * 1.1F) + 4, 0x80FFFFFF);
         }
     }
  

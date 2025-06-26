@@ -185,6 +185,9 @@ public class FishyConfig {
     public static final String HUD_TIMER_ENABLED = "timerHud";
     public static final String HUD_TIMER_SIZE = "timerHudSize";
     public static final String HUD_TIMER_COLOR = "timerHudColor";
+    public static final String HUD_TITLE_X = "titleHudX";
+    public static final String HUD_TITLE_Y = "titleHudY";
+    public static final String HUD_TITLE_SIZE = "titleHudSize";
     public static final String RENDER_COORD_COLOR = "renderCoordsColor";
     private static final String CUSTOM_PARTICLE_COLOR_INDEX = "customParticleColorIndex";
     private static final String CUSTOM_PARTICLE_MODE = "customParticleMode";
@@ -193,6 +196,8 @@ public class FishyConfig {
     private static final String MUTE_PHANTOM = "mutePhantom";
     private static final String RENDER_COORDS = "renderCoords";
     private static final String BEACON_ALARM = "beaconAlarm";
+    private static final String COPY_CHAT = "copyChat";
+    private static final String THEME_MODE = "themeMode";
 
     // Generalized HUD position getters/setters
     public static int getHudX(String hudKey, int defaultX) {
@@ -273,27 +278,31 @@ public class FishyConfig {
             keybinds.set("GLFW_KEY_B", "/wardrobe");
             chatReplacements.set(":cat:", "ᗢᘏᓗ");            
             chatReplacements.set(":hi:", "ඞ");
-            chatReplacements.set("heii", "Any string will be replaced one to one");
+            chatReplacements.set("heiiii", "Any string will be replaced one to one");
             settings.set("fishyLava", false);
             settings.set(CUSTOM_PARTICLE_COLOR_INDEX, Integer.valueOf(1));
             settings.set(SKIP_F5, false);
             settings.set(CLEAN_HYPE, false);
             settings.set(MUTE_PHANTOM, false);
-            settings.set(RENDER_COORDS, false);
+            settings.set(RENDER_COORDS, true);
+            settings.set(COPY_CHAT, true);
             settings.set(CUSTOM_PARTICLE_MODE, "preset");
-            settings.set(BEACON_ALARM, false);
+            settings.set(BEACON_ALARM, true);
             settings.set(HUD_PING_ENABLED, false);
-            settings.set(HUD_TIMER_ENABLED, false);
+            settings.set(HUD_TIMER_ENABLED, true);
             hud.set(HUD_PING_X, 5);
-            hud.set(HUD_PING_Y, 5);
+            hud.set(HUD_PING_Y, 80);
             hud.set(HUD_PING_SIZE, 12);
             hud.set(HUD_PING_COLOR, 1.5649516E7);
             hud.set(HUD_TIMER_X, 5);
-            hud.set(HUD_TIMER_Y, 20);
+            hud.set(HUD_TIMER_Y, 100);
             hud.set(HUD_TIMER_SIZE, 12);
             hud.set(HUD_TIMER_COLOR, 1.5649516E7);
-            hud.set(RENDER_COORD_COLOR, 0xFF00FFFF);
-            modKeys.set("lockKey", "GLFW_KEY_L");
+            hud.set(HUD_TITLE_X, 500);
+            hud.set(HUD_TITLE_Y, 140);
+            hud.set(HUD_TITLE_SIZE, 12);
+            hud.set(RENDER_COORD_COLOR, -1.6711681E7);
+            modKeys.set("lockKey", "NONE");
             save();
         }
     }
@@ -332,6 +341,7 @@ public class FishyConfig {
             settings.loadFromJson(json);
             modKeys.loadFromJson(json);
             hud.loadFromJson(json);
+            chatAlerts.loadFromJson(json);            
 
             // --- Load custom RGB ---
             if (json.has("customRed")) customRed = json.get("customRed").getAsFloat();
@@ -356,6 +366,7 @@ public class FishyConfig {
             settings.saveToJson(json);
             modKeys.saveToJson(json);
             hud.saveToJson(json);
+            chatAlerts.saveToJson(json);
 
             // --- Save custom RGB ---
             json.addProperty("customRed", customRed);
@@ -503,6 +514,85 @@ public class FishyConfig {
 
     public static void setInt(String key, int value) {
         settings.set(key, value);
+        save();
+    }
+
+    // get String value
+    public static String getString(String key, String def) {
+        Object v = settings.getValues().getOrDefault(key, def);
+        return v instanceof String str ? str : def;
+    }
+
+    public static void setString(String key, String value) {
+        settings.set(key, value);
+        save();
+    }
+
+    // --- Alert Data ---
+    public static class AlertData {
+        public String msg;    
+        public String onscreen; 
+        public int color;
+        public String soundId; 
+        public float volume;
+        public boolean toggled; 
+
+        public AlertData() {
+            this("", "", 0xFFFFFFFF, "", 1.0F, true); // Default volume 1.0F
+        }
+
+        public AlertData(String msg, String onscreen, int color, String soundId, float volume, boolean toggled) {
+            this.msg = msg;
+            this.onscreen = onscreen;
+            this.color = color;
+            this.soundId = soundId;
+            // Normalize volume between 0.0F and 2.0F
+            if (volume < 0.0F) volume = 0.0F;
+            if (volume > 5.0F) volume = 5.0F;
+            this.volume = volume;
+            this.toggled = toggled;
+        }
+    }
+
+    // --- Section instance for alerts ---
+    public static final ConfigSection<AlertData> chatAlerts =
+        new ConfigSection<>("chatAlerts", "toggledChatAlerts",
+            new com.google.gson.reflect.TypeToken<Map<String, AlertData>>(){}.getType(),
+            new com.google.gson.reflect.TypeToken<Map<String, Boolean>>(){}.getType(),
+            v -> save()
+        );
+
+    public static Map<String, AlertData> getChatAlerts() {
+        return chatAlerts.getValues();
+    }
+
+    public static void setChatAlert(String key, AlertData data) {
+        chatAlerts.set(key, data);
+    }
+
+    public static void removeChatAlert(String key) {
+        chatAlerts.remove(key);
+    }
+
+    public static boolean isChatAlertToggled(String key) {
+        AlertData data = chatAlerts.getValues().get(key);
+        if (data != null) return data.toggled;
+        return chatAlerts.isToggled(key);
+    }
+
+    public static boolean isTitleActive(String key) {
+        AlertData data = chatAlerts.getValues().get(key);
+        return data != null && data.onscreen != null && !data.onscreen.isBlank();
+    }
+
+    public static void toggleChatAlert(String key, boolean enabled) {
+        AlertData data = chatAlerts.getValues().get(key);
+        if (data != null) {
+            data.toggled = enabled;
+            chatAlerts.set(key, data);
+        } else {
+            chatAlerts.toggle(key, enabled);
+        }
         save();
     }
 }

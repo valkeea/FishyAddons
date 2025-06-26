@@ -1,14 +1,15 @@
 package me.valkeea.fishyaddons.gui;
 
+import java.util.Map;
+
 import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.handler.KeyShortcut;
 import me.valkeea.fishyaddons.util.KeyUtil;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.text.Text;
+import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.util.InputUtil;
-
-import java.util.Map;
+import net.minecraft.text.Text;
 
 public class KeybindEntryList extends GenericEntryList {
     public KeybindEntryList(MinecraftClient client, int width, int height, int y, int itemHeight, TabbedListScreen parentScreen) {
@@ -100,7 +101,7 @@ public class KeybindEntryList extends GenericEntryList {
         public KeybindButtonWidget(String keyValue, GenericEntryList.GenericEntry entry, KeybindEntryList entryList, TabbedListScreen parentScreen) {
             super(
                 - 40, 5, 100, 20,
-                Text.literal(keyValue.isEmpty() ? "Set Key" : keyValue),
+                Text.literal(keyValue.isEmpty() ? "Set Key" : KeyUtil.getDisplayNameFor(keyValue)),
                 b -> {}, // Manual click
                 DEFAULT_NARRATION_SUPPLIER
             );
@@ -216,5 +217,32 @@ public class KeybindEntryList extends GenericEntryList {
         public String getKeyValue() {
             return keyValue;
         }
+    }
+
+    public boolean handleMouseClicked(double mouseX, double mouseY, int button, TabbedListScreen screen) {
+        GenericEntryList.GenericEntry entry = getHoveredKeybindEntry();
+        if (entry == null) return false;
+        if (entry.inputWidget instanceof TextFieldWidget field) {
+            if (field.mouseClicked(mouseX, mouseY, button)) {
+                field.setFocused(true);
+                screen.setFocused(field);
+                return true;
+            }
+        } else if (entry.inputWidget instanceof ButtonWidget btn) {
+            if (btn.mouseClicked(mouseX, mouseY, button)) {
+                btn.setFocused(true);
+                screen.setFocused(btn);
+                return true;
+            }
+        }
+        if (entry.outputField.mouseClicked(mouseX, mouseY, button)) {
+            entry.outputField.setFocused(true);
+            screen.setFocused(entry.outputField);
+            return true;
+        }
+        if (entry.saveButton.mouseClicked(mouseX, mouseY, button)) return true;
+        if (entry.deleteButton.mouseClicked(mouseX, mouseY, button)) return true;
+        if (entry.toggleButton.mouseClicked(mouseX, mouseY, button)) return true;
+        return false;
     }
 }

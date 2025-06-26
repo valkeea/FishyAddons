@@ -11,7 +11,7 @@
 		"homepage": "https://fabricmc.net/",
 		"sources": "https://github.com/valkeea/FishyAddons"
 	},
-	"license": "MIT",
+	"license": "GLP-3.0",
 	"icon": "assets/fishyaddons/icon.png",
 	"environment": "client",
 	"entrypoints": {

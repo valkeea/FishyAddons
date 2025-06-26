@@ -1,9 +1,11 @@
 package me.valkeea.fishyaddons.gui;
 
+import java.util.Map;
+
 import me.valkeea.fishyaddons.config.FishyConfig;
 import net.minecraft.client.MinecraftClient;
-
-import java.util.Map;
+import net.minecraft.client.gui.widget.ButtonWidget;
+import net.minecraft.client.gui.widget.TextFieldWidget;
 
 public class AliasEntryList extends GenericEntryList {
     public AliasEntryList(MinecraftClient client, int width, int height, int y, int itemHeight, TabbedListScreen parentScreen) {
@@ -71,5 +73,32 @@ public class AliasEntryList extends GenericEntryList {
     @Override
     public boolean isValidEntry(String key, String value) {
         return !key.isEmpty() && !value.isEmpty() && key.startsWith("/") && value.startsWith("/");
+    }
+
+    public boolean handleMouseClicked(double mouseX, double mouseY, int button, TabbedListScreen screen) {
+        GenericEntryList.GenericEntry entry = getHoveredCommandEntry();
+        if (entry == null) return false;
+        if (entry.inputWidget instanceof TextFieldWidget field) {
+            if (field.mouseClicked(mouseX, mouseY, button)) {
+                field.setFocused(true);
+                screen.setFocused(field);
+                return true;
+            }
+        } else if (entry.inputWidget instanceof ButtonWidget btn) {
+            if (btn.mouseClicked(mouseX, mouseY, button)) {
+                btn.setFocused(true);
+                screen.setFocused(btn);
+                return true;
+            }
+        }
+        if (entry.outputField.mouseClicked(mouseX, mouseY, button)) {
+            entry.outputField.setFocused(true);
+            screen.setFocused(entry.outputField);
+            return true;
+        }
+        if (entry.saveButton.mouseClicked(mouseX, mouseY, button)) return true;
+        if (entry.deleteButton.mouseClicked(mouseX, mouseY, button)) return true;
+        if (entry.toggleButton.mouseClicked(mouseX, mouseY, button)) return true;
+        return false;
     }
 }

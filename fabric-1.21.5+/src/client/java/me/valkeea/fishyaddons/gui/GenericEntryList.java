@@ -1,15 +1,16 @@
 package me.valkeea.fishyaddons.gui;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.widget.EntryListWidget;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.text.Text;
-
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
+import me.valkeea.fishyaddons.gui.FaButton;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.widget.ButtonWidget;
+import net.minecraft.client.gui.widget.EntryListWidget;
+import net.minecraft.client.gui.widget.TextFieldWidget;
+import net.minecraft.text.Text;
 
 public abstract class GenericEntryList extends EntryListWidget<GenericEntryList.GenericEntry> {
     protected final TabbedListScreen parentScreen;
@@ -101,33 +102,37 @@ public abstract class GenericEntryList extends EntryListWidget<GenericEntryList.
             super("", "", entryList, parentScreen);
             this.entryList = entryList;
             this.parentScreen = parentScreen;
-            this.addButton = ButtonWidget.builder(Text.literal(entryList.getAddButtonText()), b -> {
-                if (parentScreen.addingNewEntry) {
-                    parentScreen.addingNewEntry = false;
-                    parentScreen.refreshEntryList();
-                    return;
-                }
-                GenericEntry lastEntry = null;
-                for (EntryListWidget.Entry<?> entry : entryList.children()) {
-                    if (entry instanceof GenericEntryList.GenericEntry ce && ce.isNew) {
-                        lastEntry = ce;
-                        break;
-                    }
-                }
-                if (lastEntry != null) {
-                    String input = lastEntry.inputWidget instanceof TextFieldWidget field ? field.getText().trim() : lastEntry.input;
-                    String output = lastEntry.outputField.getText().trim();
-                    if (!entryList.isValidEntry(input, output)) {
+            this.addButton = new FaButton(
+                0, -20, 100, 20,
+                Text.literal(entryList.getAddButtonText()),
+                b -> {
+                    if (parentScreen.addingNewEntry) {
                         parentScreen.addingNewEntry = false;
                         parentScreen.refreshEntryList();
                         return;
                     }
+                    GenericEntry lastEntry = null;
+                    for (EntryListWidget.Entry<?> entry : entryList.children()) {
+                        if (entry instanceof GenericEntryList.GenericEntry ce && ce.isNew) {
+                            lastEntry = ce;
+                            break;
+                        }
+                    }
+                    if (lastEntry != null) {
+                        String input = lastEntry.inputWidget instanceof TextFieldWidget field ? field.getText().trim() : lastEntry.input;
+                        String output = lastEntry.outputField.getText().trim();
+                        if (!entryList.isValidEntry(input, output)) {
+                            parentScreen.addingNewEntry = false;
+                            parentScreen.refreshEntryList();
+                            return;
+                        }
+                    }
+                    if (!parentScreen.addingNewEntry) {
+                        parentScreen.addingNewEntry = true;
+                        parentScreen.refreshEntryList();
+                    }
                 }
-                if (!parentScreen.addingNewEntry) {
-                    parentScreen.addingNewEntry = true;
-                    parentScreen.refreshEntryList();
-                }
-            }).dimensions(0, -20, 100, 20).build();
+            );
         }
 
         public boolean isSelectable() {
@@ -177,6 +182,7 @@ public abstract class GenericEntryList extends EntryListWidget<GenericEntryList.
         protected final GenericEntryList entryList;
         protected final TabbedListScreen parentScreen;
         protected final Object inputWidget;
+        protected final ButtonWidget extraButton;
 
         protected String pendingTooltip = null;
         protected int tooltipX = 0, tooltipY = 0;
@@ -196,6 +202,7 @@ public abstract class GenericEntryList extends EntryListWidget<GenericEntryList.
             this.saveButton = createSaveButton();
             this.deleteButton = createDeleteButton();
             this.toggleButton = createToggleButton();
+            this.extraButton = entryList.createExtraButton(this);
         }
 
         private TextFieldWidget createOutputField(String output) {
@@ -206,10 +213,12 @@ public abstract class GenericEntryList extends EntryListWidget<GenericEntryList.
             return field;
         }
 
-        private ButtonWidget createSaveButton() {
-            return ButtonWidget.builder(Text.literal(entryList.getSaveButtonText())
-                .styled(style -> style.withColor(0xFF808080)), b -> handleSave())
-                .dimensions(0, 0, 60, 20).build();
+        private FaButton createSaveButton() {
+            return new FaButton(
+                0, 0, 60, 20,
+                Text.literal(entryList.getSaveButtonText()).styled(style -> style.withColor(0xFF808080)),
+                b -> handleSave()
+            );
         }
 
         public void dupePopup() {
@@ -291,12 +300,17 @@ public abstract class GenericEntryList extends EntryListWidget<GenericEntryList.
             parentScreen.refreshEntryList();
         }
 
-        private ButtonWidget createDeleteButton() {
-            return ButtonWidget.builder(Text.literal(entryList.getDeleteButtonText())
-                .styled(style -> style.withColor(0xFF808080)), b -> handleDelete())
-                .dimensions(0, 0, 60, 20).build();
+        private FaButton createDeleteButton() {
+            return new FaButton(
+                0, 0, 60, 20,
+                Text.literal(entryList.getDeleteButtonText()).styled(style -> style.withColor(0xFF808080)),
+                b -> handleDelete()
+            );
         }
 
+        public void checkAndSave() {
+            handleSave();
+        }
         private void handleDelete() {
             if (inputWidget instanceof TextFieldWidget field) {
                 field.setFocused(false);
@@ -311,14 +325,15 @@ public abstract class GenericEntryList extends EntryListWidget<GenericEntryList.
             }
         }
 
-        private ButtonWidget createToggleButton() {
+        private FaButton createToggleButton() {
             boolean isToggled = entryList.isEntryToggled(input);
-            final ButtonWidget[] toggleButtonRef = new ButtonWidget[1];
-            ButtonWidget toggleBtn = ButtonWidget.builder(
+            final FaButton[] toggleButtonRef = new FaButton[1];
+            FaButton toggleBtn = new FaButton(
+                0, 0, 40, 20,
                 Text.literal(isToggled ? entryList.getToggleOnText() : entryList.getToggleOffText())
                     .styled(style -> style.withColor(isToggled ? 0xFFCCFFCC : 0xFFFF8080)),
                 b -> handleToggle(toggleButtonRef)
-            ).dimensions(0, 0, 40, 20).build();
+            );
             toggleButtonRef[0] = toggleBtn;
             return toggleBtn;
         }
@@ -347,7 +362,6 @@ public abstract class GenericEntryList extends EntryListWidget<GenericEntryList.
             renderInputField(context, ax, ay, aw, ah, mouseX, mouseY, delta);
             renderOutputField(context, cx, cy, cw, ch, mouseX, mouseY, delta);
             renderButtons(context, x, y, mouseX, mouseY, delta);
-
             updateTooltipState(cx, cy, cw, ch, mouseX, mouseY);
         }
 
@@ -364,6 +378,66 @@ public abstract class GenericEntryList extends EntryListWidget<GenericEntryList.
                 button.render(context, mouseX, mouseY, delta);
             }
         }
+
+        @Override
+        public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+            // Enter key triggers save
+            if (keyCode == 257 || keyCode == 335) { // GLFW_KEY_ENTER, GLFW_KEY_KP_ENTER
+                handleSave();
+                return true;
+            }
+
+            // Tab navigation
+            if (keyCode == 258) { // GLFW_KEY_TAB
+                boolean shift = (modifiers & 0x1) != 0; // Shift modifier
+                // List of focusable widgets in order
+                java.util.List<net.minecraft.client.gui.widget.ClickableWidget> widgets = new java.util.ArrayList<>();
+                if (inputWidget instanceof TextFieldWidget field) widgets.add(field);
+                widgets.add(outputField);
+                widgets.add(saveButton);
+                widgets.add(deleteButton);
+                widgets.add(toggleButton);
+                if (extraButton != null) widgets.add(extraButton);
+
+                // Find currently focused widget
+                net.minecraft.client.gui.widget.ClickableWidget focused = null;
+                for (var w : widgets) {
+                    if (w.isFocused()) {
+                        focused = w;
+                        break;
+                    }
+                }
+                int idx = widgets.indexOf(focused);
+                int nextIdx = shift ? (idx - 1 + widgets.size()) % widgets.size() : (idx + 1) % widgets.size();
+
+                // Unfocus all, focus next
+                for (var w : widgets) w.setFocused(false);
+                widgets.get(nextIdx).setFocused(true);
+                return true;
+            }
+
+            // Forward to focused widget
+            if (inputWidget instanceof TextFieldWidget field && field.isFocused()) {
+                return field.keyPressed(keyCode, scanCode, modifiers);
+            }
+            if (outputField.isFocused()) {
+                return outputField.keyPressed(keyCode, scanCode, modifiers);
+            }
+            if (saveButton.isFocused()) {
+                return saveButton.keyPressed(keyCode, scanCode, modifiers);
+            }
+            if (deleteButton.isFocused()) {
+                return deleteButton.keyPressed(keyCode, scanCode, modifiers);
+            }
+            if (toggleButton.isFocused()) {
+                return toggleButton.keyPressed(keyCode, scanCode, modifiers);
+            }
+            if (extraButton != null && extraButton.isFocused()) {
+                return extraButton.keyPressed(keyCode, scanCode, modifiers);
+            }
+
+            return false;
+        }        
 
         private void renderOutputField(DrawContext context, int cx, int cy, int cw, int ch, int mouseX, int mouseY, float delta) {
             int outputColor = outputField.isFocused() ? 0xFFE2CAE9 : 0xFF555555;
@@ -385,11 +459,19 @@ public abstract class GenericEntryList extends EntryListWidget<GenericEntryList.
             toggleButton.setX(x + 450);
             toggleButton.setY(y);
             toggleButton.render(context, mouseX, mouseY, delta);
+
+            if (extraButton != null) {
+                extraButton.setX(x + 495);
+                extraButton.setY(y);
+                extraButton.render(context, mouseX, mouseY, delta);
+            }
         }
 
         private void updateTooltipState(int cx, int cy, int cw, int ch, int mouseX, int mouseY) {
             if (parentScreen.fishyPopup == null) {
+                // Output field tooltip
                 String outputText = outputField.getText();
+                boolean outputTooltip = false;
                 if (outputText.length() > 31) {
                     int mouseFieldX = cx + 2;
                     int mouseFieldY = cy + 5;
@@ -397,6 +479,7 @@ public abstract class GenericEntryList extends EntryListWidget<GenericEntryList.
                     int fieldHeight = ch - 10 + 10;
                     if (mouseX >= mouseFieldX && mouseX < mouseFieldX + fieldWidth &&
                         mouseY >= mouseFieldY && mouseY < mouseFieldY + fieldHeight) {
+                        outputTooltip = true;
                         List<Text> tooltipLines = new java.util.ArrayList<>();
                         for (int i = 0; i < outputText.length(); i += 64) {
                             tooltipLines.add(Text.literal(outputText.substring(i, Math.min(i + 64, outputText.length()))));
@@ -405,11 +488,31 @@ public abstract class GenericEntryList extends EntryListWidget<GenericEntryList.
                         this.tooltipX = mouseX;
                         this.tooltipY = mouseY;
                         this.tooltipLines = tooltipLines;
-                    } else {
-                        this.pendingTooltip = null;
-                        this.tooltipLines = null;
                     }
-                } else {
+                }
+                // Input field tooltip (if inputWidget is a TextFieldWidget)
+                if (!outputTooltip && inputWidget instanceof TextFieldWidget field) {
+                    String inputText = field.getText();
+                    if (inputText.length() > 31) {
+                        int mouseFieldX = field.getX();
+                        int mouseFieldY = field.getY();
+                        int fieldWidth = field.getWidth();
+                        int fieldHeight = field.getHeight();
+                        if (mouseX >= mouseFieldX && mouseX < mouseFieldX + fieldWidth &&
+                            mouseY >= mouseFieldY && mouseY < mouseFieldY + fieldHeight) {
+                            List<Text> tooltipLines = new java.util.ArrayList<>();
+                            for (int i = 0; i < inputText.length(); i += 64) {
+                                tooltipLines.add(Text.literal(inputText.substring(i, Math.min(i + 64, inputText.length()))));
+                            }
+                            this.pendingTooltip = inputText;
+                            this.tooltipX = mouseX;
+                            this.tooltipY = mouseY;
+                            this.tooltipLines = tooltipLines;
+                            return;
+                        }
+                    }
+                }
+                if (!outputTooltip) {
                     this.pendingTooltip = null;
                     this.tooltipLines = null;
                 }
@@ -427,5 +530,9 @@ public abstract class GenericEntryList extends EntryListWidget<GenericEntryList.
         field.setMaxLength(256);
         field.setDrawsBackground(false);
         return field;
+    }
+
+    public ButtonWidget createExtraButton(GenericEntry entry) {
+        return null;
     }
 }

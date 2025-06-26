@@ -3,7 +3,7 @@
 This mod was created for my personal needs, more features may or may not be added.
 Note: 1.21.5+ support with the Fabric version, use Forge for 1.8.9
 
-## **Version 2.0.0, Features:**
+## **Version 2.0.1, Features:**
 
 ### Visual
 - Custom Redstone particle color; mainly to enhance Jawbus laser and Flay ability
@@ -20,3 +20,5 @@ Note: 1.21.5+ support with the Fabric version, use Forge for 1.8.9
 - Mute Phantoms
 - Send and render player coordinates
 - Moonglade Beacon timer and hud display
+- Copy Chat
+- Customizable chat-event based alarms

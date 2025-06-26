@@ -27,7 +27,6 @@ public class FishyKeys {
             int lockKeyCode = KeyUtil.getKeyCodeFromString(FishyConfig.getLockKey());
             boolean isLockKeyPressed = InputUtil.isKeyPressed(MinecraftClient.getInstance().getWindow().getHandle(), lockKeyCode);
 
-            // --- Lock/Bind logic: allow lockKey in GUIs ---
             if (client.currentScreen instanceof HandledScreen<?> screen) {
                 Slot hovered = ((HandledScreenAccessor) screen).getFocusedSlot();
 
@@ -45,18 +44,22 @@ public class FishyKeys {
                     if (hovered != null) {
                         if (hovered == bindStart) {
                             int slotId = SlotProtectionManager.remap(screen, hovered.id);
-                            if (SlotProtectionManager.isSlotLocked(slotId)) {
-                                SlotProtectionManager.unlockSlot(slotId);
-                            } else if (SlotProtectionManager.isSlotBound(slotId)) {
-                                int other = SlotProtectionManager.getBoundSlot(slotId);
-                                SlotProtectionManager.unbindSlots(slotId, other);
-                            } else {
-                                SlotProtectionManager.lockSlot(slotId);
+                            if (slotId >= 5 && slotId < 45) {
+                                if (SlotProtectionManager.isSlotLocked(slotId)) {
+                                    SlotProtectionManager.unlockSlot(slotId);
+                                } else if (SlotProtectionManager.isSlotBound(slotId)) {
+                                    int other = SlotProtectionManager.getBoundSlot(slotId);
+                                    SlotProtectionManager.unbindSlots(slotId, other);
+                                } else {
+                                    SlotProtectionManager.lockSlot(slotId);
+                                }
                             }
                         } else {
                             int startId = SlotProtectionManager.remap(screen, bindStart.id);
-                            int endtId = SlotProtectionManager.remap(screen, hovered.id);
-                            SlotProtectionManager.bindSlots(startId, endtId);
+                            int endId = SlotProtectionManager.remap(screen, hovered.id);
+                            if (startId >= 5 && startId < 45 && endId >= 5 && endId < 45) {
+                                SlotProtectionManager.bindSlots(startId, endId);
+                            }
                         }
                     }
                     dragging = false;

@@ -34,6 +34,8 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
 
@@ -86,7 +88,9 @@ public class FishyAddons implements ClientModInitializer {
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             while (mainKey.wasPressed()) {
-                FishyToast.show("§b§lMoonglade Beacon Alarm", "Cooldown has been reset!");
+                MinecraftClient.getInstance().setScreen(
+                    new me.valkeea.fishyaddons.gui.FishyAddonsScreen()
+                );
             }
         });
     }

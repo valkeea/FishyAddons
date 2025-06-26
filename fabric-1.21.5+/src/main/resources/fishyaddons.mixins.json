@@ -4,10 +4,13 @@
 	"compatibilityLevel": "JAVA_21",
 	"mixins": [
 		"HandledScreenAccessor",
+		"ChatScreenAccessor",
+		"ChatHudAccessor",
 		"PlayerInventoryAccessor",
 		"MixinBackgroundRenderer",
 		"MixinClientPlayerEntity",
 		"MixinClientPlayNetworkHandler",
+		"MixinChatScreen",
 		"MixinHandledScreenKey",
 		"MixinHandledScreenMouse",
 		"MixinHandledScreenMouseRelease",

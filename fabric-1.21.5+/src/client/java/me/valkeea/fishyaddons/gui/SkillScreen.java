@@ -1,8 +1,8 @@
 package me.valkeea.fishyaddons.gui;
 
 import me.valkeea.fishyaddons.config.FishyConfig;
+import me.valkeea.fishyaddons.handler.SkyblockCleaner;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.TextFieldWidget;
@@ -27,42 +27,70 @@ public class SkillScreen extends Screen {
 
         int by = centerY - 80;
 
-        galateaTextField = new TextFieldWidget(this.textRenderer, centerX - 100, by, BTNW, BTNH, Text.literal("Galatea Minigame"));
-        galateaTextField.setText("Galatea Minigame");
+        galateaTextField = new TextFieldWidget(this.textRenderer, centerX, by, BTNW, BTNH, Text.literal("Moonglade Beacon"));
+        galateaTextField.setText("Moonglade Beacon");
         galateaTextField.setEditable(true);
         galateaTextField.setMaxLength(64);
         galateaTextField.setEditableColor(0xFFFFFF);
         galateaTextField.setUneditableColor(0xAAAAAA);
         galateaTextField.setDrawsBackground(false);
         this.addDrawableChild(galateaTextField);
-        galateaRect = new Rect2i(centerX, by, BTNW, BTNH);
+        galateaRect = new Rect2i(centerX - 100, by, BTNW, BTNH);      
 
         by += 30;
-        addDrawableChild(ButtonWidget.builder(getAlarmText(), btn -> {
-            FishyConfig.toggle("beaconAlarm", false);
-            btn.setMessage(getAlarmText());
-            this.setFocused(null);
-        }).dimensions(centerX - 100, by, BTNW / 2, BTNH).build());
-        
-        addDrawableChild(ButtonWidget.builder(getTimerText(), btn -> {
-            FishyConfig.toggle("timerHud", false);
-            btn.setMessage(getTimerText());
-            this.setFocused(null);
-        }).dimensions(centerX, by, BTNW / 2, BTNH).build());
 
-        addDrawableChild(ButtonWidget.builder(Text.literal("Edit HUD")
-        .setStyle(Style.EMPTY.withColor(0xFF808080)), btn ->
-            MinecraftClient.getInstance().setScreen(new HudEditScreen())
-        ).dimensions(centerX + 100, by, 60, BTNH).build());
+        this.addDrawableChild(new FaButton(
+            centerX - 100, by, BTNW / 2, BTNH,
+            getAlarmText(),
+            btn -> {
+                FishyConfig.toggle("beaconAlarm", false);
+                btn.setMessage(getAlarmText());
+                this.setFocused(null);
+            }
+        ));
+
+        this.addDrawableChild(new FaButton(
+            centerX, by, BTNW / 2, BTNH,
+            getTimerText(),
+            btn -> {
+                FishyConfig.toggle("timerHud", false);
+                btn.setMessage(getTimerText());
+                this.setFocused(null);
+            }
+        ));
+
+        this.addDrawableChild(new FaButton(
+            centerX + 100, by, 60, BTNH,
+            Text.literal("Edit HUD").setStyle(Style.EMPTY.withColor(0xFF808080)),
+            btn -> MinecraftClient.getInstance().setScreen(new HudEditScreen())
+        ));
+
+        by += 30;
+
+        this.addDrawableChild(new FaButton(
+            centerX - 100, by, BTNW, BTNH,
+            getPhantomText(),
+            btn -> {
+                FishyConfig.toggle("mutePhantom", false);
+                btn.setMessage(getPhantomText());
+                SkyblockCleaner.refresh();
+                btn.setFocused(false);
+            }
+        ));
+
         by += 60;
 
-        addDrawableChild(ButtonWidget.builder(Text.literal("Back"), btn -> 
-            MinecraftClient.getInstance().setScreen(new FishyAddonsScreen())
-        ).dimensions(centerX - 100, by, 80, BTNH).build());
+        this.addDrawableChild(new FaButton(
+            centerX - 100, by, 80, BTNH,
+            Text.literal("Back"),
+            btn -> MinecraftClient.getInstance().setScreen(new FishyAddonsScreen())
+        ));
 
-        addDrawableChild(ButtonWidget.builder(Text.literal("Close"), btn -> 
-            MinecraftClient.getInstance().setScreen(null)
-        ).dimensions(centerX + 20, by, 80, BTNH).build());
+        this.addDrawableChild(new FaButton(
+            centerX + 20, by, 80, BTNH,
+            Text.literal("Close"),
+            btn -> MinecraftClient.getInstance().setScreen(null)
+        ));
     }
 
     private Text getAlarmText() {
@@ -73,18 +101,21 @@ public class SkillScreen extends Screen {
         return GuiUtil.onOffLabel("HUD Timer", FishyConfig.getState("timerHud", false));
     }
 
+    private Text getPhantomText() {
+        return GuiUtil.onOffLabel("Mute Phantoms", FishyConfig.getState("mutePhantom", false));
+    }    
+
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         this.renderBackground(context, mouseX, mouseY, delta);
 
-        // Draw semi-transparent black background for the text field
         if (galateaRect != null) {
             context.fill(
                 galateaRect.getX(),
                 galateaRect.getY(),
                 galateaRect.getX() + galateaRect.getWidth(),
                 galateaRect.getY() + galateaRect.getHeight(),
-                0x88000000 // 0x88 alpha for semi-transparent black
+                0x88000000
             );
         }
 

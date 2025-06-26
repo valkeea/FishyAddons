@@ -12,7 +12,9 @@ import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.text.Text;
 import net.minecraft.client.util.InputUtil;
 
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class SafeguardScreen extends Screen {
@@ -20,6 +22,8 @@ public class SafeguardScreen extends Screen {
     private static final int BTNW = 120;
     private static final int BBTNW = 200;
     private static final int BTNH = 20;
+
+    private int keyBtnX, keyBtnY, keyBtnW, keyBtnH; 
 
     public SafeguardScreen() {
         super(Text.literal("FA safeguard"));
@@ -33,78 +37,102 @@ public class SafeguardScreen extends Screen {
         int centerX = this.width / 2;
         int y = this.height / 3 - 30;
 
-        // Sell Protection toggle
-        addDrawableChild(ButtonWidget.builder(getToggleButtonText(), btn -> {
-            ItemConfig.setSellProtectionEnabled(!ItemConfig.isSellProtectionEnabled());
-            ItemConfig.saveConfigIfNeeded();
-            btn.setMessage(getToggleButtonText());
-        }).dimensions(centerX - 240, y, BTNW, BTNH).build());
+        addDrawableChild(new FaButton(
+            centerX - 240, y, BTNW, BTNH,
+            getToggleButtonText(),
+            btn -> {
+                ItemConfig.setSellProtectionEnabled(!ItemConfig.isSellProtectionEnabled());
+                ItemConfig.saveConfigIfNeeded();
+                btn.setMessage(getToggleButtonText());
+            }
+        ));
 
-        // Tooltip toggle
-        addDrawableChild(ButtonWidget.builder(getTooltipToggleText(), btn -> {
-            ItemConfig.setTooltipEnabled(!ItemConfig.isTooltipEnabled());
-            ItemConfig.saveConfigIfNeeded();
-            btn.setMessage(getTooltipToggleText());
-        }).dimensions(centerX - 120, y, BTNW, BTNH).build());
+        addDrawableChild(new FaButton(
+            centerX - 120, y, BTNW, BTNH,
+            getTooltipToggleText(),
+            btn -> {
+                ItemConfig.setTooltipEnabled(!ItemConfig.isTooltipEnabled());
+                ItemConfig.saveConfigIfNeeded();
+                btn.setMessage(getTooltipToggleText());
+            }
+        ));
 
-        // Sound toggle
-        addDrawableChild(ButtonWidget.builder(getSoundToggleText(), btn -> {
-            ItemConfig.setProtectTriggerEnabled(!ItemConfig.isProtectTriggerEnabled());
-            ItemConfig.saveConfigIfNeeded();
-            btn.setMessage(getSoundToggleText());
-        }).dimensions(centerX, y, BTNW, BTNH).build());
+        addDrawableChild(new FaButton(
+            centerX, y, BTNW, BTNH,
+            getSoundToggleText(),
+            btn -> {
+                ItemConfig.setProtectTriggerEnabled(!ItemConfig.isProtectTriggerEnabled());
+                ItemConfig.saveConfigIfNeeded();
+                btn.setMessage(getSoundToggleText());
+            }
+        ));
 
-        // Notification toggle
-        addDrawableChild(ButtonWidget.builder(getNotiToggleText(), btn -> {
-            ItemConfig.setProtectNotiEnabled(!ItemConfig.isProtectNotiEnabled());
-            ItemConfig.saveConfigIfNeeded();
-            btn.setMessage(getNotiToggleText());
-        }).dimensions(centerX + 120, y, BTNW, BTNH).build());
+        addDrawableChild(new FaButton(
+            centerX + 120, y, BTNW, BTNH,
+            getNotiToggleText(),
+            btn -> {
+                ItemConfig.setProtectNotiEnabled(!ItemConfig.isProtectNotiEnabled());
+                ItemConfig.saveConfigIfNeeded();
+                btn.setMessage(getNotiToggleText());
+            }
+        ));
 
-        // Blacklist entries
         int by = this.height / 3 + 30;
         for (GuiBlacklistEntry entry : BlacklistManager.getMergedBlacklist()) {
             String label = "blacklist." + entry.identifiers.get(0).toLowerCase().replace(" ", "_");
-            ButtonWidget blacklistButton = addDrawableChild(ButtonWidget.builder(Text.translatable(
-                label).styled(s -> s.withColor(entry.enabled ? 0xCCFFCC : 0xFF8080)), btn -> {
-                entry.enabled = !entry.enabled;
-                BlacklistManager.updateBlacklistEntry(entry.identifiers.get(0), entry.enabled);
-                this.setFocused(false);
-                btn.setMessage(
-                    Text.translatable(label).styled(s -> s.withColor(entry.enabled ? 0xCCFFCC : 0xFF8080))
-                );
-            }).dimensions(centerX - 100, by, 200, 20).build());
+            FaButton blacklistButton = new FaButton(
+                centerX - 100, by, 200, 20,
+                Text.translatable(label).styled(s -> s.withColor(entry.enabled ? 0xCCFFCC : 0xFF8080)),
+                btn -> {
+                    entry.enabled = !entry.enabled;
+                    BlacklistManager.updateBlacklistEntry(entry.identifiers.get(0), entry.enabled);
+                    this.setFocused(false);
+                    btn.setMessage(
+                        Text.translatable(label).styled(s -> s.withColor(entry.enabled ? 0xCCFFCC : 0xFF8080))
+                    );
+                }
+            );
+            addDrawableChild(blacklistButton);
             blacklistButtons.put(blacklistButton, entry);
             by += 24;
         }
 
-        // Lock/Bind Slot Keybind button
-        int keyButtonY = by + 10;
+        keyBtnX = centerX - 100;
+        keyBtnY = by + 10;
+        keyBtnW = BBTNW;
+        keyBtnH = BTNH;
+
         addDrawableChild(new ListeningWidget(
-            centerX - 100, keyButtonY, BBTNW, BTNH,
+            keyBtnX, keyBtnY, keyBtnW, keyBtnH,
             FishyConfig.getLockKey(),
             FishyConfig::setLockKey,
             keyName -> getLockKeyButtonText()
         ));
-
-        by += 30;
-        // Slotlocking Sound toggle
-        addDrawableChild(ButtonWidget.builder(getLockTriggerText(), btn -> {
-            ItemConfig.setLockTriggerEnabled(!ItemConfig.isLockTriggerEnabled());
-            ItemConfig.saveConfigIfNeeded();
-            this.setFocused(false);            
-            btn.setMessage(getLockTriggerText());
-        }).dimensions(centerX - 100, by, BBTNW, BTNH).build());
         by += 30;
 
-        // Back and Close buttons
-        addDrawableChild(ButtonWidget.builder(Text.literal("Back"), btn -> 
-            MinecraftClient.getInstance().setScreen(new FishyAddonsScreen())
-        ).dimensions(centerX - 100, by, 80, BTNH).build());
+        addDrawableChild(new FaButton(
+            centerX - 100, by, BBTNW, BTNH,
+            getLockTriggerText(),
+            btn -> {
+                ItemConfig.setLockTriggerEnabled(!ItemConfig.isLockTriggerEnabled());
+                ItemConfig.saveConfigIfNeeded();
+                this.setFocused(false);            
+                btn.setMessage(getLockTriggerText());
+            }
+        ));
+        by += 30;
 
-        addDrawableChild(ButtonWidget.builder(Text.literal("Close"), btn -> 
-            MinecraftClient.getInstance().setScreen(null)
-        ).dimensions(centerX + 20, by, 80, BTNH).build());
+        addDrawableChild(new FaButton(
+            centerX - 100, by, 80, BTNH,
+            Text.literal("Back"),
+            btn -> MinecraftClient.getInstance().setScreen(new FishyAddonsScreen())
+        ));
+
+        addDrawableChild(new FaButton(
+            centerX + 20, by, 80, BTNH,
+            Text.literal("Close"),
+            btn -> MinecraftClient.getInstance().setScreen(null)
+        ));
     }
 
     private Text getToggleButtonText() {
@@ -141,5 +169,15 @@ public class SafeguardScreen extends Screen {
         this.renderBackground(context, mouseX, mouseY, delta);
         context.drawCenteredTextWithShadow(this.textRenderer, "FA safeguard", this.width / 2, this.height / 3 - 60, 0xFF55FFFF);
         super.render(context, mouseX, mouseY, delta);
+
+        if (mouseX >= keyBtnX && mouseX <= keyBtnX + keyBtnW && mouseY >= keyBtnY && mouseY <= keyBtnY + keyBtnH) {
+            List<Text> tooltipLines = Arrays.asList(
+                Text.literal("Slotlocking/Binding:"),
+                Text.literal("- §8Press the key to lock slots,"),
+                Text.literal("  §8drag while the key is pressed to bind slots"),
+                Text.literal("- §8left click to unbind")
+            );
+            GuiUtil.fishyTooltip(context, this.textRenderer, tooltipLines, mouseX, mouseY);
+        }
     }
 }

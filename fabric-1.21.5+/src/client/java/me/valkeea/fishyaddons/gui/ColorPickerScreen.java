@@ -1,12 +1,12 @@
 package me.valkeea.fishyaddons.gui;
 
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.gui.widget.SliderWidget;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.text.Text;
-
 import java.util.function.Consumer;
+
+import net.minecraft.client.font.TextRenderer;
+import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.text.Style;
+import net.minecraft.text.Text;
 
 public class ColorPickerScreen extends Screen {
 
@@ -16,6 +16,7 @@ public class ColorPickerScreen extends Screen {
 
     private Consumer<float[]> onColorSelected;
     private Screen parent;
+    private FaTextField hexField;
 
     public ColorPickerScreen(Screen parent, float[] initialColor, Consumer<float[]> onColorSelected) {
         super(Text.literal("Color Picker"));
@@ -36,20 +37,59 @@ public class ColorPickerScreen extends Screen {
         int x = (this.width - sliderWidth) / 2;
         int y = this.height / 4;
 
+        Runnable updateHexField = () -> {
+            if (hexField != null) {
+                hexField.setText(String.format("#%02X%02X%02X", (int)(red * 255), (int)(green * 255), (int)(blue * 255)));
+            }
+        };
+
         // RGB sliders
-        this.addDrawableChild(new Slider(x, y, sliderWidth, sliderHeight, "Red", red, value -> red = value));
-        this.addDrawableChild(new Slider(x, y + 25, sliderWidth, sliderHeight, "Green", green, value -> green = value));
-        this.addDrawableChild(new Slider(x, y + 50, sliderWidth, sliderHeight, "Blue", blue, value -> blue = value));
+        this.addDrawableChild(new Slider(x, y, sliderWidth, sliderHeight, "Red", red, value -> {
+            red = value;
+            updateHexField.run();
+        }));
+        this.addDrawableChild(new Slider(x, y + 25, sliderWidth, sliderHeight, "Green", green, value -> {
+            green = value;
+            updateHexField.run();
+        }));
+        this.addDrawableChild(new Slider(x, y + 50, sliderWidth, sliderHeight, "Blue", blue, value -> {
+            blue = value;
+            updateHexField.run();
+        }));
 
-        // Confirm / Cancel
-        this.addDrawableChild(ButtonWidget.builder(Text.literal("Confirm"), btn -> {
-            onColorSelected.accept(new float[]{red, green, blue});
-            this.client.setScreen(parent);
-        }).dimensions(x, y + 90, 70, 20).build());
+        TextRenderer tr = this.textRenderer;
+        hexField = new FaTextField(tr, x, y + 75, sliderWidth, 20, Text.literal("Hex (e.g. #FF00FF)"));
+        hexField.setMaxLength(9);
+        hexField.setText(String.format("#%02X%02X%02X", (int)(red * 255), (int)(green * 255), (int)(blue * 255)));
+        this.addDrawableChild(hexField);
 
-        this.addDrawableChild(ButtonWidget.builder(Text.literal("Cancel"), btn -> 
-            this.client.setScreen(parent)
-        ).dimensions(x + 80, y + 90, 70, 20).build());
+        this.addDrawableChild(new FaButton(
+            x, y + 110, 70, 20,
+            Text.literal("Cancel").setStyle(Style.EMPTY.withColor(0xFF8080)),
+            btn -> {
+                this.client.setScreen(parent);
+            }
+        ));
+        
+        this.addDrawableChild(new FaButton(
+            x + 80, y + 110, 70, 20,
+            Text.literal("Confirm").setStyle(Style.EMPTY.withColor(0xCCFFCC)),
+            btn -> {
+                // If hex field is not empty, parse and use it
+                String hex = hexField.getText().trim();
+                float[] rgb = new float[]{red, green, blue};
+                if (hex.matches("^#?[0-9a-fA-F]{6}$")) {
+                    try {
+                        int color = Integer.parseInt(hex.replace("#", ""), 16);
+                        rgb[0] = ((color >> 16) & 0xFF) / 255f;
+                        rgb[1] = ((color >> 8) & 0xFF) / 255f;
+                        rgb[2] = (color & 0xFF) / 255f;
+                    } catch (Exception ignored) {}
+                }
+                onColorSelected.accept(rgb);
+                this.client.setScreen(parent);
+            }
+        ));
     }
 
     @Override
@@ -57,7 +97,6 @@ public class ColorPickerScreen extends Screen {
         this.renderBackground(context, mouseX, mouseY, delta);
         super.render(context, mouseX, mouseY, delta);
 
-        // Draw current color preview
         int previewSize = 40;
         int px = (this.width - previewSize) / 2;
         int py = this.height / 2 + 40;
@@ -66,7 +105,7 @@ public class ColorPickerScreen extends Screen {
         context.drawBorder(px, py, previewSize, previewSize, 0xFFFFFFFF);
     }
 
-    private static class Slider extends SliderWidget {
+    private static class Slider extends ThemedSlider {
         private final String labelBase;
         private final java.util.function.Consumer<Float> onChanged;
 

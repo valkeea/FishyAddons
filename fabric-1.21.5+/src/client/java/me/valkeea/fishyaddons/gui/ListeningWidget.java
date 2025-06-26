@@ -1,12 +1,12 @@
 package me.valkeea.fishyaddons.gui;
 
-import me.valkeea.fishyaddons.util.KeyUtil;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.text.Text;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-public class ListeningWidget extends ButtonWidget {
+import me.valkeea.fishyaddons.util.KeyUtil;
+import net.minecraft.text.Text;
+
+public class ListeningWidget extends FaButton {
     private boolean listening = false;
     private final Consumer<String> onKeySet;
     private String keyName;
@@ -17,13 +17,13 @@ public class ListeningWidget extends ButtonWidget {
             ListeningWidget widget = (ListeningWidget) btn;
             widget.listening = true;
             widget.setMessage(Text.literal("Press any key...").styled(s -> s.withColor(0xFFFFFF80)));
-        }, DEFAULT_NARRATION_SUPPLIER);
+        });
         this.keyName = initialKey;
         this.onKeySet = onKeySet;
         this.labelProvider = labelProvider;
         this.setMessage(labelProvider.apply(keyName));
     }
-
+    
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
         if (listening) {
@@ -39,5 +39,17 @@ public class ListeningWidget extends ButtonWidget {
             return true;
         }
         return super.keyPressed(keyCode, scanCode, modifiers);
+    }
+
+    @Override
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        if (listening && button == 0 && this.isMouseOver(mouseX, mouseY)) {
+            keyName = "NONE";
+            onKeySet.accept(keyName);
+            this.setMessage(labelProvider.apply(keyName));
+            listening = false;
+            return true;
+        }
+        return super.mouseClicked(mouseX, mouseY, button);
     }
 }

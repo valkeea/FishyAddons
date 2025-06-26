@@ -1,17 +1,18 @@
 package me.valkeea.fishyaddons.listener;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import me.valkeea.fishyaddons.config.FishyConfig;
+import me.valkeea.fishyaddons.handler.ChatAlert;
 import me.valkeea.fishyaddons.handler.ChatTimers;
+import me.valkeea.fishyaddons.render.BeaconRenderer;
 import me.valkeea.fishyaddons.util.AreaUtils;
 import me.valkeea.fishyaddons.util.HelpUtil;
 import me.valkeea.fishyaddons.util.SkyblockCheck;
-import me.valkeea.fishyaddons.render.BeaconRenderer;
-import net.minecraft.util.math.BlockPos;
-
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
-
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
 
 public class ClientChat {
     private static final ClientChat INSTANCE = new ClientChat();
@@ -32,6 +33,7 @@ public class ClientChat {
         ClientReceiveMessageEvents.GAME.register((message, overlay) -> {
             String text = message.getString();
             INSTANCE.onClientChat(text);
+            ChatAlert.handleMatch(text);
 
             Pattern coordPattern = Pattern.compile(
                 "\\bx\\s*:\\s*(-?\\d{1,7})\\s*,\\s*y\\s*:\\s*(-?\\d{1,7})\\s*,\\s*z\\s*:\\s*(-?\\d{1,7})\\b",
@@ -50,14 +52,14 @@ public class ClientChat {
                     label = text.substring(matcher.end()).trim();
                 }
 
-                if (!newPos.equals(BeaconRenderer.getActualPos(newPos)) && FishyConfig.getState("renderCoords", false)) {
-                    BeaconRenderer.setBeacon(BeaconRenderer.getActualPos(newPos), FishyConfig.getHudColor("renderCoordsColor", 0xFF00FFFF), label.isEmpty() ? null : label);
+                if (!newPos.equals(BeaconRenderer.getActualPos(new Vec3d(newPos))) && 
+                    FishyConfig.getState("renderCoords", false)) {
+                    BeaconRenderer.setBeacon(BeaconRenderer.getActualPos(new Vec3d(newPos)),
+                    FishyConfig.getInt("renderCoordsColor"), label.isEmpty() ? null : label);
                 }
             }
         });
     }
-
-
 
     public void onClientChat(String message) {
         Pattern pattern = Pattern.compile("entered (MM )?The Catacombs");

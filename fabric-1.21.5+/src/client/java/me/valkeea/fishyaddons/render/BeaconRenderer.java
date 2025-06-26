@@ -1,21 +1,22 @@
 package me.valkeea.fishyaddons.render;
 
-import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
-import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.render.VertexConsumer;
-import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.font.TextRenderer;
-import org.joml.Matrix4f;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.util.math.*;
-import org.jetbrains.annotations.Nullable;
-import net.minecraft.client.render.block.entity.BeaconBlockEntityRenderer;
-import net.minecraft.util.Identifier;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import org.jetbrains.annotations.Nullable;
+import org.joml.Matrix4f;
+
+import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
+import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.font.TextRenderer;
+import net.minecraft.client.render.RenderLayer;
+import net.minecraft.client.render.VertexConsumer;
+import net.minecraft.client.render.block.entity.BeaconBlockEntityRenderer;
+import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Box;
+import net.minecraft.util.math.Vec3d;
 
 public class BeaconRenderer {
     private static class BeaconData {
@@ -38,15 +39,13 @@ public class BeaconRenderer {
         beacons.add(new BeaconData(pos, colorARGB, displayLabel));
     }
 
-    public static void setBeaconUnderPlayer(int colorARGB, @Nullable String label) {
-        MinecraftClient client = MinecraftClient.getInstance();
-        if (client.player == null) return;
-        BlockPos pos = BlockPos.ofFloored(client.player.getX(), client.player.getY() - 1, client.player.getZ());
-        setBeacon(pos, colorARGB, label);
-    }
-
-    public static BlockPos getActualPos(BlockPos pos) {
-        return new BlockPos(pos.getX(), pos.getY() - 1, pos.getZ());
+    // subtract 1 if negative, do nothing if positive
+    public static BlockPos getActualPos(Vec3d pos) {
+        return new BlockPos(
+            (int) (pos.x < 0 ? Math.floor(pos.x) - 1 : Math.floor(pos.x)),
+            (int) (Math.floor(pos.y) - 1),
+            (int) (pos.z < 0 ? Math.floor(pos.z) - 1 : Math.floor(pos.z))
+        );
     }
 
     public static void init() {
@@ -84,10 +83,10 @@ public class BeaconRenderer {
 
         // Draw block outline at (x, y, z)
         VertexConsumer consumer = context.consumers().getBuffer(RenderLayer.getLines());
-        drawBoxOutline(matrices, new Box(getActualPos(beacon.pos)), consumer, r, g, b, a);
+        drawBoxOutline(matrices, new Box(beacon.pos), consumer, r, g, b, a);
 
         matrices.push();
-        matrices.translate(x + 1, y, z + 0.5);
+        matrices.translate(x, y, z);
         BeaconBlockEntityRenderer.renderBeam(
             matrices,
             context.consumers(),
@@ -126,7 +125,6 @@ public class BeaconRenderer {
                 0xF000F0
             );
             matrices.pop();
-    
 
         matrices.pop();
     }

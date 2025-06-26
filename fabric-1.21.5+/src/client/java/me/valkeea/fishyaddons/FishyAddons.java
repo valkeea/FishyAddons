@@ -86,7 +86,7 @@ public class FishyAddons implements ClientModInitializer {
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             while (mainKey.wasPressed()) {
-                FishyToast.show("FishyAddons", "Press F3 + H to see the version");
+                FishyToast.show("§b§lMoonglade Beacon Alarm", "Cooldown has been reset!");
             }
         });
     }

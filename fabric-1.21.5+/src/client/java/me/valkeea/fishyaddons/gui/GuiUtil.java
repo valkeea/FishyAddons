@@ -3,6 +3,7 @@ package me.valkeea.fishyaddons.gui;
 import net.minecraft.text.Text;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.font.TextRenderer;
+import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.text.Style;
 import java.util.List;
 
@@ -33,13 +34,19 @@ public class GuiUtil {
             }
         }
 
+        MatrixStack matrices = context.getMatrices();
+        matrices.push();
+        matrices.translate(0, 0, 400);
+
         int height = lines.size() * 10 + 5;
 
         context.fill(tooltipX - 3, tooltipY - 3, tooltipX + width + 3, tooltipY + height + 3, 0x90000000);
+        context.fill(tooltipX - 2, tooltipY - 2, tooltipX + width + 1, tooltipY + height + 1, 0xB0000000);
 
         for (int i = 0; i < lines.size(); i++) {
             context.drawTextWithShadow(textRenderer, lines.get(i), tooltipX, tooltipY + i * 10, 0xFFE2CAE9);
         }
+        matrices.pop();
     }
 
     public static Text onOffLabel(String label, boolean enabled) {
@@ -49,6 +56,7 @@ public class GuiUtil {
                 .append(Text.literal(state).setStyle(Style.EMPTY.withColor(color)));
     } 
 
+    // Replaced by texture overlays but may be added back later
     public static void lockedOverlay(DrawContext context, int x, int y) {
         int outerColor = 0x80E2CAE9;
         int innerColor = 0xC0E2CAE9;

@@ -24,17 +24,20 @@ public class FishyPopup {
 
     public void init(int screenWidth, int screenHeight) {
         width = 220;
-        height = 80;
+        height = 110;
         x = (screenWidth - width) / 2;
         y = (screenHeight - height) / 2;
         continueButton = ButtonWidget.builder(continueButtonText, b -> onContinue.run())
-            .dimensions(x + 15, y + 40, 90, 20).build();
+            .dimensions(x + 15, y + 70, 90, 20).build();
         discardButton = ButtonWidget.builder(discardButtonText, b -> onDiscard.run())
-            .dimensions(x + 115, y + 40, 90, 20).build();
+            .dimensions(x + 115, y + 70, 90, 20).build();
     }
 
     public void render(DrawContext context, net.minecraft.client.font.TextRenderer textRenderer, int mouseX, int mouseY, float delta) {
-        int color = 0xFFE2CAE9; // Border color (light purple/pink)
+        int color = 0xFFE2CAE9;
+
+        context.getMatrices().push();
+        context.getMatrices().translate(0, 0, 500);
         // Draw a semi-transparent background
         context.fill(x, y, x + width, y + height, 0xAA000000);
         context.fill(x - 1, y - 1, x + width + 1, y, color);
@@ -49,10 +52,15 @@ public class FishyPopup {
         );
         continueButton.render(context, mouseX, mouseY, delta);
         discardButton.render(context, mouseX, mouseY, delta);
+        context.getMatrices().pop();
     }
 
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         return continueButton.mouseClicked(mouseX, mouseY, button) ||
                discardButton.mouseClicked(mouseX, mouseY, button);
     }
+
+    public int getX() { return x; }
+    public int getY() { return y; }
+    public int getWidth() { return width; }
 }

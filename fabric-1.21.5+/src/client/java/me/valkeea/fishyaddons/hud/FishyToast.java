@@ -1,18 +1,18 @@
 package me.valkeea.fishyaddons.hud;
 
+import me.valkeea.fishyaddons.tool.FishyMode;
 import net.fabricmc.fabric.api.client.rendering.v1.HudLayerRegistrationCallback;
 import net.fabricmc.fabric.api.client.rendering.v1.IdentifiedLayer;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.toast.Toast;
 import net.minecraft.client.toast.ToastManager;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
-import net.minecraft.client.render.RenderLayer;
 
 public class FishyToast implements Toast {
-    private static final Identifier TEXTURE = Identifier.of("fishyaddons", "gui/fatoast");
     private long startTime = -1;
     private final String title;
     private final String message;
@@ -24,16 +24,12 @@ public class FishyToast implements Toast {
     }
 
     @Override
-    public void draw(DrawContext context, TextRenderer textRenderer, long startTime) {
-        context.drawTexture(RenderLayer::getGuiTextured, TEXTURE, 160, 32, 0, 0, getWidth(), getHeight(), 160, 32);
-        context.drawText(textRenderer, Text.literal(title), 30, 7, 0xFFFFFF, true);
-        context.drawText(textRenderer, Text.literal(message), 30, 20, 0xAAAAAA, false);
-    }
+    public void draw(DrawContext context, TextRenderer textRenderer, long startTime) {}
 
     @Override
     public Visibility getVisibility() {
         if (startTime < 0) return Toast.Visibility.SHOW;
-        return (System.currentTimeMillis() - startTime) >= 3000L ? Toast.Visibility.HIDE : Toast.Visibility.SHOW;
+        return (System.currentTimeMillis() - startTime) >= 4000L ? Toast.Visibility.HIDE : Toast.Visibility.SHOW;
     }
 
     @Override
@@ -54,17 +50,23 @@ public class FishyToast implements Toast {
                 (context, tickCounter) -> {
                     if (currentToast != null) {
                         long elapsed = System.currentTimeMillis() - currentToast.startTime;
-                        if (elapsed < 3000L) {
+                        if (elapsed < 4000L) {
                             MinecraftClient mc = MinecraftClient.getInstance();
                             int screenWidth = mc.getWindow().getScaledWidth();
                             int toastWidth = 160;
                             int toastHeight = 32;
                             int x = (screenWidth - toastWidth) / 2;
                             int y = 20;
-                            context.fill(x, y, x + toastWidth, y + toastHeight, 0x80000000);
+                            context.drawTexture(
+                                RenderLayer::getGuiTextured,
+                                Identifier.of("fishyaddons", "textures/gui/" + FishyMode.getTheme() + "/fatoast.png"),
+                                x, y, 0, 0, toastWidth, toastHeight, 160, 32
+                            );
                             TextRenderer tr = mc.textRenderer;
-                            context.drawText(tr, Text.literal(currentToast.title), x + 16, y + 7, 0xFFFFFF, true);
-                            context.drawText(tr, Text.literal(currentToast.message), x + 16, y + 20, 0xAAAAAA, false);
+                            int titleWidth = tr.getWidth(currentToast.title);
+                            int msgWidth = tr.getWidth(currentToast.message);                           
+                            context.drawText(tr, Text.literal(currentToast.title), x + toastWidth / 2 - titleWidth / 2, y + 7, 0xFFFFFF, true);
+                            context.drawText(tr, Text.literal(currentToast.message), x + toastWidth / 2 - msgWidth / 2, y + 18, 0xAAAAAA, false);
                         } else {
                             currentToast = null;
                         }

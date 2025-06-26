@@ -27,7 +27,7 @@ public class SkillScreen extends Screen {
 
         int by = centerY - 80;
 
-        galateaTextField = new TextFieldWidget(this.textRenderer, centerX, by, BTNW, BTNH, Text.literal("Moonglade Beacon"));
+        galateaTextField = new TextFieldWidget(this.textRenderer, centerX - 50, by, BTNW, BTNH, Text.literal("Moonglade Beacon"));
         galateaTextField.setText("Moonglade Beacon");
         galateaTextField.setEditable(true);
         galateaTextField.setMaxLength(64);

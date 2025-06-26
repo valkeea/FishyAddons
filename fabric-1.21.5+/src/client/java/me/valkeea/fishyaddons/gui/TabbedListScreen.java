@@ -82,11 +82,11 @@ public class TabbedListScreen extends Screen {
         updateTabVisibility();
 
         // Bottom buttons
-        addDrawableChild(new FaButton(width / 2 - 200, height - 30, 80, 20,
+        addDrawableChild(new FaButton(width / 2 - 80, height - 30, 80, 20,
             Text.literal("Back").styled(style -> style.withColor(0xFFB0B0B0)),
             b -> this.client.setScreen(new QolScreen())
         ));
-        addDrawableChild(new FaButton(width / 2 - 120, height - 30, 80, 20,
+        addDrawableChild(new FaButton(width / 2, height - 30, 80, 20,
             Text.literal("Close").styled(style -> style.withColor(0xFFB0B0B0)),
             b -> this.client.setScreen(null)
         ));

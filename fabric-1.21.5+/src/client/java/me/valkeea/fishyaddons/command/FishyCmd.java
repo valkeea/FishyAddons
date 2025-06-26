@@ -112,13 +112,36 @@ public class FishyCmd {
                         );
                         return 1;
                     });
-        }    
+        }
+        
+        protected static LiteralArgumentBuilder<FabricClientCommandSource> registerAlert() {
+            return ClientCommandManager.literal("alert")
+                    .then(ClientCommandManager.literal("on")
+                        .executes(context -> {
+                            FishyConfig.getChatAlerts().keySet().forEach(key -> FishyConfig.toggleChatAlert(key, true));
+                            FishyNotis.send("Chat alerts " + Formatting.GREEN + "ON.");
+                            return 1;
+                        }))
+                    .then(ClientCommandManager.literal("off")
+                        .executes(context -> {
+                            FishyConfig.getChatAlerts().keySet().forEach(key -> FishyConfig.toggleChatAlert(key, false));
+                            FishyNotis.send("Chat alerts " + Formatting.RED + "OFF.");
+                            return 1;
+                        }))
+                    .executes(context -> {
+                        if (checkGUI() == 1) return 1;
+                        MinecraftClient.getInstance().execute(() ->
+                            GuiScheduler.scheduleGui(new TabbedListScreen(MinecraftClient.getInstance().currentScreen, TabbedListScreen.Tab.ALERT))
+                        );
+                        return 1;
+                    });
+        }
 
         protected static LiteralArgumentBuilder<FabricClientCommandSource> registerGuide() {
             return ClientCommandManager.literal("guide")
                 .executes(context -> {
                     if (checkGUI() == 1) return 1;
-                    FishyNotis.guideNoti();
+                    FishyNotis.guideNoti2();
                     return 1;
                 });
         }

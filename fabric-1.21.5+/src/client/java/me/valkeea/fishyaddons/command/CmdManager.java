@@ -25,6 +25,7 @@ public class CmdManager {
         dispatcher.register(ClientCommandManager.literal(root)
             .then(FishyCmd.registerCmd())
             .then(FishyCmd.registerChat())
+            .then(FishyCmd.registerAlert())
             .then(FishyCmd.registerKey())
             .then(FishyCmd.registerGuide())
             .then(FishyCmd.registerHelp())

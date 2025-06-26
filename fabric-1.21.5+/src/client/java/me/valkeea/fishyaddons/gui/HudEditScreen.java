@@ -1,11 +1,11 @@
 package me.valkeea.fishyaddons.gui;
 
-import me.valkeea.fishyaddons.hud.HudElement;
 import me.valkeea.fishyaddons.hud.ElementRegistry;
+import me.valkeea.fishyaddons.hud.HudElement;
+import me.valkeea.fishyaddons.hud.TitleDisplay;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.text.Text;
 
 public class HudEditScreen extends Screen {
@@ -19,32 +19,67 @@ public class HudEditScreen extends Screen {
 
     @Override
     protected void init() {
-        addDrawableChild(ButtonWidget.builder(Text.literal("Save"), btn -> {
-            for (HudElement element : ElementRegistry.getElements()) {
-                element.setEditingMode(false);
+        addDrawableChild(new FaButton(
+            this.width / 2 - 40, this.height - 40, 80, 20,
+            Text.literal("Save & Exit"),
+            btn -> {
+                for (HudElement element : ElementRegistry.getElements()) {
+                    element.setEditingMode(false);
+                }
+                MinecraftClient.getInstance().setScreen(null);
             }
-            MinecraftClient.getInstance().setScreen(null);
-        }).dimensions(this.width / 2 - 40, this.height - 40, 80, 20).build());
+        ));
 
-        addDrawableChild(ButtonWidget.builder(Text.literal("Color"), btn -> {
-            HudElement element = selectedElement;
-            if (element == null) {
-                var elements = ElementRegistry.getElements();
-                if (elements.isEmpty()) return;
-                element = elements.get(0);
-            }
-            final HudElement finalElement = element;
-            int color = finalElement.getHudColor();
-            float red = ((color >> 16) & 0xFF) / 255.0f;
-            float green = ((color >> 8) & 0xFF) / 255.0f;
-            float blue = (color & 0xFF) / 255.0f;
-            MinecraftClient.getInstance().setScreen(
-                new ColorPickerScreen(this, new float[]{red, green, blue}, rgb -> {
-                    int newColor = ((int)(rgb[0] * 255) << 16) | ((int)(rgb[1] * 255) << 8) | (int)(rgb[2] * 255);
-                    finalElement.setHudColor(newColor);
-                })
-            );
-        }).dimensions(this.width / 2 + 50, this.height - 40, 60, 20).build());
+        addDrawableChild(new FaButton(
+            this.width / 2 + 50, this.height - 40, 60, 20,
+            Text.literal("Color"),
+            btn -> {
+                HudElement element = selectedElement;
+                if (element == null) {
+                    var elements = ElementRegistry.getElements();
+                    if (elements.isEmpty()) return;
+                    element = elements.get(0);
+                }
+                if (element instanceof me.valkeea.fishyaddons.hud.TitleDisplay) {
+                    // Show popup: color is set per-alert, not here
+                    this.client.setScreen(new Screen(Text.literal("Alert Color")) {
+                        FishyPopup popup;
+                        @Override
+                        protected void init() {
+                            popup = new FishyPopup(
+                                Text.literal("Alert color is set in the alert editor!"),
+                                Text.literal("GO"), () -> this.client.setScreen(new TabbedListScreen(
+                                    client.currentScreen, TabbedListScreen.Tab.ALERT)),
+                                Text.literal("Back"), () -> this.client.setScreen(HudEditScreen.this)
+                            );
+                            popup.init(this.width, this.height);
+                        }
+                        @Override
+                        public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+                            this.renderBackground(context, mouseX, mouseY, delta);
+                            popup.render(context, this.textRenderer, mouseX, mouseY, delta);
+                            super.render(context, mouseX, mouseY, delta);
+                        }
+                        @Override
+                        public boolean mouseClicked(double mouseX, double mouseY, int button) {
+                            return popup.mouseClicked(mouseX, mouseY, button) || super.mouseClicked(mouseX, mouseY, button);
+                        }
+                    });
+                    return;
+                }
+                // Normal color picker for other HUD elements
+                final HudElement finalElement = element;
+                int color = finalElement.getHudColor();
+                float red = ((color >> 16) & 0xFF) / 255.0f;
+                float green = ((color >> 8) & 0xFF) / 255.0f;
+                float blue = (color & 0xFF) / 255.0f;
+                MinecraftClient.getInstance().setScreen(
+                    new ColorPickerScreen(this, new float[]{red, green, blue}, rgb -> {
+                        int newColor = ((int)(rgb[0] * 255) << 16) | ((int)(rgb[1] * 255) << 8) | (int)(rgb[2] * 255);
+                        finalElement.setHudColor(newColor);
+                    })
+                );
+            }));
     }
 
     @Override
@@ -53,7 +88,10 @@ public class HudEditScreen extends Screen {
             int hudX = element.getHudX();
             int hudY = element.getHudY();
             int size = element.getHudSize();
-            if (mouseX >= hudX && mouseX <= hudX + 80 && mouseY >= hudY && mouseY <= hudY + size + 4) {
+            float scale = size / 12.0F;
+            int width = (int)(80 * scale);
+            int height = (int)(size + 4);
+            if (mouseX >= hudX && mouseX <= hudX + width && mouseY >= hudY && mouseY <= hudY + height) {
                 dragging = element;
                 selectedElement = element;
                 dragOffsetX = (int)mouseX - hudX;
@@ -91,7 +129,28 @@ public class HudEditScreen extends Screen {
             int hudX = selectedElement.getHudX();
             int hudY = selectedElement.getHudY();
             int size = selectedElement.getHudSize();
-            GuiUtil.drawBox(context, hudX, hudY, 80, size + 4, 0x80000000);
+            float scale = size / 12.0F;
+            int width = (int)(80 * scale);
+            int height = (int)(size + 4);
+
+            if (selectedElement instanceof TitleDisplay) {
+                // Centered box for TitleDisplay
+                String titleText = MinecraftClient.getInstance().textRenderer == null ? "" : TitleDisplay.getTitle();
+                int textWidth = this.textRenderer.getWidth(titleText == null ? "" : titleText);
+                int scaledTextWidth = (int) (textWidth * scale);
+                int boxWidth = Math.max(80, scaledTextWidth + 8);
+                int scaledBoxWidth = (int) (boxWidth * scale);
+                GuiUtil.drawBox(
+                    context,
+                    hudX - scaledBoxWidth / 2 - 2,
+                    hudY - 2,
+                    scaledBoxWidth + 4,
+                    (int)(size + 4 * scale),
+                    0x80000000
+                );
+            } else {
+                GuiUtil.drawBox(context, hudX, hudY, width, height, 0x80000000);
+            }
         }
         super.render(context, mouseX, mouseY, delta);
     }
@@ -101,5 +160,20 @@ public class HudEditScreen extends Screen {
         for (HudElement element : ElementRegistry.getElements()) {
             element.setEditingMode(false);
         }
+    }
+
+    @Override
+    public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
+        double amount = verticalAmount; // Use vertical scroll for resizing
+        if (selectedElement != null) {
+            int currentSize = selectedElement.getHudSize();
+            int newSize = currentSize + (int) amount;
+
+            if (newSize < 8) newSize = 8;
+            if (newSize > 80) newSize = 80;
+            selectedElement.setHudSize(newSize);
+            return true;
+        }
+        return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
     }
 }

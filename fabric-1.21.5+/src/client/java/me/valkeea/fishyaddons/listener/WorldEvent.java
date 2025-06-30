@@ -1,7 +1,8 @@
 package me.valkeea.fishyaddons.listener;
 
-import me.valkeea.fishyaddons.util.SkyblockCheck;
+import me.valkeea.fishyaddons.handler.PetInfo;
 import me.valkeea.fishyaddons.util.AreaUtils;
+import me.valkeea.fishyaddons.util.SkyblockCheck;
 import me.valkeea.fishyaddons.util.ZoneUtils;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientWorldEvents;
@@ -40,6 +41,8 @@ public class WorldEvent {
     private void onWorldLoad() {
         updateRulesNextTick = true;
         scoreboardDelay = 180;
+        PetInfo.setTablistReady(false);
+        PetInfo.setWidget(true);
         if (pendingBypass) {
             checkBypass = true;
             pendingBypass = false;
@@ -66,8 +69,11 @@ public class WorldEvent {
             if (scoreboardDelay == 0) {
                 SkyblockCheck.getInstance().updateSkyblockCache();
                 ZoneUtils.update();
-                ClientConnected.triggerAction();
                 updateRulesNextTick = false;
+                scoreboardDelay = 60;
+            } else if (scoreboardDelay == 1) {
+                ClientConnected.triggerAction();
+                PetInfo.update();
             }
         }
     }

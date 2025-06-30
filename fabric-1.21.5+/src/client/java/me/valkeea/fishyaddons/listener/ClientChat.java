@@ -6,6 +6,7 @@ import java.util.regex.Pattern;
 import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.handler.ChatAlert;
 import me.valkeea.fishyaddons.handler.ChatTimers;
+import me.valkeea.fishyaddons.handler.PetInfo;
 import me.valkeea.fishyaddons.render.BeaconRenderer;
 import me.valkeea.fishyaddons.util.AreaUtils;
 import me.valkeea.fishyaddons.util.HelpUtil;
@@ -34,6 +35,7 @@ public class ClientChat {
             String text = message.getString();
             INSTANCE.onClientChat(text);
             ChatAlert.handleMatch(text);
+            PetInfo.handleChat(text);
 
             Pattern coordPattern = Pattern.compile(
                 "\\bx\\s*:\\s*(-?\\d{1,7})\\s*,\\s*y\\s*:\\s*(-?\\d{1,7})\\s*,\\s*z\\s*:\\s*(-?\\d{1,7})\\b",
@@ -45,8 +47,6 @@ public class ClientChat {
                 int y = Integer.parseInt(matcher.group(2));
                 int z = Integer.parseInt(matcher.group(3));
                 BlockPos newPos = new BlockPos(x, y, z);
-
-                // Try to extract a label (before or after the coords)
                 String label = HelpUtil.stripColor(text.substring(0, matcher.start()).trim());
                 if (label.isEmpty()) {
                     label = text.substring(matcher.end()).trim();

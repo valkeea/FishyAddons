@@ -14,8 +14,8 @@ import me.valkeea.fishyaddons.handler.ClientPing;
 import me.valkeea.fishyaddons.safeguard.ItemHandler;
 import me.valkeea.fishyaddons.tool.GuiScheduler;
 import me.valkeea.fishyaddons.util.FishyNotis;
-import me.valkeea.fishyaddons.util.TextFormatUtil;
 import me.valkeea.fishyaddons.util.PlayerPosition;
+import me.valkeea.fishyaddons.util.TextFormatUtil;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.MinecraftClient;
@@ -311,7 +311,10 @@ public class FishyCmd {
                         }))
                     .executes(context -> {
                         ClientPing.send();
-                        FishyNotis.send("Current ping: " + ClientPing.get() + " ms");
+                        FishyNotis.send(
+                            Text.literal(" » ").formatted(Formatting.DARK_AQUA)
+                                .append(Text.literal(ClientPing.get() + " ms").formatted(Formatting.WHITE))
+                        );
                         return 1;
                     });
         } 
@@ -343,6 +346,28 @@ public class FishyCmd {
         return ClientCommandManager.literal("coords")
                 .executes(context -> {
                     PlayerPosition.giveAwayCoords();
+                    return 1;
+                });
+    }
+
+    protected static LiteralArgumentBuilder<FabricClientCommandSource> registerQol() {
+        return ClientCommandManager.literal("qol")
+                .executes(context -> {
+                    if (checkGUI() == 1) return 1;
+                    MinecraftClient.getInstance().execute(() ->
+                        GuiScheduler.scheduleGui(new QolScreen())
+                    );
+                    return 1;
+                });
+    }
+
+    protected static LiteralArgumentBuilder<FabricClientCommandSource> registerVisual() {
+        return ClientCommandManager.literal("visual")
+                .executes(context -> {
+                    if (checkGUI() == 1) return 1;
+                    MinecraftClient.getInstance().execute(() ->
+                        GuiScheduler.scheduleGui(new VisualSettingsScreen())
+                    );
                     return 1;
                 });
     }

@@ -123,22 +123,8 @@ public class QolScreen extends Screen {
             btn -> MinecraftClient.getInstance().setScreen(new HudEditScreen())
         ));
 
-        f5BtnX = centerX - 100;
-        f5BtnY = centerY - 10;
-        f5BtnW = BTNW;  
-        f5BtnH = BTNH;
-
-        addDrawableChild(new FaButton(
-            f5BtnX, f5BtnY, f5BtnW, f5BtnH,
-            getSkipPerspectiveText(),
-            btn -> {
-                FishyConfig.toggle("skipPerspective", false);
-                btn.setMessage(getSkipPerspectiveText());
-            }
-        ));
-
         copyBtnX = centerX - 100;
-        copyBtnY = centerY + 20;
+        copyBtnY = centerY - 10;
         copyBtnW = BTNW;
         copyBtnH = BTNH;
 
@@ -150,7 +136,31 @@ public class QolScreen extends Screen {
                 btn.setMessage(getCopyText());
                 CopyChat.refresh();
             }
+        ));
+        
+        addDrawableChild(new FaButton(
+            copyBtnX + BTNW, copyBtnY, 60, BTNH,
+            getCopyNotiText(),
+            btn -> {
+                FishyConfig.toggle("ccNoti", true);
+                btn.setMessage(getCopyNotiText());
+                CopyChat.refresh();
+            }
         ));        
+
+        f5BtnX = centerX - 100;
+        f5BtnY = centerY + 20;
+        f5BtnW = BTNW;  
+        f5BtnH = BTNH;
+
+        addDrawableChild(new FaButton(
+            f5BtnX, f5BtnY, f5BtnW, f5BtnH,
+            getSkipPerspectiveText(),
+            btn -> {
+                FishyConfig.toggle("skipPerspective", false);
+                btn.setMessage(getSkipPerspectiveText());
+            }
+        ));
 
         hypBtnX = centerX - 100;
         hypBtnY = centerY + 50;
@@ -218,7 +228,11 @@ public class QolScreen extends Screen {
 
     private Text getCopyText() {
         return GuiUtil.onOffLabel("Copy Chat", FishyConfig.getState("copyChat", true));
-    }    
+    } 
+    
+    private Text getCopyNotiText() {
+        return GuiUtil.onOffLabel("Noti", FishyConfig.getState("ccNoti", true));
+    }
 
     private Text getDeathText() {
         return GuiUtil.onOffLabel("Skip Mob Death Animation", FishyConfig.getState("deathAni", false));

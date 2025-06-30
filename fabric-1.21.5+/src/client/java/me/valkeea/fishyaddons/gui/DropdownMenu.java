@@ -39,12 +39,14 @@ public class DropdownMenu {
         if (!visible) return false;
         for (int i = 0; i < entries.size(); i++) {
             int entryY = y + i * entryHeight;
-            if (mouseX >= x && mouseX <= x + width && mouseY >= entryY && mouseY <= entryY + entryHeight) {
+
+            if (mouseX >= x && mouseX < x + width && mouseY >= entryY && mouseY < entryY + entryHeight) {
                 onSelect.accept(entries.get(i));
                 visible = false;
                 return true;
             }
         }
+        visible = false;
         return false;
     }
 

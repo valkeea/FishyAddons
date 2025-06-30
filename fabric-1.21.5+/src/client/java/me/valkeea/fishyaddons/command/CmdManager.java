@@ -13,6 +13,8 @@ import net.minecraft.client.MinecraftClient;
 
 
 public class CmdManager {
+    private CmdManager() {}
+    
     public static void register() {
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
             registerFaCommand(dispatcher, "fa");
@@ -30,6 +32,8 @@ public class CmdManager {
             .then(FishyCmd.registerGuide())
             .then(FishyCmd.registerHelp())
             .then(FishyCmd.registerLava())
+            .then(FishyCmd.registerQol())
+            .then(FishyCmd.registerVisual())
             .then(FishyCmd.registerHud())
             .then(FishyCmd.registerPing())
             .then(FishyCmd.registerCam())

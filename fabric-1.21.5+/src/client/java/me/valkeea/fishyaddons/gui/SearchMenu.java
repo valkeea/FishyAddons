@@ -8,8 +8,8 @@ import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.text.Text;
 import net.minecraft.text.Style;
+import net.minecraft.text.Text;
 
 public class SearchMenu {
     private final List<SearchEntry> allEntries;
@@ -23,11 +23,13 @@ public class SearchMenu {
     private int scrollOffset = 0;
     private static final int MAX_VISIBLE_ENTRIES = 8;
 
-    public SearchMenu(List<SearchEntry> entries, int x, int y, int width, int entryHeight, Consumer<SearchEntry> onSelect, Screen screen) {
+    public SearchMenu(List<SearchEntry> entries, int x, int y, int width, int entryHeight,
+        Consumer<SearchEntry> onSelect, Screen screen) {
         this(entries, x, y, width, entryHeight, onSelect, screen, null);
     }
 
-    public SearchMenu(List<SearchEntry> entries, int x, int y, int width, int entryHeight, Consumer<SearchEntry> onSelect, Screen screen, TextFieldWidget externalField) {
+    public SearchMenu(List<SearchEntry> entries, int x, int y, int width, int entryHeight,
+        Consumer<SearchEntry> onSelect, Screen screen, TextFieldWidget externalField) {
         this.allEntries = entries;
         this.filteredEntries = entries;
         this.x = x;
@@ -40,6 +42,7 @@ public class SearchMenu {
             this.usesExternalField = true;
         } else {
             this.searchField = new FaTextField(screen.getTextRenderer(), x, y, width, 15, Text.literal("Search..."));
+            this.searchField.setEditableColor(0xFF808080);
             this.searchField.setChangedListener(this::updateFilter);
             this.usesExternalField = false;
         }
@@ -55,7 +58,6 @@ public class SearchMenu {
     public void render(DrawContext context, Screen screen, int mouseX, int mouseY, float delta) {
         if (!visible) return;
 
-        // set text to "Search" if unfocused and empty, remove text when focused
         if (!searchField.isFocused() && searchField.getText().isEmpty()) {
             searchField.setText(Text.literal("search...")
             .setStyle(Style.EMPTY.withItalic(true).withColor(0xFF808080)).getString());
@@ -78,18 +80,24 @@ public class SearchMenu {
         int totalEntries = filteredEntries.size();
         int visibleEntries = Math.min(totalEntries, MAX_VISIBLE_ENTRIES);
 
+        // Clamp scrollOffset to valid range
+        int maxOffset = Math.max(0, totalEntries - visibleEntries);
+        if (scrollOffset > maxOffset) scrollOffset = maxOffset;
+        if (scrollOffset < 0) scrollOffset = 0;
+
         // Calculate dynamic entry heights
         int[] entryHeights = new int[visibleEntries];
         int[][] lineCounts = new int[visibleEntries][2]; // [nameLines, descLines]
         for (int i = 0; i < visibleEntries; i++) {
             int entryIndex = i + scrollOffset;
+            if (entryIndex >= filteredEntries.size()) break;
             SearchEntry entry = filteredEntries.get(entryIndex);
             int descLines = 0;
             if (entry.description != null && !entry.description.isEmpty()) {
                 descLines = entry.description.split("\n").length;
             }
-            entryHeights[i] = 14 + descLines * 12 + 4; // 14px for name, 12px per desc line, 4px padding
-            lineCounts[i][0] = 1; // name is always 1 line
+            entryHeights[i] = 14 + descLines * 12 + 4;
+            lineCounts[i][0] = 1;
             lineCounts[i][1] = descLines;
         }
 
@@ -160,31 +168,40 @@ public class SearchMenu {
 
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (!visible) return false;
-        if (!searchField.isFocused()) return false;
 
-        boolean insideDropdown = false;
         int totalEntries = filteredEntries.size();
         int visibleEntries = Math.min(totalEntries, MAX_VISIBLE_ENTRIES);
-
-        int maxOffset = Math.max(0, totalEntries - visibleEntries);
-        if (scrollOffset > maxOffset) scrollOffset = maxOffset;
-        if (scrollOffset < 0) scrollOffset = 0;
-
+        int[] entryHeights = new int[visibleEntries];
+        int currentY = y;
         for (int i = 0; i < visibleEntries; i++) {
             int entryIndex = i + scrollOffset;
-            int entryY = y + i * entryHeight;
-            if (mouseX >= x && mouseX <= x + width && mouseY >= entryY && mouseY <= entryY + entryHeight) {
-                onSelect.accept(filteredEntries.get(entryIndex));
-                searchField.setFocused(false);
-                insideDropdown = true;
-                break;
+            if (entryIndex >= filteredEntries.size()) break;
+            SearchEntry entry = filteredEntries.get(entryIndex);
+            int descLines = 0;
+            if (entry.description != null && !entry.description.isEmpty()) {
+                descLines = entry.description.split("\n").length;
             }
+            entryHeights[i] = 14 + descLines * 12 + 4; // 14px for name, 12px per desc line, 4px padding
         }
 
-        if (!insideDropdown && !(mouseX >= x && mouseX <= x + width && mouseY >= searchField.getY() && mouseY <= searchField.getY() + searchField.getHeight())) {
+        int entryTop = y;
+        for (int i = 0; i < visibleEntries; i++) {
+            int entryIndex = i + scrollOffset;
+            int entryHeight = entryHeights[i];
+            int entryBottom = entryTop + entryHeight;
+            if (mouseX >= x && mouseX <= x + width && mouseY >= entryTop && mouseY <= entryBottom) {
+                onSelect.accept(filteredEntries.get(entryIndex));
+                searchField.setFocused(false);
+                return true;
+            }
+            entryTop = entryBottom;
+        }
+
+        if (!(mouseX >= x && mouseX <= x + width && mouseY >= searchField.getY() &&
+            mouseY <= searchField.getY() + searchField.getHeight())) {
             searchField.setFocused(false);
         }
-        return insideDropdown;
+        return false;
     }
 
     public boolean mouseScrolled(double mouseX, double mouseY, double amount) {

@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 public class FishyConfig {
+    private FishyConfig() {} // Prevent instantiation
     private static final File CONFIG_FILE;
     private static final File BACKUP_DIR;
     private static final File BACKUP_FILE;
@@ -188,7 +189,14 @@ public class FishyConfig {
     public static final String HUD_TITLE_X = "titleHudX";
     public static final String HUD_TITLE_Y = "titleHudY";
     public static final String HUD_TITLE_SIZE = "titleHudSize";
+    public static final String HUD_PET_X = "petHudX";
+    public static final String HUD_PET_Y = "petHudY";
+    public static final String HUD_PET_SIZE = "petHudSize";
+    public static final String HUD_PET_COLOR = "petHudColor";
     public static final String RENDER_COORD_COLOR = "renderCoordsColor";
+    public static final String XP_COLOR = "xpColor";
+    public static final String HD_FONT = "hdFont";
+    public static final String FISHY_GUI = "fishyGui";
     private static final String CUSTOM_PARTICLE_COLOR_INDEX = "customParticleColorIndex";
     private static final String CUSTOM_PARTICLE_MODE = "customParticleMode";
     private static final String SKIP_F5 = "skipPerspective";
@@ -197,17 +205,19 @@ public class FishyConfig {
     private static final String RENDER_COORDS = "renderCoords";
     private static final String BEACON_ALARM = "beaconAlarm";
     private static final String COPY_CHAT = "copyChat";
-    private static final String THEME_MODE = "themeMode";
+    private static final String COPY_NOTI = "ccNoti";
 
     // Generalized HUD position getters/setters
     public static int getHudX(String hudKey, int defaultX) {
         Object value = hud.getValues().getOrDefault(hudKey + "X", defaultX);
         return value instanceof Number n ? n.intValue() : defaultX;
     }
+
     public static int getHudY(String hudKey, int defaultY) {
         Object value = hud.getValues().getOrDefault(hudKey + "Y", defaultY);
         return value instanceof Number n ? n.intValue() : defaultY;
     }
+
     public static void setHudX(String hudKey, int x) {
         if (!hud.getValues().containsKey(hudKey + "X")) {
             hud.set(hudKey + "X", 5);
@@ -215,6 +225,7 @@ public class FishyConfig {
         hud.set(hudKey + "X", x);
         save();
     }
+
     public static void setHudY(String hudKey, int y) {
         if (!hud.getValues().containsKey(hudKey + "Y")) {
             hud.set(hudKey + "Y", 5);
@@ -227,16 +238,39 @@ public class FishyConfig {
         Object value = hud.getValues().getOrDefault(hudKey + "Size", defaultSize);
         return value instanceof Number n ? n.intValue() : defaultSize;
     }
+
     public static void setHudSize(String hudKey, int size) {
         hud.set(hudKey + "Size", size);
         save();
     }
+
     public static int getHudColor(String hudKey, int defaultColor) {
         Object value = hud.getValues().getOrDefault(hudKey + "Color", defaultColor);
         return value instanceof Number n ? n.intValue() : defaultColor;
     }
+
     public static void setHudColor(String hudKey, int color) {
         hud.set(hudKey + "Color", color);
+        save();
+    }
+
+    public static boolean getHudOutline(String hudKey, boolean outline) {
+        Object value = hud.getValues().getOrDefault(hudKey + "Outline", outline);
+        return value instanceof Boolean b ? b : outline;
+    }
+
+    public static void setHudOutline(String hudKey, boolean outline) {
+        hud.set(hudKey + "Outline", outline);
+        save();
+    }
+
+    public static boolean getHudBg(String hudKey, boolean bg) {
+        Object value = hud.getValues().getOrDefault(hudKey + "Bg", bg);
+        return value instanceof Boolean b ? b : bg;
+    }
+
+    public static void setHudBg(String hudKey, boolean bg) {
+        hud.set(hudKey + "Bg", bg);
         save();
     }
 
@@ -275,34 +309,41 @@ public class FishyConfig {
         if (firstLoad) {
             commandAliases.set("/m7", "/joininstance MASTER_CATACOMBS_FLOOR_SEVEN");
             keybinds.set("MOUSE3", "/pets");
-            keybinds.set("GLFW_KEY_B", "/wardrobe");
             chatReplacements.set(":cat:", "ᗢᘏᓗ");            
             chatReplacements.set(":hi:", "ඞ");
             chatReplacements.set("heiiii", "Any string will be replaced one to one");
             settings.set("fishyLava", false);
+            settings.set(RENDER_COORD_COLOR, -5653771);            
             settings.set(CUSTOM_PARTICLE_COLOR_INDEX, Integer.valueOf(1));
+            settings.set(XP_COLOR, 0xD0D1FF);
+            settings.set(HD_FONT, false);
+            settings.set(FISHY_GUI, false);
             settings.set(SKIP_F5, false);
             settings.set(CLEAN_HYPE, false);
             settings.set(MUTE_PHANTOM, false);
             settings.set(RENDER_COORDS, true);
             settings.set(COPY_CHAT, true);
+            settings.set(COPY_NOTI, true);
             settings.set(CUSTOM_PARTICLE_MODE, "preset");
             settings.set(BEACON_ALARM, true);
             settings.set(HUD_PING_ENABLED, false);
             settings.set(HUD_TIMER_ENABLED, true);
             hud.set(HUD_PING_X, 5);
-            hud.set(HUD_PING_Y, 80);
+            hud.set(HUD_PING_Y, 12);
             hud.set(HUD_PING_SIZE, 12);
             hud.set(HUD_PING_COLOR, 1.5649516E7);
             hud.set(HUD_TIMER_X, 5);
-            hud.set(HUD_TIMER_Y, 100);
+            hud.set(HUD_TIMER_Y, 28);
             hud.set(HUD_TIMER_SIZE, 12);
-            hud.set(HUD_TIMER_COLOR, 1.5649516E7);
-            hud.set(HUD_TITLE_X, 500);
-            hud.set(HUD_TITLE_Y, 140);
-            hud.set(HUD_TITLE_SIZE, 12);
-            hud.set(RENDER_COORD_COLOR, -1.6711681E7);
-            modKeys.set("lockKey", "NONE");
+            hud.set(HUD_TIMER_COLOR, 1.3228737E7);
+            hud.set(HUD_TITLE_X, 600);
+            hud.set(HUD_TITLE_Y, 120);
+            hud.set(HUD_TITLE_SIZE, 55);
+            hud.set(HUD_PET_X, 601);
+            hud.set(HUD_PET_Y, 486);
+            hud.set(HUD_PET_SIZE, 12);
+            hud.set(HUD_PET_COLOR, 1.5649516E7);
+            modKeys.set("lockKey", "GLFW_KEY_SEMICOLON");
             save();
         }
     }

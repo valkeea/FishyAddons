@@ -5,6 +5,7 @@ import java.util.List;
 
 import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.handler.CopyChat;
+import me.valkeea.fishyaddons.handler.MobAnimations;
 import me.valkeea.fishyaddons.handler.SkyblockCleaner;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
@@ -89,7 +90,6 @@ public class QolScreen extends Screen {
             btn -> {
                 FishyConfig.toggle("renderCoords", false);
                 btn.setMessage(getRndrText());
-                btn.setFocused(false);
             }
         ));
 
@@ -98,9 +98,9 @@ public class QolScreen extends Screen {
             getColorButtonText(),
             btn -> {
                 MinecraftClient.getInstance().setScreen(new ColorPickerScreen(this,
-                    ColorPickerScreen.intToRGB(FishyConfig.getHudColor("renderCoordsColor", 0xFF00FFFF)),
+                    ColorPickerScreen.intToRGB(FishyConfig.getInt("renderCoordsColor")),
                     rgb -> {
-                        FishyConfig.setHudColor("renderCoordsColor", ColorPickerScreen.rgbToInt(rgb));
+                        FishyConfig.setInt("renderCoordsColor", ColorPickerScreen.rgbToInt(rgb));
                         FishyConfig.saveConfigIfNeeded();
                         btn.setMessage(getColorButtonText());
                     }
@@ -114,7 +114,6 @@ public class QolScreen extends Screen {
             btn -> {
                 FishyConfig.toggle("pingHud", false);
                 btn.setMessage(getPingHudText());
-                this.setFocused(null);
             }
         ));
 
@@ -135,28 +134,11 @@ public class QolScreen extends Screen {
             btn -> {
                 FishyConfig.toggle("skipPerspective", false);
                 btn.setMessage(getSkipPerspectiveText());
-                this.setFocused(null);
-            }
-        ));
-
-        hypBtnX = centerX - 100;
-        hypBtnY = centerY + 20;
-        hypBtnW = BTNW;
-        hypBtnH = BTNH;
-
-        addDrawableChild(new FaButton(
-            hypBtnX, hypBtnY, hypBtnW, hypBtnH,
-            getHypText(),
-            btn -> {
-                FishyConfig.toggle("cleanHype", false);
-                btn.setMessage(getHypText());
-                SkyblockCleaner.refresh();
-                btn.setFocused(false);
             }
         ));
 
         copyBtnX = centerX - 100;
-        copyBtnY = centerY + 50;
+        copyBtnY = centerY + 20;
         copyBtnW = BTNW;
         copyBtnH = BTNH;
 
@@ -167,18 +149,52 @@ public class QolScreen extends Screen {
                 FishyConfig.toggle("copyChat", true);
                 btn.setMessage(getCopyText());
                 CopyChat.refresh();
-                btn.setFocused(false);
+            }
+        ));        
+
+        hypBtnX = centerX - 100;
+        hypBtnY = centerY + 50;
+        hypBtnW = BTNW;
+        hypBtnH = BTNH;
+
+        addDrawableChild(new FaButton(
+            hypBtnX, hypBtnY, hypBtnW, hypBtnH,
+            getHypText(),
+            btn -> {
+                FishyConfig.toggle("cleanHype", false);
+                btn.setMessage(getHypText());
+                SkyblockCleaner.refresh();
+            }
+        ));        
+
+        addDrawableChild(new FaButton(
+            centerX - 100, centerY + 70, BTNW, BTNH,
+            getDeathText(),
+            btn -> {
+                FishyConfig.toggle("deathAni", false);
+                MobAnimations.refresh();
+                btn.setMessage(getDeathText());
             }
         ));
 
         addDrawableChild(new FaButton(
-            centerX - 100, centerY + 120, 80, BTNH,
+            centerX - 100, centerY + 90, BTNW, BTNH,
+            getFireText(),
+            btn -> {
+                FishyConfig.toggle("fireAni", false);
+                MobAnimations.refresh();
+                btn.setMessage(getFireText());
+            }
+        ));
+
+        addDrawableChild(new FaButton(
+            centerX - 100, centerY + 160, 80, BTNH,
             Text.literal("Back").setStyle(Style.EMPTY.withColor(0xFF808080)),
             btn -> MinecraftClient.getInstance().setScreen(new FishyAddonsScreen())
         ));
 
         addDrawableChild(new FaButton(
-            centerX + 20, centerY + 120, 80, BTNH,
+            centerX + 20, centerY + 160, 80, BTNH,
             Text.literal("Close").setStyle(Style.EMPTY.withColor(0xFF808080)),
             btn -> MinecraftClient.getInstance().setScreen(null)
         ));
@@ -204,8 +220,16 @@ public class QolScreen extends Screen {
         return GuiUtil.onOffLabel("Copy Chat", FishyConfig.getState("copyChat", true));
     }    
 
+    private Text getDeathText() {
+        return GuiUtil.onOffLabel("Skip Mob Death Animation", FishyConfig.getState("deathAni", false));
+    }
+
+    private Text getFireText() {
+        return GuiUtil.onOffLabel("Skip Mob Fire Animation", FishyConfig.getState("fireAni", false));
+    }
+
     private static Text getColorButtonText() {
-        float[] rgb = ColorPickerScreen.intToRGB(FishyConfig.getHudColor("renderCoordsColor", 0xFF00FFFF));
+        float[] rgb = ColorPickerScreen.intToRGB(FishyConfig.getInt("renderCoordsColor"));
         int r = (int)(rgb[0] * 255);
         int g = (int)(rgb[1] * 255);
         int b = (int)(rgb[2] * 255);
@@ -292,7 +316,7 @@ public class QolScreen extends Screen {
                 Text.literal("Copy Chat:"),
                 Text.literal("- §8Right-click to copy chat messages"),
                 Text.literal("  §8to clipboard"),
-                Text.literal("- §8hold shift to only copy the line")
+                Text.literal("- §8Hold shift to copy just the hovered line")
             );
             GuiUtil.fishyTooltip(context, this.textRenderer, tooltipLines, mouseX, mouseY);
         }

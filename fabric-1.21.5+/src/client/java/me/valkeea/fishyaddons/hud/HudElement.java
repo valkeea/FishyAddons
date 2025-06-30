@@ -1,5 +1,8 @@
 package me.valkeea.fishyaddons.hud;
 
+import java.awt.Rectangle;
+
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 
 public interface HudElement {
@@ -10,7 +13,14 @@ public interface HudElement {
     void setHudSize(int size);
     int getHudColor();
     void setHudColor(int color);
+    boolean getHudOutline();
+    void setHudOutline(boolean outline);
+    boolean getHudBg();
+    void setHudBg(boolean bg);
     void setEditingMode(boolean editing);
     void render(DrawContext context, int mouseX, int mouseY);
     String getDisplayName();
+    Rectangle getBounds(MinecraftClient mc);
+    HudElementState getCachedState();
+    void invalidateCache();
 }

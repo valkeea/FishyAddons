@@ -1,5 +1,7 @@
 package me.valkeea.fishyaddons.hud;
 
+import java.awt.Rectangle;
+
 import me.valkeea.fishyaddons.config.FishyConfig;
 import net.fabricmc.fabric.api.client.rendering.v1.HudLayerRegistrationCallback;
 import net.fabricmc.fabric.api.client.rendering.v1.IdentifiedLayer;
@@ -14,6 +16,7 @@ public class TitleDisplay implements HudElement {
     private static final String HUD_KEY = "titleHud";
     private static long alertStartTime = 0L;
     private static long alertDurationMs = 2000L;
+    private HudElementState cachedState;    
 
     public void register() {
         HudLayerRegistrationCallback.EVENT.register(layeredDrawer ->
@@ -64,12 +67,53 @@ public class TitleDisplay implements HudElement {
                 hudY + (int)(size + 4 * scale),
                 0x80FFFFFF
             );
+            context.drawText(
+                mc.textRenderer,
+                "Alert Title",
+                hudX - scaledBoxWidth / 2,
+                hudY + 2,
+                0xFFFFFF,
+                false
+            );
         }
     }
 
     public static String getTitle() {
         return title;
     }
+    
+    @Override
+    public Rectangle getBounds(MinecraftClient mc) {
+        int hudX = getHudX();
+        int hudY = getHudY();
+        int size = getHudSize();
+        float scale = size / 12.0F;
+        int textWidth = mc.textRenderer.getWidth(title == null ? "" : title);
+        int boxWidth = Math.max(80, textWidth + 8);
+        int scaledBoxWidth = (int) (boxWidth * scale);
+        int height = (int)(size + 4 * scale);
+        return new Rectangle(hudX - scaledBoxWidth / 2 - 2, hudY - 2, scaledBoxWidth + 4, height);
+    } 
+
+    @Override
+    public void invalidateCache() {
+        cachedState = null;
+    }    
+
+    @Override
+    public HudElementState getCachedState() {
+        if (cachedState == null) {
+            cachedState = new HudElementState(
+                FishyConfig.getHudX(HUD_KEY, 5),
+                FishyConfig.getHudY(HUD_KEY, 5),
+                FishyConfig.getHudSize(HUD_KEY, 40),
+                0,
+                FishyConfig.getHudOutline(HUD_KEY, false),
+                FishyConfig.getHudBg(HUD_KEY, true)
+            );
+        }
+        return cachedState;
+    }    
 
     @Override public int getHudX() { return FishyConfig.getHudX(HUD_KEY, 5); }
     @Override public int getHudY() { return FishyConfig.getHudY(HUD_KEY, 5); }
@@ -78,6 +122,10 @@ public class TitleDisplay implements HudElement {
     @Override public void setHudSize(int size) { FishyConfig.setHudSize(HUD_KEY, size); }
     @Override public int getHudColor() { return FishyConfig.getHudColor(HUD_KEY, 0xFFFFFF); }
     @Override public void setHudColor(int color) { FishyConfig.setHudColor(HUD_KEY, color); }
+    @Override public boolean getHudOutline() { return FishyConfig.getHudOutline(HUD_KEY, false); }
+    @Override public void setHudOutline(boolean outline) { FishyConfig.setHudOutline(HUD_KEY, outline); }   
+    @Override public boolean getHudBg() { return FishyConfig.getHudBg(HUD_KEY, true); }
+    @Override public void setHudBg(boolean bg) { FishyConfig.setHudBg(HUD_KEY, bg); }
     @Override public void setEditingMode(boolean editing) { this.editingMode = editing; }
     @Override public String getDisplayName() { return "Ping HUD"; }
 }

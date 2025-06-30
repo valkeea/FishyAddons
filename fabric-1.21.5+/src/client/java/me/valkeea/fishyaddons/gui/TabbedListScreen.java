@@ -230,30 +230,22 @@ public class TabbedListScreen extends Screen {
             if (presetNameField.keyPressed(keyCode, scanCode, modifiers)) return true;
             return false;
         }
+        GenericEntryList.GenericEntry entry = null;
         if (currentTab == Tab.COMMANDS) {
-            if (commandEntryList.getFocused() instanceof GenericEntryList.GenericEntry entry) {
-                if (entry.outputField.isFocused() && entry.outputField.keyPressed(keyCode, scanCode, modifiers)) return true;
-                if (entry.inputWidget instanceof TextFieldWidget field && field.isFocused() && field.keyPressed(keyCode, scanCode, modifiers)) return true;
-                if (entry.inputWidget instanceof ButtonWidget btn && btn.isFocused() && btn.keyPressed(keyCode, scanCode, modifiers)) return true;
-            }
+            entry = (GenericEntryList.GenericEntry) commandEntryList.getFocused();
         } else if (currentTab == Tab.KEYBINDS) {
-            if (keybindEntryList.getFocused() instanceof GenericEntryList.GenericEntry entry) {
-                if (entry.outputField.isFocused() && entry.outputField.keyPressed(keyCode, scanCode, modifiers)) return true;
-                if (entry.inputWidget instanceof TextFieldWidget field && field.isFocused() && field.keyPressed(keyCode, scanCode, modifiers)) return true;
-                if (entry.inputWidget instanceof ButtonWidget btn && btn.isFocused() && btn.keyPressed(keyCode, scanCode, modifiers)) return true;
-            }
+            entry = (GenericEntryList.GenericEntry) keybindEntryList.getFocused();
         } else if (currentTab == Tab.CHAT) {
-            if (chatEntryList.getFocused() instanceof GenericEntryList.GenericEntry entry) {
-                if (entry.outputField.isFocused() && entry.outputField.keyPressed(keyCode, scanCode, modifiers)) return true;
-                if (entry.inputWidget instanceof TextFieldWidget field && field.isFocused() && field.keyPressed(keyCode, scanCode, modifiers)) return true;
-                if (entry.inputWidget instanceof ButtonWidget btn && btn.isFocused() && btn.keyPressed(keyCode, scanCode, modifiers)) return true;
-            }
+            entry = (GenericEntryList.GenericEntry) chatEntryList.getFocused();
         } else if (currentTab == Tab.ALERT) {
-            if (alertEntryList.getFocused() instanceof GenericEntryList.GenericEntry entry) {
-                if (entry.outputField.isFocused() && entry.outputField.keyPressed(keyCode, scanCode, modifiers)) return true;
-                if (entry.inputWidget instanceof TextFieldWidget field && field.isFocused() && field.keyPressed(keyCode, scanCode, modifiers)) return true;
-                if (entry.inputWidget instanceof ButtonWidget btn && btn.isFocused() && btn.keyPressed(keyCode, scanCode, modifiers)) return true;
-            }
+            entry = (GenericEntryList.GenericEntry) alertEntryList.getFocused();
+        }
+        if (entry != null) {
+            if (entry.outputField.isFocused() && entry.outputField.keyPressed(keyCode, scanCode, modifiers)) return true;
+            if (entry.inputWidget instanceof TextFieldWidget field && field.isFocused() && field.keyPressed(keyCode, scanCode, modifiers)) return true;
+            if (entry.inputWidget instanceof ButtonWidget btn && btn.isFocused() && btn.keyPressed(keyCode, scanCode, modifiers)) return true;
+            // Forward to the entry itself (for Enter/Tab etc)
+            if (entry.keyPressed(keyCode, scanCode, modifiers)) return true;
         }
         return super.keyPressed(keyCode, scanCode, modifiers);
     }

@@ -13,9 +13,14 @@ import me.valkeea.fishyaddons.handler.ChatReplacement;
 import me.valkeea.fishyaddons.handler.CommandAlias;
 import me.valkeea.fishyaddons.handler.CopyChat;
 import me.valkeea.fishyaddons.handler.KeyShortcut;
+import me.valkeea.fishyaddons.handler.MobAnimations;
+import me.valkeea.fishyaddons.handler.PetInfo;
 import me.valkeea.fishyaddons.handler.SkyblockCleaner;
+import me.valkeea.fishyaddons.handler.ResourceHandler;
+import me.valkeea.fishyaddons.handler.XpColor;
 import me.valkeea.fishyaddons.hud.ElementRegistry;
 import me.valkeea.fishyaddons.hud.FishyToast;
+import me.valkeea.fishyaddons.hud.PetDisplay;
 import me.valkeea.fishyaddons.hud.PingDisplay;
 import me.valkeea.fishyaddons.hud.TimerDisplay;
 import me.valkeea.fishyaddons.hud.TitleDisplay;
@@ -32,10 +37,9 @@ import me.valkeea.fishyaddons.util.PlaySound;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
 
@@ -55,6 +59,9 @@ public class FishyAddons implements ClientModInitializer {
         FishyMode.getTheme();
         ChatAlert.refresh();
         CopyChat.refresh();
+        PetInfo.refresh();
+        XpColor.refresh();
+        MobAnimations.refresh();
         SkyblockCleaner.refresh();
         GuiScheduler.register();
         CmdManager.register();  
@@ -70,20 +77,24 @@ public class FishyAddons implements ClientModInitializer {
 
         PingDisplay pingDisplay = new PingDisplay();
         TimerDisplay timerDisplay = new TimerDisplay();
-        TitleDisplay titleDisplay = new TitleDisplay(); 
+        TitleDisplay titleDisplay = new TitleDisplay();
+        PetDisplay petDisplay = new PetDisplay();
+        ResourceHandler.register();
         ElementRegistry.register(pingDisplay);
         ElementRegistry.register(timerDisplay);
         ElementRegistry.register(titleDisplay);
+        ElementRegistry.register(petDisplay);
         pingDisplay.register();
         timerDisplay.register();
         titleDisplay.register();
-        
+        petDisplay.register();
+
         FishyPresets.ensureDefaultPresets();
 
         Registry.register(Registries.SOUND_EVENT, PlaySound.PROTECT_TRIGGER_ID, PlaySound.PROTECT_TRIGGER_EVENT);
 
         KeyBinding mainKey = KeyBindingHelper.registerKeyBinding(
-            new KeyBinding("Open FishyAddons gui", InputUtil.Type.KEYSYM, -1, "FishyAddons")
+            new KeyBinding("Open FishyAddons gui", InputUtil.Type.KEYSYM, 240, "FishyAddons")
         );
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {

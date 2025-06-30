@@ -2,10 +2,15 @@ package me.valkeea.fishyaddons.gui;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Arrays;
+import java.util.List;
 
 import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.config.TextureConfig;
+import me.valkeea.fishyaddons.handler.PetInfo;
 import me.valkeea.fishyaddons.handler.RedstoneColor;
+import me.valkeea.fishyaddons.handler.ResourceHandler;
+import me.valkeea.fishyaddons.handler.XpColor;
 import me.valkeea.fishyaddons.tool.FishyMode;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
@@ -18,6 +23,8 @@ public class VisualSettingsScreen extends Screen {
     private static final int BTNW = 200;
     private static final int BTNH = 20;
     private final Map<ButtonWidget, String> islandButtons = new HashMap<>();
+
+    private int petBtnX, petBtnY, petBtnW, petBtnH;
 
     public VisualSettingsScreen() {
         super(Text.literal("Visual Settings"));
@@ -36,43 +43,30 @@ public class VisualSettingsScreen extends Screen {
             getLavaToggleText(),
             btn -> {
                 FishyConfig.toggle("fishyLava", false);
-                FishyConfig.saveConfigIfNeeded();
                 btn.setMessage(getLavaToggleText());
-                this.setFocused(false);
             }
         ));
 
         addDrawableChild(new FaButton(
             centerX - 100, y, BTNW, BTNH,
-            getRetexStatusText(),
+            getFontText(),
             btn -> {
-                btn.setMessage(getRetexStatusText());
-                btn.setFocused(false);
+                FishyConfig.toggle("hdFont", false);
+                ResourceHandler.updateFontPack();
+                btn.setMessage(getFontText());
             }
         ));
         
         addDrawableChild(new FaButton(
             centerX + 100, y, BTNW, BTNH,
-            getAllToggleText(),
+            getGuiText(),
             btn -> {
-                btn.setMessage(getAllToggleText());
-                islandButtons.forEach((button, island) -> button.setMessage(getIslandButtonText(island)));
+                FishyConfig.toggle("fishyGui", false);
+                ResourceHandler.updateGuiPack();
+                btn.setMessage(getGuiText());
             }
         ));
-        y += 30;
-
-        /*for (String island : RetexHandler.getKnownIslands()) {
-            if ("default".equals(island) || "mineshaft".equals(island)) continue;
-            ButtonWidget islandButton = addDrawableChild(ButtonWidget.builder(getIslandButtonText(island), btn -> {
-                boolean isEnabled = TextureConfig.isIslandTextureEnabled(island);
-                TextureConfig.toggleIslandTexture(island, !isEnabled);
-                btn.setMessage(getIslandButtonText(island));
-            }).dimensions(centerX - 100, y, 200, 20).build());
-            islandButtons.put(islandButton, island);
-            y += 24;
-        }*/
-
-        y += 40;
+        y += 70;
 
         addDrawableChild(new ParticleColorSlider(centerX - 100, y, BTNW, BTNH,
         "Redstone Particle Color", 0, 4, FishyConfig.getCustomParticleColorIndex())); 
@@ -82,13 +76,79 @@ public class VisualSettingsScreen extends Screen {
             getCustomButtonText(),
             btn -> MinecraftClient.getInstance().setScreen(new ColorPickerScreen(this, RedstoneColor.getActiveParticleColor(), color -> {
                 RedstoneColor.setCustomColor(color);
-                FishyConfig.saveConfigIfNeeded();
                 btn.setMessage(getCustomButtonText());
             }))
         ));   
         y += 30;
 
         addDrawableChild(new ThemeModeSlider(centerX - 100, y, BTNW, BTNH));
+        y += 30;
+
+        addDrawableChild(new FaButton(
+            centerX - 100, y, BTNW, BTNH,
+            getXpColorText(),
+            btn -> {
+                XpColor.toggle();
+                XpColor.refresh();
+                btn.setMessage(getXpColorText());
+            }
+        ));
+
+        addDrawableChild(new FaButton(
+            centerX + 100, y, 60, BTNH,
+            getCustomXpColorText(),
+            btn -> MinecraftClient.getInstance().setScreen(new ColorPickerScreen(this, ColorPickerScreen.intToRGB(XpColor.get()), color -> {
+                XpColor.set(ColorPickerScreen.rgbToInt(color));
+                btn.setMessage(getCustomXpColorText());
+            }))
+        ));
+
+        addDrawableChild(new FaButton(
+            centerX + 160, y, 60, BTNH,
+            getOutlineText(),
+            btn -> {
+                XpColor.toggleOutline();
+                XpColor.refresh();
+                btn.setMessage(getOutlineText());
+            }
+        ));
+
+        y += 30;
+        petBtnX = centerX - 100;
+        petBtnY = y;
+        petBtnW = BTNW;
+        petBtnH = BTNH;
+
+        addDrawableChild(new FaButton(
+            petBtnX, petBtnY, petBtnW, petBtnH,
+            getPetText(),
+            btn -> {
+                FishyConfig.toggle("petHud", false);
+                PetInfo.refresh();
+                btn.setMessage(getPetText());
+            }
+        ));
+
+        addDrawableChild(new FaButton(
+            centerX + 100, y, 60, BTNH,
+            getDynamicText(),
+            btn -> {
+                FishyConfig.toggle("tabTicks", false);
+                PetInfo.refresh();
+                btn.setMessage(getDynamicText());
+            }
+        ));
+
+        addDrawableChild(new FaButton(
+            centerX + 160, y, 60, BTNH,
+            getPetXpText(),
+            btn -> {
+                FishyConfig.toggle("petXpCheck", false);
+                PetInfo.refresh();
+                btn.setMessage(getPetXpText());
+            }
+        ));
+
         y += 60;
 
         addDrawableChild(new FaButton(
@@ -105,12 +165,12 @@ public class VisualSettingsScreen extends Screen {
         ));
     }
 
-    private Text getAllToggleText() {
-        return GuiUtil.onOffLabel(Formatting.STRIKETHROUGH + "All Islands", TextureConfig.isAllToggled());
-    }
+    private Text getFontText() {
+        return GuiUtil.onOffLabel("HD Font", FishyConfig.getState("hdFont", false));
+    }    
 
-    private Text getRetexStatusText() {
-        return GuiUtil.onOffLabel(Formatting.STRIKETHROUGH + "Retexturing", TextureConfig.isRetexStatus());
+    private Text getGuiText() {
+        return GuiUtil.onOffLabel("Transparent Gui", FishyConfig.getState("fishyGui", false));
     }
 
     private Text getLavaToggleText() {
@@ -136,14 +196,52 @@ public class VisualSettingsScreen extends Screen {
         }
     }
 
+    private static Text getXpColorText() {
+        return GuiUtil.onOffLabel("XP Color", FishyConfig.getState("xpColorEnabled", false));
+    }
+
+    private static Text getCustomXpColorText() {
+        return Text.literal("Custom")
+            .styled(style -> style.withColor((XpColor.get())));
+    }  
+    
+    private static Text getOutlineText() {
+        return GuiUtil.onOffLabel("Outline", FishyConfig.getState("xpOutline", false));
+    }
+
+    private static Text getPetText() {
+        return GuiUtil.onOffLabel("Pet Display", FishyConfig.getState("petHud", false));
+    }
+
+    private static Text getDynamicText() {
+        boolean isEnabled = FishyConfig.getState("tabTicks", false);
+        String title = "Dynamic";
+        return Text.literal(title).styled(s -> s.withColor(isEnabled ? 0xCCFFCC : 0xFF8080));
+    }
+
+    private static Text getPetXpText() {
+        boolean isEnabled = FishyConfig.getState("petXpCheck", false);
+        String title = "Include XP";
+        return Text.literal(title).styled(s -> s.withColor(isEnabled ? 0xCCFFCC : 0xFF8080));
+    }
+
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         this.renderBackground(context, mouseX, mouseY, delta);
 
         String title = "Visual Settings";
         context.drawCenteredTextWithShadow(this.textRenderer, title, this.width / 2, this.height / 4 - 20, 0xFF55FFFF);
-
         super.render(context, mouseX, mouseY, delta);
+
+        if (mouseX >= petBtnX && mouseX <= petBtnX + petBtnW && mouseY >= petBtnY && mouseY <= petBtnY + petBtnH) {
+            List<Text> tooltipLines = Arrays.asList(
+                Text.literal("Renders Tablist info:"),
+                Text.literal("- §8On chat match, unless dynamic"),
+                Text.literal("  §8is enabled"),
+                Text.literal("- §8Dynamic scans once per second")
+            );
+            GuiUtil.fishyTooltip(context, this.textRenderer, tooltipLines, mouseX, mouseY);
+        }
     }
 
     private static class ParticleColorSlider extends ThemedSlider {
@@ -215,7 +313,7 @@ public class VisualSettingsScreen extends Screen {
         @Override
         protected void updateMessage() {
             int idx = (int)(this.value * (MODES.length - 1) + 0.5);
-            String mode = MODES[Math.max(0, Math.min(idx, MODES.length - 1))];
+            String mode = MODES[Math.clamp(idx, 0, MODES.length - 1)];
             String color = switch (mode) {
                 case "purple" -> "BB80DF";
                 case "blue" -> "A2C8FF";
@@ -230,7 +328,7 @@ public class VisualSettingsScreen extends Screen {
         @Override
         protected void applyValue() {
             int idx = (int)(this.value * (MODES.length - 1) + 0.5);
-            String mode = MODES[Math.max(0, Math.min(idx, MODES.length - 1))];
+            String mode = MODES[Math.clamp(idx, 0, MODES.length - 1)];
             FishyMode.setTheme(mode);
             updateMessage();
         }
@@ -238,5 +336,5 @@ public class VisualSettingsScreen extends Screen {
         private static String capitalize(String s) {
             return s.substring(0, 1).toUpperCase() + s.substring(1);
         }
-    }    
+    }   
 }

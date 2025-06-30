@@ -8,6 +8,7 @@ import net.minecraft.util.Identifier;
 import java.util.Set;
 
 public class SkyblockCleaner {
+    private SkyblockCleaner() {}
     private static boolean hypeOn = false;
     private static boolean phantomOn = false;
 
@@ -25,14 +26,6 @@ public class SkyblockCleaner {
         Registries.SOUND_EVENT.getId(SoundEvents.ENTITY_PHANTOM_HURT),
         Registries.SOUND_EVENT.getId(SoundEvents.ENTITY_PHANTOM_SWOOP)
     );
-    
-    private boolean isHypeSound(Identifier soundId) {
-        return HYPE_SOUNDS.contains(soundId);
-    }
-
-    private boolean isPhantomSound(Identifier soundId) {
-        return PHANTOM_SOUNDS.contains(soundId);
-    }
 
     public static boolean shouldCleanHype(Identifier soundId) {
         return hypeOn && HYPE_SOUNDS.contains(soundId);

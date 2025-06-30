@@ -14,11 +14,15 @@ Note: 1.21.5+ support with the Fabric version, use Forge for 1.8.9
 - Configurable keybinds, command aliases and chat-text replacements
 
 ### 1.21.5 Only:
+- Copy Chat
 - Custom f5 (No front perspective)
 - Ping command and display
 - Clean Wither Impact (particles, sound)
 - Mute Phantoms
+- Skip rendering entity death
+- Skip rendering fire on entities
+- Pet Display
 - Send and render player coordinates
 - Moonglade Beacon timer and hud display
-- Copy Chat
 - Customizable chat-event based alarms
+- Mod resourses: Trasnparent ui and HD font

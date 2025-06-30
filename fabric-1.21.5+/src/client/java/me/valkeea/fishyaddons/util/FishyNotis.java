@@ -50,14 +50,16 @@ public class FishyNotis {
         send(Text.literal("Item protected").formatted(Formatting.GRAY).getString());
     }
 
-    public static void sendCopyConfirmation() {
+    public static void ccNoti() {
+        if (!me.valkeea.fishyaddons.handler.CopyChat.isNotiOn()) return;
         send("Copied to clipboard");
     }
 
     public static void helpNoti() {
         alert(Text.literal(" [FA] Available Commands:").formatted(Formatting.AQUA, Formatting.BOLD));
+        alert(Text.literal("/fishyaddons opens the main config!").formatted(Formatting.AQUA));        
         alert(Text.literal("/fishyaddons = /fa, /fa guard = /fg").formatted(Formatting.AQUA));
-        alert(Text.literal("/fg clear | add | remove | list").formatted(Formatting.DARK_AQUA));
+        alert(Text.literal("/fg clear | add | remove | list | alert").formatted(Formatting.DARK_AQUA));
         alert(Text.literal("/fa key | /fa cmd |/fa chat | /fg").formatted(Formatting.DARK_AQUA));
         alert(Text.literal("/fa key | cmd | chat + on | off").formatted(Formatting.DARK_AQUA));
         alert(Text.literal("/fa key | cmd | fg + add").formatted(Formatting.DARK_AQUA));
@@ -71,13 +73,13 @@ public class FishyNotis {
 
     public static void guideNoti2() {
         alert(Text.literal("α Welcome to FishyAddons! α").formatted(Formatting.AQUA, Formatting.BOLD));
-        alert(Text.literal("Current features include:").formatted(Formatting.GRAY));
+        alert(Text.literal("Current commands are:").formatted(Formatting.GRAY));
 
         alert(Text.literal("FishyAddons Safeguard:").formatted(Formatting.GOLD));
         alert(Text.literal(" - ").formatted(Formatting.DARK_AQUA)
                 .append(Text.literal("Protects your items from being dropped or interacted with" + SPACE + "in certain GUIs.").formatted(Formatting.GRAY)));
         alert(Text.literal(FORMAT1).formatted(Formatting.DARK_AQUA)
-                .append(Text.literal("/faguard = fg").formatted(Formatting.AQUA))
+                .append(Text.literal("/faguard (/fg), /fa visual, /fa qol, /fa alert").formatted(Formatting.AQUA))
                 .append(Text.literal(FORMAT2).formatted(Formatting.DARK_AQUA))
                 .append(Text.literal("Open GUI").formatted(Formatting.WHITE)));
         alert(Text.literal(FORMAT1).formatted(Formatting.DARK_AQUA)
@@ -142,11 +144,15 @@ public class FishyNotis {
                 alert(Text.literal("α Welcome to FishyAddons! α").formatted(Formatting.AQUA, Formatting.BOLD));
                 alert(Text.literal("Current features include:").formatted(Formatting.GRAY));
                 alert(Text.literal(" - ").formatted(Formatting.DARK_AQUA)
-                        .append(Text.literal(" Item safeguard, Visual Features, Chat alerts").formatted(Formatting.GRAY)));
+                        .append(Text.literal(" Item safeguard, Slotlocking and -binding").formatted(Formatting.GRAY)));
+                alert(Text.literal(" - ").formatted(Formatting.DARK_AQUA)     
+                        .append(Text.literal(" Pet display, Mob death/fire animation skip").formatted(Formatting.GRAY)));                                   
                 alert(Text.literal(" - ").formatted(Formatting.DARK_AQUA)
                         .append(Text.literal(" Keybinds, Command Aliases, Mute hyperion/phantoms").formatted(Formatting.GRAY)));
                 alert(Text.literal(" - ").formatted(Formatting.DARK_AQUA)
-                        .append(Text.literal(" Custom F5, Ping display, Coordinate beacons").formatted(Formatting.GRAY)));                        
+                        .append(Text.literal(" Custom F5, Ping display, Coordinate beacons").formatted(Formatting.GRAY)));
+                alert(Text.literal(" - ").formatted(Formatting.DARK_AQUA)
+                        .append(Text.literal(" Custom HUD, Clear lava, Redstone particle colors").formatted(Formatting.GRAY)));                                                
                 alert(Text.literal(" - ").formatted(Formatting.DARK_AQUA)
                         .append(Text.literal(" Chat Event-based alerts, Timer for Moonglade Minigame").formatted(Formatting.GRAY)));
                 alert(Text.literal(FORMAT1).formatted(Formatting.DARK_AQUA)
@@ -154,8 +160,8 @@ public class FishyNotis {
                         .append(Text.literal(FORMAT2).formatted(Formatting.DARK_AQUA))
                         .append(Text.literal("Show a more detailed guide.").formatted(Formatting.WHITE)));
                 alert(Text.literal(" - ").formatted(Formatting.DARK_AQUA)
-                        .append(Text.literal(" You can also use /fa help to see available commands.").formatted(Formatting.GRAY))
-                        .append(Text.literal(SPACE + "or use the search function in the GUI.").formatted(Formatting.GRAY)));
+                        .append(Text.literal(" You can also use /fa help to see available commands").formatted(Formatting.GRAY))
+                        .append(Text.literal(SPACE + "     or use the search function in /fa.").formatted(Formatting.GRAY)));
                 alert(Text.literal(" Enjoy using FishyAddons! ").formatted(Formatting.DARK_AQUA));
         }
 }

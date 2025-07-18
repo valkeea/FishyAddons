@@ -15,7 +15,8 @@ import net.minecraft.util.Identifier;
 
 public class PetDisplay implements HudElement {
     private boolean editingMode = false;
-    private static final String HUD_KEY = "petHud";
+    private static final String HUD_KEY = me.valkeea.fishyaddons.config.Key.HUD_PET_ENABLED;
+    private static final String PLACE_HOLDER = "Pet Display";
     private Text saved = null;
     private Text outline = null;
     private HudElementState cachedState = null;
@@ -35,7 +36,7 @@ public class PetDisplay implements HudElement {
         if (!editingMode && !PetInfo.isOn()) return;
 
         Text pet = TabScanner.getPet();
-        if (pet == null || pet.getString().isEmpty()) return;
+        if (pet == null || pet.getString().isEmpty() && !editingMode) return;
 
         // Compare current pet info string to cached string
         if (saved == null || !saved.getString().equals(pet.getString())) {
@@ -53,11 +54,11 @@ public class PetDisplay implements HudElement {
         boolean showBg = state.bg;
 
         float scale = size / 12.0F;
-        Text fullText = TextUtils.stripColor(saved);
+        Text fullText = TextUtils.stripColor(pet).getString().isEmpty() ? Text.literal(PLACE_HOLDER) : saved;
         int textWidth = mc.textRenderer.getWidth(fullText);
 
         if (editingMode || showBg) {
-            int shadowX1 = hudX + 1;
+            int shadowX1 = hudX + 3;
             int shadowY1 = hudY + 2;
             int shadowX2 = hudX + (int)(textWidth * scale) + 2;
             int shadowY2 = hudY + (int)(size * 0.8F) - 1;
@@ -89,7 +90,11 @@ public class PetDisplay implements HudElement {
         context.getMatrices().pop();
 
         if (editingMode) {
-            context.fill(hudX - 2, hudY - 2, hudX + (int)(textWidth * scale) + 18, hudY + (int)(size * 1.1F) + 4, 0x80FFFFFF);
+            int placeHolderWidth = mc.textRenderer.getWidth(PLACE_HOLDER);
+            context.drawText(mc.textRenderer, 
+                Text.literal(PLACE_HOLDER), 
+                hudX + 4, hudY + size + 2, 0xFFAAAAAA, false);
+            context.fill(hudX - 2, hudY - 2, hudX + (int)(placeHolderWidth * scale) + 18, hudY + (int)(size * 1.1F) + 4, 0x80FFFFFF);
         }        
     }
 
@@ -102,6 +107,8 @@ public class PetDisplay implements HudElement {
         int textWidth = 0;
         if (saved != null) {
             textWidth = mc.textRenderer.getWidth(saved.getString());
+        } else {
+            textWidth = mc.textRenderer.getWidth(PLACE_HOLDER);
         }
         int width = (int)(Math.max(80, textWidth) * scale);
         int height = (int)(size + 4 * scale);
@@ -140,5 +147,5 @@ public class PetDisplay implements HudElement {
     @Override public boolean getHudBg() { return FishyConfig.getHudBg(HUD_KEY, false); }
     @Override public void setHudBg(boolean bg) { FishyConfig.setHudBg(HUD_KEY, bg); }
     @Override public void setEditingMode(boolean editing) { this.editingMode = editing; }
-    @Override public String getDisplayName() { return "Pet Display"; }
+    @Override public String getDisplayName() { return PLACE_HOLDER; }
 }

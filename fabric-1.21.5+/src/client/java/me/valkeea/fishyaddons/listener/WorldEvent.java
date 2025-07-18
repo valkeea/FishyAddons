@@ -1,6 +1,7 @@
 package me.valkeea.fishyaddons.listener;
 
 import me.valkeea.fishyaddons.handler.PetInfo;
+import me.valkeea.fishyaddons.render.BeaconRenderer;
 import me.valkeea.fishyaddons.util.AreaUtils;
 import me.valkeea.fishyaddons.util.SkyblockCheck;
 import me.valkeea.fishyaddons.util.ZoneUtils;
@@ -43,6 +44,8 @@ public class WorldEvent {
         scoreboardDelay = 180;
         PetInfo.setTablistReady(false);
         PetInfo.setWidget(true);
+        BeaconRenderer.clearBeacons();
+        
         if (pendingBypass) {
             checkBypass = true;
             pendingBypass = false;
@@ -70,7 +73,7 @@ public class WorldEvent {
                 SkyblockCheck.getInstance().updateSkyblockCache();
                 ZoneUtils.update();
                 updateRulesNextTick = false;
-                scoreboardDelay = 60;
+                scoreboardDelay = 100;
             } else if (scoreboardDelay == 1) {
                 ClientConnected.triggerAction();
                 PetInfo.update();

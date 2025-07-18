@@ -12,7 +12,8 @@ public class FishyNotis {
     private static final String SPACE = "     ";
 
     private static Text formatMessage(String message) {
-        return Text.literal("[FA] ").formatted(Formatting.AQUA)
+        return Text.literal("[α]").formatted(Formatting.AQUA)
+             .append(Text.literal(" » ").formatted(Formatting.DARK_GRAY))
             .append(Text.literal(message).formatted(Formatting.GRAY));
     }
 
@@ -26,7 +27,8 @@ public class FishyNotis {
     public static void send(Text message) {
         MinecraftClient mc = MinecraftClient.getInstance();
         if (mc.player != null) {
-            Text prefix = Text.literal("[FA] ").formatted(Formatting.AQUA);
+            Text prefix = Text.literal("[α]").formatted(Formatting.AQUA)
+                .append(Text.literal(" » ").formatted(Formatting.DARK_GRAY));
             mc.player.sendMessage(prefix.copy().append(message), false);
         }
     }

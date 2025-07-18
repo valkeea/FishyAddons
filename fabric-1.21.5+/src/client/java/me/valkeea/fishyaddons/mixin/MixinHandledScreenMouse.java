@@ -6,6 +6,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import me.valkeea.fishyaddons.config.ItemConfig;
+import me.valkeea.fishyaddons.hud.TrackerDisplay;
 import me.valkeea.fishyaddons.safeguard.BlacklistMatcher;
 import me.valkeea.fishyaddons.safeguard.SellProtectionHandler;
 import net.minecraft.client.MinecraftClient;
@@ -27,6 +28,20 @@ public abstract class MixinHandledScreenMouse extends Screen {
     private void onMouseClicked(double mouseX, double mouseY, int button, CallbackInfoReturnable<Boolean> cir) {
         MinecraftClient mc = MinecraftClient.getInstance();
         HandledScreen<?> screen = (HandledScreen<?>) (Object) this;
+
+        // Check for profit tracker button clicks first
+        TrackerDisplay profitTracker = TrackerDisplay.getInstance();
+        if (profitTracker != null && profitTracker.handleMouseClick(mouseX, mouseY, button)) {
+            cir.setReturnValue(true);
+            return;
+        }
+        
+        // Check for search field clicks
+        me.valkeea.fishyaddons.hud.SearchHudElement searchElement = me.valkeea.fishyaddons.hud.SearchHudElement.getInstance();
+        if (searchElement != null && searchElement.handleMouseClick(mouseX, mouseY, button)) {
+            cir.setReturnValue(true);
+            return;
+        }
 
         Slot hoveredSlot = ((HandledScreenAccessor) screen).getFocusedSlot();
         ItemStack stack;

@@ -10,7 +10,6 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.text.Text;
 
 public class TabbedListScreen extends Screen {
@@ -90,11 +89,11 @@ public class TabbedListScreen extends Screen {
             Text.literal("Close").styled(style -> style.withColor(0xFFB0B0B0)),
             b -> this.client.setScreen(null)
         ));
-        addDrawableChild(new FaButton(width - 210, height - 30, 100, 20,
+        addDrawableChild(new FaButton(width / 2 + 205, height - 30, 100, 20,
             Text.literal("Load From Preset").styled(style -> style.withColor(0xE2CAE9)),
             b -> showPresetDropdown()
         ));
-        addDrawableChild(new FaButton(width - 310, height - 30, 100, 20,
+        addDrawableChild(new FaButton(width / 2 + 105, height - 30, 100, 20,
             Text.literal("Save as Preset").styled(style -> style.withColor(0xB0FFB0)),
             b -> showSavePresetPopup()
         ));
@@ -292,12 +291,15 @@ public class TabbedListScreen extends Screen {
             case CHAT -> FishyPresets.PresetType.CHAT;
             case ALERT -> FishyPresets.PresetType.ALERT;
         };
+        
         List<String> suffixes = FishyPresets.listPresetSuffixes(type);
+
         if (suffixes.isEmpty()) {
             showFishyPopup(Text.literal("No presets found for this tab."), Text.literal("OK"), () -> fishyPopup = null, Text.literal(""), () -> {});
             return;
         }
-        int dropdownX = width - 220;
+
+        int dropdownX = width / 2 + 205;
         int dropdownY = height - 40 - (suffixes.size() * 14) / 2;
         presetDropdown = new DropdownMenu(
             suffixes, dropdownX, dropdownY, 100, 14,

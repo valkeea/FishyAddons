@@ -3,11 +3,11 @@ package me.valkeea.fishyaddons.handler;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import me.valkeea.fishyaddons.config.Key;
+import me.valkeea.fishyaddons.util.SkyblockCheck;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
-
-import me.valkeea.fishyaddons.util.SkyblockCheck;
 
 public class PetInfo {
     private PetInfo() {}
@@ -22,9 +22,9 @@ public class PetInfo {
     private static boolean pendingSummonScan = false;
 
     public static void refresh() {
-        isOn = me.valkeea.fishyaddons.config.FishyConfig.getState("petHud", false);
-        dynamicCheck = me.valkeea.fishyaddons.config.FishyConfig.getState("tabTicks", false);
-        xpCheck = me.valkeea.fishyaddons.config.FishyConfig.getState("petXpCheck", false);
+        isOn = me.valkeea.fishyaddons.config.FishyConfig.getState(Key.HUD_PET_ENABLED, false);
+        dynamicCheck = me.valkeea.fishyaddons.config.FishyConfig.getState(Key.HUD_PET_DYNAMIC, false);
+        xpCheck = me.valkeea.fishyaddons.config.FishyConfig.getState(Key.HUD_PETXP, false);
     }
 
     public static void update() {

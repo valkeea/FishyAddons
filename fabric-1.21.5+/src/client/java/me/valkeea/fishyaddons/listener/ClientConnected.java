@@ -1,6 +1,7 @@
 package me.valkeea.fishyaddons.listener;
 
 import me.valkeea.fishyaddons.config.*;
+import me.valkeea.fishyaddons.handler.PetInfo;
 import me.valkeea.fishyaddons.util.FishyNotis;
 import me.valkeea.fishyaddons.util.SkyblockCheck;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
@@ -12,6 +13,7 @@ public class ClientConnected {
     private static boolean anyRecreated = false;
     private static boolean anyRestored = false;
     private static boolean pendingAlert = false;
+    private static boolean connected = false;
 
     public static void init() {
         ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> onClientConnected());
@@ -19,18 +21,22 @@ public class ClientConnected {
 
     private static void onClientConnected() {
         refreshServerData();
+        connected = true;
 
         boolean r1 = FishyConfig.isRecreated();
-        //boolean r2 = TextureConfig.isRecreated();
-        boolean r3 = ItemConfig.isRecreated();
+        boolean r2 = ItemConfig.isRecreated();
 
-        firstLoad = r1 && r3;// && r2; 
-        anyRecreated = r1 || r3;// || r2;
+        firstLoad = r1 && r2;
+        anyRecreated = r1 || r2;
         anyRestored = FishyConfig.isRestored() || TextureConfig.isRestored() || ItemConfig.isRestored();
         pendingAlert = firstLoad || anyRecreated || anyRestored;
     }
 
     public static void triggerAction() {
+        if (connected && SkyblockCheck.getInstance().rules()) {
+            PetInfo.update();
+            PetInfo.setPending(true);
+        }
         if (pendingAlert) {
             if (firstLoad) {
                 FishyNotis.guideNoti();
@@ -54,6 +60,7 @@ public class ClientConnected {
         anyRecreated = false;
         anyRestored = false;
         pendingAlert = false;
+        connected = false;
     }
 
     public static void refreshServerData() {

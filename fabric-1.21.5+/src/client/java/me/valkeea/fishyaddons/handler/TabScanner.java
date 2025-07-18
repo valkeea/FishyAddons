@@ -16,17 +16,17 @@ public class TabScanner {
     private TabScanner() {}
     private static final Pattern PET_PATTERN = Pattern.compile("\\[Lvl \\d+\\] .+");
     private static final int XP_FAIL_LIMIT = 15;
+    private static final int FAIL_LIMIT = 20;
+    private static final int SUMMON_FAIL_LIMIT = 15;
+
     private static PetTabInfo saved = null;
     private static int xpFailCount = 0;
     private static Text override = null;
     private static Text overrideOutline = null;
     private static int failCount = 0;
-    private static final int FAIL_LIMIT = 20;
-    private static final java.util.Map<String, Text> maxLevelCache = new java.util.HashMap<>();
-
-    private static String lastline1 = null;
     private static int summonFailCount = 0;
-    private static final int SUMMON_FAIL_LIMIT = 15;
+
+    private static final java.util.Map<String, Text> maxLevelCache = new java.util.HashMap<>();
 
     public static void setPet(Text petInfo) { override = petInfo; }
     public static void clearPet() { override = null; }
@@ -47,8 +47,7 @@ public class TabScanner {
         }
         if (override != null) {
             String stripped = Formatting.strip(override.getString());
-            Text outline = Text.literal(stripped).styled(style -> style.withColor(Formatting.BLACK));
-            return outline;
+            return Text.literal(stripped).styled(style -> style.withColor(Formatting.BLACK));
         }
         return saved != null ? saved.getCombinedForOutline() : null;
     }
@@ -78,7 +77,20 @@ public class TabScanner {
         }
 
         if (PetInfo.isPending()) {
-            handlePending(currentline1);
+            if (line1Idx == -1) {
+                summonFailCount++;
+                if (summonFailCount >= SUMMON_FAIL_LIMIT) {
+                    PetInfo.setPending(false);
+                    PetInfo.setNextCheck(false);
+                    summonFailCount = 0;
+                    sendFailNoti();
+                }
+                return;
+            }
+
+            Text o = lines.get(line1Idx);
+            handlePending(currentline1, o);
+            return;
         }
 
         if (line1Idx == -1) {
@@ -133,14 +145,20 @@ public class TabScanner {
     }
 
     // Handle pending summon scan logic
-    private static void handlePending(String currentline1) {
-        lastline1 = saved != null ? saved.line1.getString().trim() : null;
+    private static void handlePending(String c1, Text o) {
+        String lastline1 = saved != null ? saved.line1.getString().trim() : null;
+        String current = c1 != null ? c1.trim() : null;
+
         // Only proceed if info has changed
-        if (currentline1 != null && !currentline1.equals(lastline1)) {
+        if (current != null && !current.equals(lastline1)) {
             PetInfo.confirm(true);
-            PetInfo.setPending(false);            
+            PetInfo.setPending(false); 
+            saved = new PetTabInfo(-1, -1, o, null);      
             summonFailCount = 0;
-        } else {
+            return;
+        } 
+        
+        if (PetInfo.isPending()) {
             summonFailCount++;
             if (summonFailCount >= SUMMON_FAIL_LIMIT) {
                 PetInfo.setPending(false);

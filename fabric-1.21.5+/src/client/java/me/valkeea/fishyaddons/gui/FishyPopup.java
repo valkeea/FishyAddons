@@ -36,23 +36,22 @@ public class FishyPopup {
     public void render(DrawContext context, net.minecraft.client.font.TextRenderer textRenderer, int mouseX, int mouseY, float delta) {
         int color = 0xFFE2CAE9;
 
-        context.getMatrices().push();
-        context.getMatrices().translate(0, 0, 500);
-        // Draw a semi-transparent background
-        context.fill(x, y, x + width, y + height, 0xAA000000);
-        context.fill(x - 1, y - 1, x + width + 1, y, color);
-        context.fill(x - 1, y + height, x + width + 1, y + height + 1, color);
-        context.fill(x - 1, y, x, y + height, color);
-        context.fill(x + width, y, x + width + 1, y + height, color);
+        me.valkeea.fishyaddons.render.FaLayers.renderAboveOverlay(context, () -> {
+            context.fill(x, y, x + width, y + height, 0x80FF20);
+            context.fill(x - 1, y - 1, x + width + 1, y, color);
+            context.fill(x - 1, y + height, x + width + 1, y + height + 1, color);
+            context.fill(x - 1, y, x, y + height, color);
+            context.fill(x + width, y, x + width + 1, y + height, color);
 
-        context.drawCenteredTextWithShadow(
-            textRenderer,
-            title,
-            x + width / 2, y + 15, 0xFFFF8080
-        );
-        continueButton.render(context, mouseX, mouseY, delta);
-        discardButton.render(context, mouseX, mouseY, delta);
-        context.getMatrices().pop();
+            // draw light aqua title text
+            context.drawCenteredTextWithShadow(
+                textRenderer,
+                title,
+                x + width / 2, y + 15, 0xE2CAE9
+            );
+            continueButton.render(context, mouseX, mouseY, delta);
+            discardButton.render(context, mouseX, mouseY, delta);
+        });
     }
 
     public boolean mouseClicked(double mouseX, double mouseY, int button) {

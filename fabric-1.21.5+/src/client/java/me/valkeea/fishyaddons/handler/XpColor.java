@@ -1,6 +1,7 @@
 package me.valkeea.fishyaddons.handler;
 
 import me.valkeea.fishyaddons.config.FishyConfig;
+import me.valkeea.fishyaddons.config.Key;
 
 public class XpColor {
     private XpColor() {}
@@ -13,24 +14,24 @@ public class XpColor {
     public static boolean isOutlineEnabled() { return isOutlineEnabled; }
 
     public static void refresh() {
-        color = FishyConfig.getInt("xpColor");
-        isEnabled = FishyConfig.getState("xpColorEnabled", false); 
-        isOutlineEnabled = FishyConfig.getState("xpOutline", false);
+        color = FishyConfig.getInt(Key.XP_COLOR);
+        isEnabled = FishyConfig.getState(Key.XP_COLOR_ON, false); 
+        isOutlineEnabled = FishyConfig.getState(Key.XP_OUTLINE, false);
     }
 
     public static void set(int newColor) {
         color = newColor;
-        FishyConfig.setInt("xpColor", newColor);
+        FishyConfig.setInt(Key.XP_COLOR, newColor);
         refresh();
     }
 
     public static void toggle() {
-        FishyConfig.toggle("xpColorEnabled", false);
+        FishyConfig.toggle(Key.XP_COLOR_ON, false);
         refresh();
     }
 
     public static void toggleOutline() {
-        FishyConfig.toggle("xpOutline", false);
+        FishyConfig.toggle(Key.XP_OUTLINE, false);
         refresh();
     }
 }

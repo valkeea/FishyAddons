@@ -6,7 +6,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import me.valkeea.fishyaddons.bridge.ParticleColorAccessor;
-import me.valkeea.fishyaddons.handler.RedstoneColor;
+import me.valkeea.fishyaddons.handler.ParticleVisuals;
 import net.minecraft.client.particle.RedDustParticle;
 import net.minecraft.client.particle.SpriteProvider;
 import net.minecraft.client.world.ClientWorld;
@@ -26,11 +26,15 @@ public abstract class MixinRedDustParticle {
                              double velocityX, double velocityY, double velocityZ,
                              DustParticleEffect parameters, SpriteProvider spriteProvider,
                              CallbackInfo ci) {
-        if (RedstoneColor.cachedIndex() == 0) return;
+        try {
+            if (ParticleVisuals.cachedIndex() == 0) return;
 
-        float[] custom = RedstoneColor.getCustomColor();
-        if (custom != null) {
-            ((ParticleColorAccessor) this).setColor(custom[0], custom[1], custom[2]);
+            float[] custom = ParticleVisuals.getCustomColor();
+            if (custom != null && custom.length == 3) {
+                ((ParticleColorAccessor) this).setColor(custom[0], custom[1], custom[2]);
+            }
+        } catch (Exception e) {
+            // Silently ignore errors to prevent particle spawn failures
         }
     }
 }

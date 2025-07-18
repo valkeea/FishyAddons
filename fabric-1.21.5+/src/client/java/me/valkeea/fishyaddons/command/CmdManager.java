@@ -20,6 +20,7 @@ public class CmdManager {
             registerFaCommand(dispatcher, "fa");
             registerFaCommand(dispatcher, "fishyaddons");
             registerFgCommand(dispatcher, "fg");
+            registerFpCommand(dispatcher, "fp");
         });
     }
     
@@ -34,10 +35,16 @@ public class CmdManager {
             .then(FishyCmd.registerLava())
             .then(FishyCmd.registerQol())
             .then(FishyCmd.registerVisual())
+            .then(FishyCmd.registerSb())
             .then(FishyCmd.registerHud())
             .then(FishyCmd.registerPing())
             .then(FishyCmd.registerCam())
             .then(FishyCmd.registerPos())
+            .then(buildProfitRoot("profit", root + " profit"))
+            .executes(context -> {
+                ProfitTrackerCommand.showUsage();
+                return 1;
+            })
             .then(buildGuardRoot("guard", root + " guard"))
             .executes(context -> {
                 if (FishyCmd.checkGUI() == 1) return 1;
@@ -59,6 +66,20 @@ public class CmdManager {
             if (FishyCmd.checkGUI() == 1) return 1;
             MinecraftClient.getInstance().execute(() ->
                 GuiScheduler.scheduleGui(new SafeguardScreen()));
+            return 1;
+        });
+        return builder;
+    }
+
+    private static void registerFpCommand(CommandDispatcher<FabricClientCommandSource> dispatcher, String root) {
+        dispatcher.register(buildGuardRoot(root, root));
+    }
+
+    private static LiteralArgumentBuilder<FabricClientCommandSource> buildProfitRoot(String rootLiteral, String rootNameForMessages) {
+        LiteralArgumentBuilder<FabricClientCommandSource> builder = ClientCommandManager.literal(rootLiteral);
+        FishyCmd.addProfitSubcommands(builder, rootNameForMessages);
+        builder.executes(context -> {
+            ProfitTrackerCommand.showUsage();
             return 1;
         });
         return builder;

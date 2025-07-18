@@ -59,13 +59,10 @@ public class HudEditScreen extends Screen {
                             popup.init(this.width, this.height);
                         }
                         @Override
-                        public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-                            context.getMatrices().push();
-                            context.getMatrices().translate(0, 0, 700);                           
+                        public void render(DrawContext context, int mouseX, int mouseY, float delta) {   
                             this.renderBackground(context, mouseX, mouseY, delta);
-                            popup.render(context, this.textRenderer, mouseX, mouseY, delta);
                             super.render(context, mouseX, mouseY, delta);
-                            context.getMatrices().pop();
+                            popup.render(context, this.textRenderer, mouseX, mouseY, delta);
                         }
                         @Override
                         public boolean mouseClicked(double mouseX, double mouseY, int button) {
@@ -175,7 +172,6 @@ public class HudEditScreen extends Screen {
 
             if (selectedElement instanceof TitleDisplay) {
                 // Centered box for TitleDisplay
-                String titleText = "Alert Title";
                 int textWidth = this.textRenderer.getWidth("Alert Title");
                 int scaledTextWidth = (int) (textWidth * scale);
                 int boxWidth = Math.max(80, scaledTextWidth + 8);
@@ -219,6 +215,7 @@ public class HudEditScreen extends Screen {
             if (newSize < 8) newSize = 8;
             if (newSize > 80) newSize = 80;
             selectedElement.setHudSize(newSize);
+            selectedElement.invalidateCache();
             return true;
         }
         return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);

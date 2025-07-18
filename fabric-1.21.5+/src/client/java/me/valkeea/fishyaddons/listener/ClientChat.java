@@ -8,6 +8,7 @@ import me.valkeea.fishyaddons.handler.ChatAlert;
 import me.valkeea.fishyaddons.handler.ChatTimers;
 import me.valkeea.fishyaddons.handler.PetInfo;
 import me.valkeea.fishyaddons.render.BeaconRenderer;
+import me.valkeea.fishyaddons.tracker.TrackerUtils;
 import me.valkeea.fishyaddons.util.AreaUtils;
 import me.valkeea.fishyaddons.util.HelpUtil;
 import me.valkeea.fishyaddons.util.SkyblockCheck;
@@ -33,32 +34,47 @@ public class ClientChat {
     public static void init() {
         ClientReceiveMessageEvents.GAME.register((message, overlay) -> {
             String text = message.getString();
-            INSTANCE.onClientChat(text);
-            ChatAlert.handleMatch(text);
-            PetInfo.handleChat(text);
-
-            Pattern coordPattern = Pattern.compile(
-                "\\bx\\s*:\\s*(-?\\d{1,7})\\s*,\\s*y\\s*:\\s*(-?\\d{1,7})\\s*,\\s*z\\s*:\\s*(-?\\d{1,7})\\b",
-                Pattern.CASE_INSENSITIVE
-            );
-            Matcher matcher = coordPattern.matcher(text);
-            if (matcher.find()) {
-                int x = Integer.parseInt(matcher.group(1));
-                int y = Integer.parseInt(matcher.group(2));
-                int z = Integer.parseInt(matcher.group(3));
-                BlockPos newPos = new BlockPos(x, y, z);
-                String label = HelpUtil.stripColor(text.substring(0, matcher.start()).trim());
-                if (label.isEmpty()) {
-                    label = text.substring(matcher.end()).trim();
-                }
-
-                if (!newPos.equals(BeaconRenderer.getActualPos(new Vec3d(newPos))) && 
-                    FishyConfig.getState("renderCoords", false)) {
-                    BeaconRenderer.setBeacon(BeaconRenderer.getActualPos(new Vec3d(newPos)),
-                    FishyConfig.getInt("renderCoordsColor"), label.isEmpty() ? null : label);
-                }
-            }
+            handleGameplayMessages(text);
+            handleCoordinates(text);
+            me.valkeea.fishyaddons.tracker.TrackerUtils.checkForHoverEvents(message);
         });
+        // register also CHAT for debugging purposes
+        ClientReceiveMessageEvents.CHAT.register((message, signedMessage, sender, params, timestamp) -> {
+            String text = message.getString();
+            handleCoordinates(text);
+        });
+    }
+
+    private static void handleGameplayMessages(String text) {
+        INSTANCE.onClientChat(text);
+        ChatAlert.handleMatch(text);
+        PetInfo.handleChat(text);
+        TrackerUtils.handleChat(text);
+    }
+
+    private static void handleCoordinates(String text) {
+        Pattern coordPattern = Pattern.compile(
+            "\\bx\\s*:\\s*(-?\\d{1,7})\\s*,\\s*y\\s*:\\s*(-?\\d{1,7})\\s*,\\s*z\\s*:\\s*(-?\\d{1,7})\\b",
+            Pattern.CASE_INSENSITIVE
+        );
+        Matcher matcher = coordPattern.matcher(text);
+        if (matcher.find()) {
+            int x = Integer.parseInt(matcher.group(1));
+            int y = Integer.parseInt(matcher.group(2));
+            int z = Integer.parseInt(matcher.group(3));
+            BlockPos newPos = new BlockPos(x, y, z);
+            String label = "";
+            int endOfCoords = matcher.end();
+            if (endOfCoords < text.length()) {
+                label = HelpUtil.stripColor(text.substring(endOfCoords).trim());
+            }
+
+            if (!newPos.equals(BeaconRenderer.getActualPos(new Vec3d(newPos))) && 
+                FishyConfig.getState(me.valkeea.fishyaddons.config.Key.RENDER_COORDS, false)) {
+                BeaconRenderer.setBeacon(BeaconRenderer.getActualPos(new Vec3d(newPos)),
+                FishyConfig.getInt("renderCoordsColor"), label);
+            }
+        }
     }
 
     public void onClientChat(String message) {

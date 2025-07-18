@@ -16,4 +16,10 @@ public interface HandledScreenAccessor {
 
     @Accessor("backgroundHeight")
     int getBackgroundHeight();
+    
+    @Accessor("x")
+    int getX();
+    
+    @Accessor("y")
+    int getY();
 }

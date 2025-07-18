@@ -4,9 +4,11 @@ import java.util.Arrays;
 import java.util.List;
 
 import me.valkeea.fishyaddons.config.FishyConfig;
+import me.valkeea.fishyaddons.config.Key;
 import me.valkeea.fishyaddons.handler.CopyChat;
 import me.valkeea.fishyaddons.handler.MobAnimations;
 import me.valkeea.fishyaddons.handler.SkyblockCleaner;
+import me.valkeea.fishyaddons.handler.ItemSearchOverlay;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
@@ -21,10 +23,12 @@ public class QolScreen extends Screen {
     private int keyBtnX, keyBtnY, keyBtnW, keyBtnH;
     private int chatBtnX, chatBtnY, chatBtnW, chatBtnH;
     private int alertBtnX, alertBtnY, alertBtnW, alertBtnH;
+    private int invBtnX, invBtnY, invBtnW, invBtnH;
     private int f5BtnX, f5BtnY, f5BtnW, f5BtnH;
     private int hypBtnX, hypBtnY, hypBtnW, hypBtnH;
     private int rndrBtnX, rndrBtnY, rndrBtnW, rndrBtnH;
     private int copyBtnX, copyBtnY, copyBtnW, copyBtnH;
+    private CompactSlider opacitySlider;
 
     public QolScreen() {
         super(Text.literal("General Qol"));
@@ -88,7 +92,7 @@ public class QolScreen extends Screen {
             rndrBtnX, rndrBtnY, rndrBtnW, rndrBtnH,
             getRndrText(),
             btn -> {
-                FishyConfig.toggle("renderCoords", false);
+                FishyConfig.toggle(Key.RENDER_COORDS, false);
                 btn.setMessage(getRndrText());
             }
         ));
@@ -112,7 +116,7 @@ public class QolScreen extends Screen {
             centerX - 100, centerY - 40, BTNW, BTNH,
             getPingHudText(),
             btn -> {
-                FishyConfig.toggle("pingHud", false);
+                FishyConfig.toggle(Key.HUD_PING_ENABLED, false);
                 btn.setMessage(getPingHudText());
             }
         ));
@@ -132,7 +136,7 @@ public class QolScreen extends Screen {
             copyBtnX, copyBtnY, copyBtnW, copyBtnH,
             getCopyText(),
             btn -> {
-                FishyConfig.toggle("copyChat", true);
+                FishyConfig.toggle(Key.COPY_CHAT, true);
                 btn.setMessage(getCopyText());
                 CopyChat.refresh();
             }
@@ -142,14 +146,35 @@ public class QolScreen extends Screen {
             copyBtnX + BTNW, copyBtnY, 60, BTNH,
             getCopyNotiText(),
             btn -> {
-                FishyConfig.toggle("ccNoti", true);
+                FishyConfig.toggle(Key.COPY_NOTI, true);
                 btn.setMessage(getCopyNotiText());
                 CopyChat.refresh();
             }
-        ));        
+        ));    
+        
+        invBtnX = centerX - 100;
+        invBtnY = centerY + 20;
+        invBtnW = 150;
+        invBtnH = BTNH;
+        
+        addDrawableChild(new FaButton(
+            invBtnX, invBtnY, invBtnW, invBtnH,
+            getInvSearchText(),
+            btn -> {
+                ItemSearchOverlay overlay = ItemSearchOverlay.getInstance();
+                boolean newState = !overlay.isEnabled();
+                overlay.setEnabled(newState);
+                btn.setMessage(getInvSearchText());
+            }
+        ));
+        
+        float currentOpacity = ItemSearchOverlay.getInstance().getOpacity();
+        opacitySlider = new CompactSlider(invBtnX + invBtnW + 10, invBtnY + 4, currentOpacity, opacity -> 
+            ItemSearchOverlay.getInstance().setOpacity(opacity)
+        );
 
         f5BtnX = centerX - 100;
-        f5BtnY = centerY + 20;
+        f5BtnY = centerY + 50;
         f5BtnW = BTNW;  
         f5BtnH = BTNH;
 
@@ -157,13 +182,13 @@ public class QolScreen extends Screen {
             f5BtnX, f5BtnY, f5BtnW, f5BtnH,
             getSkipPerspectiveText(),
             btn -> {
-                FishyConfig.toggle("skipPerspective", false);
+                FishyConfig.toggle(Key.SKIP_F5, false);
                 btn.setMessage(getSkipPerspectiveText());
             }
         ));
 
         hypBtnX = centerX - 100;
-        hypBtnY = centerY + 50;
+        hypBtnY = centerY + 80;
         hypBtnW = BTNW;
         hypBtnH = BTNH;
 
@@ -171,14 +196,14 @@ public class QolScreen extends Screen {
             hypBtnX, hypBtnY, hypBtnW, hypBtnH,
             getHypText(),
             btn -> {
-                FishyConfig.toggle("cleanHype", false);
+                FishyConfig.toggle(Key.CLEAN_HYPE, false);
                 btn.setMessage(getHypText());
                 SkyblockCleaner.refresh();
             }
         ));        
 
         addDrawableChild(new FaButton(
-            centerX - 100, centerY + 70, BTNW, BTNH,
+            centerX - 100, centerY + 100, BTNW, BTNH,
             getDeathText(),
             btn -> {
                 FishyConfig.toggle("deathAni", false);
@@ -188,7 +213,7 @@ public class QolScreen extends Screen {
         ));
 
         addDrawableChild(new FaButton(
-            centerX - 100, centerY + 90, BTNW, BTNH,
+            centerX - 100, centerY + 120, BTNW, BTNH,
             getFireText(),
             btn -> {
                 FishyConfig.toggle("fireAni", false);
@@ -198,40 +223,40 @@ public class QolScreen extends Screen {
         ));
 
         addDrawableChild(new FaButton(
-            centerX - 100, centerY + 160, 80, BTNH,
+            centerX - 100, centerY + 190, 80, BTNH,
             Text.literal("Back").setStyle(Style.EMPTY.withColor(0xFF808080)),
             btn -> MinecraftClient.getInstance().setScreen(new FishyAddonsScreen())
         ));
 
         addDrawableChild(new FaButton(
-            centerX + 20, centerY + 160, 80, BTNH,
+            centerX + 20, centerY + 190, 80, BTNH,
             Text.literal("Close").setStyle(Style.EMPTY.withColor(0xFF808080)),
             btn -> MinecraftClient.getInstance().setScreen(null)
         ));
     }
 
     private Text getRndrText() {
-        return GuiUtil.onOffLabel("Highlight Coordinates", FishyConfig.getState("renderCoords", false));
+        return GuiUtil.onOffLabel("Highlight Coordinates", FishyConfig.getState(Key.RENDER_COORDS, false));
     }  
     
     private Text getPingHudText() {
-        return GuiUtil.onOffLabel("Ping Display", FishyConfig.getState("pingHud", false));
+        return GuiUtil.onOffLabel("Ping Display", FishyConfig.getState(Key.HUD_PING_ENABLED, false));
     }
 
     private Text getSkipPerspectiveText() {
-        return GuiUtil.onOffLabel("Skip Front Perspective", FishyConfig.getState("skipPerspective", false));
+        return GuiUtil.onOffLabel("Skip Front Perspective", FishyConfig.getState(Key.SKIP_F5, false));
     }
 
     private Text getHypText() {
-        return GuiUtil.onOffLabel("Clean Wither Impact", FishyConfig.getState("cleanHype", false));
+        return GuiUtil.onOffLabel("Clean Wither Impact", FishyConfig.getState(Key.CLEAN_HYPE, false));
     }
 
     private Text getCopyText() {
-        return GuiUtil.onOffLabel("Copy Chat", FishyConfig.getState("copyChat", true));
+        return GuiUtil.onOffLabel("Copy Chat", FishyConfig.getState(Key.COPY_CHAT, true));
     } 
     
     private Text getCopyNotiText() {
-        return GuiUtil.onOffLabel("Noti", FishyConfig.getState("ccNoti", true));
+        return GuiUtil.onOffLabel("Noti", FishyConfig.getState(Key.COPY_NOTI, true));
     }
 
     private Text getDeathText() {
@@ -240,6 +265,10 @@ public class QolScreen extends Screen {
 
     private Text getFireText() {
         return GuiUtil.onOffLabel("Skip Mob Fire Animation", FishyConfig.getState("fireAni", false));
+    }
+
+    private static Text getInvSearchText() {
+        return GuiUtil.onOffLabel("Inventory Search", FishyConfig.getState(Key.INV_SEARCH, false));
     }
 
     private static Text getColorButtonText() {
@@ -255,7 +284,16 @@ public class QolScreen extends Screen {
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         this.renderBackground(context, mouseX, mouseY, delta);
         context.drawCenteredTextWithShadow(this.textRenderer, "General Qol", this.width / 2, this.height / 2 - 150, 0xFF55FFFF);
+        
         super.render(context, mouseX, mouseY, delta);
+
+        if (opacitySlider != null) {
+            opacitySlider.render(context, mouseX, mouseY);
+            String percentageText = opacitySlider.getPercentageText();
+            context.drawText(this.textRenderer, percentageText, 
+                opacitySlider.getX() + CompactSlider.getWidth() + 5, 
+                opacitySlider.getY() + 2, 0xFFFFFFFF, false);
+        }    
 
         if (mouseX >= cmdBtnX && mouseX <= cmdBtnX + cmdBtnW && mouseY >= cmdBtnY && mouseY <= cmdBtnY + cmdBtnH) {
             List<Text> tooltipLines = Arrays.asList(
@@ -297,6 +335,28 @@ public class QolScreen extends Screen {
             GuiUtil.fishyTooltip(context, this.textRenderer, tooltipLines, mouseX, mouseY);
         }
 
+        if (mouseX >= invBtnX && mouseX <= invBtnX + invBtnW && mouseY >= invBtnY && mouseY <= invBtnY + invBtnH) {
+            List<Text> tooltipLines = Arrays.asList(
+                Text.literal("Inventory Search:"),
+                Text.literal("- §8Search your inventory"),
+                Text.literal("  §8for items by name/lore"),
+                Text.literal("- §8Right click the textfield"),
+                Text.literal("  §8to toggle search mode")
+            );
+            GuiUtil.fishyTooltip(context, this.textRenderer, tooltipLines, mouseX, mouseY);
+        }
+
+        // Add tooltip for opacity slider
+        if (opacitySlider != null && opacitySlider.isMouseOver(mouseX, mouseY)) {
+            List<Text> tooltipLines = Arrays.asList(
+                Text.literal("Search Overlay Opacity:"),
+                Text.literal("- §8Adjust the darkness of"),
+                Text.literal("  §8the search overlay"),
+                Text.literal("- §8" + opacitySlider.getPercentageText() + " opacity")
+            );
+            GuiUtil.fishyTooltip(context, this.textRenderer, tooltipLines, mouseX, mouseY);
+        }
+
         if (mouseX >= f5BtnX && mouseX <= f5BtnX + f5BtnW && mouseY >= f5BtnY && mouseY <= f5BtnY + f5BtnH) {
             List<Text> tooltipLines = Arrays.asList(
                 Text.literal("Custom F5/Camera:"),
@@ -334,5 +394,29 @@ public class QolScreen extends Screen {
             );
             GuiUtil.fishyTooltip(context, this.textRenderer, tooltipLines, mouseX, mouseY);
         }
+    }
+    
+    @Override
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        if (opacitySlider != null && opacitySlider.mouseClicked(mouseX, mouseY, button)) {
+            return true;
+        }
+        return super.mouseClicked(mouseX, mouseY, button);
+    }
+    
+    @Override
+    public boolean mouseReleased(double mouseX, double mouseY, int button) {
+        if (opacitySlider != null && opacitySlider.mouseReleased(button)) {
+            return true;
+        }
+        return super.mouseReleased(mouseX, mouseY, button);
+    }
+    
+    @Override
+    public boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
+        if (opacitySlider != null && opacitySlider.mouseDragged(mouseX, button)) {
+            return true;
+        }
+        return super.mouseDragged(mouseX, mouseY, button, deltaX, deltaY);
     }
 }

@@ -51,8 +51,8 @@ public class FishyAddonsScreen extends Screen {
 
         addDrawableChild(new FaButton(
             centerX - 100, centerY - 20, BTNW, BTNH,
-            Text.literal("Skills").styled(style -> style.withColor(0xE2CAE9)),
-            btn -> MinecraftClient.getInstance().setScreen(new SkillScreen())
+            Text.literal("Skyblock").styled(style -> style.withColor(0xE2CAE9)),
+            btn -> MinecraftClient.getInstance().setScreen(new SbScreen())
         ));
         
         fgBtnX = centerX - 100;

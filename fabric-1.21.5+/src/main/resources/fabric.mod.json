@@ -3,12 +3,11 @@
 	"id": "fishyaddons",
 	"version": "${version}",
 	"name": "FishyAddons",
-	"description": "Client-side utility mod ported from 1.8.9.",
+	"description": "Skyblock/general utility mod.",
 	"authors": [
 		"valkeea"
 	],
 	"contact": {
-		"homepage": "https://github.com/valkeea/FishyAddons",
 		"sources": "https://github.com/valkeea/FishyAddons"
 	},
 	"license": "GLP-3.0",

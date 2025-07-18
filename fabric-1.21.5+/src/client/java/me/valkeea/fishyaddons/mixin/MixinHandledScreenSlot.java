@@ -24,8 +24,7 @@ public class MixinHandledScreenSlot {
         if (hovered == null) return;
         int index = hovered.id;
         int invIndex = SlotProtectionManager.remap(screen, index );
-        
-        if (invIndex <= 4 || invIndex >= 45) return;
+        if (invIndex <= 4 || invIndex >= 44) return;
         
         boolean isLocked = SlotProtectionManager.isSlotLocked(invIndex);
         boolean isBound = SlotProtectionManager.isSlotBound(invIndex);

@@ -44,7 +44,7 @@ public class FishyKeys {
                     if (hovered != null) {
                         if (hovered == bindStart) {
                             int slotId = SlotProtectionManager.remap(screen, hovered.id);
-                            if (slotId >= 5 && slotId < 45) {
+                            if (isValidSlot(slotId)) {
                                 if (SlotProtectionManager.isSlotLocked(slotId)) {
                                     SlotProtectionManager.unlockSlot(slotId);
                                 } else if (SlotProtectionManager.isSlotBound(slotId)) {
@@ -57,7 +57,7 @@ public class FishyKeys {
                         } else {
                             int startId = SlotProtectionManager.remap(screen, bindStart.id);
                             int endId = SlotProtectionManager.remap(screen, hovered.id);
-                            if (startId >= 5 && startId < 45 && endId >= 5 && endId < 45) {
+                            if (isValidSlot(startId) && isValidSlot(endId)) {
                                 SlotProtectionManager.bindSlots(startId, endId);
                             }
                         }
@@ -78,5 +78,14 @@ public class FishyKeys {
                 KeyShortcut.handleShortcuts();
             }
         });
+    }
+
+    private static boolean isValidSlot(int remapId) {
+        HandledScreen<?> screen = MinecraftClient.getInstance().currentScreen instanceof HandledScreen<?> ? 
+            (HandledScreen<?>) MinecraftClient.getInstance().currentScreen : null;
+        return (screen instanceof net.minecraft.client.gui.screen.ingame.InventoryScreen && 
+            remapId >= 5 && remapId <= 43) ||
+            (screen instanceof net.minecraft.client.gui.screen.ingame.GenericContainerScreen && 
+            remapId >= 9 && remapId <= 43);
     }
 }

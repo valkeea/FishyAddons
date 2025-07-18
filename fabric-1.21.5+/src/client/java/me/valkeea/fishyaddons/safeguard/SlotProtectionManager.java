@@ -53,12 +53,16 @@ public class SlotProtectionManager {
 
     public static int remap(HandledScreen<?> screen, int slotId) {
         String guiClass = screen.getClass().getSimpleName();
-        if (guiClass.equals("class_490") && slotId >= 5 && slotId <= 44) {
+        if (guiClass.equals("class_490") && slotId >= 5 && slotId <= 43) {
             // Player inventory screen
             return slotId;
         } else if (guiClass.equals("class_476")) {
-            // Server gui
-            return slotId - 45;
+            int s = slotId - 45;
+            if (s >= 9 && s <= 43) {
+                return s;
+            } else {
+                return -1;
+            }
         } else {
             return -1;
         }

@@ -25,7 +25,7 @@ public abstract class MixinHandledScreenSlotOverlay {
         HandledScreen<?> screen = (HandledScreen<?>) (Object) this;
         int invIndex = SlotProtectionManager.remap(screen, slot.id);
 
-        if (invIndex <= 8 && invIndex >= 45) {
+        if (invIndex <= 8 && invIndex >= 44) {
             return;
         }
 

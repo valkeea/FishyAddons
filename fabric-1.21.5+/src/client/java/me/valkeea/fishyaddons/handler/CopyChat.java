@@ -3,6 +3,7 @@ package me.valkeea.fishyaddons.handler;
 import java.util.List;
 
 import me.valkeea.fishyaddons.config.FishyConfig;
+import me.valkeea.fishyaddons.config.Key;
 import me.valkeea.fishyaddons.mixin.ChatHudAccessor;
 import me.valkeea.fishyaddons.util.FishyNotis;
 import net.minecraft.client.MinecraftClient;
@@ -19,8 +20,8 @@ public class CopyChat {
     public static boolean isNotiOn() { return isNotiOn; }
 
     public static void refresh() {
-        isOn = FishyConfig.getState("copyChat", true);
-        isNotiOn = FishyConfig.getState("ccNoti", true);
+        isOn = FishyConfig.getState(Key.COPY_CHAT, true);
+        isNotiOn = FishyConfig.getState(Key.COPY_NOTI, true);
     }
 
     public static void tryCopyChat(double mouseX, double mouseY) {

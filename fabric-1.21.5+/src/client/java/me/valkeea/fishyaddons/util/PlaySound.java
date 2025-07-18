@@ -32,7 +32,7 @@ public class PlaySound {
     }
 
     public static void beaconAlarm() {
-        if (mc.player != null && FishyConfig.getState("beaconAlarm", false)) {
+        if (mc.player != null && FishyConfig.getState(me.valkeea.fishyaddons.config.Key.BEACON_ALARM, false)) {
             mc.player.playSound(SoundEvents.BLOCK_BELL_USE, 1.0F, 1.0F);  
         }
     }

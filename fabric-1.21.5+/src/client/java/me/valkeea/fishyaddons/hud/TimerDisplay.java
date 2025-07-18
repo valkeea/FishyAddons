@@ -13,7 +13,7 @@ import net.minecraft.util.Identifier;
 
 public class TimerDisplay implements HudElement {
     private boolean editingMode = false;
-    private static final String HUD_KEY = "timerHud";
+    private static final String HUD_KEY = me.valkeea.fishyaddons.config.Key.HUD_TIMER_ENABLED;
     private HudElementState cachedState = null;
 
     public void register() {

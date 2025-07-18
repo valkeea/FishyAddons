@@ -14,7 +14,7 @@ import net.minecraft.util.Identifier;
 
 public class PingDisplay implements HudElement {
     private boolean editingMode = false;
-    private static final String HUD_KEY = "pingHud";
+    private static final String HUD_KEY = me.valkeea.fishyaddons.config.Key.HUD_PING_ENABLED;
     private HudElementState cachedState = null;
 
     public void register() {

@@ -2,13 +2,10 @@ package me.valkeea.fishyaddons.gui;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Arrays;
-import java.util.List;
 
 import me.valkeea.fishyaddons.config.FishyConfig;
-import me.valkeea.fishyaddons.config.TextureConfig;
-import me.valkeea.fishyaddons.handler.PetInfo;
-import me.valkeea.fishyaddons.handler.RedstoneColor;
+import me.valkeea.fishyaddons.config.Key;
+import me.valkeea.fishyaddons.handler.ParticleVisuals;
 import me.valkeea.fishyaddons.handler.ResourceHandler;
 import me.valkeea.fishyaddons.handler.XpColor;
 import me.valkeea.fishyaddons.tool.FishyMode;
@@ -17,14 +14,12 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
+
 
 public class VisualSettingsScreen extends Screen {
     private static final int BTNW = 200;
     private static final int BTNH = 20;
     private final Map<ButtonWidget, String> islandButtons = new HashMap<>();
-
-    private int petBtnX, petBtnY, petBtnW, petBtnH;
 
     public VisualSettingsScreen() {
         super(Text.literal("Visual Settings"));
@@ -74,8 +69,8 @@ public class VisualSettingsScreen extends Screen {
         addDrawableChild(new FaButton(
             centerX + 100, y, 60, BTNH,
             getCustomButtonText(),
-            btn -> MinecraftClient.getInstance().setScreen(new ColorPickerScreen(this, RedstoneColor.getActiveParticleColor(), color -> {
-                RedstoneColor.setCustomColor(color);
+            btn -> MinecraftClient.getInstance().setScreen(new ColorPickerScreen(this, ParticleVisuals.getActiveParticleColor(), color -> {
+                ParticleVisuals.setCustomColor(color);
                 btn.setMessage(getCustomButtonText());
             }))
         ));   
@@ -113,42 +108,6 @@ public class VisualSettingsScreen extends Screen {
             }
         ));
 
-        y += 30;
-        petBtnX = centerX - 100;
-        petBtnY = y;
-        petBtnW = BTNW;
-        petBtnH = BTNH;
-
-        addDrawableChild(new FaButton(
-            petBtnX, petBtnY, petBtnW, petBtnH,
-            getPetText(),
-            btn -> {
-                FishyConfig.toggle("petHud", false);
-                PetInfo.refresh();
-                btn.setMessage(getPetText());
-            }
-        ));
-
-        addDrawableChild(new FaButton(
-            centerX + 100, y, 60, BTNH,
-            getDynamicText(),
-            btn -> {
-                FishyConfig.toggle("tabTicks", false);
-                PetInfo.refresh();
-                btn.setMessage(getDynamicText());
-            }
-        ));
-
-        addDrawableChild(new FaButton(
-            centerX + 160, y, 60, BTNH,
-            getPetXpText(),
-            btn -> {
-                FishyConfig.toggle("petXpCheck", false);
-                PetInfo.refresh();
-                btn.setMessage(getPetXpText());
-            }
-        ));
-
         y += 60;
 
         addDrawableChild(new FaButton(
@@ -177,12 +136,6 @@ public class VisualSettingsScreen extends Screen {
         return GuiUtil.onOffLabel("Clear Lava", FishyConfig.getState("fishyLava", false));
     }
 
-    private Text getIslandButtonText(String island) {
-        boolean isEnabled = TextureConfig.isIslandTextureEnabled(island);
-        String key = "gui.island_toggle." + island + (isEnabled ? ".enabled" : ".disabled");
-        return Text.literal(key).styled(s -> s.withColor(isEnabled ? 0xCCFFCC : 0xFF8080));
-    }
-
     private static Text getCustomButtonText() {
         if ("custom".equals(FishyConfig.getParticleColorMode())) {
             float[] rgb = FishyConfig.getCustomParticleRGB();
@@ -197,7 +150,7 @@ public class VisualSettingsScreen extends Screen {
     }
 
     private static Text getXpColorText() {
-        return GuiUtil.onOffLabel("XP Color", FishyConfig.getState("xpColorEnabled", false));
+        return GuiUtil.onOffLabel("XP Color", FishyConfig.getState(Key.XP_COLOR_ON, false));
     }
 
     private static Text getCustomXpColorText() {
@@ -206,22 +159,8 @@ public class VisualSettingsScreen extends Screen {
     }  
     
     private static Text getOutlineText() {
-        return GuiUtil.onOffLabel("Outline", FishyConfig.getState("xpOutline", false));
-    }
-
-    private static Text getPetText() {
-        return GuiUtil.onOffLabel("Pet Display", FishyConfig.getState("petHud", false));
-    }
-
-    private static Text getDynamicText() {
-        boolean isEnabled = FishyConfig.getState("tabTicks", false);
-        String title = "Dynamic";
-        return Text.literal(title).styled(s -> s.withColor(isEnabled ? 0xCCFFCC : 0xFF8080));
-    }
-
-    private static Text getPetXpText() {
-        boolean isEnabled = FishyConfig.getState("petXpCheck", false);
-        String title = "Include XP";
+        boolean isEnabled = FishyConfig.getState(Key.XP_OUTLINE, false);
+        String title = "Outline";
         return Text.literal(title).styled(s -> s.withColor(isEnabled ? 0xCCFFCC : 0xFF8080));
     }
 
@@ -232,16 +171,6 @@ public class VisualSettingsScreen extends Screen {
         String title = "Visual Settings";
         context.drawCenteredTextWithShadow(this.textRenderer, title, this.width / 2, this.height / 4 - 20, 0xFF55FFFF);
         super.render(context, mouseX, mouseY, delta);
-
-        if (mouseX >= petBtnX && mouseX <= petBtnX + petBtnW && mouseY >= petBtnY && mouseY <= petBtnY + petBtnH) {
-            List<Text> tooltipLines = Arrays.asList(
-                Text.literal("Renders Tablist info:"),
-                Text.literal("- §8On chat match, unless dynamic"),
-                Text.literal("  §8is enabled"),
-                Text.literal("- §8Dynamic scans once per second")
-            );
-            GuiUtil.fishyTooltip(context, this.textRenderer, tooltipLines, mouseX, mouseY);
-        }
     }
 
     private static class ParticleColorSlider extends ThemedSlider {

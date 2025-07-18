@@ -1,6 +1,7 @@
 package me.valkeea.fishyaddons.handler;
 
 import me.valkeea.fishyaddons.config.FishyConfig;
+import me.valkeea.fishyaddons.config.Key;
 import net.minecraft.registry.Registries;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.Identifier;
@@ -40,7 +41,7 @@ public class SkyblockCleaner {
     }
 
     public static void refresh() {
-        hypeOn = FishyConfig.getState("cleanHype", false);
-        phantomOn = FishyConfig.getState("mutePhantom", false);
+        hypeOn = FishyConfig.getState(Key.CLEAN_HYPE, false);
+        phantomOn = FishyConfig.getState(Key.MUTE_PHANTOM, false);
     }    
 }

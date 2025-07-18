@@ -17,7 +17,7 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 public class FishyConfig {
-    private FishyConfig() {} // Prevent instantiation
+    private FishyConfig() {}
     private static final File CONFIG_FILE;
     private static final File BACKUP_DIR;
     private static final File BACKUP_FILE;
@@ -174,39 +174,6 @@ public class FishyConfig {
             new TypeToken<Map<String, Object>>(){}.getType(),
             v -> save());
 
-
-    // --- Config keys ---
-    public static final String HUD_PING_X = "pingHudX";
-    public static final String HUD_PING_Y = "pingHudY";
-    public static final String HUD_PING_ENABLED = "pingHud";
-    public static final String HUD_PING_SIZE = "pingHudSize";
-    public static final String HUD_PING_COLOR = "pingHudColor";
-    public static final String HUD_TIMER_X = "timerHudX";
-    public static final String HUD_TIMER_Y = "timerHudY";
-    public static final String HUD_TIMER_ENABLED = "timerHud";
-    public static final String HUD_TIMER_SIZE = "timerHudSize";
-    public static final String HUD_TIMER_COLOR = "timerHudColor";
-    public static final String HUD_TITLE_X = "titleHudX";
-    public static final String HUD_TITLE_Y = "titleHudY";
-    public static final String HUD_TITLE_SIZE = "titleHudSize";
-    public static final String HUD_PET_X = "petHudX";
-    public static final String HUD_PET_Y = "petHudY";
-    public static final String HUD_PET_SIZE = "petHudSize";
-    public static final String HUD_PET_COLOR = "petHudColor";
-    public static final String RENDER_COORD_COLOR = "renderCoordsColor";
-    public static final String XP_COLOR = "xpColor";
-    public static final String HD_FONT = "hdFont";
-    public static final String FISHY_GUI = "fishyGui";
-    private static final String CUSTOM_PARTICLE_COLOR_INDEX = "customParticleColorIndex";
-    private static final String CUSTOM_PARTICLE_MODE = "customParticleMode";
-    private static final String SKIP_F5 = "skipPerspective";
-    private static final String CLEAN_HYPE = "cleanHype";
-    private static final String MUTE_PHANTOM = "mutePhantom";
-    private static final String RENDER_COORDS = "renderCoords";
-    private static final String BEACON_ALARM = "beaconAlarm";
-    private static final String COPY_CHAT = "copyChat";
-    private static final String COPY_NOTI = "ccNoti";
-
     // Generalized HUD position getters/setters
     public static int getHudX(String hudKey, int defaultX) {
         Object value = hud.getValues().getOrDefault(hudKey + "X", defaultX);
@@ -307,43 +274,58 @@ public class FishyConfig {
         load();
 
         if (firstLoad) {
-            commandAliases.set("/m7", "/joininstance MASTER_CATACOMBS_FLOOR_SEVEN");
-            keybinds.set("MOUSE3", "/pets");
-            chatReplacements.set(":cat:", "ᗢᘏᓗ");            
-            chatReplacements.set(":hi:", "ඞ");
-            chatReplacements.set("heiiii", "Any string will be replaced one to one");
-            settings.set("fishyLava", false);
-            settings.set(RENDER_COORD_COLOR, -5653771);            
-            settings.set(CUSTOM_PARTICLE_COLOR_INDEX, Integer.valueOf(1));
-            settings.set(XP_COLOR, 0xD0D1FF);
-            settings.set(HD_FONT, false);
-            settings.set(FISHY_GUI, false);
-            settings.set(SKIP_F5, false);
-            settings.set(CLEAN_HYPE, false);
-            settings.set(MUTE_PHANTOM, false);
-            settings.set(RENDER_COORDS, true);
-            settings.set(COPY_CHAT, true);
-            settings.set(COPY_NOTI, true);
-            settings.set(CUSTOM_PARTICLE_MODE, "preset");
-            settings.set(BEACON_ALARM, true);
-            settings.set(HUD_PING_ENABLED, false);
-            settings.set(HUD_TIMER_ENABLED, true);
-            hud.set(HUD_PING_X, 5);
-            hud.set(HUD_PING_Y, 12);
-            hud.set(HUD_PING_SIZE, 12);
-            hud.set(HUD_PING_COLOR, 1.5649516E7);
-            hud.set(HUD_TIMER_X, 5);
-            hud.set(HUD_TIMER_Y, 28);
-            hud.set(HUD_TIMER_SIZE, 12);
-            hud.set(HUD_TIMER_COLOR, 1.3228737E7);
-            hud.set(HUD_TITLE_X, 600);
-            hud.set(HUD_TITLE_Y, 120);
-            hud.set(HUD_TITLE_SIZE, 55);
-            hud.set(HUD_PET_X, 601);
-            hud.set(HUD_PET_Y, 486);
-            hud.set(HUD_PET_SIZE, 12);
-            hud.set(HUD_PET_COLOR, 1.5649516E7);
-            modKeys.set("lockKey", "GLFW_KEY_SEMICOLON");
+        commandAliases.set("/m7", "/joininstance MASTER_CATACOMBS_FLOOR_SEVEN");
+        keybinds.set("MOUSE3", "/pets");
+        chatReplacements.set(":cat:", "ᗢᘏᓗ");
+        chatReplacements.set(":hi:", "ඞ");
+        chatReplacements.set("heiiii", "Any string will be replaced one to one");
+        settings.set("fishyLava", false);
+        settings.set(Key.RENDER_COORD_COLOR, -5653771);
+        settings.set(Key.CUSTOM_PARTICLE_COLOR_INDEX, Integer.valueOf(1));
+        settings.set(Key.XP_COLOR, 0xD0D1FF);
+        settings.set(Key.HD_FONT, false);
+        settings.set(Key.FISHY_GUI, false);
+        settings.set(Key.SKIP_F5, false);
+        settings.set(Key.CLEAN_HYPE, false);
+        settings.set(Key.MUTE_PHANTOM, false);
+        settings.set(Key.RENDER_COORDS, true);
+        settings.set(Key.COPY_CHAT, true);
+        settings.set(Key.COPY_NOTI, true);
+        settings.set(Key.CUSTOM_PARTICLE_MODE, "preset");
+        settings.set(Key.BEACON_ALARM, true);
+        settings.set(Key.HUD_PING_ENABLED, false);
+        settings.set(Key.HUD_TIMER_ENABLED, true);
+        settings.set(Key.HUD_PET_ENABLED, false);
+        settings.set(Key.HUD_PETXP, true);
+        settings.set(Key.HUD_PET_DYNAMIC, true);
+        settings.set(Key.TRACK_SACK, false);
+        settings.set(Key.DMG_SCALE, 0.15f);
+        settings.set(Key.SCALE_CRIT, false);
+        settings.set(Key.INV_SEARCH, false);
+        settings.set(Key.RENDER_COORDS, true);
+        hud.set(Key.HUD_PING_X, 5);
+        hud.set(Key.HUD_PING_Y, 12);
+        hud.set(Key.HUD_PING_SIZE, 12);
+        hud.set(Key.HUD_PING_COLOR, 1.5649516E7);
+        hud.set(Key.HUD_TIMER_X, 5);
+        hud.set(Key.HUD_TIMER_Y, 28);
+        hud.set(Key.HUD_TIMER_SIZE, 12);
+        hud.set(Key.HUD_TIMER_COLOR, 1.3228737E7);
+        hud.set(Key.HUD_TITLE_X, 600);
+        hud.set(Key.HUD_TITLE_Y, 120);
+        hud.set(Key.HUD_TITLE_SIZE, 55);
+        hud.set(Key.HUD_PET_X, 601);
+        hud.set(Key.HUD_PET_Y, 486);
+        hud.set(Key.HUD_PET_SIZE, 12);
+        hud.set(Key.HUD_PET_COLOR, 1.5649516E7);
+        hud.set(Key.HUD_TRACKER_X, 5);
+        hud.set(Key.HUD_TRACKER_Y, 44);
+        hud.set(Key.HUD_TRACKER_SIZE, 12);
+        hud.set(Key.HUD_TRACKER_COLOR, 1.5649516E7);
+        hud.set(Key.HUD_SEARCH_X, 400);
+        hud.set(Key.HUD_SEARCH_Y, 70);
+        hud.set(Key.HUD_SEARCH_SIZE, 14);
+        modKeys.set("lockKey", "GLFW_KEY_SEMICOLON");
             save();
         }
     }
@@ -494,12 +476,12 @@ public class FishyConfig {
     // --- Custom Redstone Particle API ---
 
     public static int getCustomParticleColorIndex() {
-        Object value = settings.getValues().get(CUSTOM_PARTICLE_COLOR_INDEX);
+        Object value = settings.getValues().get(Key.CUSTOM_PARTICLE_COLOR_INDEX);
         return value instanceof Number number ? number.intValue() : 1;
     }
 
     public static void setCustomParticleColorIndex(int index) {
-        settings.set(CUSTOM_PARTICLE_COLOR_INDEX, index);
+        settings.set(Key.CUSTOM_PARTICLE_COLOR_INDEX, index);
         save();
     }
 
@@ -515,12 +497,12 @@ public class FishyConfig {
     }
 
     public static String getParticleColorMode() {
-        Object value = settings.getValues().getOrDefault(CUSTOM_PARTICLE_MODE, "preset");
+        Object value = settings.getValues().getOrDefault(Key.CUSTOM_PARTICLE_MODE, "preset");
         return value instanceof String string ? string : "preset";
     }
 
     public static void setParticleColorMode(String mode) {
-        settings.set(CUSTOM_PARTICLE_MODE, mode);
+        settings.set(Key.CUSTOM_PARTICLE_MODE, mode);
         save();
     }    
 
@@ -565,6 +547,16 @@ public class FishyConfig {
     }
 
     public static void setString(String key, String value) {
+        settings.set(key, value);
+        save();
+    }
+
+    public static float getFloat(String key, float def) {
+        Object v = settings.getValues().getOrDefault(key, def);
+        return v instanceof Number n ? n.floatValue() : def;
+    }
+
+    public static void setFloat(String key, float value) {
         settings.set(key, value);
         save();
     }

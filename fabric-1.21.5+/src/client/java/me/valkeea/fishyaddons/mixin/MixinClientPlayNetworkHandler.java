@@ -8,8 +8,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import me.valkeea.fishyaddons.handler.ClientPing;
 import me.valkeea.fishyaddons.handler.PetInfo;
 import me.valkeea.fishyaddons.handler.TabScanner;
+import me.valkeea.fishyaddons.tracker.InventoryTracker;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.network.packet.s2c.play.PlayerListS2CPacket;
+import net.minecraft.network.packet.s2c.play.ScreenHandlerSlotUpdateS2CPacket;
 import net.minecraft.network.packet.s2c.query.PingResultS2CPacket;
 
 
@@ -31,4 +33,19 @@ public class MixinClientPlayNetworkHandler {
             TabScanner.onUpdate();
         }
     }    
+    
+    @Inject(
+        method = "onScreenHandlerSlotUpdate",
+        at = @At("TAIL")
+    )
+    private void onSlotUpdate(ScreenHandlerSlotUpdateS2CPacket packet, CallbackInfo ci) {
+        // Check if this is the player's inventory (syncId 0) and != slot 5 (helmet)
+        if (packet.getSyncId() == 0) {
+            int slotId = packet.getSlot();
+            net.minecraft.item.ItemStack stack = packet.getStack();
+            if (!stack.isEmpty() && slotId != 5) {
+                InventoryTracker.onItemAdded(stack);
+            }
+        }
+    }
 }

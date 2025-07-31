@@ -118,7 +118,7 @@ public class ItemSearchOverlay {
             return;
         }
         context.getMatrices().push();
-        context.getMatrices().translate(0, 0, 300); // Render above everything
+        context.getMatrices().translate(0, 0, 700);
         HandledScreenAccessor accessor = (HandledScreenAccessor) screen;
         int guiX = accessor.getX();
         int guiY = accessor.getY();

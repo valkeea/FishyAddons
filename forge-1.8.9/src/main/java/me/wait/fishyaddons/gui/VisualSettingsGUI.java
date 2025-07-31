@@ -1,5 +1,10 @@
 package me.wait.fishyaddons.gui;
 
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import me.wait.fishyaddons.config.ConfigHandler;
 import me.wait.fishyaddons.config.TextureConfig;
 import me.wait.fishyaddons.handlers.RetexHandler;
@@ -8,23 +13,19 @@ import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.resources.I18n;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.List;
-import java.util.Arrays;
-
 public class VisualSettingsGUI extends GuiScreen {
     private static final int BACK_BUTTON_ID = 0;
     private static final int SESSION_TOGGLE_BUTTON_ID = 1;
     private static final int COMPLETE_TOGGLE_BUTTON_ID = 2;
     private static final int LAVA_TOGGLE_BUTTON_ID = 3;
+    private static final int HOTSPOT_TOGGLE_BUTTON_ID = 5;
     private static final int ISLAND_BUTTON_OFFSET = 4;
 
     private GuiButton backButton;
     private GuiButton allToggleButton;
     private GuiButton statusToggleButton;
     private GuiButton toggleFishyLavaButton;
+    private GuiButton toggleHotspotButton;
 
     private final Map<Integer, String> buttonIdToIsland = new HashMap<>();
 
@@ -44,8 +45,11 @@ public class VisualSettingsGUI extends GuiScreen {
 
         y += 30;
 
-        toggleFishyLavaButton = new GuiButton(LAVA_TOGGLE_BUTTON_ID, centerX - 70, y, 140, 20, getLavaToggleText());
+        toggleFishyLavaButton = new GuiButton(LAVA_TOGGLE_BUTTON_ID, centerX - 150, y, 140, 20, getLavaToggleText());
         buttonList.add(toggleFishyLavaButton);
+
+        toggleHotspotButton = new GuiButton(HOTSPOT_TOGGLE_BUTTON_ID, centerX + 10, y, 140, 20, getHotspotToggleText());
+        buttonList.add(toggleHotspotButton);
 
         y += 30;
 
@@ -74,6 +78,10 @@ public class VisualSettingsGUI extends GuiScreen {
 
     private String getLavaToggleText() {
         return ConfigHandler.isFishyLavaEnabled() ? "Clear Lava §aON" : "Clear Lava §cOFF";
+    }
+
+    private String getHotspotToggleText() {
+        return ConfigHandler.isHideHotspotEnabled() ? "Hide Hotspot §aON" : "Hide Hotspot §cOFF";
     }
 
     private String getIslandButtonText(String island) {
@@ -110,6 +118,11 @@ public class VisualSettingsGUI extends GuiScreen {
             ConfigHandler.setFishyLavaEnabled(!ConfigHandler.isFishyLavaEnabled());
             ConfigHandler.saveConfigIfNeeded();
             button.displayString = getLavaToggleText();
+        } else if (button.id == HOTSPOT_TOGGLE_BUTTON_ID) {
+            ConfigHandler.setHideHotspotEnabled(!ConfigHandler.isHideHotspotEnabled());
+            ConfigHandler.saveConfigIfNeeded();
+            button.displayString = getHotspotToggleText();
+            me.wait.fishyaddons.handlers.SkyblockCleaner.refresh();    
         } else if (buttonIdToIsland.containsKey(button.id)) {
             String island = buttonIdToIsland.get(button.id);
             boolean isEnabled = TextureConfig.isIslandTextureEnabled(island);
@@ -129,6 +142,7 @@ public class VisualSettingsGUI extends GuiScreen {
         allToggleButton.packedFGColour = TextureConfig.isAllToggled() ? 0xFFCCFFCC : 0xFFFF8080;
         statusToggleButton.packedFGColour = TextureConfig.isRetexStatus() ? 0xFFCCFFCC : 0xFFFF8080;
         toggleFishyLavaButton.packedFGColour = ConfigHandler.isFishyLavaEnabled() ? 0xFFCCFFCC : 0xFFFF8080;
+        toggleHotspotButton.packedFGColour = ConfigHandler.isHideHotspotEnabled() ? 0xFFCCFFCC : 0xFFFF8080;
 
         super.drawScreen(mouseX, mouseY, partialTicks);
 

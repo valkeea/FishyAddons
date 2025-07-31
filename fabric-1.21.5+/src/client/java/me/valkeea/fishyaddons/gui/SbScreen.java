@@ -25,6 +25,7 @@ public class SbScreen extends Screen {
     private static final String TRACKER_TEXT = "Profit Tracker";
     private CompactSlider dmgScaleSlider;
     private CompactSlider minValueSlider;
+    private CompactSlider hotspotDistanceSlider;
     private int petBtnX, petBtnY, petBtnW, petBtnH;
     private int trackBtnX, trackBtnY, trackBtnW, trackBtnH;  
     private int dmgBtnX, dmgBtnY, dmgBtnW, dmgBtnH;
@@ -51,6 +52,29 @@ public class SbScreen extends Screen {
                 btn.setFocused(false);
             }
         ));
+
+        by += 30;
+
+        addDrawableChild(new FaButton(
+            centerX - 100, by, BTNW, BTNH,
+            getHotspotText(),
+            btn -> {
+                FishyConfig.toggle(Key.HIDE_HOTSPOT, false);
+                btn.setMessage(getHotspotText());
+                SkyblockCleaner.refresh();
+                btn.setFocused(false);
+            }
+        ));
+
+        float currentDistance = FishyConfig.getFloat(Key.HOTSPOT_DISTANCE, 7.0f);
+        hotspotDistanceSlider = new CompactSlider(
+            centerX + 110, by, currentDistance,
+            0.0f, 20.0f, "%.1f",
+            newDistance -> {
+                FishyConfig.setFloat(Key.HOTSPOT_DISTANCE, newDistance);
+                SkyblockCleaner.refresh();
+            }
+        );
 
         by += 30;
 
@@ -214,7 +238,18 @@ public class SbScreen extends Screen {
             0, 100000, "%.0f", v -> {
                 FishyConfig.setFloat("minItemValue", v);
                 TrackerDisplay.refreshDisplay();
-            });        
+        });    
+        
+        by += 30;
+
+        addDrawableChild(new FaButton(
+            centerX - 100, by, BTNW, BTNH,
+            getBookAlertText(),
+            btn -> {
+                FishyConfig.toggle(Key.BOOK_DROP_ALERT, true);
+                btn.setMessage(getBookAlertText());
+            }
+        ));
 
         by += 60;
 
@@ -241,7 +276,11 @@ public class SbScreen extends Screen {
 
     private Text getPhantomText() {
         return GuiUtil.onOffLabel("Mute Phantoms", FishyConfig.getState(Key.MUTE_PHANTOM, false));
-    }   
+    }  
+    
+    private Text getHotspotText() {
+        return GuiUtil.onOffLabel("Hide Hotspot", FishyConfig.getState(Key.HIDE_HOTSPOT, false));
+    }
     
     private static Text getPetText() {
         return GuiUtil.onOffLabel("Pet Display", FishyConfig.getState(Key.HUD_PET_ENABLED, false));
@@ -279,6 +318,12 @@ public class SbScreen extends Screen {
         return Text.literal(title).styled(s -> s.withColor(isEnabled ? 0xCCFFCC : 0xFF8080));
     }
 
+    private static Text getBookAlertText() {
+        boolean isEnabled = FishyConfig.getState(Key.BOOK_DROP_ALERT, true);
+        String title = "Send Tracked Books in Chat";
+        return Text.literal(title).styled(s -> s.withColor(isEnabled ? 0xCCFFCC : 0xFF8080));
+    }
+
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         this.renderBackground(context, mouseX, mouseY, delta);
@@ -306,6 +351,14 @@ public class SbScreen extends Screen {
             context.drawText(this.textRenderer, valueText, 
                 minValueSlider.getX() + CompactSlider.getWidth() + 5, 
                 minValueSlider.getY() + 2, 0xFFFFFFFF, false);
+        }
+        
+        if (hotspotDistanceSlider != null) {
+            hotspotDistanceSlider.render(context, mouseX, mouseY);
+            String distanceText = hotspotDistanceSlider.getValue() <= 0.0f ? "Always" : hotspotDistanceSlider.getPercentageText() + " blocks";
+            context.drawText(this.textRenderer, distanceText, 
+                hotspotDistanceSlider.getX() + CompactSlider.getWidth() + 5, 
+                hotspotDistanceSlider.getY() + 2, 0xFFFFFFFF, false);
         }
      
         if (mouseX >= petBtnX && mouseX <= petBtnX + petBtnW && mouseY >= petBtnY && mouseY <= petBtnY + petBtnH) {
@@ -369,6 +422,16 @@ public class SbScreen extends Screen {
             );
             GuiUtil.fishyTooltip(context, this.textRenderer, tooltipLines, mouseX, mouseY);
         }
+
+        if (hotspotDistanceSlider != null && hotspotDistanceSlider.isMouseOver(mouseX, mouseY)) {
+            List<Text> tooltipLines = Arrays.asList(
+                Text.literal("Hotspot Hide Distance:"),
+                Text.literal("- §80 blocks = Always hide"),
+                Text.literal("- §8>0 blocks = Hide within range"),
+                Text.literal("- §8Current: " + (hotspotDistanceSlider.getValue() <= 0.0f ? "Always" : hotspotDistanceSlider.getPercentageText() + " blocks"))
+            );
+            GuiUtil.fishyTooltip(context, this.textRenderer, tooltipLines, mouseX, mouseY);
+        }
     } 
     
     @Override
@@ -377,6 +440,9 @@ public class SbScreen extends Screen {
             return true;
         }
         if (minValueSlider != null && minValueSlider.mouseClicked(mouseX, mouseY, button)) {
+            return true;
+        }
+        if (hotspotDistanceSlider != null && hotspotDistanceSlider.mouseClicked(mouseX, mouseY, button)) {
             return true;
         }
         return super.mouseClicked(mouseX, mouseY, button);
@@ -390,6 +456,9 @@ public class SbScreen extends Screen {
         if (minValueSlider != null && minValueSlider.mouseReleased(button)) {
             return true;
         }
+        if (hotspotDistanceSlider != null && hotspotDistanceSlider.mouseReleased(button)) {
+            return true;
+        }
         return super.mouseReleased(mouseX, mouseY, button);
     }
     
@@ -399,6 +468,9 @@ public class SbScreen extends Screen {
             return true;
         }
         if (minValueSlider != null && minValueSlider.mouseDragged(mouseX, button)) {
+            return true;
+        }
+        if (hotspotDistanceSlider != null && hotspotDistanceSlider.mouseDragged(mouseX, button)) {
             return true;
         }
         return super.mouseDragged(mouseX, mouseY, button, deltaX, deltaY);

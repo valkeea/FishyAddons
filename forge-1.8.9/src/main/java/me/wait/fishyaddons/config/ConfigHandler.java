@@ -1,26 +1,33 @@
 package me.wait.fishyaddons.config;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonObject;
-import com.google.gson.reflect.TypeToken;
-import com.google.gson.JsonSyntaxException;
-import com.google.gson.stream.MalformedJsonException;
-import me.wait.fishyaddons.handlers.KeybindHandler;
-import me.wait.fishyaddons.handlers.FishyLavaHandler;
-import me.wait.fishyaddons.event.ClientConnectedToServer;
-import me.wait.fishyaddons.handlers.AliasHandler;
-import me.wait.fishyaddons.util.SkyblockCheck;
-import com.google.gson.stream.MalformedJsonException;
-
-import java.io.*;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.Reader;
+import java.io.Writer;
 import java.lang.reflect.Type;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonSyntaxException;
+import com.google.gson.reflect.TypeToken;
+import com.google.gson.stream.MalformedJsonException;
+
+import me.wait.fishyaddons.event.ClientConnectedToServer;
+import me.wait.fishyaddons.handlers.AliasHandler;
+import me.wait.fishyaddons.handlers.ArmorStandHandler;
+import me.wait.fishyaddons.handlers.FishyLavaHandler;
+import me.wait.fishyaddons.handlers.KeybindHandler;
+import me.wait.fishyaddons.handlers.SkyblockCleaner;
+
 public class ConfigHandler {
+    private ConfigHandler() {}
     private static final File CONFIG_FILE = new File("config/fishyaddons/fishyaddons.json");
     private static final File BACKUP_DIR = new File("config/fishyaddons/backup");
     private static final File BACKUP_FILE = new File(BACKUP_DIR, "fishyaddons.json");
@@ -38,6 +45,7 @@ public class ConfigHandler {
     private static boolean recreatedConfig = false;
     private static boolean restoredConfig = false;
     private static boolean isFishyLavaEnabled = true;
+    private static boolean isHideHotspotEnabled = true;
     private static boolean customParticlesEnabled = true;
     private static boolean configChanged = false;
 
@@ -51,8 +59,8 @@ public class ConfigHandler {
     }
 
     public static void init() {
-        CONFIG_FILE.getParentFile().mkdirs(); // Ensure the config directory exists
-        BACKUP_DIR.mkdirs(); // Ensure the backup directory exists
+        CONFIG_FILE.getParentFile().mkdirs();
+        BACKUP_DIR.mkdirs();
         load();
     }
 
@@ -129,6 +137,9 @@ public class ConfigHandler {
             if (json.has("isFishyLavaEnabled")) {
                 isFishyLavaEnabled = json.get("isFishyLavaEnabled").getAsBoolean();
             }
+            if (json.has("isHideHotspotEnabled")) {
+                isHideHotspotEnabled = json.get("isHideHotspotEnabled").getAsBoolean();
+            }
         } catch (JsonSyntaxException | MalformedJsonException e) {
             System.err.println("[TextureConfig] Malformed JSON detected: " + e.getMessage());
             loadOrRestore();
@@ -153,6 +164,7 @@ public class ConfigHandler {
             json.addProperty("green", green);
             json.addProperty("blue", blue);
             json.addProperty("isFishyLavaEnabled", isFishyLavaEnabled);
+            json.addProperty("isHideHotspotEnabled", isHideHotspotEnabled);
 
             GSON.toJson(json, writer);
         } catch (IOException e) {
@@ -278,6 +290,17 @@ public class ConfigHandler {
         markConfigChanged();
         ClientConnectedToServer.refreshServerData();
         FishyLavaHandler.updateRegistration();
+    }
+
+    public static boolean isHideHotspotEnabled() {
+        return isHideHotspotEnabled;
+    }
+
+    public static void setHideHotspotEnabled(boolean enabled) {
+        isHideHotspotEnabled = enabled;
+        markConfigChanged();
+        SkyblockCleaner.refresh();
+        ArmorStandHandler.updateRegistration();
     }
 
     public static Map<String, String> getCommandAliases() {

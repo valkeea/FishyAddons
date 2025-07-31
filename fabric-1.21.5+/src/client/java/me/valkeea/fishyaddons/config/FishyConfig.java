@@ -303,6 +303,10 @@ public class FishyConfig {
         settings.set(Key.SCALE_CRIT, false);
         settings.set(Key.INV_SEARCH, false);
         settings.set(Key.RENDER_COORDS, true);
+        settings.set(Key.HIDE_HOTSPOT, false);
+        settings.set(Key.HOTSPOT_DISTANCE, 7.0f);
+        settings.set(Key.PRICE_TYPE, "sellPrice");
+        settings.set(Key.BOOK_DROP_ALERT, true);
         hud.set(Key.HUD_PING_X, 5);
         hud.set(Key.HUD_PING_Y, 12);
         hud.set(Key.HUD_PING_SIZE, 12);

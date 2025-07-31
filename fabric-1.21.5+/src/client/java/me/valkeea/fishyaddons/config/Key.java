@@ -58,5 +58,9 @@ public class Key {
     public static final String COPY_CHAT = "copyChat";
     public static final String COPY_NOTI = "ccNoti";
     public static final String INV_SEARCH = "invSearch";
+    public static final String PRICE_TYPE = "priceType";
+    public static final String HIDE_HOTSPOT = "hideHotspot";
+    public static final String HOTSPOT_DISTANCE = "hotspotDistance";
+    public static final String BOOK_DROP_ALERT = "bookDropAlert";
 
 }

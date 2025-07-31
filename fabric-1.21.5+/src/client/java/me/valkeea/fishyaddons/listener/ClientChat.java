@@ -38,11 +38,6 @@ public class ClientChat {
             handleCoordinates(text);
             me.valkeea.fishyaddons.tracker.TrackerUtils.checkForHoverEvents(message);
         });
-        // register also CHAT for debugging purposes
-        ClientReceiveMessageEvents.CHAT.register((message, signedMessage, sender, params, timestamp) -> {
-            String text = message.getString();
-            handleCoordinates(text);
-        });
     }
 
     private static void handleGameplayMessages(String text) {

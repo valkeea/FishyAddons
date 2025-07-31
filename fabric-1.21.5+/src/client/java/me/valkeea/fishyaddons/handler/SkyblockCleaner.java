@@ -12,6 +12,8 @@ public class SkyblockCleaner {
     private SkyblockCleaner() {}
     private static boolean hypeOn = false;
     private static boolean phantomOn = false;
+    private static boolean hideHotspot = false;
+    private static float hotspotDistance = 0.0f;
 
     private static final Set<Identifier> HYPE_SOUNDS = Set.of(
         Registries.SOUND_EVENT.getId(SoundEvents.ENTITY_GENERIC_EXPLODE.value()),
@@ -40,8 +42,18 @@ public class SkyblockCleaner {
         return phantomOn && PHANTOM_SOUNDS.contains(soundId);
     }
 
+    public static boolean shouldHideHotspot() {
+        return hideHotspot;
+    }
+
+    public static float getHotspotDistance() {
+        return hotspotDistance;
+    }
+
     public static void refresh() {
         hypeOn = FishyConfig.getState(Key.CLEAN_HYPE, false);
         phantomOn = FishyConfig.getState(Key.MUTE_PHANTOM, false);
+        hideHotspot = FishyConfig.getState(Key.HIDE_HOTSPOT, false);
+        hotspotDistance = FishyConfig.getFloat(Key.HOTSPOT_DISTANCE, 7.0f);
     }    
 }

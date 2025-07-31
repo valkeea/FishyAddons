@@ -22,6 +22,7 @@ public class ClientTick {
             if (client.world != null && client.world.getTime() % 600 == 0) {
                 me.valkeea.fishyaddons.util.EntityTracker.cleanup();
                 me.valkeea.fishyaddons.util.EntityTracker.cleanVal();
+                me.valkeea.fishyaddons.tracker.InventoryTracker.cleanup();
             }
         });
     }    

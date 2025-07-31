@@ -192,25 +192,19 @@ public class ChatDropParser {
             -1, 1
         ));
         
-        // Pattern 14: "CHARM You charmed a CreatureName and captured X Shards"
+        // Pattern 14: "CHARM You charmed a CreatureName and captured X Shards from it"
         DROP_PATTERNS.add(new DropPattern(
-            Pattern.compile("charm\\s+you charmed an?\\s+(.+?)\\s+and captured (\\d+)\\s+shards?", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("(?:salt|charm)\\s+you charmed an?\\s+(.+?)\\s+and captured (\\d+)\\s+shards? from it", Pattern.CASE_INSENSITIVE),
             2, 1
         ));
         
-        // Pattern 15: "CHARM You charmed a CreatureName and captured X Shards from it"
-        DROP_PATTERNS.add(new DropPattern(
-            Pattern.compile("charm\\s+you charmed an?\\s+(.+?)\\s+and captured (\\d+)\\s+shards? from it", Pattern.CASE_INSENSITIVE),
-            2, 1
-        ));
-        
-        // Pattern 16: "CHARM/SALT You charmed a CreatureName and captured its Shard"
+        // Pattern 14b: "CHARM/SALT You charmed a CreatureName and captured its Shard"
         DROP_PATTERNS.add(new DropPattern(
             Pattern.compile("(?:salt|charm)\\s+you charmed an?\\s+(.+?)\\s+and captured its shard", Pattern.CASE_INSENSITIVE),
             -1, 1
         ));
         
-        // Pattern 17: "LOOT SHARE You received a ItemName Shard for assisting <someone>!"
+        // Pattern 15: "LOOT SHARE You received a ItemName Shard for assisting <someone>!"
         DROP_PATTERNS.add(new DropPattern(
             Pattern.compile("loot share\\s+you received an?\\s+(.+?)\\s*shard for assisting\\s+\\w+!", Pattern.CASE_INSENSITIVE),
             -1, 1
@@ -347,7 +341,13 @@ public class ChatDropParser {
             itemName = ensureShardSuffix(itemName, cleanMessage);
             String displayName = toSingular(itemName);
 
-            return new ParseResult(displayName, quantity, false);
+            // Extract magic find for enchanted book drops
+            String magicFind = null;
+            if (displayName.toLowerCase().contains("enchanted book")) {
+                magicFind = extractMagicFind(cleanMessage);
+            }
+
+            return new ParseResult(displayName, quantity, false, null, magicFind);
         } catch (Exception e) {
             return null;
         }
@@ -543,6 +543,20 @@ public class ChatDropParser {
         }
         return false;
     }
+    
+    private static String extractMagicFind(String message) {
+        if (message == null) return null;
+        
+        // Pattern for magic find: (+XXX% ✯ Magic Find) or (+XXX% Magic Find)
+        Pattern magicFindPattern = Pattern.compile("\\(\\+(\\d+)%\\s*✯?\\s*magic\\s+find\\)", Pattern.CASE_INSENSITIVE);
+        Matcher matcher = magicFindPattern.matcher(message);
+        
+        if (matcher.find()) {
+            return matcher.group(1) + "%";
+        }
+        
+        return null;
+    }
 
     /**
      * Data class for drop patterns
@@ -567,20 +581,26 @@ public class ChatDropParser {
         public final int quantity;
         public final boolean isCoinDrop;
         public final String tooltipContent;
+        public final String magicFind;
         
         public ParseResult(String itemName, int quantity) {
-            this(itemName, quantity, false, null);
+            this(itemName, quantity, false, null, null);
         }
         
         public ParseResult(String itemName, int quantity, boolean isCoinDrop) {
-            this(itemName, quantity, isCoinDrop, null);
+            this(itemName, quantity, isCoinDrop, null, null);
         }
         
         public ParseResult(String itemName, int quantity, boolean isCoinDrop, String tooltipContent) {
+            this(itemName, quantity, isCoinDrop, tooltipContent, null);
+        }
+        
+        public ParseResult(String itemName, int quantity, boolean isCoinDrop, String tooltipContent, String magicFind) {
             this.itemName = itemName;
             this.quantity = quantity;
             this.isCoinDrop = isCoinDrop;
             this.tooltipContent = tooltipContent;
+            this.magicFind = magicFind;
         }
         
         @Override

@@ -1,6 +1,7 @@
 package me.valkeea.fishyaddons.command;
 
 import me.valkeea.fishyaddons.api.HypixelPriceClient;
+import me.valkeea.fishyaddons.cache.ApiCache;
 import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.tracker.ItemTrackerData;
 import me.valkeea.fishyaddons.util.FishyNotis;
@@ -39,6 +40,8 @@ public class ProfitTrackerCommand {
                 return handleStatus();
             case "price":
                 return handlePrice(args);
+            case "type":
+                return handlePriceType(args);
             default:
                 showUsage();
                 return false;
@@ -63,7 +66,40 @@ public class ProfitTrackerCommand {
         }
         return true;
     }
-    
+
+    private static boolean handlePriceType(String[] args) {
+        if (args.length < 2) {
+            FishyNotis.alert(Text.literal("§cUsage: /fa profit type [insta_sell|sell_offer]"));
+            return false;
+        }
+
+        String typeArg = args[1].toLowerCase();
+        String newType;
+
+        switch (typeArg) {
+            case "insta_sell":
+                newType = "sellPrice";
+                break;
+            case "sell_offer":
+                newType = "buyPrice";
+                break;
+            default:
+                FishyNotis.alert(Text.literal("§cInvalid type! Use 'insta_sell' or 'sell_offer'."));
+                return false;
+        }
+
+        me.valkeea.fishyaddons.api.HypixelPriceClient.setPriceType(newType);
+        me.valkeea.fishyaddons.config.FishyConfig.setString(me.valkeea.fishyaddons.config.Key.PRICE_TYPE, newType);
+        
+        // Clear cached values in ItemTrackerData to force re-calculation with new price type
+        ItemTrackerData.clearValueCache();
+        
+        // Refresh prices to populate cache with new price type
+        me.valkeea.fishyaddons.tracker.ItemTrackerData.refreshPrices();
+        FishyNotis.alert(Text.literal(String.format("§bPrice type set to §3%s", newType)));
+        return true;
+    }
+
     private static boolean handleOn() {
         FishyConfig.enable(key, true);
         me.valkeea.fishyaddons.tracker.TrackerUtils.refresh();
@@ -77,6 +113,7 @@ public class ProfitTrackerCommand {
             }
         } else {
             FishyNotis.send(Text.literal("§3Profit Tracker §aenabled"));
+            FishyNotis.alert(Text.literal("§7Started background price updates..."));            
         }
         return true;
     }
@@ -161,7 +198,6 @@ public class ProfitTrackerCommand {
         
         ItemTrackerData.updateAllAsync();
         FishyNotis.send(Text.literal("§3Initialized price client"));
-        FishyNotis.alert(Text.literal("§7Started background price updates..."));
         return true;
     }
     

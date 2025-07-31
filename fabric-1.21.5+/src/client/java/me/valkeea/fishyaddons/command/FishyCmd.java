@@ -277,6 +277,26 @@ public class FishyCmd {
                         ProfitTrackerCommand.handle(new String[]{"status"});
                         return 1;
                     }))
+                .then(ClientCommandManager.literal("clear")
+                    .executes(context -> {
+                        ProfitTrackerCommand.handle(new String[]{"clear"});
+                        return 1;
+                    }))
+                .then(ClientCommandManager.literal("type")
+                    .then(ClientCommandManager.literal("insta_sell")
+                        .executes(context -> {
+                            ProfitTrackerCommand.handle(new String[]{"type", "insta_sell"});
+                            return 1;
+                        }))
+                    .then(ClientCommandManager.literal("sell_offer")
+                        .executes(context -> {
+                            ProfitTrackerCommand.handle(new String[]{"type", "sell_offer"});
+                            return 1;
+                        }))
+                    .executes(context -> {
+                        ProfitTrackerCommand.handle(new String[]{"type"});
+                        return 1;
+                    }))
                 .then(ClientCommandManager.literal("price")
                     .then(ClientCommandManager.argument("item", com.mojang.brigadier.arguments.StringArgumentType.greedyString())
                         .executes(context -> {

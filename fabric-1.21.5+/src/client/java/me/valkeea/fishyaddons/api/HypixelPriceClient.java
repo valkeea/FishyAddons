@@ -17,6 +17,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonParser;
 import me.valkeea.fishyaddons.cache.ApiCache;
+import net.minecraft.text.Text;
 
 
 // HTTP client for both Bazaar and Auction House APIs
@@ -33,7 +34,8 @@ public class HypixelPriceClient {
     private volatile long lastBazaarUpdate = 0;
     private volatile long lastAuctionUpdate = 0;
     private volatile long sessionStartTime = System.currentTimeMillis();
-    
+    private static String type = "sellPrice";
+
     public HypixelPriceClient() {
         this.httpClient = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(10))
@@ -51,6 +53,24 @@ public class HypixelPriceClient {
         this.scheduler.scheduleAtFixedRate(this::refreshBazaarAsync, 0, BZ_CACHE_EXPIRY_MINUTES, TimeUnit.MINUTES);
     }
     
+    public static void setPriceType(String newType) {
+        if (newType == null || newType.isEmpty()) {
+            throw new IllegalArgumentException("Price type cannot be null or empty");
+        }
+
+        if (!newType.equals("sellPrice") && !newType.equals("buyPrice")) {
+            throw new IllegalArgumentException("Invalid price type: " + newType);
+        }
+
+        // Clear cache when price type changes
+        if (!newType.equals(type)) {
+            ApiCache.clearAllCaches();
+        }
+
+        type = newType;
+        me.valkeea.fishyaddons.config.FishyConfig.setString(me.valkeea.fishyaddons.config.Key.PRICE_TYPE, newType);
+    }
+
     // Check cache, bazaar, ah or fallback, in that order
     public double getBestPrice(String itemName) {
         String apiId = convertToApiId(itemName);
@@ -70,7 +90,7 @@ public class HypixelPriceClient {
         return bestPrice;
     }
     
-    // Default to insta sell for now
+    // Get bazaar price based on current price type setting
     public double getBazaarBuyPrice(String itemName) {
         String apiId = convertToApiId(itemName);
         
@@ -83,7 +103,7 @@ public class HypixelPriceClient {
         double price = 0.0;
         
         if (priceData != null && !priceData.isExpired(BZ_CACHE_EXPIRY_MINUTES)) {
-            price = priceData.buyPrice;
+            price = priceData.getPrice(type);
         }
         
         ApiCache.cachePrice(apiId, ApiCache.PriceType.BZ_BUY, price);
@@ -107,7 +127,7 @@ public class HypixelPriceClient {
             price = priceData.buyPrice;
         } else {
             price = searchAuctionForItem(cleanedItemName);
-            auctionCache.put(cleanedItemName, new PriceData(price, System.currentTimeMillis()));
+            auctionCache.put(cleanedItemName, new PriceData(price, price, System.currentTimeMillis()));
         }
         
         ApiCache.cachePrice(apiId, ApiCache.PriceType.AH_BIN, price);
@@ -164,13 +184,16 @@ public class HypixelPriceClient {
             for (String itemName : cachedItems) {
                 try {
                     double newPrice = searchAuctionForItem(itemName);
-                    auctionCache.put(itemName, new PriceData(newPrice, System.currentTimeMillis()));
+                    auctionCache.put(itemName, new PriceData(newPrice, newPrice, System.currentTimeMillis()));
                     
                 } catch (Exception e) {
                     System.err.println("Error refreshing price for " + itemName + ": " + e.getMessage());
                 }
             }
         });
+
+        me.valkeea.fishyaddons.util.FishyNotis.send(
+            Text.literal("§bAuction cache refreshed successfully!"));
     }
     
     public void refreshAllAsync() {
@@ -221,9 +244,10 @@ public class HypixelPriceClient {
                 
                 JsonObject quickStatus = product.getAsJsonObject("quick_status");
                 if (quickStatus != null) {
-                    double buyPrice = quickStatus.has("sellPrice") ? quickStatus.get("sellPrice").getAsDouble() : 0.0;
+                    double buyPrice = quickStatus.has("buyPrice") ? quickStatus.get("buyPrice").getAsDouble() : 0.0;
+                    double sellPrice = quickStatus.has("sellPrice") ? quickStatus.get("sellPrice").getAsDouble() : 0.0;
                     
-                    PriceData priceData = new PriceData(buyPrice, now);
+                    PriceData priceData = new PriceData(buyPrice, sellPrice, now);
                     bazaarCache.put(productId, priceData);
                 }
             }
@@ -231,6 +255,9 @@ public class HypixelPriceClient {
             System.err.println("Error parsing bazaar data: " + e.getMessage());
             e.printStackTrace();
         }
+
+        me.valkeea.fishyaddons.util.FishyNotis.send(
+        Text.literal("§bBazaar cache refreshed successfully!"));
     }
     
     private String convertToApiId(String itemName) {
@@ -253,9 +280,8 @@ public class HypixelPriceClient {
             if (directMapping != null) {
                 apiId = directMapping;
             }
-            // ENCHANTMENT_<TYPE>_<NAME>_<TIER> for books
             else if (isEnchantment(normalized)) {
-                apiId = convertEnchantmentToApiId(normalized, false); // Default to non-ultimate for generic conversion
+                apiId = convertEnchantmentToApiId(normalized, false);
             }
             else {
                 // Generic ids
@@ -279,7 +305,8 @@ public class HypixelPriceClient {
     
     private boolean isEnchantment(String itemName) {
         String lower = itemName.toLowerCase();
-        if (lower.contains("enchanted book") || lower.contains("enchantment")) {
+        if (lower.matches(".*\\b([1-9]|10)\\b.*") ||
+            lower.matches(".*\\b(i{1,3}|iv|v|vi{0,3}|ix|x)\\b.*")) {
             return true;
         }
         
@@ -385,15 +412,21 @@ public class HypixelPriceClient {
      */
     private static class PriceData {
         final double buyPrice;
+        final double sellPrice;
         final long timestamp;
 
-        PriceData(double buyPrice, long timestamp) {
+        PriceData(double buyPrice, double sellPrice, long timestamp) {
             this.buyPrice = buyPrice;
+            this.sellPrice = sellPrice;
             this.timestamp = timestamp;
         }
 
         boolean isExpired(int expiryMinutes) {
             return (System.currentTimeMillis() - timestamp) > (expiryMinutes * 60000L);
+        }
+        
+        double getPrice(String priceType) {
+            return "sellPrice".equals(priceType) ? sellPrice : buyPrice;
         }
     }
 

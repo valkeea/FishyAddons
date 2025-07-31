@@ -2,11 +2,12 @@
 
 Note: 1.21.5+ support with the Fabric version, use Forge for 1.8.9
 
-## **Version 2.0.3, Features:**
+## **Version 2.0.4, Features:**
 
 ### Visual
 - Custom Redstone particle color; mainly to enhance Jawbus laser and Flay ability
 - Lava visibility
+- Hide Hotspot Holograms
 - Island-specific block retexturing (Textures from ValksfullSBpack, 1.8.9 only)
 
 ### Qol

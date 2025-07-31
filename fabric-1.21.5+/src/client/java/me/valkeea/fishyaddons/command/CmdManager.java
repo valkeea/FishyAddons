@@ -72,7 +72,7 @@ public class CmdManager {
     }
 
     private static void registerFpCommand(CommandDispatcher<FabricClientCommandSource> dispatcher, String root) {
-        dispatcher.register(buildGuardRoot(root, root));
+        dispatcher.register(buildProfitRoot(root, root));
     }
 
     private static LiteralArgumentBuilder<FabricClientCommandSource> buildProfitRoot(String rootLiteral, String rootNameForMessages) {

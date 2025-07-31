@@ -2,16 +2,19 @@ package me.valkeea.fishyaddons.tracker;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
+import net.minecraft.component.DataComponentTypes;
+import net.minecraft.component.type.LoreComponent;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 
 
 public class InventoryTracker {
     // Constants
-    private static final int STACK_INCREASE_THRESHOLD = 64; // Increased threshold - drops can be large but purchases are usually full stacks
+    private static final int STACK_INCREASE_THRESHOLD = 32;
     
     // Track recently detected "Enchanted Book" drops from chat
-    private static final Map<Long, Integer> recentEnchantedBookDrops = new ConcurrentHashMap<>();
+    private static final Map<Long, EnchantedBookDrop> recentEnchantedBookDrops = new ConcurrentHashMap<>();
     private static final long DROP_CORRELATION_WINDOW = 5000; // 5 seconds to correlate drops
     
     // Max monitoring window in case quick disable is missed
@@ -22,14 +25,28 @@ public class InventoryTracker {
     private static long lsStartTime = 0;
     private static final long LS_WINDOW = 10000;
     
-    // Track specific items we want to monitor (besides enchanted books)
     private static final Map<String, String> TRACKED_PLAYER_HEADS = new ConcurrentHashMap<>();
+    private static final Map<String, String> TRACKED_GHAST_TEARS = new ConcurrentHashMap<>();
+    
+    /**
+     * Data class to store enchanted book drop information
+     */
+    private static class EnchantedBookDrop {
+        final int quantity;
+        final String magicFind;
+        
+        EnchantedBookDrop(int quantity, String magicFind) {
+            this.quantity = quantity;
+            this.magicFind = magicFind;
+        }
+    }
     
     static {
-        // Initialize tracked player head items (display name -> bazaar ID)
         TRACKED_PLAYER_HEADS.put("emperor's skull", "DIVER_FRAGMENT");
-        TRACKED_PLAYER_HEADS.put("great white shark tooth", "GREAT_WHITE_SHARK_TOOTH");
-        // Add more player head items here as needed
+    }
+
+    static {
+        TRACKED_GHAST_TEARS.put("great white shark tooth", "GREAT_WHITE_SHARK_TOOTH");
     }
     
     // Track recently detected special item drops from chat
@@ -38,17 +55,15 @@ public class InventoryTracker {
     // Track last known stack sizes for stackable skulls to detect increases
     private static final Map<String, Integer> lastKnownStackSizes = new ConcurrentHashMap<>();
 
-    private InventoryTracker() {
-        // Private constructor to prevent instantiation
-    }
+    private InventoryTracker() {}
     
     /**
-     * Called when an "Enchanted Book" is detected in chat - we'll correlate this with inventory additions
+     * Called when an "Enchanted Book" is detected in chat
      */
-    public static void onEnchantedBookDropDetected(int quantity) {
+    public static void onEnchantedBookDropDetected(int quantity, String magicFind) {
+
         long currentTime = System.currentTimeMillis();
-        recentEnchantedBookDrops.put(currentTime, quantity);
-        
+        recentEnchantedBookDrops.put(currentTime, new EnchantedBookDrop(quantity, magicFind));
         // Clean up old entries
         recentEnchantedBookDrops.entrySet().removeIf(entry -> 
             (currentTime - entry.getKey()) > DROP_CORRELATION_WINDOW * 2);
@@ -58,8 +73,10 @@ public class InventoryTracker {
     public static void onItemAdded(ItemStack stack) {
         if (stack.isEmpty()) return;
 
-        if (!recentEnchantedBookDrops.isEmpty()) {
+        // Process enchanted books if we have recent drops to correlate
+        if (!recentEnchantedBookDrops.isEmpty() && stack.getItem() == Items.ENCHANTED_BOOK) {
             handleEnchantedBookAdded(stack);
+            return; // Exit early to prevent double processing
         }
         
         // Only process items if we're in a monitoring window (after entity death)
@@ -67,11 +84,13 @@ public class InventoryTracker {
             return;
         }
         
-        
-        if (stack.getItem() == Items.ENCHANTED_BOOK) {
-            handleEnchantedBookAdded(stack);
-        } else if (stack.getItem() == Items.PLAYER_HEAD) {
+        // Handle other tracked items during monitoring window
+        if (stack.getItem() == Items.PLAYER_HEAD) {
             handlePlayerHeadAdded(stack);
+        }
+
+        if (stack.getItem() == Items.GHAST_TEAR) {
+            handleGhastTearAdded(stack);
         }
     }
     
@@ -101,14 +120,18 @@ public class InventoryTracker {
         long currentTime = System.currentTimeMillis();
         
         // Check if this correlates with a recent chat drop
-        for (Map.Entry<Long, Integer> entry : recentEnchantedBookDrops.entrySet()) {
+        for (Map.Entry<Long, EnchantedBookDrop> entry : recentEnchantedBookDrops.entrySet()) {
             long dropTime = entry.getKey();
-            int dropQuantity = entry.getValue();
+            EnchantedBookDrop drop = entry.getValue();
             
-            if (currentTime - dropTime <= 5000L && dropQuantity >= stack.getCount()) {
-                // Found correlation - scan inventory to find the actual book name
+            if (currentTime - dropTime <= 5000L && drop.quantity >= stack.getCount()) {
+                // Found correlation - extract enchantment info from lore
+                LoreComponent lore = stack.get(DataComponentTypes.LORE);
+                String tooltipContent = lore != null ? lore.toString() : null;
+                ItemTrackerData.addEnchantedBookDrop("enchanted book", stack.getCount(), tooltipContent, drop.magicFind);
+                
+                // Remove the processed drop from tracking
                 recentEnchantedBookDrops.remove(dropTime);
-                ItemTrackerData.removeGenericEnchantedBook(stack.getCount());
                 return;
             }
         }
@@ -141,29 +164,62 @@ public class InventoryTracker {
             lastKnownStackSizes.put(cleanDisplayName, currentStackSize);
         }
     }
+
+    private static void handleGhastTearAdded(ItemStack stack) {
+        String displayName = stack.getName().getString().toLowerCase().trim();
+        String cleanDisplayName = displayName.replaceAll("§[0-9a-fk-or]", "").trim();
+        String bazaarId = TRACKED_GHAST_TEARS.get(cleanDisplayName);
+        
+        if (bazaarId == null) {
+            return; // Not a tracked ghast tear
+        }
+        
+        int currentStackSize = stack.getCount();
+        int previousStackSize = lastKnownStackSizes.getOrDefault(cleanDisplayName, 0);
+        
+        if (currentStackSize > previousStackSize) {
+            int rawIncrease = currentStackSize - previousStackSize;
+            
+            // Failsafe: If increase is more than threshold, likely user bought/moved items
+            // Count as only 1 to avoid false positives from purchases/trades
+            int newItems = (rawIncrease > STACK_INCREASE_THRESHOLD) ? 1 : rawIncrease;
+            
+            lastKnownStackSizes.put(cleanDisplayName, currentStackSize);
+            
+            ItemTrackerData.addDrop(cleanDisplayName, newItems);
+        } else {
+            // Stack size didn't increase, just update our tracking
+            lastKnownStackSizes.put(cleanDisplayName, currentStackSize);
+        }
+    }
     
     /**
      * Cleanup method to be called periodically to reset correlation state
      */
     public static void cleanup() {
+
         long currentTime = System.currentTimeMillis();
+        for (Map.Entry<Long, EnchantedBookDrop> entry : recentEnchantedBookDrops.entrySet()) {
+            long dropTime = entry.getKey();
+            EnchantedBookDrop drop = entry.getValue();
+            if (currentTime - dropTime > DROP_CORRELATION_WINDOW) {
+                ItemTrackerData.addDrop("enchanted book", drop.quantity);
+            }
+        }
         
-        // Clean up old enchanted book drop entries
         recentEnchantedBookDrops.entrySet().removeIf(entry -> 
             (currentTime - entry.getKey()) > DROP_CORRELATION_WINDOW * 3);
         
-        // Clean up old tracked item drop entries
         recentTrackedItemDrops.entrySet().removeIf(entry -> 
             (currentTime - entry.getKey()) > DROP_CORRELATION_WINDOW * 3);
-        
-        // Clean up stack size tracking if it gets too large
+
         if (lastKnownStackSizes.size() > 63) {
             lastKnownStackSizes.clear();
         }
     }
     
     /**
-     * Called when a loot share message is detected - enable monitoring
+     * Called when a loot share message is detected
      */
     public static void onLsDetected() {
         lsEnabled = true;
@@ -172,34 +228,10 @@ public class InventoryTracker {
     
     /**
      * Called when any entity enters death animation - enables packet monitoring window
-     * This version doesn't filter by entity type since death animation is already a good indicator
      */
     public static void onValuableEntityDamaged() {
-        
-        // Enable monitoring window immediately when death animation is detected
         monitoringEnabled = true;
         monitoringStartTime = System.currentTimeMillis();
-        
-        // Don't clear stack tracking here since entity isn't fully dead yet
-    }
-    
-    /**
-     * Called when a valuable entity takes damage - enables packet monitoring window
-     * Only enable monitoring if the entity is actually valuable
-     */
-    public static void onValuableEntityDamaged(String displayName) {
-        if (displayName == null) return;
-        
-        // Check if this entity is actually valuable using the same patterns as EntityTracker
-        if (!isEntityValuable(displayName)) {
-            return; // Not a valuable entity, don't enable monitoring
-        }
-        
-        // Enable monitoring window immediately when damage is detected
-        monitoringEnabled = true;
-        monitoringStartTime = System.currentTimeMillis();
-        
-        // Don't clear stack tracking here since entity isn't dead yet
     }
     
     /**
@@ -208,17 +240,15 @@ public class InventoryTracker {
      */
     private static boolean isEntityValuable(String displayName) {
         if (displayName == null) return false;
-        
-        // Check for valuable mob patterns (same as EntityTracker)
         String nameToCheck = displayName.toLowerCase();
         
         // Check for valuable sea creatures
-        if (nameToCheck.matches(".*\\b(sea walker|guardian defender|sea witch|squid|loch emperor|the rider of the deep)\\b.*")) {
+        if (nameToCheck.matches(".*\\b(the loch emperor|lord jawbus|thunder)\\b.*")) {
             return true;
         }
         
-        // Check for valuable player entities (sharks)
-        if (nameToCheck.matches(".*\\b(great white shark|tiger shark)\\b.*")) {
+        // Check for valuable player entities
+        if (nameToCheck.matches(".*\\b(great white shark|tiger shark|ent)\\b.*")) {
             return true;
         }
         
@@ -227,9 +257,8 @@ public class InventoryTracker {
     
     /**
      * Called when a valuable entity dies - brief monitoring window then quick disable
-     * This replaces complex inventory scanning with simple packet detection
      */
-    public static void onValuableEntityDeath(String entityName) {
+    public static void onValuableEntityDeath() {
         
         // Enable monitoring window for immediate drops
         monitoringEnabled = true;

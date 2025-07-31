@@ -43,9 +43,10 @@ public class TrackerUtils {
             if (result.isCoinDrop) {
                 ItemTrackerData.addCoins(result.quantity);
             } else {
-                ItemTrackerData.addDrop(result.itemName, result.quantity);
                 if (result.itemName.toLowerCase().contains("enchanted book")) {
-                    InventoryTracker.onEnchantedBookDropDetected(result.quantity);
+                    InventoryTracker.onEnchantedBookDropDetected(result.quantity, result.magicFind);
+                } else {
+                    ItemTrackerData.addDrop(result.itemName, result.quantity);
                 }
             }
         }

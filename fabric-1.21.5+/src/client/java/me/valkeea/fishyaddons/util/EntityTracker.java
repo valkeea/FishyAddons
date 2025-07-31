@@ -99,7 +99,7 @@ public class EntityTracker {
         trackedEntities.remove(entity);
         TrackedMob trackedMob = mobData.remove(entity);
         if (trackedMob != null && trackedMob.isValuable()) {
-            handleMobDeath(trackedMob);
+            handleMobDeath();
         }
     
         armorStandSpawnTimes.remove(entity);
@@ -136,7 +136,6 @@ public class EntityTracker {
         TrackedMob trackedPlayer = new TrackedMob(player, mobType);
         trackedPlayer.setDisplayName(displayName.isEmpty() ? playerName : displayName);
         mobData.put(player, trackedPlayer);
-
         foundVal = true;
         scheduleArmorStandAssociation(trackedPlayer);
     }
@@ -252,8 +251,8 @@ public class EntityTracker {
         return false;
     }
     
-    private static void handleMobDeath(TrackedMob trackedMob) {
-        scanInventoryForDrops(trackedMob);
+    private static void handleMobDeath() {
+        scanInventoryForDrops();
         cleanup();
     }
 
@@ -263,8 +262,8 @@ public class EntityTracker {
         }
     }
     
-    private static void scanInventoryForDrops(TrackedMob deadMob) {
-        me.valkeea.fishyaddons.tracker.InventoryTracker.onValuableEntityDeath(deadMob.getDisplayName());
+    private static void scanInventoryForDrops() {
+        me.valkeea.fishyaddons.tracker.InventoryTracker.onValuableEntityDeath();
     }
     
     public static void cleanup() {

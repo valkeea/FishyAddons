@@ -244,6 +244,7 @@ public class TrackerDisplay implements HudElement {
             case 0:
                 FishyNotis.send(Text.literal("§bRefreshing cache..."));
                 ItemTrackerData.forceRefreshAuctionCache();
+                ItemTrackerData.refreshBazaarPrices();
                 HudDisplayCache.getInstance().invalidateCache();
                 break;
             case 1:

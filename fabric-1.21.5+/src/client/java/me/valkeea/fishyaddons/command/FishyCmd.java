@@ -241,7 +241,7 @@ public class FishyCmd {
                     }));
         }   
 
-        protected static void addProfitSubcommands(LiteralArgumentBuilder<FabricClientCommandSource> root, String rootNameForMessages) {
+        protected static void addProfitSubcommands(LiteralArgumentBuilder<FabricClientCommandSource> root) {
             root.then(ClientCommandManager.literal("on")
                     .executes(context -> {
                         ProfitTrackerCommand.handle(new String[]{"on"});
@@ -308,6 +308,25 @@ public class FishyCmd {
                         ProfitTrackerCommand.handle(new String[]{"price"});
                         return 1;
                     }))
+                // add profile <name> and profile <delete> <profile> commands
+                .then(ClientCommandManager.literal("profile")    
+                    .then(ClientCommandManager.argument("name", com.mojang.brigadier.arguments.StringArgumentType.greedyString())
+                        .executes(context -> {
+                            String profileName = com.mojang.brigadier.arguments.StringArgumentType.getString(context, "name");
+                            ProfitTrackerCommand.handle(new String[]{"profile", profileName});
+                            return 1;
+                        }))
+                    .then(ClientCommandManager.literal("delete")
+                        .then(ClientCommandManager.argument("profile", com.mojang.brigadier.arguments.StringArgumentType.greedyString())
+                            .executes(context -> {
+                                String profileName = com.mojang.brigadier.arguments.StringArgumentType.getString(context, "profile");
+                                ProfitTrackerCommand.handle(new String[]{"profile", "delete", profileName});
+                                return 1;
+                            })))
+                    .executes(context -> {
+                        ProfitTrackerCommand.handle(new String[]{"profile"});
+                        return 1;
+                    }))
                 .executes(context -> {
                     ProfitTrackerCommand.handle(new String[]{});
                     return 1;
@@ -318,13 +337,13 @@ public class FishyCmd {
             return ClientCommandManager.literal("lava")
                     .then(ClientCommandManager.literal("on")
                         .executes(context -> {
-                            FishyConfig.settings.set("fishyLava", true);
+                            FishyConfig.settings.set(Key.FISHY_LAVA, true);
                             FishyNotis.send(Text.literal("Clear Lava " + Formatting.GREEN + "ON.").formatted(Formatting.GRAY));
                             return 1;
                         }))
                     .then(ClientCommandManager.literal("off")
                         .executes(context -> {
-                            FishyConfig.settings.set("fishyLava", false);
+                            FishyConfig.settings.set(Key.FISHY_LAVA, false);
                             FishyNotis.send("Clear Lava " + Formatting.RED + "OFF.");
                             return 1;
                         }))
@@ -462,6 +481,37 @@ public class FishyCmd {
                     return 1;
                 });
     }
+
+    protected static LiteralArgumentBuilder<FabricClientCommandSource> registerRain() {
+            return ClientCommandManager.literal("rain")
+                    .then(ClientCommandManager.literal("track")
+                        .executes(context -> {
+                            boolean isRaining = me.valkeea.fishyaddons.handler.WeatherTracker.isRaining();
+                            me.valkeea.fishyaddons.handler.WeatherTracker.track();
+                            String status = isRaining ? "It is currently raining. You will be notified when the rain stops." : "It is not currently raining.";
+                            FishyNotis.send(Text.literal(status).formatted(isRaining ? Formatting.DARK_AQUA : Formatting.RED));
+                            return 1;
+                        }))
+                    .then(ClientCommandManager.literal("on")
+                        .executes(context -> {
+                            FishyConfig.toggle(Key.RAIN_NOTI, true);
+                            FishyNotis.send("Rain notifications " + Formatting.GREEN + "ON.");
+                            return 1;
+                        }))
+                    .then(ClientCommandManager.literal("off")
+                        .executes(context -> {
+                            FishyConfig.toggle(Key.RAIN_NOTI, false);
+                            me.valkeea.fishyaddons.handler.WeatherTracker.reset();
+                            FishyNotis.send("Rain notifications " + Formatting.RED + "OFF.");
+                            return 1;
+                        }))
+                    .executes(context -> {
+                        FishyNotis.send("§b2Rain Tracker:");
+                        FishyNotis.alert(Text.literal("§7- /fa rain track - §8Track the current rain state."));
+                        FishyNotis.alert(Text.literal("§7- /fa rain on | off - §8Enable/disable rain notifications"));
+                        return 1;
+                    });
+    }    
 
     protected static int checkGUI() {
         if (MinecraftClient.getInstance().currentScreen != null

@@ -1,6 +1,7 @@
 package me.valkeea.fishyaddons.listener;
 
 import me.valkeea.fishyaddons.config.*;
+import me.valkeea.fishyaddons.tracker.ItemTrackerData;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 
 public class ClientDisconnected {
@@ -13,5 +14,6 @@ public class ClientDisconnected {
         FishyConfig.saveBackup();
         TextureConfig.saveBackup();
         ItemConfig.saveBackup();
+        ItemTrackerData.saveProfile();
     }
 }

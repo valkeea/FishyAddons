@@ -1,17 +1,16 @@
 package me.valkeea.fishyaddons.command;
 
+import java.util.Map;
+
 import me.valkeea.fishyaddons.api.HypixelPriceClient;
-import me.valkeea.fishyaddons.cache.ApiCache;
 import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.tracker.ItemTrackerData;
 import me.valkeea.fishyaddons.util.FishyNotis;
 import net.minecraft.text.Text;
 
-import java.util.Map;
-
 public class ProfitTrackerCommand {
     private ProfitTrackerCommand() {}
-    private static final String key = me.valkeea.fishyaddons.config.Key.HUD_TRACKER_ENABLED;
+    private static final String KEY = me.valkeea.fishyaddons.config.Key.HUD_TRACKER_ENABLED;
 
     public static boolean handle(String[] args) {
         if (args.length == 0) {
@@ -42,6 +41,8 @@ public class ProfitTrackerCommand {
                 return handlePrice(args);
             case "type":
                 return handlePriceType(args);
+            case "profile":
+                return handleProfile(args);
             default:
                 showUsage();
                 return false;
@@ -49,8 +50,8 @@ public class ProfitTrackerCommand {
     }
     
     private static boolean handleToggle() {
-        boolean newState = !FishyConfig.getState(key, false);
-        FishyConfig.enable(key, newState);
+        boolean newState = !FishyConfig.getState(KEY, false);
+        FishyConfig.enable(KEY, newState);
         String status = newState ? "§aenabled" : "§cdisabled";
         me.valkeea.fishyaddons.tracker.TrackerUtils.refresh();
         
@@ -101,7 +102,7 @@ public class ProfitTrackerCommand {
     }
 
     private static boolean handleOn() {
-        FishyConfig.enable(key, true);
+        FishyConfig.enable(KEY, true);
         me.valkeea.fishyaddons.tracker.TrackerUtils.refresh();
         handleInit(); // Ensure APIs are initialized
         
@@ -119,7 +120,7 @@ public class ProfitTrackerCommand {
     }
     
     private static boolean handleOff() {
-        FishyConfig.enable(key, false);
+        FishyConfig.enable(KEY, false);
         me.valkeea.fishyaddons.tracker.TrackerUtils.refresh();
         FishyNotis.send(Text.literal("§3Profit Tracker §cdisabled"));
         return true;
@@ -212,6 +213,7 @@ public class ProfitTrackerCommand {
         long lastAuction = ItemTrackerData.getLastAuctionUpdateTime();
         
         FishyNotis.alert(Text.literal("§b  α API Status α  "));
+        FishyNotis.alert(Text.literal("§7Price type: §3" + me.valkeea.fishyaddons.api.HypixelPriceClient.getType()));
         
         if (lastBazaar > 0) {
             long minutes = (System.currentTimeMillis() - lastBazaar) / 60000;
@@ -225,6 +227,79 @@ public class ProfitTrackerCommand {
             FishyNotis.alert(Text.literal(String.format("§7Auctions: §a✓ §7(%d min ago)", minutes)));
         } else {
             FishyNotis.alert(Text.literal("§7Auctions: §c✗"));
+        }
+        
+        return true;
+    }
+    
+    private static boolean handleProfile(String[] args) {
+        if (args.length < 2) {
+            // Show current profile and available profiles
+            String currentProfile = ItemTrackerData.getCurrentProfile();
+            java.util.List<String> availableProfiles = ItemTrackerData.getAvailableProfiles();
+            
+            FishyNotis.send(Text.literal("§bCurrent Profile: §3" + currentProfile));
+            FishyNotis.alert(Text.literal("§7Available Profiles:"));
+            for (String profile : availableProfiles) {
+                String marker = profile.equals(currentProfile) ? "§a▶ " : "§7- ";
+                FishyNotis.alert(Text.literal(marker + "§f" + profile));
+            }
+            FishyNotis.alert(Text.literal("§7Usage: /fa profit profile <name> - Switch to or create profile"));
+            FishyNotis.alert(Text.literal("§7Usage: /fa profit profile delete <name> - Delete profile"));
+            return true;
+        }
+
+        String action = args[1].toLowerCase();
+        
+        if ("delete".equals(action)) {
+            if (args.length < 3) {
+                FishyNotis.alert(Text.literal("§cUsage: /fa profit profile delete <name>"));
+                return false;
+            }
+            
+            String profileToDelete = args[2];
+            if ("default".equals(profileToDelete)) {
+                FishyNotis.alert(Text.literal("§cCannot delete the default profile!"));
+                return false;
+            }
+            
+            if (ItemTrackerData.deleteProfile(profileToDelete)) {
+                FishyNotis.send(Text.literal("§cDeleted profile: " + profileToDelete));
+                // If current profile was deleted, switch to default
+                if (profileToDelete.equals(ItemTrackerData.getCurrentProfile())) {
+                    ItemTrackerData.setCurrentProfile("default");
+                    FishyNotis.send(Text.literal("§3Switched to default profile"));
+                }
+            } else {
+                FishyNotis.alert(Text.literal("§cProfile '" + profileToDelete + "' not found or cannot be deleted"));
+            }
+            return true;
+        }
+        
+        String profileName = args[1];
+        String currentProfile = ItemTrackerData.getCurrentProfile();
+
+        if (!"default".equals(currentProfile)) {
+            ItemTrackerData.saveToJson();
+        }
+
+        if (profileName.equals(currentProfile)) {
+            FishyNotis.send(Text.literal("§7Already using profile: §3" + profileName));
+            return true;
+        }
+        
+        // Check if profile exists
+        java.util.List<String> availableProfiles = ItemTrackerData.getAvailableProfiles();
+        if (availableProfiles.contains(profileName)) {
+            ItemTrackerData.setCurrentProfile(profileName);
+            FishyNotis.send(Text.literal("§3Switched to profile: §b" + profileName));
+        } else {
+            // Create new profile
+            if (ItemTrackerData.createProfile(profileName)) {
+                FishyNotis.send(Text.literal("§aCreated and switched to new profile: §b" + profileName));
+            } else {
+                FishyNotis.alert(Text.literal("§cFailed to create profile: " + profileName));
+            }
         }
         
         return true;
@@ -305,15 +380,15 @@ public class ProfitTrackerCommand {
     
     protected static void showUsage() {
         FishyNotis.alert(Text.literal("§b  α Profit Tracker Commands α  "));
-        FishyNotis.alert(Text.literal("§3/fa profit on/off §7- Enable/disable"));        
-        FishyNotis.alert(Text.literal("§3/fa profit toggle §7- Toggle tracker"));
+        FishyNotis.alert(Text.literal("§3/fa profit on/off/toggle §7- Enable/disable"));        
         FishyNotis.alert(Text.literal("§3/fa profit clear §7- Clear current data"));
+        FishyNotis.alert(Text.literal("§3/fa profit refresh §7- Refresh cached prices"));        
         FishyNotis.alert(Text.literal("§3/fa profit show §7- Show session stats"));
-        FishyNotis.alert(Text.literal("§3/fa profit init §7- Initialize APIs"));
-        FishyNotis.alert(Text.literal("§3/fa profit refresh §7- Refresh cached prices"));
+        FishyNotis.alert(Text.literal("§3/fa profit init §7- Manually initialize APIs"));
         FishyNotis.alert(Text.literal("§3/fa profit status §7- Check API status"));
         FishyNotis.alert(Text.literal("§3/fa profit price [amount] <item> §7- Check price"));
-        FishyNotis.send(Text.literal("§bYou can save the current session using HUD buttons!."));
+        FishyNotis.alert(Text.literal("§3/fa profit profile [name] §7- Create or switch to a profile"));
+        FishyNotis.send(Text.literal("§bYou can save profile data using HUD buttons!."));
     }
     
     private static String capitalizeItemName(String itemName) {

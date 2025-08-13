@@ -40,7 +40,7 @@ public class ItemTrackerData {
             priceClient = null;
         }
     }
-    
+
     public static void addDrop(String itemName, int quantity) {
         addDrop(itemName, quantity, null);
     }
@@ -306,7 +306,6 @@ public class ItemTrackerData {
             }
         }
         
-        // Check if we have cached auction data
         if (priceClient != null && priceClient.hasAuctionData(itemName)) {
             double auctionPrice = priceClient.getLowestBinPrice(itemName);
             if (auctionPrice > 0) {
@@ -319,7 +318,7 @@ public class ItemTrackerData {
         // If no cached data, do async lookup
         new Thread(() -> {
             try {
-                double value = getItemValue(itemName); // This will do the async search
+                double value = getItemValue(itemName);
                 String source = priceClient != null ? priceClient.getPriceSource(itemName).name() : "ESTIMATED";
                 callback.onResult(value, source);
             } catch (Exception e) {
@@ -340,12 +339,10 @@ public class ItemTrackerData {
         if (priceClient == null) {
             return;
         }
-        // to-do -- 371 and 411 check later if getItemvalue --> getCachedItemValue works
+
         Map<String, Integer> currentItems = new HashMap<>(itemCounts);
         
         new Thread(() -> {
-            System.out.println("Background price update started for " + currentItems.size() + " items");
-            
             for (String normalizedItemName : currentItems.keySet()) {
                 try {
                     if (!itemValues.containsKey(normalizedItemName)) {
@@ -361,25 +358,122 @@ public class ItemTrackerData {
                     System.err.println("Error updating price for " + normalizedItemName + ": " + e.getMessage());
                 }
             }
-            
-            System.out.println("Background price update completed");
         }, "BackgroundPriceUpdate").start();
     }
     
+    // --- Tracker profile management ---
+    private static final String TRACKER_BASE_PATH = "config/fishyaddons/tracker/";
+    private static final String DEFAULT_PROFILE = "default";
+    private static String currentProfile = DEFAULT_PROFILE;
+
+    public static void saveProfile() {
+        if (!DEFAULT_PROFILE.equals(currentProfile)) {
+            saveToJson();
+        }
+    }
+
+    private static String getCurrentTrackerFilePath() {
+        return TRACKER_BASE_PATH + "profittracker_" + currentProfile + ".json";
+    }
+    
+    private static String getTrackerFilePath(String profile) {
+        return TRACKER_BASE_PATH + "profittracker_" + profile + ".json";
+    }
+    
+    public static void setCurrentProfile(String profile) {
+        if (profile == null || profile.trim().isEmpty()) {
+            profile = DEFAULT_PROFILE;
+        }
+        
+        saveToJson();
+        currentProfile = profile.toLowerCase().replaceAll("[^a-z0-9_-]", "");
+        
+        itemCounts.clear();
+        itemValues.clear();
+        sessionCoins = 0.0;
+        sessionStartTime = System.currentTimeMillis();
+        loadFromJson();
+    }
+    
+    public static String getCurrentProfile() {
+        return currentProfile;
+    }
+    
+    public static java.util.List<String> getAvailableProfiles() {
+        java.util.List<String> profiles = new java.util.ArrayList<>();
+        try {
+            Path trackerDir = Paths.get(TRACKER_BASE_PATH);
+            if (Files.exists(trackerDir)) {
+                Files.list(trackerDir)
+                    .filter(Files::isRegularFile)
+                    .filter(path -> path.getFileName().toString().startsWith("profittracker_") && 
+                                   path.getFileName().toString().endsWith(".json"))
+                    .forEach(path -> {
+                        String fileName = path.getFileName().toString();
+                        String profileName = fileName.substring("profittracker_".length(), fileName.length() - ".json".length());
+                        profiles.add(profileName);
+                    });
+            }
+        } catch (Exception e) {
+            System.err.println("Error listing profiles: " + e.getMessage());
+        }
+        
+        if (!profiles.contains(DEFAULT_PROFILE)) {
+            profiles.add(0, DEFAULT_PROFILE);
+        }
+        
+        return profiles;
+    }
+    
     /**
-     * Path to the JSON file where tracker data is saved
+     * Create a new profile with the given name
      */
-    private static final String TRACKER_FILE_PATH = "config/fishyaddons/tracker/profittracker.json";
+    public static boolean createProfile(String profileName) {
+        if (profileName == null || profileName.trim().isEmpty()) {
+            return false;
+        }
+        
+        String cleanProfileName = profileName.toLowerCase().replaceAll("[^a-z0-9_-]", "");
+        if (cleanProfileName.isEmpty()) {
+            return false;
+        }
+        
+        if (getAvailableProfiles().contains(cleanProfileName)) {
+            return false;
+        }
+        
+        saveToJson();
+        setCurrentProfile(cleanProfileName);
+        return true;
+    }
+    
+    public static boolean deleteProfile(String profile) {
+        if (DEFAULT_PROFILE.equals(profile)) {
+            return false;
+        }
+        
+        try {
+            Path filePath = Paths.get(getTrackerFilePath(profile));
+            if (Files.exists(filePath)) {
+                Files.delete(filePath);
+                return true;
+            }
+        } catch (Exception e) {
+            System.err.println("Error deleting profile " + profile + ": " + e.getMessage());
+        }
+        return false;
+    }
     
     public static void saveToJson() {
         try {
-            Path filePath = Paths.get(TRACKER_FILE_PATH);
+            Path filePath = Paths.get(getCurrentTrackerFilePath());
             Files.createDirectories(filePath.getParent());
             
             TrackerData data = new TrackerData();
             data.itemCounts = new HashMap<>(itemCounts);
             data.sessionStartTime = sessionStartTime;
             data.savedAt = System.currentTimeMillis();
+            data.profileName = currentProfile;
             
             Gson gson = new GsonBuilder().setPrettyPrinting().create();
             String json = gson.toJson(data);
@@ -394,7 +488,7 @@ public class ItemTrackerData {
     
     public static boolean loadFromJson() {
         try {
-            Path filePath = Paths.get(TRACKER_FILE_PATH);
+            Path filePath = Paths.get(getCurrentTrackerFilePath());
             if (!Files.exists(filePath)) {
                 return false;
             }
@@ -419,7 +513,7 @@ public class ItemTrackerData {
     
     public static boolean deleteJsonFile() {
         try {
-            Path filePath = Paths.get(TRACKER_FILE_PATH);
+            Path filePath = Paths.get(getCurrentTrackerFilePath());
             if (Files.exists(filePath)) {
                 Files.delete(filePath);
                 return true;
@@ -431,7 +525,7 @@ public class ItemTrackerData {
     }
     
     public static boolean hasJsonFile() {
-        return Files.exists(Paths.get(TRACKER_FILE_PATH));
+        return Files.exists(Paths.get(getCurrentTrackerFilePath()));
     }
     
     // Force refresh from the hud buttons
@@ -462,22 +556,12 @@ public class ItemTrackerData {
                     }
                 }
                 
-                me.valkeea.fishyaddons.util.FishyNotis.send(
-                "Auction cache refresh completed. Updated " + refreshCount + " items.");
+                me.valkeea.fishyaddons.util.FishyNotis.alert(Text.literal(
+                "§7Auction cache refresh completed. Updated " + refreshCount + " items."));
             } catch (Exception e) {
                 System.err.println("Error during force auction refresh: " + e.getMessage());
             }
         }, "ForceAuctionRefresh").start();
-    }
-    
-    private static String formatCoins(double coins) {
-        if (coins >= 1_000_000.0) {
-            return String.format("%.1fm", coins / 1_000_000.0);
-        } else if (coins >= 1_000.0) {
-            return String.format("%.1fk", coins / 1_000.0);
-        } else {
-            return String.format("%.0f", coins);
-        }
     }
     
     /**
@@ -487,6 +571,7 @@ public class ItemTrackerData {
         Map<String, Integer> itemCounts;
         long sessionStartTime;
         long savedAt;
+        String profileName;
     }
     
     /**
@@ -494,7 +579,6 @@ public class ItemTrackerData {
      * This version is for when we want to extract the name without modifying the tracker
      */
     public static String enhanceItemName(String rawItemName, String tooltipContent) {
-        System.out.println("Enhancing item name: " + rawItemName);
         if (rawItemName == null || rawItemName.trim().isEmpty()) {
             return rawItemName;
         }
@@ -607,7 +691,7 @@ public class ItemTrackerData {
         if (FishyConfig.getState(Key.BOOK_DROP_ALERT, true)) {
             // Create the base message
             net.minecraft.text.MutableText message = Text.literal(BOOK_DROP_MESSAGE).formatted(Formatting.GOLD, Formatting.BOLD);
-            message = message.append(Text.literal(" " + enchantmentName).formatted(Formatting.WHITE));
+            message = message.append(Text.literal(" " + enchantmentName).formatted(Formatting.WHITE, Formatting.RESET));
 
             // Add magic find if available
             if (magicFind != null && !magicFind.trim().isEmpty()) {

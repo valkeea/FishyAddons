@@ -388,7 +388,7 @@ public class ProfitTrackerCommand {
         FishyNotis.alert(Text.literal("§3/fa profit status §7- Check API status"));
         FishyNotis.alert(Text.literal("§3/fa profit price [amount] <item> §7- Check price"));
         FishyNotis.alert(Text.literal("§3/fa profit profile [name] §7- Create or switch to a profile"));
-        FishyNotis.send(Text.literal("§bYou can save profile data using HUD buttons!."));
+        FishyNotis.send(Text.literal("§bYou can also switch profile using HUD buttons!"));
     }
     
     private static String capitalizeItemName(String itemName) {

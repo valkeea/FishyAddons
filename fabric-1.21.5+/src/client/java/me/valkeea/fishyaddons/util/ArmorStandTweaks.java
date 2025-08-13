@@ -23,6 +23,10 @@ public class ArmorStandTweaks {
             return true;
         }
 
+        if (labelText.contains("♔") && labelText.contains("Trophy Fish Chance")) {
+            return true;
+        }        
+
         if (labelText.contains("Sea Creature Chance")) {
             return true;
         }

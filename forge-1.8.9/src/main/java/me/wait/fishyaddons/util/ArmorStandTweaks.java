@@ -20,8 +20,12 @@ public class ArmorStandTweaks {
         if (labelText.contains("Fishing Speed") && labelText.contains("☂")) {
             return true;
         }
-        
+
         if (labelText.contains("⛃") && labelText.contains("Treasure Chance")) {
+            return true;
+        }        
+
+        if (labelText.contains("♔") && labelText.contains("Trophy Fish Chance")) {
             return true;
         }
 

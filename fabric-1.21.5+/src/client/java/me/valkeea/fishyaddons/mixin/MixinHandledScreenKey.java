@@ -32,7 +32,7 @@ public abstract class MixinHandledScreenKey {
         int invIndex = SlotProtectionManager.remap(gui, slotId);
 
         // Only apply to player inventory/armor slots
-        if (invIndex < 8 || invIndex >= 43) {
+        if (invIndex < 8 || invIndex >= 44) {
             return;
         }
         if (isThrowKey && (SlotProtectionManager.isSlotLocked(invIndex)

@@ -1,16 +1,7 @@
 package me.wait.fishyaddons.util;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import me.wait.fishyaddons.config.ConfigHandler;
-import me.wait.fishyaddons.handlers.FishyLavaHandler;
-
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.World;
-
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.client.event.EntityViewRenderEvent;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
@@ -60,8 +51,6 @@ public class SkyblockCheck {
             } else {
                 cachedIsInSkyblock = false;
             }
-
-            System.out.println("Skyblock detection: " + cachedIsInSkyblock);
         } catch (Exception e) {
             cachedIsInSkyblock = false;
             System.err.println("Error in Skyblock detection: " + e.getMessage());

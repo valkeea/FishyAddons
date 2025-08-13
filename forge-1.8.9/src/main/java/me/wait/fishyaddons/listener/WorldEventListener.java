@@ -1,15 +1,14 @@
 package me.wait.fishyaddons.listener;
 
-import me.wait.fishyaddons.util.ZoneUtils;
+import me.wait.fishyaddons.event.ClientConnectedToServer;
 import me.wait.fishyaddons.util.AreaUtils;
 import me.wait.fishyaddons.util.SkyblockCheck;
-import me.wait.fishyaddons.util.ScoreboardUtils;
-import me.wait.fishyaddons.event.ClientConnectedToServer;
+import me.wait.fishyaddons.util.ZoneUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
-import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 

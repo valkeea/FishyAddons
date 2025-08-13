@@ -1,19 +1,16 @@
 package me.wait.fishyaddons.util;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import me.wait.fishyaddons.fishyprotection.BlacklistMatcher;
 import net.minecraft.client.Minecraft;
 import net.minecraft.scoreboard.Score;
 import net.minecraft.scoreboard.ScoreObjective;
-import net.minecraft.scoreboard.Scoreboard;
 import net.minecraft.scoreboard.ScorePlayerTeam;
-import net.minecraft.scoreboard.Team;
-import net.minecraft.util.StringUtils;
+import net.minecraft.scoreboard.Scoreboard;
 import net.minecraft.world.World;
-
-import java.util.Collections;
-import java.util.Collection;
-import java.util.ArrayList;
-import java.util.List;
 
 public class ScoreboardUtils {
     private static String gameMode = null;
@@ -23,15 +20,16 @@ public class ScoreboardUtils {
     private static List<String> getSidebarLines() {
         Minecraft mc = Minecraft.getMinecraft();
         World world = mc.theWorld;
-        if (world == null) return Collections.emptyList();
+        if (world == null) {
+            gameMode = null;
+            return Collections.emptyList();
+        }
     
         Scoreboard scoreboard = world.getScoreboard();
         ScoreObjective sidebar = scoreboard.getObjectiveInDisplaySlot(1);
         gameMode = sidebar == null ? null : BlacklistMatcher.stripColor(sidebar.getName());
         
-    
         if (sidebar == null) return Collections.emptyList();
-    
         List<Score> scores = new ArrayList<Score>(scoreboard.getSortedScores(sidebar));
         List<String> lines = new ArrayList<String>();
     
@@ -55,9 +53,7 @@ public class ScoreboardUtils {
     }
 
     public static String getGamemode() {
-        if (gameMode == null) {
-            getSidebarLines();
-        }
+        getSidebarLines();
         return gameMode;
     }
 

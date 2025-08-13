@@ -141,10 +141,11 @@ public class FaTextField extends TextFieldWidget {
             case '\\': return '|';
             case ';': return ':';
             case '\'': return '"';
-            case ',': return '<';
-            case '.': return '>';
+            case ',': return ';';
+            case '.': return ':';
             case '/': return '?';
             case '`': return '~';
+            case '<': return '>';
             default: return c;
         }
     }

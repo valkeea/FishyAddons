@@ -117,7 +117,9 @@ public class TrackerDisplay implements HudElement {
             lines.add(Text.literal("Total: §3 items"));
             lines.add(Text.literal("Value: §b~27m coins"));
         } else if (!displayData.isEmpty()) {
-            lines.add(Text.literal("Profit Tracker" + displayData.timeString));
+            String currentProfile = ItemTrackerData.getCurrentProfile();
+            String profileSuffix = "default".equals(currentProfile) ? "" : " (" + currentProfile + ")";
+            lines.add(Text.literal("Profit Tracker" + displayData.timeString + profileSuffix));
             java.util.List<ItemValueData> allItems = getSortedItemValues(displayData);
             allItems.stream()
                 .limit(15)
@@ -187,7 +189,7 @@ public class TrackerDisplay implements HudElement {
     
     // Inventory buttons
     private void drawButtons(DrawContext context, int x, int y, int mouseX, int mouseY) {
-        String[] buttonTexts = {"Refresh", "Save", "Delete", "Sack"};
+        String[] buttonTexts = {"Refresh", "Save", "Delete", "Sack", "Profile"};
         int buttonWidth = 40;
         int buttonHeight = 16;
         int buttonSpacing = 2;
@@ -210,28 +212,29 @@ public class TrackerDisplay implements HudElement {
         }
     }
 
-    // Register mouse clicks for buttons
     public boolean handleMouseClick(double mouseX, double mouseY, int button) {
-        if (button != 0) return false;
-        
         MinecraftClient mc = MinecraftClient.getInstance();
         if (!isInventoryOpen(mc)) return false;
         
         HudElementState state = getCachedState();
         int hudX = state.x;
         int hudY = state.y;
-        int buttonY = Math.max(10, hudY - 30); // Use the same calculation as in drawButtons
+        int buttonY = Math.max(10, hudY - 30);
         int buttonWidth = 40;
         int buttonHeight = 16;
         int buttonSpacing = 2;
         
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < 5; i++) {
             int buttonX = hudX + i * (buttonWidth + buttonSpacing);
             
             if (mouseX >= buttonX && mouseX <= buttonX + buttonWidth &&
                 mouseY >= buttonY && mouseY <= buttonY + buttonHeight) {
-                
-                handleButtonClick(i);
+
+                if (i == 4 && button == 1) {
+                    showProfileMenu();
+                } else if (button == 0) {
+                    handleButtonClick(i);
+                }
                 return true;
             }
         }
@@ -267,9 +270,38 @@ public class TrackerDisplay implements HudElement {
                     FishyNotis.send(Text.literal("§aSack tracking enabled"));
                 }
                 break;
+            case 4:
+                cycleProfile();
+                break;
             default:
                 break;
         }
+    }
+    
+    private void cycleProfile() {
+        java.util.List<String> profiles = ItemTrackerData.getAvailableProfiles();
+        String currentProfile = ItemTrackerData.getCurrentProfile();
+        
+        int currentIndex = profiles.indexOf(currentProfile);
+        int nextIndex = (currentIndex + 1) % profiles.size();
+        String nextProfile = profiles.get(nextIndex);
+        
+        ItemTrackerData.setCurrentProfile(nextProfile);
+        FishyNotis.send(Text.literal("§eSwitched to profile: §b" + nextProfile));
+        HudDisplayCache.getInstance().invalidateCache();
+    }
+    
+    private void showProfileMenu() {
+        java.util.List<String> profiles = ItemTrackerData.getAvailableProfiles();
+        String currentProfile = ItemTrackerData.getCurrentProfile();
+        
+        FishyNotis.send(Text.literal("§bAvailable Profiles:"));
+        for (String profile : profiles) {
+            String marker = profile.equals(currentProfile) ? "§a▶ " : "§7- ";
+            FishyNotis.send(Text.literal(marker + "§f" + profile));
+        }
+        FishyNotis.send(Text.literal("§7Left-click Profile button to cycle, Right-click for menu"));
+        FishyNotis.send(Text.literal("§7Use §b/fishytracker profile <name>§7 to create/switch profiles"));
     }
     
     private String capitalizeItemName(String itemName) {

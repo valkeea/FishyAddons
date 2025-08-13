@@ -1,7 +1,9 @@
 package me.valkeea.fishyaddons.gui;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.List;
 
 import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.config.Key;
@@ -21,6 +23,9 @@ public class VisualSettingsScreen extends Screen {
     private static final int BTNH = 20;
     private final Map<ButtonWidget, String> islandButtons = new HashMap<>();
 
+    private int wtrBtnX, wtrBtnY, wtrBtnW, wtrBtnH;
+    private int lavaBtnX, lavaBtnY, lavaBtnW, lavaBtnH;
+
     public VisualSettingsScreen() {
         super(Text.literal("Visual Settings"));
     }
@@ -35,20 +40,25 @@ public class VisualSettingsScreen extends Screen {
         
         addDrawableChild(new FaButton(
             centerX - 300, y, BTNW, BTNH,
-            getLavaToggleText(),
-            btn -> {
-                FishyConfig.toggle("fishyLava", false);
-                btn.setMessage(getLavaToggleText());
-            }
-        ));
-
-        addDrawableChild(new FaButton(
-            centerX - 100, y, BTNW, BTNH,
             getFontText(),
             btn -> {
                 FishyConfig.toggle("hdFont", false);
                 ResourceHandler.updateFontPack();
                 btn.setMessage(getFontText());
+            }
+        ));
+
+        lavaBtnX = centerX - 100;
+        lavaBtnY = y;
+        lavaBtnW = BTNW;
+        lavaBtnH = BTNH;
+        
+        addDrawableChild(new FaButton(
+            lavaBtnX, lavaBtnY, lavaBtnW, lavaBtnH,
+            getLavaToggleText(),
+            btn -> {
+                FishyConfig.toggle(Key.FISHY_LAVA, false);
+                btn.setMessage(getLavaToggleText());
             }
         ));
         
@@ -61,7 +71,24 @@ public class VisualSettingsScreen extends Screen {
                 btn.setMessage(getGuiText());
             }
         ));
-        y += 70;
+
+        y += 20;
+
+        wtrBtnX = centerX - 100;
+        wtrBtnY = y;
+        wtrBtnW = BTNW;
+        wtrBtnH = BTNH;
+        
+        addDrawableChild(new FaButton(
+            wtrBtnX, wtrBtnY, wtrBtnW, wtrBtnH,
+            getWaterToggleText(),
+            btn -> {
+                FishyConfig.toggle(Key.FISHY_WATER, false);
+                btn.setMessage(getWaterToggleText());
+            }
+        ));
+
+        y += 30;
 
         addDrawableChild(new ParticleColorSlider(centerX - 100, y, BTNW, BTNH,
         "Redstone Particle Color", 0, 4, FishyConfig.getCustomParticleColorIndex())); 
@@ -133,7 +160,11 @@ public class VisualSettingsScreen extends Screen {
     }
 
     private Text getLavaToggleText() {
-        return GuiUtil.onOffLabel("Clear Lava", FishyConfig.getState("fishyLava", false));
+        return GuiUtil.onOffLabel("Clear Lava", FishyConfig.getState(Key.FISHY_LAVA, false));
+    }
+
+    private Text getWaterToggleText() {
+        return GuiUtil.onOffLabel("Clear Water", FishyConfig.getState(Key.FISHY_WATER, false));
     }
 
     private static Text getCustomButtonText() {
@@ -171,6 +202,24 @@ public class VisualSettingsScreen extends Screen {
         String title = "Visual Settings";
         context.drawCenteredTextWithShadow(this.textRenderer, title, this.width / 2, this.height / 4 - 20, 0xFF55FFFF);
         super.render(context, mouseX, mouseY, delta);
+
+        if (mouseX >= lavaBtnX && mouseX <= lavaBtnX + lavaBtnW && mouseY >= lavaBtnY && mouseY <= lavaBtnY + lavaBtnH) {
+            List<Text> tooltipLines = Arrays.asList(
+                Text.literal("Clear Lava:"),
+                Text.literal("- §8Removes underlava fog overlay"),
+                Text.literal("- §8Disabled outside Skyblock")
+            );
+            GuiUtil.fishyTooltip(context, this.textRenderer, tooltipLines, mouseX, mouseY);
+        }
+
+        if (mouseX >= wtrBtnX && mouseX <= wtrBtnX + wtrBtnW && mouseY >= wtrBtnY && mouseY <= wtrBtnY + wtrBtnH) {
+            List<Text> tooltipLines = Arrays.asList(
+                Text.literal("Clear Water:"),
+                Text.literal("- §8Removes underwater overlay"),
+                Text.literal("- §8Disabled outside Skyblock")
+            );
+            GuiUtil.fishyTooltip(context, this.textRenderer, tooltipLines, mouseX, mouseY);
+        }
     }
 
     private static class ParticleColorSlider extends ThemedSlider {

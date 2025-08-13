@@ -547,12 +547,11 @@ public class ChatDropParser {
     private static String extractMagicFind(String message) {
         if (message == null) return null;
         
-        // Pattern for magic find: (+XXX% ✯ Magic Find) or (+XXX% Magic Find)
-        Pattern magicFindPattern = Pattern.compile("\\(\\+(\\d+)%\\s*✯?\\s*magic\\s+find\\)", Pattern.CASE_INSENSITIVE);
+        Pattern magicFindPattern = Pattern.compile("\\(\\+(\\d+) ✯ Magic Find\\)");
         Matcher matcher = magicFindPattern.matcher(message);
         
         if (matcher.find()) {
-            return matcher.group(1) + "%";
+            return matcher.group(1);
         }
         
         return null;

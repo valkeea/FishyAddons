@@ -71,6 +71,10 @@ public class HypixelPriceClient {
         me.valkeea.fishyaddons.config.FishyConfig.setString(me.valkeea.fishyaddons.config.Key.PRICE_TYPE, newType);
     }
 
+    public static String getType() {
+        return type;
+    }
+
     // Check cache, bazaar, ah or fallback, in that order
     public double getBestPrice(String itemName) {
         String apiId = convertToApiId(itemName);
@@ -192,8 +196,8 @@ public class HypixelPriceClient {
             }
         });
 
-        me.valkeea.fishyaddons.util.FishyNotis.send(
-            Text.literal("§bAuction cache refreshed successfully!"));
+        me.valkeea.fishyaddons.util.FishyNotis.alert(
+            Text.literal("§7Auction cache refreshed successfully!"));
     }
     
     public void refreshAllAsync() {
@@ -256,8 +260,8 @@ public class HypixelPriceClient {
             e.printStackTrace();
         }
 
-        me.valkeea.fishyaddons.util.FishyNotis.send(
-        Text.literal("§bBazaar cache refreshed successfully!"));
+        me.valkeea.fishyaddons.util.FishyNotis.alert(
+        Text.literal("§7Bazaar cache refreshed successfully!"));
     }
     
     private String convertToApiId(String itemName) {
@@ -615,6 +619,8 @@ public class HypixelPriceClient {
                 return "INK_SACK";
             case "emperor's skull":
                 return "DIVER_FRAGMENT";
+            case "thunder fragment":
+                return "THUNDER_SHARDS";
             case "hay bale":
                 return "HAY_BLOCK";
             case "enchanted hay bale":
@@ -622,7 +628,17 @@ public class HypixelPriceClient {
             case "lucky clover core":
                 return "PET_ITEM_LUCKY_CLOVER_DROP";
             case "duplex i":
-                return "ENCHANTMENT_ULTIMATE_REITERATE_1";   
+                return "ENCHANTMENT_ULTIMATE_REITERATE_1";
+            case "loch emperor shard":
+                return "SHARD_SEA_EMPEROR";
+            case "magmafish":
+                return "MAGMA_FISH";
+            case "silver magmafish":
+                return "MAGMA_FISH_SILVER";
+            case "gold magmafish":
+                return "MAGMA_FISH_GOLD";
+            case "diamond magmafish":
+                return "MAGMA_FISH_DIAMOND";
             case "coins":
                 return null;
             default:

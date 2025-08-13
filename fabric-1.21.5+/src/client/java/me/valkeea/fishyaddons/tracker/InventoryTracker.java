@@ -43,6 +43,7 @@ public class InventoryTracker {
     
     static {
         TRACKED_PLAYER_HEADS.put("emperor's skull", "DIVER_FRAGMENT");
+        TRACKED_PLAYER_HEADS.put("magma lord fragment", "MAGMA_LORD_FRAGMENT");
     }
 
     static {
@@ -259,7 +260,6 @@ public class InventoryTracker {
      * Called when a valuable entity dies - brief monitoring window then quick disable
      */
     public static void onValuableEntityDeath() {
-        
         // Enable monitoring window for immediate drops
         monitoringEnabled = true;
         monitoringStartTime = System.currentTimeMillis();

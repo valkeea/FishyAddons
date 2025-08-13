@@ -1,21 +1,21 @@
 package me.valkeea.fishyaddons.gui;
 
-import me.valkeea.fishyaddons.safeguard.BlacklistManager.GuiBlacklistEntry;
-import me.valkeea.fishyaddons.safeguard.BlacklistManager;
-import me.valkeea.fishyaddons.config.ItemConfig;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import me.valkeea.fishyaddons.config.FishyConfig;
+import me.valkeea.fishyaddons.config.ItemConfig;
+import me.valkeea.fishyaddons.safeguard.BlacklistManager;
+import me.valkeea.fishyaddons.safeguard.BlacklistManager.GuiBlacklistEntry;
 import me.valkeea.fishyaddons.util.KeyUtil;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.text.Text;
 import net.minecraft.client.util.InputUtil;
-
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import net.minecraft.text.Text;
 
 public class SafeguardScreen extends Screen {
     private final Map<ButtonWidget, GuiBlacklistEntry> blacklistButtons = new HashMap<>();
@@ -82,13 +82,13 @@ public class SafeguardScreen extends Screen {
             String label = "blacklist." + entry.identifiers.get(0).toLowerCase().replace(" ", "_");
             FaButton blacklistButton = new FaButton(
                 centerX - 100, by, 200, 20,
-                Text.translatable(label).styled(s -> s.withColor(entry.enabled ? 0xCCFFCC : 0xFF8080)),
+                Text.translatable(label).styled(s -> s.withColor(entry.isEnabled() ? 0xCCFFCC : 0xFF8080)),
                 btn -> {
-                    entry.enabled = !entry.enabled;
-                    BlacklistManager.updateBlacklistEntry(entry.identifiers.get(0), entry.enabled);
+                    entry.setEnabled(!entry.isEnabled());
+                    BlacklistManager.updateBlacklistEntry(entry.identifiers.get(0), entry.isEnabled());
                     this.setFocused(false);
                     btn.setMessage(
-                        Text.translatable(label).styled(s -> s.withColor(entry.enabled ? 0xCCFFCC : 0xFF8080))
+                        Text.translatable(label).styled(s -> s.withColor(entry.isEnabled() ? 0xCCFFCC : 0xFF8080))
                     );
                 }
             );

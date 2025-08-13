@@ -11,14 +11,21 @@ public class BlacklistManager {
     // --- Entry class ---
     public static class GuiBlacklistEntry {
         public final List<String> identifiers;
-        public boolean enabled;
-        public boolean checkTooltip;
+        private boolean enabled;
         public final boolean checkTitle;
 
         public GuiBlacklistEntry(List<String> identifiers, boolean enabled, boolean checkTitle) {
             this.identifiers = identifiers;
             this.enabled = enabled;
             this.checkTitle = checkTitle;
+        }
+        
+        public boolean isEnabled() {
+            return enabled;
+        }
+        
+        public void setEnabled(boolean enabled) {
+            this.enabled = enabled;
         }
     }
 
@@ -41,7 +48,7 @@ public class BlacklistManager {
         for (GuiBlacklistEntry def : defaultBlacklist) {
             GuiBlacklistEntry override = findUserOverride(def);
             if (override != null) {
-                merged.add(new GuiBlacklistEntry(def.identifiers, override.enabled, def.checkTitle));
+                merged.add(new GuiBlacklistEntry(def.identifiers, override.isEnabled(), def.checkTitle));
             } else {
                 merged.add(def);
             }
@@ -71,7 +78,7 @@ public class BlacklistManager {
         for (GuiBlacklistEntry entry : userBlacklist) {
             for (String id : entry.identifiers) {
                 if (id.equalsIgnoreCase(identifier)) {
-                    entry.enabled = enabled;
+                    entry.setEnabled(enabled);
                     saveUserBlacklist();
                     return;
                 }
@@ -118,7 +125,7 @@ public class BlacklistManager {
         for (GuiBlacklistEntry entry : userBlacklist) {
             Map<String, Object> map = new HashMap<>();
             map.put("identifiers", entry.identifiers);
-            map.put("enabled", entry.enabled);
+            map.put("enabled", entry.isEnabled());
             map.put("checkTitle", entry.checkTitle);
             jsonList.add(map);
         }

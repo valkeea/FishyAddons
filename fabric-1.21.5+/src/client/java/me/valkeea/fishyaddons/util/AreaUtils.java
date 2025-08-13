@@ -1,57 +1,77 @@
 package me.valkeea.fishyaddons.util;
 
-//import me.valkeea.fishyaddons.handlers.RetexHandler;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.util.math.BlockPos;
-
 import java.util.Arrays;
 import java.util.List;
 
-/*
- * FAretex requires instantaneous area detection.
- * This class allows for area detection based on spawn position
- * instead of relying on scoreboard or other methods.
- */
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.util.math.BlockPos;
+
+/**
+ * This approach allows for instant area detection based on spawn position.
+ * Failure is possible but rare and for critical features a fallback can be implemented.
+ **/
 public class AreaUtils {
+    private AreaUtils() {}
+    private static final String CI = "crimson_isles";
+    private static final String HUB = "hub";
+    private static final String DH = "dungeon_hub";
+    private static final String CH = "crystal_hollows";
+    private static final String DM = "dwarven_mines";
+    private static final String END = "the_end";
+    private static final String FI = "farming_islands";
+    private static final String GT = "glacite_tunnels";
+    private static final String PARK = "park";
+    private static final String DEN = "den";
+    private static final String DEF = "default";
+    private static final String GAL = "galatea";
+
     private static final MinecraftClient mc = MinecraftClient.getInstance();
-    private static String currentIsland = "default";
+    private static String currentIsland = DEF;
+    private static boolean isGalatea = false;    
 
     private static final List<SpawnData> SPAWN_DATA = Arrays.asList(
         // Crimson Isles
-        new SpawnData("crimson_isles", -370, -350, 75, 120, -450, -420),
-        new SpawnData("crimson_isles", -380, -360, 110, 125, -1000, -970),
+        new SpawnData(CI, -370, -350, 75, 120, -450, -420),
+        new SpawnData(CI, -380, -360, 110, 125, -1000, -970),
         // Hub
-        new SpawnData("hub", -45, -43, null, null, 10, 13),
-        new SpawnData("hub", -223, -200, null, null, -16, -14),
-        new SpawnData("hub", -3, -2, null, null, -69, -68),
-        new SpawnData("hub", -160, -158, null, null, -159, -157),
-        new SpawnData("hub", 75, 77, null, null, -183, -180),
-        new SpawnData("hub", -11, -8, null, null, -229, -227),
-        new SpawnData("hub", 90, 92, null, null, 172, 174),
-        new SpawnData("hub", 41, 43, null, null, 68, 70),
-        new SpawnData("hub", -251, -249, null, null, 44, 46),
-        new SpawnData("hub", -162, -160, null, null, -100, -99),
+        new SpawnData(HUB, -45, -43, null, null, 10, 13),
+        new SpawnData(HUB, -223, -200, null, null, -16, -14),
+        new SpawnData(HUB, -3, -2, null, null, -69, -68),
+        new SpawnData(HUB, -160, -158, null, null, -159, -157),
+        new SpawnData(HUB, 75, 77, null, null, -183, -180),
+        new SpawnData(HUB, -11, -8, null, null, -229, -227),
+        new SpawnData(HUB, 90, 92, null, null, 172, 174),
+        new SpawnData(HUB, 41, 43, null, null, 68, 70),
+        new SpawnData(HUB, -251, -249, null, null, 44, 46),
+        new SpawnData(HUB, -162, -160, null, null, -100, -99),
         // Dungeon Hub
-        new SpawnData("dungeon_hub", -32, -29, 120, 122, -2, 2),
+        new SpawnData(DH, -32, -29, 120, 122, -2, 2),
         // Crystal Hollows
-        new SpawnData("crystal_hollows", 500, 530, null, null, 500, 550),
-        new SpawnData("crystal_hollows", 200, 230, null, null, 400, 440),
+        new SpawnData(CH, 500, 530, null, null, 500, 550),
+        new SpawnData(CH, 200, 230, null, null, 400, 440),
         // Dwarven Mines
-        new SpawnData("dwarven_mines", -60, -30, null, null, -130, -100),
-        new SpawnData("dwarven_mines", 0, 1, null, null, -69, -68),
+        new SpawnData(DM, -60, -30, null, null, -130, -100),
+        new SpawnData(DM, 0, 1, null, null, -69, -68),
         // The End
-        new SpawnData("the_end", -503, -501, null, null, -276, -274),
-        new SpawnData("the_end", -570, -569, null, null, -319, -317),
-        new SpawnData("the_end", -607, -605, null, null, -276, -274),
+        new SpawnData(END, -503, -501, null, null, -276, -274),
+        new SpawnData(END, -570, -569, null, null, -319, -317),
+        new SpawnData(END, -607, -605, null, null, -276, -274),
         // Farming Islands
-        new SpawnData("farming_islands", 100, 130, null, null, -230, -180),
-        new SpawnData("farming_islands", 140, 160, null, null, -320, -290),
-        new SpawnData("farming_islands", 150, -170, null, null, -390, -350),
+        new SpawnData(FI, 100, 130, null, null, -230, -180),
+        new SpawnData(FI, 140, 160, null, null, -320, -290),
+        new SpawnData(FI, 150, -170, null, null, -390, -350),
         // Glacite Tunnels
-        new SpawnData("glacite_tunnels", -10, 10, null, null, 190, 210),
+        new SpawnData(GT, -10, 10, null, null, 190, 210),
         // Park
-        new SpawnData("park", -278, -276, null, null, -14, -13),
-        new SpawnData("park", -463, -461, null, null, -126, -124)
+        new SpawnData(PARK, -485, -481, null, null, -43, -40),
+        new SpawnData(PARK, -266, -264, null, null, -19, -16),
+        new SpawnData(PARK, -468, -465, null, null, -34, -32),
+        // Galatea
+        new SpawnData(GAL, -549, -546, null, null, -24, -21),
+        new SpawnData(GAL, -645, -643, null, null, 1, 3),
+        // Spider's Den
+        new SpawnData(DEN, -203, -201, null, null, -233, -231),
+        new SpawnData(DEN, -190, -188, null, null, -311, -309)
     );
 
     public static String getIsland() {
@@ -60,6 +80,7 @@ public class AreaUtils {
 
     public static void setIsland(String island) {
         currentIsland = island;
+        isGalatea = setGalatea(island);
         //RetexHandler.setIsland(island);
     }
 
@@ -77,6 +98,23 @@ public class AreaUtils {
         }
         setIsland("default");
     
+    }
+
+    public static boolean setGalatea(String island) {
+        if (GAL.equalsIgnoreCase(island)) {
+            isGalatea = true;
+            return true;
+        }
+        isGalatea = false;
+        return false;
+    }
+
+    public static boolean isGalatea() {
+        return isGalatea;
+    }
+
+    public static boolean isDenOrPark() {
+        return DEN.equalsIgnoreCase(currentIsland) || PARK.equalsIgnoreCase(currentIsland);
     }
 
     // Inner class for spawn data

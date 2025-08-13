@@ -24,12 +24,10 @@ public class MixinParticleManager {
             if (SkyblockCleaner.shouldCleanHype() && 
                 (parameters.getType() == ParticleTypes.EXPLOSION
                 || parameters.getType() == ParticleTypes.EXPLOSION_EMITTER)) {
-                // Instead of returning null, cancel the method to prevent particle creation
-                // This is safer than returning null which can cause issues downstream
                 cir.cancel();
             }
         } catch (Exception e) {
-            // Silently handle any errors to prevent particle system crashes
+            // Silent exit
         }
     }
 }

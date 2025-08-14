@@ -228,5 +228,7 @@ public class SearchMenu {
     public int getEntryHeight() { return entryHeight; }
     public Consumer<SearchEntry> getOnSelect() { return onSelect; }
     public int getHoveredIndex() { return hoveredIndex; }
+    public int getScrollOffset() { return scrollOffset; }
+    public int getMaxVisibleEntries() { return MAX_VISIBLE_ENTRIES; }
     
 }

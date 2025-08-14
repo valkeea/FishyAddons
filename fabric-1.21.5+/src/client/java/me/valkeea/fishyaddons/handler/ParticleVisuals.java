@@ -54,7 +54,7 @@ public class ParticleVisuals {
     }
 
     public static boolean getDmg() {
-        return scaleDmg;
+        return scaleDmg && me.valkeea.fishyaddons.util.AreaUtils.isGalatea();
     }
 
     public static void setDmg(boolean state) {

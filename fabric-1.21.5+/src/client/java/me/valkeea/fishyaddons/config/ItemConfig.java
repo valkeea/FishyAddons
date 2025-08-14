@@ -31,6 +31,10 @@ public class ItemConfig {
     private static final Map<String, String> protectedUUIDs = new HashMap<>();
     private static final Set<Integer> lockedSlots = new HashSet<>();
     private static final Map<Integer, Integer> boundSlots = new HashMap<>();
+    
+    // --- Equipment Skulls ---
+    private static final Map<Integer, String> equipmentSkullTextures = new HashMap<>();
+    private static final Map<Integer, String> equipmentSkullItemData = new HashMap<>();
 
 
     // --- State/Flags ---
@@ -49,6 +53,8 @@ public class ItemConfig {
     private static final String PROT_NOTI_KEY = "protectNotiEnabled";
     private static final String LOCK_TRIGGER_KEY = "lockTriggerEnabled";
     private static final String BLACKLIST_KEY = "blacklist";
+    private static final String EQUIPMENT_SKULL_TEXTURES_KEY = "equipmentSkullTextures";
+    private static final String EQUIPMENT_SKULL_ITEMS_KEY = "equipmentSkullItems";
 
     static {
         File root = new File(MinecraftClient.getInstance().runDirectory, "config/fishyaddons");
@@ -177,6 +183,53 @@ public class ItemConfig {
         markConfigChanged();
     }
 
+    // --- Equipment Skulls ---
+    public static synchronized void setEqSkull(int slot, String textureUrl) {
+        if (textureUrl == null) {
+            equipmentSkullTextures.remove(slot);
+        } else {
+            equipmentSkullTextures.put(slot, textureUrl);
+        }
+        markConfigChanged();
+    }
+
+    public static synchronized String getEquipmentSkullTexture(int slot) {
+        return equipmentSkullTextures.get(slot);
+    }
+
+    public static synchronized void setEqItemData(int slot, String itemData) {
+        if (itemData == null) {
+            equipmentSkullItemData.remove(slot);
+        } else {
+            equipmentSkullItemData.put(slot, itemData);
+        }
+        markConfigChanged();
+    }
+
+    public static synchronized String getEquipmentSkullItemData(int slot) {
+        return equipmentSkullItemData.get(slot);
+    }
+
+    public static synchronized boolean hasEquipmentSkull(int slot) {
+        return equipmentSkullTextures.containsKey(slot);
+    }
+
+    public static synchronized void clearEquipmentSkulls() {
+        equipmentSkullTextures.clear();
+        equipmentSkullItemData.clear();
+        markConfigChanged();
+    }
+
+    public static synchronized Map<Integer, String> getAllEquipmentSkullTextures() {
+        return new HashMap<>(equipmentSkullTextures);
+    }
+
+    public static synchronized void clearEquipmentSlot(int slot) {
+        equipmentSkullTextures.remove(slot);
+        equipmentSkullItemData.remove(slot);
+        markConfigChanged();
+    }
+
     // --- Config IO ---
     public static synchronized void load() {
         if (!CONFIG_FILE.exists()) {
@@ -274,6 +327,39 @@ public class ItemConfig {
                     System.err.println("[ItemConfig] Blacklist is not a valid list.");
                 }
             }
+
+            // --- Load Equipment Skulls ---
+            if (config.containsKey(EQUIPMENT_SKULL_TEXTURES_KEY)) {
+                Object texturesObj = config.get(EQUIPMENT_SKULL_TEXTURES_KEY);
+                if (texturesObj instanceof Map<?, ?>) {
+                    equipmentSkullTextures.clear();
+                    for (Map.Entry<?, ?> entry : ((Map<?, ?>) texturesObj).entrySet()) {
+                        try {
+                            int slot = Integer.parseInt(entry.getKey().toString());
+                            String textureUrl = entry.getValue().toString();
+                            equipmentSkullTextures.put(slot, textureUrl);
+                        } catch (NumberFormatException e) {
+                            System.err.println("[ItemConfig] Invalid equipment skull slot: " + entry.getKey());
+                        }
+                    }
+                }
+            }
+
+            if (config.containsKey(EQUIPMENT_SKULL_ITEMS_KEY)) {
+                Object itemsObj = config.get(EQUIPMENT_SKULL_ITEMS_KEY);
+                if (itemsObj instanceof Map<?, ?>) {
+                    equipmentSkullItemData.clear();
+                    for (Map.Entry<?, ?> entry : ((Map<?, ?>) itemsObj).entrySet()) {
+                        try {
+                            int slot = Integer.parseInt(entry.getKey().toString());
+                            String itemData = entry.getValue().toString();
+                            equipmentSkullItemData.put(slot, itemData);
+                        } catch (NumberFormatException e) {
+                            System.err.println("[ItemConfig] Invalid equipment skull item slot: " + entry.getKey());
+                        }
+                    }
+                }
+            }
         } catch (JsonSyntaxException | com.google.gson.stream.MalformedJsonException e) {
             System.err.println("[ItemConfig] Malformed JSON detected: " + e.getMessage());
             loadOrRestore();
@@ -310,6 +396,10 @@ public class ItemConfig {
         List<Map<String, Object>> serializedBlacklist = BlacklistManager.getUserBlacklistAsJson();
         config.put(BLACKLIST_KEY, serializedBlacklist);
 
+        // --- Save Equipment Skulls ---
+        config.put(EQUIPMENT_SKULL_TEXTURES_KEY, new HashMap<>(equipmentSkullTextures));
+        config.put(EQUIPMENT_SKULL_ITEMS_KEY, new HashMap<>(equipmentSkullItemData));
+
         try (Writer writer = new OutputStreamWriter(new FileOutputStream(CONFIG_FILE), java.nio.charset.StandardCharsets.UTF_8)) {
             GSON.toJson(config, writer);
         } catch (IOException e) {
@@ -343,7 +433,12 @@ public class ItemConfig {
         // If restore fails or backup doesn't exist, create a new config
         System.err.println("[ItemConfig] Creating a new config file...");
         try {
-            CONFIG_FILE.createNewFile();
+            boolean created = CONFIG_FILE.createNewFile();
+            if (created) {
+                System.out.println("[ItemConfig] New config file created.");
+            } else {
+                System.out.println("[ItemConfig] Failed to create new config file.");
+            }
             save();
             recreatedConfig = true;
         } catch (IOException e) {
@@ -363,7 +458,7 @@ public class ItemConfig {
             return false;
         }
         // Validate types
-        return (config.get(UUIDS_KEY) instanceof Map) &&
+        boolean valid = (config.get(UUIDS_KEY) instanceof Map) &&
                (config.get(SELL_PROT_KEY) instanceof Boolean) &&
                (config.get(TOOLTIP_KEY) instanceof Boolean) &&
                (config.get(PROT_TRIGGER_KEY) instanceof Boolean) &&
@@ -371,6 +466,16 @@ public class ItemConfig {
                (config.get(LOCK_TRIGGER_KEY) instanceof Boolean) &&
                (config.get(BOUND_SLOTS_KEY) instanceof Map) &&
                (config.get(LOCKED_SLOTS_KEY) instanceof List);
+               
+        // Optional
+        if (config.containsKey(EQUIPMENT_SKULL_TEXTURES_KEY)) {
+            valid &= (config.get(EQUIPMENT_SKULL_TEXTURES_KEY) instanceof Map);
+        }
+        if (config.containsKey(EQUIPMENT_SKULL_ITEMS_KEY)) {
+            valid &= (config.get(EQUIPMENT_SKULL_ITEMS_KEY) instanceof Map);
+        }
+        
+        return valid;
     }
 
     private static void markConfigChanged() {

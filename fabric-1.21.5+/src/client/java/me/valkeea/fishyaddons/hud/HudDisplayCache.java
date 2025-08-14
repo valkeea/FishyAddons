@@ -9,7 +9,7 @@ public class HudDisplayCache {
     private CachedHudData cachedData;
     private long lastApiUpdate = 0;
     private static final long CACHE_VALIDITY_MS = 5000;
-    private static final long API_STALENESS_THRESHOLD = 3000000;
+    private static final long API_STALENESS_THRESHOLD = 6000000;
     private HudDisplayCache() {}
 
     public static HudDisplayCache getInstance() {
@@ -54,14 +54,13 @@ public class HudDisplayCache {
             }
         }
         
-        // Pre-calculate commonly used values
         int totalItems = ItemTrackerData.getTotalItemCount();
         double totalValue = ItemTrackerData.getTotalSessionValue();
         long sessionDuration = ItemTrackerData.getSessionDurationMinutes();
         
         boolean hasRecentApiData = apiTimestamp > 0 && (currentTime - apiTimestamp) < API_STALENESS_THRESHOLD;
         String formattedValue = formatCoins(totalValue);
-        String timeString = sessionDuration > 0 ? String.format(" (%dm)", sessionDuration) : "";
+        String timeString = sessionDuration > 60 ? String.format(" (%dh)", sessionDuration / 60) : String.format(" (%dmin)", sessionDuration);
         String apiIndicator = calculateApiIndicator(hasRecentApiData);
         
         cachedData = new CachedHudDataBuilder()
@@ -105,7 +104,7 @@ public class HudDisplayCache {
     
     public static class CachedHudData {
         public final Map<String, Integer> items;
-        public final Map<String, Double> itemValues; // Unit price per item
+        public final Map<String, Double> itemValues;
         public final int totalItems;
         public final double totalValue;
         public final String formattedValue;
@@ -132,7 +131,7 @@ public class HudDisplayCache {
     }
     
     
-    // Builder for CachedHudData to avoid too many constructor parameters
+    // Builder to avoid too many constructor parameters
     private static class CachedHudDataBuilder {
         Map<String, Integer> items;
         Map<String, Double> itemValues;

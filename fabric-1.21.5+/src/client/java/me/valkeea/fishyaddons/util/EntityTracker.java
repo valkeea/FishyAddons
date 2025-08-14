@@ -1,19 +1,20 @@
 package me.valkeea.fishyaddons.util;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.decoration.ArmorStandEntity;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.decoration.ArmorStandEntity;
-import net.minecraft.client.MinecraftClient;
-import java.util.Set;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.regex.Pattern;
-import java.util.regex.Matcher;
 
 public class EntityTracker {
     private static final Set<Entity> trackedEntities = ConcurrentHashMap.newKeySet();
@@ -24,17 +25,18 @@ public class EntityTracker {
     private static boolean foundVal = false;
     
     private static final Pattern VALUABLE_MOB_PATTERN = Pattern.compile(
-        ".*\\b(the loch emperor|lord jawbus|thunder)\\b.*",
+        ".*\\b(the loch emperor|lord jawbus|thunder|sea walker)\\b.*",
         Pattern.CASE_INSENSITIVE
     );
     
     private static final Pattern MOB_INFO_PATTERN = Pattern.compile(
-        "\\[Lv(\\d+)\\]\\s+(.+?)\\s+(\\d+(?:\\.\\d+)?[kmbtKMBT]?)/(\\d+(?:\\.\\d+)?[kmbtKMBT]?)❤"
+        ".*\\[Lv(\\d+)\\]\\s*(?:[^\\s\\w]+\\s*)*(.+?)\\s+(\\d+(?:\\.\\d+)?[kmbtKMBT]?)/(\\d+(?:\\.\\d+)?[kmbtKMBT]?)❤.*",
+        Pattern.CASE_INSENSITIVE
     );
 
     // wip
     private static final Pattern VALUABLE_PLAYERENTITY_PATTERN = Pattern.compile(
-        ".*\\b(great white shark|tiger shark|ent)\\b.*",
+        ".*\\b(great white shark|minos inquisitor)\\b.*",
         Pattern.CASE_INSENSITIVE
     );
     
@@ -234,6 +236,7 @@ public class EntityTracker {
     }
     
     private static boolean tryExtractAndAssociateMobInfo(ArmorStandEntity armorStand, String nameToCheck, TrackedMob trackedMob) {
+        if (!nameToCheck.contains("[Lv") || !nameToCheck.contains("❤")) {  return false;   }
         Matcher matcher = MOB_INFO_PATTERN.matcher(nameToCheck);
         if (matcher.matches()) {
             String mobName = matcher.group(2).trim();

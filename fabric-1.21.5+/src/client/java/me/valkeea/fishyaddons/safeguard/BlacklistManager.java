@@ -35,7 +35,7 @@ public class BlacklistManager {
     private static boolean loaded = false;
 
     static {
-        defaultBlacklist.add(new GuiBlacklistEntry(Arrays.asList("Create Auction", "Create BIN Auction", "Auction House"), true, true));
+        defaultBlacklist.add(new GuiBlacklistEntry(Arrays.asList("Create Auction", "Create BIN Auction", "Find items for sale by players"), true, true));
         defaultBlacklist.add(new GuiBlacklistEntry(Arrays.asList("Coins Transaction"), true, false));
         defaultBlacklist.add(new GuiBlacklistEntry(Arrays.asList("Salvage Items"), true, true));
         defaultBlacklist.add(new GuiBlacklistEntry(Arrays.asList("Sell Item", "Click items in your inventory to sell", "Click to buyback"), true, false));

@@ -597,6 +597,8 @@ public class HypixelPriceClient {
     // Direct for special cases
     private String getDirectMapping(String itemName) {
         switch (itemName) {
+            case "agathas coupon":
+                return "AGATHA_COUPON";
             case "experience bottle":
                 return "EXPERIENCE_BOTTLE";
             case "grand experience bottle":
@@ -617,7 +619,7 @@ public class HypixelPriceClient {
                 return "RAW_FISH:3";
             case "ink sac":
                 return "INK_SACK";
-            case "emperor's skull":
+            case "emperors skull":
                 return "DIVER_FRAGMENT";
             case "thunder fragment":
                 return "THUNDER_SHARDS";

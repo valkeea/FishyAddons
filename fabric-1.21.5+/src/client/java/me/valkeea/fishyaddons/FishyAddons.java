@@ -8,6 +8,7 @@ import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.config.FishyPresets;
 import me.valkeea.fishyaddons.config.ItemConfig;
 import me.valkeea.fishyaddons.event.FishyKeys;
+import me.valkeea.fishyaddons.handler.CakeTimer;
 import me.valkeea.fishyaddons.handler.ChatAlert;
 import me.valkeea.fishyaddons.handler.ChatReplacement;
 import me.valkeea.fishyaddons.handler.CommandAlias;
@@ -16,17 +17,18 @@ import me.valkeea.fishyaddons.handler.KeyShortcut;
 import me.valkeea.fishyaddons.handler.MobAnimations;
 import me.valkeea.fishyaddons.handler.ParticleVisuals;
 import me.valkeea.fishyaddons.handler.PetInfo;
-import me.valkeea.fishyaddons.handler.SkyblockCleaner;
 import me.valkeea.fishyaddons.handler.ResourceHandler;
+import me.valkeea.fishyaddons.handler.SkyblockCleaner;
 import me.valkeea.fishyaddons.handler.XpColor;
+import me.valkeea.fishyaddons.hud.CakeDisplay;
 import me.valkeea.fishyaddons.hud.ElementRegistry;
 import me.valkeea.fishyaddons.hud.FishyToast;
 import me.valkeea.fishyaddons.hud.PetDisplay;
 import me.valkeea.fishyaddons.hud.PingDisplay;
+import me.valkeea.fishyaddons.hud.SearchHudElement;
 import me.valkeea.fishyaddons.hud.TimerDisplay;
 import me.valkeea.fishyaddons.hud.TitleDisplay;
 import me.valkeea.fishyaddons.hud.TrackerDisplay;
-import me.valkeea.fishyaddons.hud.SearchHudElement;
 import me.valkeea.fishyaddons.listener.ClientChat;
 import me.valkeea.fishyaddons.listener.ClientConnected;
 import me.valkeea.fishyaddons.listener.ClientDisconnected;
@@ -40,11 +42,12 @@ import me.valkeea.fishyaddons.tracker.ItemTrackerData;
 import me.valkeea.fishyaddons.tracker.SackDropParser;
 import me.valkeea.fishyaddons.tracker.TrackerUtils;
 import me.valkeea.fishyaddons.util.PlaySound;
+import me.valkeea.fishyaddons.util.ScoreboardUtils;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.KeyBinding;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
@@ -80,6 +83,7 @@ public class FishyAddons implements ClientModInitializer {
         WorldEvent.init();
         ClientConnected.init();
         ClientDisconnected.init();
+        CakeTimer.getInstance().init();
         BeaconRenderer.init();
         ClientChat.init();
         FishyToast.init();
@@ -90,6 +94,7 @@ public class FishyAddons implements ClientModInitializer {
         PetDisplay petDisplay = new PetDisplay();
         TrackerDisplay trackerDisplay = new TrackerDisplay();
         SearchHudElement searchHudElement = new SearchHudElement();
+        CakeDisplay centuryCakeDisplay = new CakeDisplay();
 
         ResourceHandler.register();
         ElementRegistry.register(pingDisplay);
@@ -98,6 +103,7 @@ public class FishyAddons implements ClientModInitializer {
         ElementRegistry.register(petDisplay);
         ElementRegistry.register(trackerDisplay);
         ElementRegistry.register(searchHudElement);
+        ElementRegistry.register(centuryCakeDisplay);
         
         pingDisplay.register();
         timerDisplay.register();
@@ -105,6 +111,7 @@ public class FishyAddons implements ClientModInitializer {
         petDisplay.register();
         trackerDisplay.register();
         searchHudElement.register();
+        centuryCakeDisplay.register();
 
         ItemTrackerData.init();
         FishyPresets.ensureDefaultPresets();

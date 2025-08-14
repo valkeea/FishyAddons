@@ -4,6 +4,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import me.valkeea.fishyaddons.config.FishyConfig;
+import me.valkeea.fishyaddons.handler.CakeTimer;
 import me.valkeea.fishyaddons.handler.ChatAlert;
 import me.valkeea.fishyaddons.handler.ChatTimers;
 import me.valkeea.fishyaddons.handler.PetInfo;
@@ -45,6 +46,7 @@ public class ClientChat {
         ChatAlert.handleMatch(text);
         PetInfo.handleChat(text);
         TrackerUtils.handleChat(text);
+        CakeTimer.getInstance().handleChat(text);
     }
 
     private static void handleCoordinates(String text) {

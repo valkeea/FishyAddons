@@ -43,7 +43,8 @@ public class SackDropParser {
     }
 
     public static void refresh() {
-        shouldTrackSack = me.valkeea.fishyaddons.config.FishyConfig.getState(Key.TRACK_SACK, false);
+        shouldTrackSack = me.valkeea.fishyaddons.config.FishyConfig.getState(Key.TRACK_SACK, false) && 
+            me.valkeea.fishyaddons.config.FishyConfig.getState(Key.HUD_TRACKER_ENABLED, false);
     }
 
     public static void toggle() {

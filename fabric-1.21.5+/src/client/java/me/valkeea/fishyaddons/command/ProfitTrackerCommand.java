@@ -102,7 +102,7 @@ public class ProfitTrackerCommand {
     }
 
     private static boolean handleOn() {
-        FishyConfig.enable(KEY, true);
+        FishyConfig.enable(KEY, false);
         me.valkeea.fishyaddons.tracker.TrackerUtils.refresh();
         handleInit(); // Ensure APIs are initialized
         
@@ -120,7 +120,7 @@ public class ProfitTrackerCommand {
     }
     
     private static boolean handleOff() {
-        FishyConfig.enable(KEY, false);
+        FishyConfig.disable(KEY);
         me.valkeea.fishyaddons.tracker.TrackerUtils.refresh();
         FishyNotis.send(Text.literal("§3Profit Tracker §cdisabled"));
         return true;
@@ -136,7 +136,7 @@ public class ProfitTrackerCommand {
         Map<String, Integer> items = ItemTrackerData.getAllItems();
         
         if (items.isEmpty()) {
-            FishyNotis.alert(Text.literal("§7No items tracked this session"));
+            FishyNotis.alert(Text.literal("§7No items tracked this session. Use /fp on to enable tracking, /fp to see available commands."));
             return false;
         }
         
@@ -380,15 +380,17 @@ public class ProfitTrackerCommand {
     
     protected static void showUsage() {
         FishyNotis.alert(Text.literal("§b  α Profit Tracker Commands α  "));
-        FishyNotis.alert(Text.literal("§3/fa profit on/off/toggle §7- Enable/disable"));        
-        FishyNotis.alert(Text.literal("§3/fa profit clear §7- Clear current data"));
-        FishyNotis.alert(Text.literal("§3/fa profit refresh §7- Refresh cached prices"));        
-        FishyNotis.alert(Text.literal("§3/fa profit show §7- Show session stats"));
-        FishyNotis.alert(Text.literal("§3/fa profit init §7- Manually initialize APIs"));
-        FishyNotis.alert(Text.literal("§3/fa profit status §7- Check API status"));
-        FishyNotis.alert(Text.literal("§3/fa profit price [amount] <item> §7- Check price"));
-        FishyNotis.alert(Text.literal("§3/fa profit profile [name] §7- Create or switch to a profile"));
-        FishyNotis.send(Text.literal("§bYou can also switch profile using HUD buttons!"));
+        FishyNotis.alert(Text.literal("§3/fa profit = /fp"));
+        FishyNotis.alert(Text.literal("§3/fp on/off/toggle §7- Enable/disable"));        
+        FishyNotis.alert(Text.literal("§3/fp clear §7- Clear current data"));
+        FishyNotis.alert(Text.literal("§3/fp refresh §7- Refresh cached prices"));        
+        FishyNotis.alert(Text.literal("§3/fp stats §7- Show session stats"));
+        FishyNotis.alert(Text.literal("§3/fp init §7- Manually initialize APIs"));
+        FishyNotis.alert(Text.literal("§3/fp status §7- Check API status"));
+        FishyNotis.alert(Text.literal("§3/fp price [amount] <item> §7- Check and update price"));
+        FishyNotis.alert(Text.literal("§3/fp profile [name] §7- Create or switch to a profile"));
+        FishyNotis.send(Text.literal("§bYou can also switch profiles using HUD buttons!"));
+        FishyNotis.alert(Text.literal("§b       Profile data will save automatically on swap/disconnect."));
     }
     
     private static String capitalizeItemName(String itemName) {

@@ -718,7 +718,9 @@ public class ItemTrackerData {
         
         // Show book drop alert with magic find if available
         showBookDropAlert(enchantmentName, magicFind);
-        
+
+        if (!TrackerUtils.isEnabled()) return;
+
         // Store the enchantment with metadata
         String normalizedName = normalizeItemName(enchantmentName);
         itemCounts.merge(normalizedName, quantity, Integer::sum);

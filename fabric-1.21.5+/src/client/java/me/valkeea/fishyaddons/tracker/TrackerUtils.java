@@ -15,7 +15,7 @@ public class TrackerUtils {
 
     public static void refresh() {
         pricePerItem = me.valkeea.fishyaddons.config.FishyConfig.getState(Key.PER_ITEM, false);
-        enabled = me.valkeea.fishyaddons.config.FishyConfig.getState(Key.HUD_TRACKER_ENABLED, true);
+        enabled = me.valkeea.fishyaddons.config.FishyConfig.getState(Key.HUD_TRACKER_ENABLED, false);
     }
 
     public static void setPricePerItem(boolean state) {
@@ -24,11 +24,21 @@ public class TrackerUtils {
     }
 
     public static void handleChat(String message) {
-        if (!me.valkeea.fishyaddons.util.SkyblockCheck.getInstance().rules() ||
-            !enabled) return;
+        if (!me.valkeea.fishyaddons.util.SkyblockCheck.getInstance().rules()) return;
+        
         String s = HelpUtil.stripColor(message);
         if (s.startsWith("[") || s.startsWith("Guild") || 
             s.startsWith("Party")) {
+            return;
+        }
+        
+        ChatDropParser.ParseResult result = ChatDropParser.parseMessage(message);
+        
+        if (!enabled) {
+            if (result != null && !result.isCoinDrop && 
+                result.itemName.toLowerCase().contains("enchanted book")) {
+                InventoryTracker.onEnchantedBookDropDetected(result.quantity, result.magicFind);
+            }
             return;
         }
         
@@ -36,7 +46,6 @@ public class TrackerUtils {
             InventoryTracker.onLsDetected();
         }
         
-        ChatDropParser.ParseResult result = ChatDropParser.parseMessage(message);
         if (result != null) {
             SackDropParser.registerChatDrop(result.itemName, result.quantity);
             
@@ -53,7 +62,8 @@ public class TrackerUtils {
     }    
     
     public static void handleSackDrop(ChatDropParser.ParseResult drop) {
-        if (!me.valkeea.fishyaddons.util.SkyblockCheck.getInstance().rules()) return;
+        if (!me.valkeea.fishyaddons.util.SkyblockCheck.getInstance().rules() ||
+            !enabled) return;
         
         if (drop != null) {
             ItemTrackerData.addDrop(drop.itemName, drop.quantity);

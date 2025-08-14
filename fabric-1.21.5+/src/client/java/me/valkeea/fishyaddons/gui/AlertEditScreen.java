@@ -48,9 +48,9 @@ public class AlertEditScreen extends Screen {
         addDrawableChild(new FaButton(centerX - 70, centerY, 50, 20, 
             Text.literal("Color").styled(style -> style.withColor(alertColor)),
             btn -> { 
-                float[] rgb = ColorPickerScreen.intToRGB(alertColor);
-                this.client.setScreen(new ColorPickerScreen(this, rgb, selected -> {
-                    alertColor = ColorPickerScreen.rgbToInt(selected);
+                float[] rgb = ColorWheel.intToRGB(alertColor);
+                this.client.setScreen(new ColorWheel(this, rgb, selected -> {
+                    alertColor = ColorWheel.rgbToInt(selected);
                     btn.setMessage(Text.literal("Color").styled(s -> s.withColor(alertColor)));
                     this.client.setScreen(this);
                 }));

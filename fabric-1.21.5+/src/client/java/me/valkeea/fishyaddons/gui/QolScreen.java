@@ -101,10 +101,10 @@ public class QolScreen extends Screen {
             centerX + 100, rndrBtnY, 60, BTNH,
             getColorButtonText(),
             btn -> {
-                MinecraftClient.getInstance().setScreen(new ColorPickerScreen(this,
-                    ColorPickerScreen.intToRGB(FishyConfig.getInt("renderCoordsColor")),
+                MinecraftClient.getInstance().setScreen(new ColorWheel(this,
+                    ColorWheel.intToRGB(FishyConfig.getInt("renderCoordsColor")),
                     rgb -> {
-                        FishyConfig.setInt("renderCoordsColor", ColorPickerScreen.rgbToInt(rgb));
+                        FishyConfig.setInt("renderCoordsColor", ColorWheel.rgbToInt(rgb));
                         FishyConfig.saveConfigIfNeeded();
                         btn.setMessage(getColorButtonText());
                     }
@@ -272,7 +272,7 @@ public class QolScreen extends Screen {
     }
 
     private static Text getColorButtonText() {
-        float[] rgb = ColorPickerScreen.intToRGB(FishyConfig.getInt("renderCoordsColor"));
+        float[] rgb = ColorWheel.intToRGB(FishyConfig.getInt("renderCoordsColor"));
         int r = (int)(rgb[0] * 255);
         int g = (int)(rgb[1] * 255);
         int b = (int)(rgb[2] * 255);
@@ -380,7 +380,8 @@ public class QolScreen extends Screen {
                 Text.literal("Render a Beacon for /fa coords:"),
                 Text.literal("- §8Supports other mods if formatted"),
                 Text.literal("  §8as 'x:%, y:%, z:%'"),
-                Text.literal("- §8Disappears after 1min")
+                Text.literal("- §8Disappears after 1min"),
+                Text.literal("- §8/fa coords [title] to include additional text")
             );
             GuiUtil.fishyTooltip(context, this.textRenderer, tooltipLines, mouseX, mouseY);
         }

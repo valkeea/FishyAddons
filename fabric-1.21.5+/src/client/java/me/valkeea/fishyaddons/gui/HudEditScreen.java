@@ -6,6 +6,7 @@ import me.valkeea.fishyaddons.hud.TitleDisplay;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.text.Text;
 
 import java.awt.Rectangle;
@@ -78,7 +79,7 @@ public class HudEditScreen extends Screen {
                 float green = ((color >> 8) & 0xFF) / 255.0f;
                 float blue = (color & 0xFF) / 255.0f;
                 MinecraftClient.getInstance().setScreen(
-                    new ColorPickerScreen(this, new float[]{red, green, blue}, rgb -> {
+                    new ColorWheel(this, new float[]{red, green, blue}, rgb -> {
                         int newColor = ((int)(rgb[0] * 255) << 16) | ((int)(rgb[1] * 255) << 8) | (int)(rgb[2] * 255);
                         finalElement.setHudColor(newColor);
                         finalElement.invalidateCache();
@@ -114,7 +115,7 @@ public class HudEditScreen extends Screen {
                 }
             }
         );
-        addDrawableChild(bgBtn);
+        addDrawableChild(bgBtn); 
     }
 
     @Override
@@ -195,7 +196,14 @@ public class HudEditScreen extends Screen {
         if (bgBtn != null) {
             bgBtn.setMessage(GuiUtil.onOffLabel("BG", selectedElement != null && selectedElement.getHudBg()));
         }
+
         super.render(context, mouseX, mouseY, delta);
+
+        String helpText = "Select an element to edit";
+        int textWidth = this.textRenderer.getWidth(helpText);
+        int helpX = (this.width - textWidth) / 2;
+        int helpY = this.height - 120;
+        context.drawText(this.textRenderer, helpText, helpX, helpY, 0xFFFFD1FF, false);         
     }
 
     @Override

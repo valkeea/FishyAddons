@@ -96,7 +96,7 @@ public class VisualSettingsScreen extends Screen {
         addDrawableChild(new FaButton(
             centerX + 100, y, 60, BTNH,
             getCustomButtonText(),
-            btn -> MinecraftClient.getInstance().setScreen(new ColorPickerScreen(this, ParticleVisuals.getActiveParticleColor(), color -> {
+            btn -> MinecraftClient.getInstance().setScreen(new ColorWheel(this, ParticleVisuals.getActiveParticleColor(), color -> {
                 ParticleVisuals.setCustomColor(color);
                 btn.setMessage(getCustomButtonText());
             }))
@@ -119,8 +119,8 @@ public class VisualSettingsScreen extends Screen {
         addDrawableChild(new FaButton(
             centerX + 100, y, 60, BTNH,
             getCustomXpColorText(),
-            btn -> MinecraftClient.getInstance().setScreen(new ColorPickerScreen(this, ColorPickerScreen.intToRGB(XpColor.get()), color -> {
-                XpColor.set(ColorPickerScreen.rgbToInt(color));
+            btn -> MinecraftClient.getInstance().setScreen(new ColorWheel(this, ColorWheel.intToRGB(XpColor.get()), color -> {
+                XpColor.set(ColorWheel.rgbToInt(color));
                 btn.setMessage(getCustomXpColorText());
             }))
         ));

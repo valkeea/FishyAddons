@@ -7,7 +7,6 @@ import java.util.regex.Pattern;
 import me.valkeea.fishyaddons.util.FishyNotis;
 import me.valkeea.fishyaddons.util.TablistUtils;
 import me.valkeea.fishyaddons.util.TextUtils;
-
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
@@ -15,158 +14,219 @@ import net.minecraft.util.Formatting;
 public class TabScanner {
     private TabScanner() {}
     private static final Pattern PET_PATTERN = Pattern.compile("\\[Lvl \\d+\\] .+");
-    private static final int XP_FAIL_LIMIT = 15;
     private static final int FAIL_LIMIT = 20;
-    private static final int SUMMON_FAIL_LIMIT = 15;
 
-    private static PetTabInfo saved = null;
-    private static int xpFailCount = 0;
-    private static Text override = null;
+    // Direct overrides
+    private static Text directOverride = null;
     private static Text overrideOutline = null;
+
+    // Tab-scanned pet info
+    private static PetTabInfo l1Scanned = null;
+    
+    // Summon handling
+    private static boolean pendingSummon = false;
+    private static String prevl1 = null;
+    private static long summonStartTime = 0;
     private static int failCount = 0;
-    private static int summonFailCount = 0;
+    private static final int MIN_SUMMON_WAIT_MS = 500;
+    private static final int MAX_SUMMON_WAIT_MS = 5000;
 
-    private static final java.util.Map<String, Text> maxLevelCache = new java.util.HashMap<>();
+    // Direct override methods
+    public static void setOverride(Text petInfo) { 
+        directOverride = petInfo; 
+        clearPet();
+    }
+    
+    public static void setOutline(Text outline) { 
+        overrideOutline = outline; 
+    }
+    
+    public static void clearOverride() { 
+        directOverride = null; 
+        overrideOutline = null;
+    }
 
-    public static void setPet(Text petInfo) { override = petInfo; }
-    public static void clearPet() { override = null; }
-    public static void setOutline(Text outline) { overrideOutline = outline; }
-    public static void clearOutline() { overrideOutline = null; }
-    public static void clearFailCount() { failCount = 0; }
+    // Summon handling
+    public static void startSummonScan() {
+        String currentPetText = l1Scanned != null ? extract(l1Scanned.l1) : null;
+        prevl1 = currentPetText;
+        pendingSummon = true;
+        summonStartTime = System.currentTimeMillis();
+        failCount = 0;
+        clearPet();
+    }
 
+    public static boolean isPending() {
+        return pendingSummon;
+    }
+
+    private static void clearPet() {
+        l1Scanned = null;
+    }
+
+    // Public getters for the HUD
     public static Text getPet() {
-        if (override != null) {
-            return override;
+        // Priority: direct override > scanned pet
+        if (directOverride != null) {
+            return directOverride;
         }
-        return saved != null ? saved.getCombined() : null;
+        return l1Scanned != null ? l1Scanned.getCombined() : null;
     }
 
     public static Text getOutline() {
         if (overrideOutline != null) {
             return overrideOutline;
         }
-        if (override != null) {
-            String stripped = Formatting.strip(override.getString());
+        if (directOverride != null) {
+            String stripped = Formatting.strip(directOverride.getString());
             return Text.literal(stripped).styled(style -> style.withColor(Formatting.BLACK));
         }
-        return saved != null ? saved.getCombinedForOutline() : null;
+        return l1Scanned != null ? l1Scanned.getCombinedForOutline() : null;
     }
 
     public static void onUpdate() {
-        if (PetInfo.isDynamic()) {
-            clearPet();
-            clearOutline();
+        // Safety check
+        if (pendingSummon && (System.currentTimeMillis() - summonStartTime > MAX_SUMMON_WAIT_MS * 2)) {
+            pendingSummon = false;
+            prevl1 = null;
+            summonStartTime = 0;
+            failCount = 0;
         }
+
+        // Dynamic mode: clear overrides
+        if (PetInfo.isDynamic()) {
+            clearOverride();
+        }
+
         List<Text> lines = TablistUtils.getLines();
         if (lines.isEmpty()) {
-            saved = null;
+            clearPet();
             return;
         }
 
-        String currentline1 = null;
-        int line1Idx = -1;
+        PetLineResult l1Result = findPetLine(lines);
+        if (l1Result == null) {
+            noneFound();
+            return;
+        }
 
-        // Find the pet line index and value
+        if (pendingSummon) {
+            handleSummon(l1Result);
+            return;
+        }
+
+        updateScannedPet(l1Result, lines);
+        failCount = 0;
+    }
+
+    private static PetLineResult findPetLine(List<Text> lines) {
         for (int i = 0; i < lines.size(); i++) {
             Text line = lines.get(i);
             if (isPetLine(line.getString())) {
-                currentline1 = line.getString().trim();
-                line1Idx = i;
-                break;
+                return new PetLineResult(i, line, line.getString().trim());
             }
         }
+        return null;
+    }
+ 
+    private static void noneFound() {
+        if (pendingSummon) {
+            long timeSinceSummon = System.currentTimeMillis() - summonStartTime;
 
-        if (PetInfo.isPending()) {
-            if (line1Idx == -1) {
-                summonFailCount++;
-                if (summonFailCount >= SUMMON_FAIL_LIMIT) {
-                    PetInfo.setPending(false);
-                    PetInfo.setNextCheck(false);
-                    summonFailCount = 0;
-                    sendFailNoti();
-                }
-                return;
-            }
-
-            Text o = lines.get(line1Idx);
-            handlePending(currentline1, o);
-            return;
-        }
-
-        if (line1Idx == -1) {
-            saved = null;
-            return;
-        }
-
-        String petKey = currentline1;
-        Text line1 = lines.get(line1Idx);
-
-        // Try to find a xp line line if dynamic
-        if (PetInfo.isDynamic() && PetInfo.shouldScanForXp()) {
-            int contIdx = findXpLineIdx(lines, line1Idx);
-            if (contIdx != -1) {
-                Text cont = lines.get(contIdx);
-                if (isMaxLevelLine(cont)) {
-                    maxLevelCache.put(petKey, cont);
-                }
-                saved = new PetTabInfo(line1Idx, contIdx, line1, cont);
-                xpFailCount = 0;
+            // Assume line has changed after max wait time
+            if (timeSinceSummon > MAX_SUMMON_WAIT_MS) {
+                pendingSummon = false;
+                prevl1 = null;
+                summonStartTime = 0;
                 failCount = 0;
-                return;
-            }
-
-            Text foundMaxLevel = maxLevelCache.get(petKey);
-            if (foundMaxLevel != null) {
-                saved = new PetTabInfo(line1Idx, -1, line1, foundMaxLevel);
-                xpFailCount = 0;
-                failCount = 0;
+                sendFailNotification();
                 return;
             }
             
-            xpFailCount++;
             failCount++;
-            if (xpFailCount >= XP_FAIL_LIMIT || failCount >= FAIL_LIMIT) {
-                sendFailNoti();
-                xpFailCount = 0;
+            if (failCount >= FAIL_LIMIT) {
+                pendingSummon = false;
+                prevl1 = null;
+                summonStartTime = 0;
                 failCount = 0;
+                sendFailNotification();
             }
+        } else {
+            clearPet();
         }
     }
 
-    // Find the index of a valid xp line, or -1 if not found
-    private static int findXpLineIdx(List<Text> lines, int line1Idx) {
-        for (int j = 0; j < lines.size(); j++) {
-            if (j == line1Idx) continue;
-            if (isXpLine(lines.get(j))) {
-                return j;
-            }
-        }
-        return -1;
-    }
-
-    // Handle pending summon scan logic
-    private static void handlePending(String c1, Text o) {
-        String lastline1 = saved != null ? saved.line1.getString().trim() : null;
-        String current = c1 != null ? c1.trim() : null;
-
-        // Only proceed if info has changed
-        if (current != null && !current.equals(lastline1)) {
-            PetInfo.confirm(true);
-            PetInfo.setPending(false); 
-            saved = new PetTabInfo(-1, -1, o, null);      
-            summonFailCount = 0;
-            return;
-        } 
+    private static void handleSummon(PetLineResult l1Result) {
+        String currentl1 = l1Result.lineText;
+        long timeSinceSummon = System.currentTimeMillis() - summonStartTime;
         
-        if (PetInfo.isPending()) {
-            summonFailCount++;
-            if (summonFailCount >= SUMMON_FAIL_LIMIT) {
-                PetInfo.setPending(false);
-                PetInfo.setNextCheck(false);
-                summonFailCount = 0;
-                sendFailNoti();
+        // Always check for timeout first, regardless of pet line content
+        if (timeSinceSummon > MAX_SUMMON_WAIT_MS) {
+            l1Scanned = new PetTabInfo(l1Result.line, null);
+            pendingSummon = false;
+            prevl1 = null;
+            summonStartTime = 0;
+            failCount = 0;
+            return;
+        }
+        
+        if (timeSinceSummon < MIN_SUMMON_WAIT_MS) {
+            return;
+        }
+        
+        // Compare normalized pet identifiers
+        String currentPetId = getIdentifier(currentl1);
+        String prevPetId = getIdentifier(prevl1);
+        boolean hasChanged = prevPetId == null || !currentPetId.equals(prevPetId);
+
+        if (hasChanged) {
+            // l1 has changed - confirm the new pet
+            l1Scanned = new PetTabInfo(l1Result.line, null);
+            pendingSummon = false;
+            prevl1 = null;
+            summonStartTime = 0;
+            failCount = 0;
+        } else {
+            failCount++;
+        }
+    }
+
+    private static void updateScannedPet(PetLineResult l1Result, List<Text> lines) {
+        Text l1 = l1Result.line;
+        Text l2 = null;
+        if (PetInfo.isDynamic() && PetInfo.shouldIncludeXp()) {
+            l2 = findXpLine(lines, l1Result.index);
+        }
+        
+        l1Scanned = new PetTabInfo(l1, l2);
+    }
+
+    private static Text findXpLine(List<Text> lines, int l1Idx) {
+        for (int i = 0; i < lines.size(); i++) {
+            if (i == l1Idx) continue;
+            if (isXpLine(lines.get(i))) {
+                return lines.get(i);
             }
         }
+        return null;
+    }
+
+    // Raw l1 for summon comparison
+    private static String extract(Text l1) {
+        if (l1 == null) return null;
+        String fullText = l1.getString().trim();
+        return Formatting.strip(fullText);
+    }
+
+    private static String getIdentifier(String l1) {
+        if (l1 == null) return null;
+
+        String stripped = Formatting.strip(l1);
+        Matcher matcher = PET_PATTERN.matcher(stripped);
+        if (matcher.matches()) {
+            return stripped;
+        }
+        return stripped;
     }
 
     private static boolean isPetLine(String line) {
@@ -177,6 +237,8 @@ public class TabScanner {
 
     private static boolean isXpLine(Text line) {
         List<Text> siblings = line.getSiblings();
+        
+        // Check for MAX LEVEL
         if (siblings.size() == 2) {
             Text maxLevel = siblings.get(1);
             if (maxLevel.getString().trim().equals("MAX LEVEL") &&
@@ -186,6 +248,8 @@ public class TabScanner {
                 return true;
             }
         }
+        
+        // Check for XP format
         if (siblings.size() >= 5) {
             Text t1 = siblings.get(1);
             Text t2 = siblings.get(2);
@@ -197,32 +261,15 @@ public class TabScanner {
             String s3 = t3.getString().trim();
             String s4 = t4.getString().trim();
 
-            boolean match =
-                t1.getStyle().getColor() != null && t1.getStyle().getColor().getRgb() == 0xFFFF55 && s1.matches("[\\d,\\.]+") &&
-                t2.getStyle().getColor() != null && t2.getStyle().getColor().getRgb() == 0xFFAA00 && s2.equals("/") &&
-                t3.getStyle().getColor() != null && t3.getStyle().getColor().getRgb() == 0xFFFF55 && s3.endsWith("XP") &&
-                t4.getStyle().getColor() != null && t4.getStyle().getColor().getRgb() == 0xFFAA00 && s4.matches("\\([\\d\\.]+%\\)");
-
-            if (match) {
-                return true;
-            }
+            return t1.getStyle().getColor() != null && t1.getStyle().getColor().getRgb() == 0xFFFF55 && s1.matches("[\\d,\\.]+") &&
+                   t2.getStyle().getColor() != null && t2.getStyle().getColor().getRgb() == 0xFFAA00 && s2.equals("/") &&
+                   t3.getStyle().getColor() != null && t3.getStyle().getColor().getRgb() == 0xFFFF55 && s3.endsWith("XP") &&
+                   t4.getStyle().getColor() != null && t4.getStyle().getColor().getRgb() == 0xFFAA00 && s4.matches("\\([\\d\\.]+%\\)");
         }
         return false;
     }
 
-    private static boolean isMaxLevelLine(Text line) {
-        List<Text> siblings = line.getSiblings();
-        if (siblings.size() == 2) {
-            Text maxLevel = siblings.get(1);
-            return maxLevel.getString().trim().equals("MAX LEVEL") &&
-                   maxLevel.getStyle().getColor() != null &&
-                   maxLevel.getStyle().getColor().getRgb() == 0x55FFFF &&
-                   Boolean.TRUE.equals(maxLevel.getStyle().isBold());
-        }
-        return false;
-    }
-
-    private static void sendFailNoti() {
+    private static void sendFailNotification() {
         MinecraftClient mc = MinecraftClient.getInstance();
         if (mc.player != null) {
             FishyNotis.send(
@@ -232,30 +279,38 @@ public class TabScanner {
         }
     }
 
-    public static class PetTabInfo {
-        public final int line1Idx;
-        public final int line2Idx;
-        public final Text line1;
-        public final Text line2;
+    private static class PetLineResult {
+        final int index;
+        final Text line;
+        final String lineText;
 
-        public PetTabInfo(int line1Idx, int line2Idx, Text line1, Text line2) {
-            this.line1Idx = line1Idx;
-            this.line2Idx = line2Idx;
-            this.line1 = line1;
-            this.line2 = line2;
+        PetLineResult(int index, Text line, String lineText) {
+            this.index = index;
+            this.line = line;
+            this.lineText = lineText;
+        }
+    }
+
+    public static class PetTabInfo {
+        private final Text l1;
+        private final Text l2;
+
+        public PetTabInfo(Text l1, Text l2) {
+            this.l1 = l1;
+            this.l2 = l2;
         }
 
         public Text getCombined() {
-            if (line2 != null) {
-                return Text.empty().append(line1).append(Text.literal(" ")).append(line2);
+            if (l2 != null) {
+                return Text.empty().append(l1).append(Text.literal(" ")).append(l2);
             } else {
-                return line1;
+                return l1;
             }
         }
 
         public Text getCombinedForOutline() {
             Text combined = getCombined();
             return TextUtils.recolor(combined);
-        }      
+        }
     }
 }

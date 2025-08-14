@@ -12,93 +12,100 @@ import net.minecraft.util.Formatting;
 public class PetInfo {
     private PetInfo() {}
     private static boolean isOn = false;
-    private static boolean nextCheck = false;
-    private static boolean dynamicCheck = false;
-    private static boolean xpCheck = false;
-    private static boolean tablistState = false;
-    private static long lastCheckTime = 0;
-    private static boolean widget = false;
-    private static boolean newPet = false;
-    private static boolean pendingSummonScan = false;
+    private static boolean dynamicMode = false;
+    private static boolean tablistReady = false;
+    private static long lastScanTime = 0;
+    private static boolean needsScan = false;
 
     public static void refresh() {
         isOn = me.valkeea.fishyaddons.config.FishyConfig.getState(Key.HUD_PET_ENABLED, false);
-        dynamicCheck = me.valkeea.fishyaddons.config.FishyConfig.getState(Key.HUD_PET_DYNAMIC, false);
-        xpCheck = me.valkeea.fishyaddons.config.FishyConfig.getState(Key.HUD_PETXP, false);
+        dynamicMode = me.valkeea.fishyaddons.config.FishyConfig.getState(Key.HUD_PET_DYNAMIC, false);
     }
 
-    public static void update() {
+    public static void onWorldLoad() {
+        setTablistReady(false);
+        needsScan = true;
+    }
+
+    public static void onTablistReady() {
         setTablistReady(true);
-        setNextCheck(true);       
     }
 
-    public static void confirm(boolean found) {
-        newPet = found;
-    }
-
-    // Rate-limited or on chat match depending on config
-    public static boolean getNextCheck() {
-        long now = System.currentTimeMillis();
-        boolean shouldCheck = (dynamicCheck || nextCheck) && tablistState &&
-        widget && (now - lastCheckTime >= 1000);
-
-        if (shouldCheck) {
-            lastCheckTime = now;
-            if (nextCheck && newPet) {
-                nextCheck = false;
-                newPet = false;
-            }
+    public static boolean shouldScan() {
+        if (!isOn || !SkyblockCheck.getInstance().rules() || !tablistReady) {
+            return false;
         }
-        return shouldCheck;
+
+        long now = System.currentTimeMillis();
+
+        // During summon scan, allow faster detection
+        if (TabScanner.isPending()) {
+            if (now - lastScanTime >= 200) {
+                lastScanTime = now;
+                return true;
+            }
+            return false;
+        }
+        
+        // Dynamic enabled: scan at rate limit + any needed scans
+        if (dynamicMode) {
+            if (now - lastScanTime >= 1000) {
+                lastScanTime = now;
+                return true;
+            }
+            return false;
+        }
+        
+        // Dynamic disabled: only scan when needed
+        if (needsScan && now - lastScanTime >= 1000) {
+            lastScanTime = now;
+            needsScan = false;
+            return true;
+        }
+        
+        return false;
     }
 
     public static void handleChat(String message) {
         if (!isOn || !SkyblockCheck.getInstance().rules()) return;
-        // Autopet: override until next chat or pet change
-        Pattern directPattern = Pattern.compile("\\[Lvl \\d+\\] ((?:[^§]|§.)+?)(?=§a§lVIEW RULE|$)");
+        
+        // Autopet: set direct override
+        Pattern directPattern = Pattern.compile("§cAutopet §eequipped your (?:§.)+\\[Lvl \\d+\\] (.+?)(?=§a§lVIEW RULE|$)");
         Matcher directMatcher = directPattern.matcher(message);
         if (directMatcher.find()) {
-
-            String msg = directMatcher.group();
-            msg = msg.replace("!", "");
-            String stripped = Formatting.strip(msg);
-            Text petInfo = Text.literal(msg);
-            TabScanner.setPet(petInfo);
+            String fullMatch = directMatcher.group(0);
+            String petInfoPart = fullMatch.substring(fullMatch.indexOf("[Lvl"));
+            petInfoPart = petInfoPart.replaceAll("[!¡]+(?:§.)*$", "").replaceAll("§.$", "");
+            
+            String stripped = Formatting.strip(petInfoPart);
+            Text petInfo = Text.literal(petInfoPart);
+            TabScanner.setOverride(petInfo);
             Text petOutline = Text.literal(stripped).styled(style -> style.withColor(Formatting.BLACK));
             TabScanner.setOutline(petOutline);
-
-            pendingSummonScan = false;
-            setNextCheck(false);
             return;
         }
 
-        // Summon: schedule scan, but only update when pet line changes
+        // Summon: clear current and schedule scan for new pet confirmation
         Pattern summonPattern = Pattern.compile("You summoned your (.+) ?[!¡]?");
         Matcher summonMatcher = summonPattern.matcher(message);
         if (summonMatcher.find() || message.matches("\\[Lvl \\d+\\] .+")) {
-            TabScanner.clearPet();
-            TabScanner.clearOutline();
-            pendingSummonScan = true;
-            setNextCheck(true);
-            TabScanner.clearFailCount();
+            TabScanner.clearOverride();
+            TabScanner.startSummonScan();
+            needsScan = true;
         }
 
         if (message.contains("You despawned your")) {
-            Text msg = Text.literal("You despawned your pet")
-            .setStyle(Style.EMPTY.withColor(0xFF808080));
-            TabScanner.setPet(msg);
-            pendingSummonScan = false;
-            setNextCheck(false);
+            Text msg = Text.literal("Despawned")
+                .setStyle(Style.EMPTY.withColor(0xFF808080));
+            TabScanner.setOverride(msg);
         }
     }
 
-    public static void setNextCheck(boolean allow) { nextCheck = allow; }
-    public static void setTablistReady(boolean ready) { tablistState = ready; }
-    public static void setPending(boolean pending) { pendingSummonScan = pending; }
-    public static void setWidget(boolean found) { widget = found; }
-    public static boolean isPending() { return pendingSummonScan; }    
-    public static boolean widget() { return widget; }
-    public static boolean isDynamic() { return dynamicCheck; }
-    public static boolean isOn() { return isOn; }    
-    public static boolean shouldScanForXp() { return xpCheck; }
+    public static void setTablistReady(boolean ready) { tablistReady = ready; }
+    public static boolean isTablistReady() { return tablistReady; }
+    public static boolean isOn() { return isOn; }
+    public static boolean isDynamic() { return dynamicMode; }
+    public static boolean shouldIncludeXp() { 
+        return me.valkeea.fishyaddons.config.FishyConfig.getState(Key.HUD_PETXP, false);
+    }
 }

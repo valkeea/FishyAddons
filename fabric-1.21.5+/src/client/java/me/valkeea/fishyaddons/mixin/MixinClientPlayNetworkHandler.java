@@ -29,7 +29,7 @@ public class MixinClientPlayNetworkHandler {
     )
     private void ons2c(PlayerListS2CPacket packet, CallbackInfo ci) {
         if (!PetInfo.isOn() || !me.valkeea.fishyaddons.util.SkyblockCheck.getInstance().rules()) return;
-        if (PetInfo.getNextCheck()) {
+        if (PetInfo.shouldScan()) {
             TabScanner.onUpdate();
         }
     }    

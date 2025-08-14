@@ -33,10 +33,6 @@ public class ClientConnected {
     }
 
     public static void triggerAction() {
-        if (connected && SkyblockCheck.getInstance().rules()) {
-            PetInfo.update();
-            PetInfo.setPending(true);
-        }
         if (pendingAlert) {
             if (firstLoad) {
                 FishyNotis.guideNoti();

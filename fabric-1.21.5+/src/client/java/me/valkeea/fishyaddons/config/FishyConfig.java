@@ -279,7 +279,8 @@ public class FishyConfig {
         chatReplacements.set(":cat:", "ᗢᘏᓗ");
         chatReplacements.set(":hi:", "ඞ");
         chatReplacements.set("heiiii", "Any string will be replaced one to one");
-        settings.set("fishyLava", false);
+        settings.set(Key.FISHY_LAVA, false);
+        settings.set(Key.FISHY_WATER, false);
         settings.set(Key.RENDER_COORD_COLOR, -5653771);
         settings.set(Key.CUSTOM_PARTICLE_COLOR_INDEX, Integer.valueOf(1));
         settings.set(Key.XP_COLOR, 0xD0D1FF);
@@ -307,6 +308,8 @@ public class FishyConfig {
         settings.set(Key.HOTSPOT_DISTANCE, 7.0f);
         settings.set(Key.PRICE_TYPE, "sellPrice");
         settings.set(Key.BOOK_DROP_ALERT, true);
+        settings.set(Key.RAIN_NOTI, false);
+        settings.set(Key.EQ_DISPLAY, false);
         hud.set(Key.HUD_PING_X, 5);
         hud.set(Key.HUD_PING_Y, 12);
         hud.set(Key.HUD_PING_SIZE, 12);
@@ -326,9 +329,13 @@ public class FishyConfig {
         hud.set(Key.HUD_TRACKER_Y, 44);
         hud.set(Key.HUD_TRACKER_SIZE, 12);
         hud.set(Key.HUD_TRACKER_COLOR, 1.5649516E7);
-        hud.set(Key.HUD_SEARCH_X, 400);
-        hud.set(Key.HUD_SEARCH_Y, 70);
+        hud.set(Key.HUD_SEARCH_X, 870);
+        hud.set(Key.HUD_SEARCH_Y, 484);
         hud.set(Key.HUD_SEARCH_SIZE, 14);
+        hud.set(Key.HUD_CENTURY_CAKE_X, 5);
+        hud.set(Key.HUD_CENTURY_CAKE_Y, 60);
+        hud.set(Key.HUD_CENTURY_CAKE_SIZE, 12);
+        hud.set(Key.HUD_CENTURY_CAKE_COLOR, 16513273);
         modKeys.set("lockKey", "GLFW_KEY_SEMICOLON");
             save();
         }

@@ -8,6 +8,7 @@ public class Key {
     public static final String HUD_TIMER_ENABLED = "timerHud"; 
     public static final String HUD_PET_ENABLED = "petHud";
     public static final String HUD_TRACKER_ENABLED = "profitTrackerHud";
+    public static final String HUD_CENTURY_CAKE_ENABLED = "centuryCakeHud";    
 
     // --- Hud State ---
     public static final String HUD_PING_X = "pingHudX";
@@ -32,6 +33,10 @@ public class Key {
     public static final String HUD_SEARCH_X = "searchX";
     public static final String HUD_SEARCH_Y = "searchY";
     public static final String HUD_SEARCH_SIZE = "searchSize";
+    public static final String HUD_CENTURY_CAKE_X = "centuryCakeHudX";
+    public static final String HUD_CENTURY_CAKE_Y = "centuryCakeHudY";
+    public static final String HUD_CENTURY_CAKE_SIZE = "centuryCakeHudSize";
+    public static final String HUD_CENTURY_CAKE_COLOR = "centuryCakeHudColor";    
 
     // --- Hud Modifiers ---
     public static final String HUD_PETXP = "petXpCheck";    
@@ -43,6 +48,8 @@ public class Key {
     public static final String RENDER_COORD_COLOR = "renderCoordsColor";
     public static final String XP_COLOR = "xpColor";
     public static final String XP_COLOR_ON = "xpColorEnabled";
+    public static final String FISHY_LAVA = "fishyLava";
+    public static final String FISHY_WATER = "fishyWater";
     public static final String XP_OUTLINE = "xpOutline";
     public static final String HD_FONT = "hdFont";
     public static final String FISHY_GUI = "fishyGui";
@@ -62,5 +69,8 @@ public class Key {
     public static final String HIDE_HOTSPOT = "hideHotspot";
     public static final String HOTSPOT_DISTANCE = "hotspotDistance";
     public static final String BOOK_DROP_ALERT = "bookDropAlert";
+    public static final String CAKE_NOTI = "centuryCakeChatReminder";
+    public static final String RAIN_NOTI = "rainNoti";
+    public static final String EQ_DISPLAY = "equipmentDisplay";
 
 }

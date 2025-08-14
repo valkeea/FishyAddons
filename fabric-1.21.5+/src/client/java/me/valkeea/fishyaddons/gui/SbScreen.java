@@ -21,7 +21,7 @@ import net.minecraft.text.Text;
 public class SbScreen extends Screen {
     private static final int BTNW = 200;
     private static final int BTNH = 20;
-    private static final String GALATEA_TEXT = "Moonglade Beacon";
+    private static final String GALATEA_TEXT = "Timers & Alerts";
     private static final String TRACKER_TEXT = "Profit Tracker";
     private CompactSlider dmgScaleSlider;
     private CompactSlider minValueSlider;
@@ -30,6 +30,7 @@ public class SbScreen extends Screen {
     private int trackBtnX, trackBtnY, trackBtnW, trackBtnH;  
     private int dmgBtnX, dmgBtnY, dmgBtnW, dmgBtnH;
     private int minValueBtnX, minValueBtnY, minValueBtnW, minValueBtnH;
+    private int cakeBtnX, cakeBtnY, cakeBtnW, cakeBtnH;
 
     public SbScreen() {
         super(Text.literal("Skyblock Settings"));
@@ -40,7 +41,7 @@ public class SbScreen extends Screen {
         int centerX = this.width / 2;
         int centerY = this.height / 2;
 
-        int by = centerY - 130;
+        int by = centerY - 140;
 
         addDrawableChild(new FaButton(
             centerX - 100, by, BTNW, BTNH,
@@ -53,7 +54,7 @@ public class SbScreen extends Screen {
             }
         ));
 
-        by += 30;
+        by += 20;
 
         addDrawableChild(new FaButton(
             centerX - 100, by, BTNW, BTNH,
@@ -68,7 +69,7 @@ public class SbScreen extends Screen {
 
         float currentDistance = FishyConfig.getFloat(Key.HOTSPOT_DISTANCE, 7.0f);
         hotspotDistanceSlider = new CompactSlider(
-            centerX + 110, by, currentDistance,
+            centerX + 110, by + 5, currentDistance,
             0.0f, 20.0f, "%.1f",
             newDistance -> {
                 FishyConfig.setFloat(Key.HOTSPOT_DISTANCE, newDistance);
@@ -76,7 +77,31 @@ public class SbScreen extends Screen {
             }
         );
 
-        by += 30;
+        by += 20;
+
+        addDrawableChild(new FaButton(
+            centerX - 100, by, BTNW, BTNH,
+            getRainText(),
+            btn -> {
+                FishyConfig.toggle(Key.RAIN_NOTI, false);
+                me.valkeea.fishyaddons.handler.WeatherTracker.track();
+                btn.setMessage(getRainText());
+            }
+        ));
+
+        by += 20;
+
+        addDrawableChild(new FaButton(
+            centerX - 100, by, BTNW, BTNH,
+            getEqText(),
+            btn -> {
+                FishyConfig.toggle(Key.EQ_DISPLAY, false);
+                me.valkeea.fishyaddons.hud.EqDisplay.reset();
+                btn.setMessage(getEqText());
+            }
+        ));
+
+        by += 20;
 
         petBtnX = centerX - 100;
         petBtnY = by;
@@ -89,8 +114,6 @@ public class SbScreen extends Screen {
             btn -> {
                 FishyConfig.toggle(Key.HUD_PET_ENABLED, false);
                 PetInfo.refresh();
-                PetInfo.setNextCheck(FishyConfig.getState(Key.HUD_PET_ENABLED, false));
-                PetInfo.setPending(!FishyConfig.getState(Key.HUD_PET_DYNAMIC, false));
                 btn.setMessage(getPetText());
             }
         ));
@@ -115,7 +138,7 @@ public class SbScreen extends Screen {
             }
         ));
 
-        by += 30;
+        by += 20;
 
         dmgBtnX = centerX - 100;
         dmgBtnY = by;
@@ -133,7 +156,7 @@ public class SbScreen extends Screen {
         ));    
 
         float dmgScale = FishyConfig.getFloat(Key.DMG_SCALE, 0.15f);
-        dmgScaleSlider = new CompactSlider(dmgBtnX + dmgBtnW + 10, by, dmgScale, 
+        dmgScaleSlider = new CompactSlider(dmgBtnX + dmgBtnW + 10, by + 5, dmgScale, 
             0.05f, 1.5f, "%.2f", ParticleVisuals::setDmgScale);
 
         by += 30;
@@ -145,7 +168,7 @@ public class SbScreen extends Screen {
         galateaTextField.setText(GALATEA_TEXT);
         galateaTextField.setEditable(false);
         galateaTextField.setMaxLength(64);
-        galateaTextField.setUneditableColor(0xD0AEFF);
+        galateaTextField.setUneditableColor(0x6DE6B5);
         galateaTextField.setDrawsBackground(false);
         this.addDrawableChild(galateaTextField); 
 
@@ -177,7 +200,39 @@ public class SbScreen extends Screen {
             btn -> MinecraftClient.getInstance().setScreen(new HudEditScreen())
         ));
 
-        by += 30;        
+        by += 20;
+        cakeBtnX = centerX - 100;
+        cakeBtnY = by;
+        cakeBtnW = BTNW / 2;
+        cakeBtnH = BTNH;
+
+        addDrawableChild(new FaButton(
+            cakeBtnX, cakeBtnY, cakeBtnW, cakeBtnH,
+            getCakeAlarmText(),
+            btn -> {
+                FishyConfig.toggle(Key.CAKE_NOTI, false);
+                btn.setMessage(getCakeAlarmText());
+                this.setFocused(null);
+            }
+        ));
+
+        addDrawableChild(new FaButton(
+            centerX, by, BTNW / 2, BTNH,
+            getCakeHudText(),
+            btn -> {
+                FishyConfig.toggle(Key.HUD_CENTURY_CAKE_ENABLED, false);
+                btn.setMessage(getCakeHudText());
+                this.setFocused(null);
+            }
+        ));
+
+        addDrawableChild(new FaButton(
+            centerX + 100, by, 60, BTNH,
+            Text.literal("Edit HUD").setStyle(Style.EMPTY.withColor(0xFF808080)),
+            btn -> MinecraftClient.getInstance().setScreen(new HudEditScreen())
+        ));
+
+        by += 30;
 
         trackBtnX = centerX - 100;
         trackBtnY = by;
@@ -190,7 +245,7 @@ public class SbScreen extends Screen {
         trackerField.setText(TRACKER_TEXT);
         trackerField.setEditable(false);
         trackerField.setMaxLength(64);
-        trackerField.setUneditableColor(0xD0AEFF);
+        trackerField.setUneditableColor(0x6DE6B5);
         trackerField.setDrawsBackground(false);
         this.addDrawableChild(trackerField);  
         
@@ -216,7 +271,7 @@ public class SbScreen extends Screen {
             }
         ));
 
-        by += 30;
+        by += 20;
 
         minValueBtnX = centerX - 100;
         minValueBtnY = by;
@@ -234,13 +289,13 @@ public class SbScreen extends Screen {
         ));
 
         float minValue = FishyConfig.getFloat("minItemValue", 0);
-        minValueSlider = new CompactSlider(minValueBtnX + minValueBtnW + 10, by, minValue, 
+        minValueSlider = new CompactSlider(minValueBtnX + minValueBtnW + 10, by + 5, minValue, 
             0, 100000, "%.0f", v -> {
                 FishyConfig.setFloat("minItemValue", v);
                 TrackerDisplay.refreshDisplay();
         });    
         
-        by += 30;
+        by += 20;
 
         addDrawableChild(new FaButton(
             centerX - 100, by, BTNW, BTNH,
@@ -267,11 +322,23 @@ public class SbScreen extends Screen {
     }
 
     private Text getAlarmText() {
-        return GuiUtil.onOffLabel("Ingame Alarm", FishyConfig.getState(Key.BEACON_ALARM, false));
+        boolean isEnabled = FishyConfig.getState(Key.BEACON_ALARM, false);
+        String title = "Moonglade Beacon";
+        return Text.literal(title).styled(s -> s.withColor(isEnabled ? 0xCCFFCC : 0xFF8080));
     }
 
     private Text getTimerText() {
         return GuiUtil.onOffLabel("HUD Timer", FishyConfig.getState(Key.HUD_TIMER_ENABLED, false));
+    }
+
+    private Text getCakeAlarmText() {
+        boolean isEnabled = FishyConfig.getState(Key.CAKE_NOTI, true);
+        String title = "Century Cake";
+        return Text.literal(title).styled(s -> s.withColor(isEnabled ? 0xCCFFCC : 0xFF8080));
+    }
+
+    private Text getCakeHudText() {
+        return GuiUtil.onOffLabel("Cake HUD", FishyConfig.getState(Key.HUD_CENTURY_CAKE_ENABLED, false));
     }
 
     private Text getPhantomText() {
@@ -280,6 +347,14 @@ public class SbScreen extends Screen {
     
     private Text getHotspotText() {
         return GuiUtil.onOffLabel("Hide Hotspot", FishyConfig.getState(Key.HIDE_HOTSPOT, false));
+    }
+
+    private Text getRainText() {
+        return GuiUtil.onOffLabel("Rain Tracker", FishyConfig.getState(Key.RAIN_NOTI, true));
+    }
+
+    private Text getEqText() {
+        return GuiUtil.onOffLabel("Equipment Display", FishyConfig.getState(Key.EQ_DISPLAY, true));
     }
     
     private static Text getPetText() {
@@ -299,7 +374,7 @@ public class SbScreen extends Screen {
     }
 
     private static Text getDmgToggleText() {
-        return GuiUtil.onOffLabel("Scale Crit Particles", FishyConfig.getState(Key.SCALE_CRIT, false));
+        return GuiUtil.onOffLabel("Scale Invisibug Particles", FishyConfig.getState(Key.SCALE_CRIT, false));
     }    
 
     private static Text getMinValueToggleText() {
@@ -373,11 +448,12 @@ public class SbScreen extends Screen {
 
         if (mouseX >= trackBtnX && mouseX <= trackBtnX + trackBtnW && mouseY >= trackBtnY && mouseY <= trackBtnY + trackBtnH) {
             List<Text> tooltipLines = Arrays.asList(
-                Text.literal("Profit Tracker:"),
-                Text.literal("- §8Shows the total profit"),
-                Text.literal("   §8per item type"),
-                Text.literal("- §8Refresh to update prices"),
-                Text.literal("   §8from api")
+                Text.literal("Profit Tracker (WIP):"),
+                Text.literal("- §8Tracks most chat, sacks and inventory"),
+                Text.literal("  §8for important mobs"),
+                Text.literal("- §8If a profile is selected, the data will auto-save."),
+                Text.literal("  §8otherwise, data is per-session."),
+                Text.literal("- §8Use /fa profit to see commands")
             );
             GuiUtil.fishyTooltip(context, this.textRenderer, tooltipLines, mouseX, mouseY);
         }  
@@ -387,11 +463,22 @@ public class SbScreen extends Screen {
                 Text.literal("Scale Damage Particles:"),
                 Text.literal("- §8Toggle scaling"),
                 Text.literal("   §8on/off"),
+                Text.literal("- §8Only enabled on Galatea"),
                 Text.literal("- §8Color = (custom) redstone color")
             );
             GuiUtil.fishyTooltip(context, this.textRenderer, tooltipLines, mouseX, mouseY);
         }
-        
+
+        if (mouseX >= cakeBtnX && mouseX <= cakeBtnX + cakeBtnW && mouseY >= cakeBtnY && mouseY <= cakeBtnY + cakeBtnH) {
+            List<Text> tooltipLines = Arrays.asList(
+                Text.literal("Century Cake Tracker:"),
+                Text.literal("- §8Tracks all Century Cakes and"),
+                Text.literal("   §8notifies if one expires"),
+                Text.literal("- §8Timestamps are taken from chat so"),
+                Text.literal("   §8the timer is config-dependent.")
+            );
+            GuiUtil.fishyTooltip(context, this.textRenderer, tooltipLines, mouseX, mouseY);
+        }
 
         if (dmgScaleSlider != null && dmgScaleSlider.isMouseOver(mouseX, mouseY)) {
             List<Text> tooltipLines = Arrays.asList(

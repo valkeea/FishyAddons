@@ -206,7 +206,6 @@ public class EqTextures {
                         slotTextures.put(slot, textureId);
                     }
                     
-                    // Create a proper skull ItemStack with texture data
                     ItemStack skullStack = createSkullWithTexture(textureUrl);
                     skullItemStacks.put(slot, skullStack);
                 }

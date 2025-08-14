@@ -1,6 +1,8 @@
 package me.valkeea.fishyaddons.listener;
 
+import me.valkeea.fishyaddons.handler.CakeTimer;
 import me.valkeea.fishyaddons.handler.PetInfo;
+import me.valkeea.fishyaddons.handler.WeatherTracker;
 import me.valkeea.fishyaddons.render.BeaconRenderer;
 import me.valkeea.fishyaddons.util.AreaUtils;
 import me.valkeea.fishyaddons.util.SkyblockCheck;
@@ -42,9 +44,9 @@ public class WorldEvent {
     private void onWorldLoad() {
         updateRulesNextTick = true;
         scoreboardDelay = 180;
-        PetInfo.setTablistReady(false);
-        PetInfo.setWidget(true);
+        PetInfo.onWorldLoad();
         BeaconRenderer.clearBeacons();
+        CakeTimer.getInstance().onLoad();
         
         if (pendingBypass) {
             checkBypass = true;
@@ -59,6 +61,8 @@ public class WorldEvent {
 
         if (!checkedIsland && !checkBypass) {
             AreaUtils.updateIsland();
+            ZoneUtils.resetRain();
+            WeatherTracker.reset();            
             checkedIsland = true;
         } else if (checkBypass) {
             checkedIsland = true;
@@ -76,7 +80,7 @@ public class WorldEvent {
                 scoreboardDelay = 100;
             } else if (scoreboardDelay == 1) {
                 ClientConnected.triggerAction();
-                PetInfo.update();
+                PetInfo.onTablistReady();
             }
         }
     }

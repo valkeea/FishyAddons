@@ -37,6 +37,12 @@ public class PlaySound {
         }
     }
 
+    public static void rainAlarm() {
+        if (mc.player != null) {
+            mc.player.playSound(SoundEvents.ITEM_TRIDENT_RETURN, 2.0F, 0.8F);
+        }
+    }
+
     private static void amethyst(float pitch) {
         if (mc.player != null) {
             mc.player.playSound(PROTECT_TRIGGER_EVENT, 1.0F, pitch);

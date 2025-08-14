@@ -1,11 +1,12 @@
 package me.valkeea.fishyaddons.util;
 
+import me.valkeea.fishyaddons.handler.WeatherTracker;
 import me.valkeea.fishyaddons.listener.WorldEvent;
 
 public class ZoneUtils {
-    private static boolean isDungeons = false;
-
     private ZoneUtils() {}
+    private static boolean isDungeons = false;
+    private static boolean denOrPark = false;
 
     private static void setDungeon() {
         StringBuilder areaBuilder = new StringBuilder();
@@ -25,7 +26,7 @@ public class ZoneUtils {
 
         String area = areaBuilder.toString().trim();
         if (!area.isEmpty()) {
-            area = area.replaceAll("[^a-zA-Z0-9\\s]", ""); // Remove funny unicode.
+            area = area.replaceAll("[^a-zA-Z0-9\\s]", "");
             boolean hasCatacombs = area.contains("The Catacombs");
             boolean hasTimeElapsed = area.contains("Time Elapsed");
             if (hasCatacombs && hasTimeElapsed) {
@@ -41,6 +42,27 @@ public class ZoneUtils {
         }
     }
 
+    public static boolean checkDenOrPark() {
+        if (AreaUtils.isDenOrPark() || denOrPark) {
+            return true;
+        }
+        ScoreboardUtils.getSidebarLines().forEach(line -> {
+            if (line != null && (line.contains("The Park") || line.contains("Birch Park"))) {
+                AreaUtils.setIsland("park");
+                WeatherTracker.track();
+                denOrPark = true;
+                return;
+            } else if (line != null && line.contains("Spider's Den")) {
+                AreaUtils.setIsland("den");
+                WeatherTracker.track();
+                denOrPark = true;
+                return;
+            }
+        });
+        denOrPark = false;
+        return false;
+    }
+
     public static boolean isInDungeon() {
         return isDungeons;
     }
@@ -48,4 +70,8 @@ public class ZoneUtils {
     public static void update() {
         setDungeon();
     }
+
+    public static void resetRain() {
+        denOrPark = false;
+    }    
 }

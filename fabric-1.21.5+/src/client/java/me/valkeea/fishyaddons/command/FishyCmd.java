@@ -513,6 +513,25 @@ public class FishyCmd {
                     });
     }    
 
+    protected static LiteralArgumentBuilder<FabricClientCommandSource> registerFishing() {
+        return ClientCommandManager.literal("fishing")
+                .then(ClientCommandManager.literal("sounds")
+                    .executes(context -> {
+                            // Give instructions on resource pack creation
+                            FishyNotis.send("§aTo create a resource pack:");
+                            FishyNotis.alert(Text.literal("§7- Create a folder named: §bfishyaddons"));
+                            FishyNotis.alert(Text.literal("§7- Inside that folder, create another folder named: §bsounds"));
+                            FishyNotis.alert(Text.literal("§7- Inside the sounds folder, create a folder named: §bcustom"));
+                            FishyNotis.alert(Text.literal("§7- Place your custom .ogg files inside the custom folder"));
+                            FishyNotis.alert(Text.literal("§7- Then use sound IDs: §bfishyaddons:fishyaddons_1§7, §bfishyaddons:fishyaddons_2§7, §bfishyaddons:fishyaddons_3"));
+                        return 1;
+                    }))
+                .executes(context -> {
+                    FishyNotis.send("§3Usage: /fa fishing sounds - open directory to add your custom .ogg files");
+                    return 1;
+                });
+    }
+
     protected static int checkGUI() {
         if (MinecraftClient.getInstance().currentScreen != null
             && !(MinecraftClient.getInstance().currentScreen instanceof ChatScreen)) {

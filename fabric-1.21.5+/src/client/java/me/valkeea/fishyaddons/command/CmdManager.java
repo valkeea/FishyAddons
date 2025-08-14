@@ -40,6 +40,8 @@ public class CmdManager {
             .then(FishyCmd.registerPing())
             .then(FishyCmd.registerCam())
             .then(FishyCmd.registerPos())
+            .then(FishyCmd.registerRain())
+            .then(FishyCmd.registerFishing())
             .then(buildProfitRoot("profit", root + " profit"))
             .executes(context -> {
                 ProfitTrackerCommand.showUsage();
@@ -77,7 +79,7 @@ public class CmdManager {
 
     private static LiteralArgumentBuilder<FabricClientCommandSource> buildProfitRoot(String rootLiteral, String rootNameForMessages) {
         LiteralArgumentBuilder<FabricClientCommandSource> builder = ClientCommandManager.literal(rootLiteral);
-        FishyCmd.addProfitSubcommands(builder, rootNameForMessages);
+        FishyCmd.addProfitSubcommands(builder);
         builder.executes(context -> {
             ProfitTrackerCommand.showUsage();
             return 1;

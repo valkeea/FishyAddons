@@ -36,6 +36,7 @@ import me.valkeea.fishyaddons.listener.ClientTick;
 import me.valkeea.fishyaddons.listener.ModifyChat;
 import me.valkeea.fishyaddons.listener.WorldEvent;
 import me.valkeea.fishyaddons.render.BeaconRenderer;
+import me.valkeea.fishyaddons.util.CustomSounds;
 import me.valkeea.fishyaddons.tool.FishyMode;
 import me.valkeea.fishyaddons.tool.GuiScheduler;
 import me.valkeea.fishyaddons.tracker.ItemTrackerData;
@@ -59,6 +60,7 @@ public class FishyAddons implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
+        CustomSounds.init();
         FishyConfig.init();
         ItemConfig.init();
         FishyKeys.register();

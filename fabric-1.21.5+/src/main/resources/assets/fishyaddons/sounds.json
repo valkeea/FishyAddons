@@ -6,5 +6,20 @@
         "stream": false
       }
     ]
+  },
+  "fishyaddons_1": {
+    "sounds": [
+      "fishyaddons:custom/fishyaddons_1"
+    ]
+  },
+  "fishyaddons_2": {
+    "sounds": [
+      "fishyaddons:custom/fishyaddons_2"
+    ]
+  },
+  "fishyaddons_3": {
+    "sounds": [
+      "fishyaddons:custom/fishyaddons_3"
+    ]
   }
 }

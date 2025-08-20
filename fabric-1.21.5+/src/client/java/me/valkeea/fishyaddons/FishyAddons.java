@@ -17,6 +17,7 @@ import me.valkeea.fishyaddons.handler.KeyShortcut;
 import me.valkeea.fishyaddons.handler.MobAnimations;
 import me.valkeea.fishyaddons.handler.ParticleVisuals;
 import me.valkeea.fishyaddons.handler.PetInfo;
+import me.valkeea.fishyaddons.handler.RenderTweaks;
 import me.valkeea.fishyaddons.handler.ResourceHandler;
 import me.valkeea.fishyaddons.handler.SkyblockCleaner;
 import me.valkeea.fishyaddons.handler.XpColor;
@@ -36,19 +37,18 @@ import me.valkeea.fishyaddons.listener.ClientTick;
 import me.valkeea.fishyaddons.listener.ModifyChat;
 import me.valkeea.fishyaddons.listener.WorldEvent;
 import me.valkeea.fishyaddons.render.BeaconRenderer;
-import me.valkeea.fishyaddons.util.CustomSounds;
 import me.valkeea.fishyaddons.tool.FishyMode;
 import me.valkeea.fishyaddons.tool.GuiScheduler;
 import me.valkeea.fishyaddons.tracker.ItemTrackerData;
 import me.valkeea.fishyaddons.tracker.SackDropParser;
 import me.valkeea.fishyaddons.tracker.TrackerUtils;
+import me.valkeea.fishyaddons.util.CustomSounds;
 import me.valkeea.fishyaddons.util.PlaySound;
-import me.valkeea.fishyaddons.util.ScoreboardUtils;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
-import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
@@ -63,16 +63,17 @@ public class FishyAddons implements ClientModInitializer {
         CustomSounds.init();
         FishyConfig.init();
         ItemConfig.init();
+        FishyMode.init();
         FishyKeys.register();
         KeyShortcut.refreshCache();
         ChatReplacement.refreshCache();
         CommandAlias.refreshCache();
         ParticleVisuals.refreshCache();
-        FishyMode.getTheme();
         ChatAlert.refresh();
         CopyChat.refresh();
         PetInfo.refresh();
         XpColor.refresh();
+        RenderTweaks.refresh();
         MobAnimations.refresh();
         SkyblockCleaner.refresh();
         TrackerUtils.refresh();
@@ -124,13 +125,13 @@ public class FishyAddons implements ClientModInitializer {
         Registry.register(Registries.SOUND_EVENT, PlaySound.PROTECT_TRIGGER_ID, PlaySound.PROTECT_TRIGGER_EVENT);
 
         KeyBinding mainKey = KeyBindingHelper.registerKeyBinding(
-            new KeyBinding("Open FishyAddons gui", InputUtil.Type.KEYSYM, 240, "FishyAddons")
+            new KeyBinding("Open Config", InputUtil.Type.KEYSYM, 240, "FishyAddons")
         );
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             while (mainKey.wasPressed()) {
                 MinecraftClient.getInstance().setScreen(
-                    new me.valkeea.fishyaddons.gui.FishyAddonsScreen()
+                    new me.valkeea.fishyaddons.gui.VCScreen()
                 );
             }
         });

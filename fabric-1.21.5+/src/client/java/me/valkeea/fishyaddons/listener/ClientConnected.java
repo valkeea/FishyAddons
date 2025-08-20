@@ -28,7 +28,7 @@ public class ClientConnected {
 
         firstLoad = r1 && r2;
         anyRecreated = r1 || r2;
-        anyRestored = FishyConfig.isRestored() || TextureConfig.isRestored() || ItemConfig.isRestored();
+        anyRestored = FishyConfig.isRestored() || ItemConfig.isRestored();
         pendingAlert = firstLoad || anyRecreated || anyRestored;
     }
 
@@ -50,7 +50,6 @@ public class ClientConnected {
 
     private static void resetFlags() {
         ItemConfig.resetFlags();
-        TextureConfig.resetFlags();
         FishyConfig.resetFlags();
         firstLoad = false;
         anyRecreated = false;

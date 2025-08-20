@@ -68,6 +68,12 @@ public class FishyAddonsScreen extends Screen {
 
         addDrawableChild(new FaButton(
             centerX - 100, centerY + 40, BTNW, BTNH,
+            Text.literal("New Config (WIP)").styled(style -> style.withColor(0x6DE6B5)),
+            btn -> MinecraftClient.getInstance().setScreen(new VCScreen())
+        ));
+
+        addDrawableChild(new FaButton(
+            centerX - 100, centerY + 70, BTNW, BTNH,
             Text.literal("Close").styled(style -> style.withColor(0xFF808080)),
             btn -> MinecraftClient.getInstance().setScreen(null)
         ));

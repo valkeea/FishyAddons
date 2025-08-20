@@ -11,7 +11,8 @@ public class SoundUtil {
 
     public static void playDynamicSound(String soundId, float volume, float pitch) {
         if (mc.player == null) return;
-
+        mc.getSoundManager().stopAll();
+        
         Identifier id = Identifier.tryParse(soundId);
         if (id == null) {
             System.err.println("[FishyAddons] Invalid sound ID: " + soundId);

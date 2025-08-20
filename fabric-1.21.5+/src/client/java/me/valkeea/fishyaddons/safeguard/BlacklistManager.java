@@ -54,6 +54,10 @@ public class BlacklistManager {
             }
         }
         for (GuiBlacklistEntry userEntry : userBlacklist) {
+            if (userEntry.identifiers == null || userEntry.identifiers.isEmpty()) {
+                continue;
+            }
+            
             boolean overridesExisting = false;
             for (GuiBlacklistEntry def : defaultBlacklist) {
                 if (matchesIdentifier(def, userEntry.identifiers.get(0))) {
@@ -100,8 +104,12 @@ public class BlacklistManager {
     }
 
     private static boolean matchesIdentifier(GuiBlacklistEntry entry, String identifier) {
+        if (entry.identifiers == null || entry.identifiers.isEmpty() || identifier == null) {
+            return false;
+        }
+        
         for (String id : entry.identifiers) {
-            if (id.equalsIgnoreCase(identifier)) {
+            if (id != null && id.equalsIgnoreCase(identifier)) {
                 return true;
             }
         }

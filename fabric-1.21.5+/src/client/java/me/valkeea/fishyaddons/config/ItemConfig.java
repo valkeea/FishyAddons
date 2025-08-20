@@ -1,17 +1,40 @@
 package me.valkeea.fishyaddons.config;
 
-import me.valkeea.fishyaddons.safeguard.BlacklistManager;
-import me.valkeea.fishyaddons.util.TextFormatUtil;
-import com.google.gson.*;
-import com.google.gson.reflect.TypeToken;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.text.Text;
-
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.Reader;
+import java.io.Writer;
 import java.lang.reflect.Type;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Consumer;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonIOException;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.google.gson.JsonPrimitive;
+import com.google.gson.JsonSyntaxException;
+import com.google.gson.reflect.TypeToken;
+
+import me.valkeea.fishyaddons.safeguard.BlacklistManager;
+import me.valkeea.fishyaddons.util.TextFormatUtil;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.text.Text;
 
 public class ItemConfig {
     private ItemConfig() {}
@@ -20,41 +43,86 @@ public class ItemConfig {
     private static final File BACKUP_FILE;
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
-    // --- Config Options ---
+    // Constants for prefixes
+    private static final String LOCKED_PREFIX = "locked_";
+    private static final String BOUND_PREFIX = "bound_";
+    private static final String TEXTURE_PREFIX = "texture_";
+    private static final String ITEM_PREFIX = "item_";
 
-    private static boolean isSellProtectionEnabled = true;
-    private static boolean isTooltipEnabled = true;
-    private static boolean isProtectTriggerEnabled = true;
-    private static boolean isProtectNotiEnabled = true;
-    private static boolean isLockTriggerEnabled = true;
+    // Simple config section (like FishyConfig)
+    public static class SimpleConfigSection<V> {
+        private final Map<String, V> values;
+        private final String valuesKey;
+        private final Type valueType;
+        private final Consumer<Void> onChange;
 
-    private static final Map<String, String> protectedUUIDs = new HashMap<>();
-    private static final Set<Integer> lockedSlots = new HashSet<>();
-    private static final Map<Integer, Integer> boundSlots = new HashMap<>();
-    
-    // --- Equipment Skulls ---
-    private static final Map<Integer, String> equipmentSkullTextures = new HashMap<>();
-    private static final Map<Integer, String> equipmentSkullItemData = new HashMap<>();
+        public SimpleConfigSection(String valuesKey, Type valueType, Consumer<Void> onChange) {
+            this.values = new LinkedHashMap<>();
+            this.valuesKey = valuesKey;
+            this.valueType = valueType;
+            this.onChange = onChange;
+        }
 
+        public Map<String, V> getValues() { return values; }
 
-    // --- State/Flags ---
-    private static boolean configChanged = false;
-    private static boolean initialized = false;
-    private static boolean recreatedConfig = false;
-    private static boolean restoredConfig = false;
+        public void set(String key, V value) {
+            if (key == null || key.isEmpty()) return;
+            values.put(key, value);
+            if (onChange != null) onChange.accept(null);
+        }
 
-    // --- Keys ---
-    private static final String LOCKED_SLOTS_KEY = "lockedSlots";
-    private static final String BOUND_SLOTS_KEY = "boundSlots";
-    private static final String UUIDS_KEY = "protectedUUIDs";
-    private static final String SELL_PROT_KEY = "sellProtectionEnabled";
-    private static final String TOOLTIP_KEY = "tooltipEnabled";
-    private static final String PROT_TRIGGER_KEY = "protectTriggerEnabled";
-    private static final String PROT_NOTI_KEY = "protectNotiEnabled";
-    private static final String LOCK_TRIGGER_KEY = "lockTriggerEnabled";
-    private static final String BLACKLIST_KEY = "blacklist";
-    private static final String EQUIPMENT_SKULL_TEXTURES_KEY = "equipmentSkullTextures";
-    private static final String EQUIPMENT_SKULL_ITEMS_KEY = "equipmentSkullItems";
+        public void remove(String key) {
+            if (key == null || key.isEmpty()) return;
+            values.remove(key);
+            if (onChange != null) onChange.accept(null);
+        }
+
+        public void clear() {
+            values.clear();
+            if (onChange != null) onChange.accept(null);
+        }
+
+        public void loadFromJson(JsonObject json) {
+            if (json.has(valuesKey)) {
+                JsonElement element = json.get(valuesKey);
+                Map<String, V> loaded = GSON.fromJson(element, valueType);
+                if (loaded != null) {
+                    values.clear();
+                    values.putAll(loaded);
+                }
+            }
+        }
+
+        public void saveToJson(JsonObject json) {
+            json.add(valuesKey, GSON.toJsonTree(values));
+        }
+    }
+
+    // Section instances
+    public static final SimpleConfigSection<Object> settings =
+        new SimpleConfigSection<>("settings",
+            new TypeToken<Map<String, Object>>(){}.getType(),
+            v -> save());
+
+    public static final SimpleConfigSection<String> protectedItems =
+        new SimpleConfigSection<>(Key.PROTECTED_UUIDS,
+            new TypeToken<Map<String, String>>(){}.getType(),
+            v -> save());
+
+    public static final SimpleConfigSection<Integer> slotData =
+        new SimpleConfigSection<>("slotData",
+            new TypeToken<Map<String, Integer>>(){}.getType(),
+            v -> save());
+
+    public static final SimpleConfigSection<String> equipmentData =
+        new SimpleConfigSection<>("equipmentData",
+            new TypeToken<Map<String, String>>(){}.getType(),
+            v -> save());
+
+    public static final SimpleConfigSection<Object> blacklistData =
+        new SimpleConfigSection<>(Key.BLACKLIST,
+            new TypeToken<List<Map<String, Object>>>(){}.getType(),
+            v -> save());
 
     static {
         File root = new File(MinecraftClient.getInstance().runDirectory, "config/fishyaddons");
@@ -63,348 +131,293 @@ public class ItemConfig {
         BACKUP_FILE = new File(BACKUP_DIR, "fishyitems.json");
     }
 
+    private static boolean firstLoad = false;
+    private static boolean recreatedConfig = false;
+    private static boolean restoredConfig = false;
+    private static boolean configChanged = false;
+
+    public static boolean isFirstLoad() { return firstLoad; }
     public static boolean isRecreated() { return recreatedConfig; }
     public static boolean isRestored() { return restoredConfig; }
+
     public static void resetFlags() {
         recreatedConfig = false;
         restoredConfig = false;
+        firstLoad = false;
     }
 
-    public static synchronized void init() {
+    public static void init() {
         CONFIG_FILE.getParentFile().mkdirs();
         BACKUP_DIR.mkdirs();
-        if (!initialized) {
-            load();
-            initialized = true;
+        load();
+
+        if (firstLoad) {
+            // Set default values
+            settings.set(Key.SELL_PROTECTION_ENABLED, true);
+            settings.set(Key.TOOLTIP_ENABLED, true);
+            settings.set(Key.PROTECT_TRIGGER_ENABLED, true);
+            settings.set(Key.PROTECT_NOTI_ENABLED, true);
+            settings.set(Key.LOCK_TRIGGER_ENABLED, true);
+            save();
         }
     }
 
-    // --- Item Protection ---
-    public static synchronized void addUUID(String uuid, Text displayName) {
-        String serialized = TextFormatUtil.serialize(displayName);
-        if (!protectedUUIDs.containsKey(uuid) || !Objects.equals(protectedUUIDs.get(uuid), serialized)) {
-            protectedUUIDs.put(uuid, serialized);
-            configChanged = true;
-            saveConfigIfNeeded();
-        }
-    }
-
-    public static synchronized void removeUUID(String uuid) {
-        if (protectedUUIDs.remove(uuid) != null) {
-            configChanged = true;
-            saveConfigIfNeeded();
-        }
-    }
-
-    public static synchronized void clearAll() {
-        protectedUUIDs.clear();
+    public static void markConfigChanged() {
         configChanged = true;
-        saveConfigIfNeeded();
     }
 
-    public static synchronized boolean isProtected(String uuid) {
-        return protectedUUIDs.containsKey(uuid);
-    }
-
-    public static synchronized Text getDisplayName(String uuid) {
-        return TextFormatUtil.deserialize(protectedUUIDs.get(uuid));
-    }
-
-    public static synchronized Map<String, String> getProtectedUUIDs() {
-        return new HashMap<>(protectedUUIDs);
-    }
-
-    public static boolean isSellProtectionEnabled() { return isSellProtectionEnabled; }
-    public static void setSellProtectionEnabled(boolean enabled) {
-        isSellProtectionEnabled = enabled;
-        save();
-    }
-
-    public static boolean isProtectTriggerEnabled() { return isProtectTriggerEnabled; }
-    public static void setProtectTriggerEnabled(boolean enabled) {
-        isProtectTriggerEnabled = enabled;
-        markConfigChanged();
-    }
-
-    public static boolean isProtectNotiEnabled() { return isProtectNotiEnabled; }
-    public static void setProtectNotiEnabled(boolean enabled) {
-        isProtectNotiEnabled = enabled;
-        markConfigChanged();
-    }
-
-    public static boolean isTooltipEnabled() { return isTooltipEnabled; }
-    public static void setTooltipEnabled(boolean enabled) {
-        isTooltipEnabled = enabled;
-        markConfigChanged();
-    }
-
-    // ---  Slot Locking ---
-    public static boolean isLockTriggerEnabled() { return isLockTriggerEnabled; }
-    public static void setLockTriggerEnabled(boolean enabled) {
-        isLockTriggerEnabled = enabled;
-        markConfigChanged();
-    }
-
-    public static synchronized boolean isSlotLocked(int slot) {
-        return lockedSlots.contains(slot);
-    }
-
-    public static synchronized void toggleSlotLock(int slot) {
-        if (lockedSlots.contains(slot)) {
-            lockedSlots.remove(slot);
-        } else {
-            lockedSlots.add(slot);
+    public static void saveConfigIfNeeded() {
+        if (configChanged) {
+            save();
+            configChanged = false;
         }
-        markConfigChanged();
     }
 
-    // --- Slot Binding ---
-    public static synchronized boolean areSlotsBound(int slotA, int slotB) {
-        return boundSlots.get(slotA) != null && boundSlots.get(slotA) == slotB;
-    }
-
-    public static synchronized boolean isSlotBound(int slot) {
-        return boundSlots.containsKey(slot);
-    }
-
-    public static synchronized int getBoundSlot(int slot) {
-        return boundSlots.getOrDefault(slot, -1);
-    }
-
-    public static synchronized void bindSlots(int slotA, int slotB) {
-        boundSlots.put(slotA, slotB);
-        boundSlots.put(slotB, slotA);
-        markConfigChanged();
-    }
-
-    public static synchronized void unbindSlots(int slotA, int slotB) {
-        boundSlots.remove(slotA);
-        boundSlots.remove(slotB);
-        markConfigChanged();
-    }
-
-    // --- Equipment Skulls ---
-    public static synchronized void setEqSkull(int slot, String textureUrl) {
-        if (textureUrl == null) {
-            equipmentSkullTextures.remove(slot);
-        } else {
-            equipmentSkullTextures.put(slot, textureUrl);
-        }
-        markConfigChanged();
-    }
-
-    public static synchronized String getEquipmentSkullTexture(int slot) {
-        return equipmentSkullTextures.get(slot);
-    }
-
-    public static synchronized void setEqItemData(int slot, String itemData) {
-        if (itemData == null) {
-            equipmentSkullItemData.remove(slot);
-        } else {
-            equipmentSkullItemData.put(slot, itemData);
-        }
-        markConfigChanged();
-    }
-
-    public static synchronized String getEquipmentSkullItemData(int slot) {
-        return equipmentSkullItemData.get(slot);
-    }
-
-    public static synchronized boolean hasEquipmentSkull(int slot) {
-        return equipmentSkullTextures.containsKey(slot);
-    }
-
-    public static synchronized void clearEquipmentSkulls() {
-        equipmentSkullTextures.clear();
-        equipmentSkullItemData.clear();
-        markConfigChanged();
-    }
-
-    public static synchronized Map<Integer, String> getAllEquipmentSkullTextures() {
-        return new HashMap<>(equipmentSkullTextures);
-    }
-
-    public static synchronized void clearEquipmentSlot(int slot) {
-        equipmentSkullTextures.remove(slot);
-        equipmentSkullItemData.remove(slot);
-        markConfigChanged();
-    }
-
-    // --- Config IO ---
     public static synchronized void load() {
         if (!CONFIG_FILE.exists()) {
-            System.err.println("[ItemConfig] Config file does not exist. Creating a new one...");
+            System.err.println("[ItemConfig] Config file does not exist. Checking for backup...");
             loadOrRestore();
+            firstLoad = true;
             return;
         }
 
         try (Reader reader = new InputStreamReader(new FileInputStream(CONFIG_FILE), java.nio.charset.StandardCharsets.UTF_8)) {
-            Type configType = new TypeToken<Map<String, Object>>() {}.getType();
-            Map<String, Object> config = GSON.fromJson(reader, configType);
+            JsonObject json = JsonParser.parseReader(reader).getAsJsonObject();
 
-            if (config == null || !validate(config)) {
+            if (!validate(json)) {
                 System.err.println("[ItemConfig] Invalid config detected. Attempting to restore from backup...");
                 loadOrRestore();
                 return;
             }
 
-            // --- Load Item Protection ---
-            if (config.containsKey(SELL_PROT_KEY)) {
-                isSellProtectionEnabled = (Boolean) config.get(SELL_PROT_KEY);
-            }
-            if (config.containsKey(TOOLTIP_KEY)) {
-                isTooltipEnabled = (Boolean) config.get(TOOLTIP_KEY);
-            }
-            if (config.containsKey(PROT_TRIGGER_KEY)) {
-                isProtectTriggerEnabled = (Boolean) config.get(PROT_TRIGGER_KEY);
-            }
-            if (config.containsKey(PROT_NOTI_KEY)) {
-                isProtectNotiEnabled = (Boolean) config.get(PROT_NOTI_KEY);
-            }
-            if (config.containsKey(UUIDS_KEY)) {
-                Object uuidsObj = config.get(UUIDS_KEY);
-                protectedUUIDs.clear();
-                if (uuidsObj instanceof Map) {
-                    Map<?, ?> uuidMap = (Map<?, ?>) uuidsObj;
-                    for (Map.Entry<?, ?> entry : uuidMap.entrySet()) {
-                        if (entry.getKey() instanceof String && entry.getValue() instanceof String) {
-                            protectedUUIDs.put((String) entry.getKey(), (String) entry.getValue());
-                        }
-                    }
-                } else if (uuidsObj instanceof List) {
-                    // Backward compatibility
-                    for (Object uuidObj : (List<?>) uuidsObj) {
-                        if (uuidObj instanceof String string) {
-                            protectedUUIDs.put(string, "");
+            // Load settings section
+            settings.loadFromJson(json);
+
+            // Load protected items (backward compatibility)
+            if (json.has(Key.PROTECTED_UUIDS)) {
+                JsonElement element = json.get(Key.PROTECTED_UUIDS);
+                if (element.isJsonObject()) {
+                    // New format: Map<String, String>
+                    protectedItems.loadFromJson(json);
+                } else if (element.isJsonArray()) {
+                    // Old format: List<String> - convert to Map<String, String>
+                    JsonArray array = element.getAsJsonArray();
+                    for (JsonElement item : array) {
+                        if (item.isJsonPrimitive()) {
+                            String uuid = item.getAsString();
+                            protectedItems.set(uuid, "Protected Item"); // Default display name
                         }
                     }
                 }
             }
 
-            // --- Load Slot Locking ---
-            if (config.containsKey(LOCK_TRIGGER_KEY)) {
-                isLockTriggerEnabled = (Boolean) config.get(LOCK_TRIGGER_KEY);
-            }
-            if (config.containsKey(LOCKED_SLOTS_KEY)) {
-                Object locked = config.get(LOCKED_SLOTS_KEY);
-                if (locked instanceof List<?>) {
-                    lockedSlots.clear();
-                    for (Object o : (List<?>) locked) {
-                        if (o instanceof Number number) lockedSlots.add(number.intValue());
-                    }
-                }
-            }
+            // Load slot data (locked slots and bound slots)
+            loadSlotData(json);
 
-            // --- Load Slot Binding ---
-            if (config.containsKey(BOUND_SLOTS_KEY)) {
-                Object bound = config.get(BOUND_SLOTS_KEY);
-                if (bound instanceof Map<?, ?>) {
-                    boundSlots.clear();
-                    for (Map.Entry<?, ?> e : ((Map<?, ?>) bound).entrySet()) {
-                        int from = Integer.parseInt(e.getKey().toString());
-                        int to = ((Number) e.getValue()).intValue();
-                        boundSlots.put(from, to);
-                        boundSlots.put(to, from);
-                    }
-                }
-            }
+            // Load equipment data
+            loadEquipmentData(json);
 
-            // --- Load Blacklist ---
-            if (config.containsKey(BLACKLIST_KEY)) {
-                Object blacklistObject = config.get(BLACKLIST_KEY);
-                if (blacklistObject instanceof List) {
-                    List<?> rawList = (List<?>) blacklistObject;
-                    List<Map<String, Object>> entries = new ArrayList<>();
-                    for (Object o : rawList) {
-                        if (o instanceof Map<?, ?>) {
-                            @SuppressWarnings("unchecked")
-                            Map<String, Object> entry = (Map<String, Object>) o;
-                            entries.add(entry);
-                        }
-                    }
-                    BlacklistManager.loadUserBlacklistFromJson(entries);
-                } else {
-                    System.err.println("[ItemConfig] Blacklist is not a valid list.");
-                }
-            }
+            // Load blacklist
+            loadBlacklistData(json);
 
-            // --- Load Equipment Skulls ---
-            if (config.containsKey(EQUIPMENT_SKULL_TEXTURES_KEY)) {
-                Object texturesObj = config.get(EQUIPMENT_SKULL_TEXTURES_KEY);
-                if (texturesObj instanceof Map<?, ?>) {
-                    equipmentSkullTextures.clear();
-                    for (Map.Entry<?, ?> entry : ((Map<?, ?>) texturesObj).entrySet()) {
-                        try {
-                            int slot = Integer.parseInt(entry.getKey().toString());
-                            String textureUrl = entry.getValue().toString();
-                            equipmentSkullTextures.put(slot, textureUrl);
-                        } catch (NumberFormatException e) {
-                            System.err.println("[ItemConfig] Invalid equipment skull slot: " + entry.getKey());
-                        }
-                    }
-                }
-            }
-
-            if (config.containsKey(EQUIPMENT_SKULL_ITEMS_KEY)) {
-                Object itemsObj = config.get(EQUIPMENT_SKULL_ITEMS_KEY);
-                if (itemsObj instanceof Map<?, ?>) {
-                    equipmentSkullItemData.clear();
-                    for (Map.Entry<?, ?> entry : ((Map<?, ?>) itemsObj).entrySet()) {
-                        try {
-                            int slot = Integer.parseInt(entry.getKey().toString());
-                            String itemData = entry.getValue().toString();
-                            equipmentSkullItemData.put(slot, itemData);
-                        } catch (NumberFormatException e) {
-                            System.err.println("[ItemConfig] Invalid equipment skull item slot: " + entry.getKey());
-                        }
-                    }
-                }
-            }
-        } catch (JsonSyntaxException | com.google.gson.stream.MalformedJsonException e) {
-            System.err.println("[ItemConfig] Malformed JSON detected: " + e.getMessage());
+        } catch (JsonSyntaxException | JsonIOException e) {
+            System.err.println("[ItemConfig] JSON parsing error: " + e.getMessage());
             loadOrRestore();
         } catch (IOException e) {
-            System.err.println("[ItemConfig] Failed to load configuration: " + e.getMessage());
+            System.err.println("[ItemConfig] IO error loading config: " + e.getMessage());
             loadOrRestore();
         }
     }
 
-    public static synchronized void save() {
-        Map<String, Object> config = new HashMap<>();
-        // --- Save Item Protection ---
-        config.put(UUIDS_KEY, new HashMap<>(protectedUUIDs));
-        config.put(SELL_PROT_KEY, isSellProtectionEnabled);
-        config.put(TOOLTIP_KEY, isTooltipEnabled);
-        config.put(PROT_TRIGGER_KEY, isProtectTriggerEnabled);
-        config.put(PROT_NOTI_KEY, isProtectNotiEnabled);
+    private static void loadSlotData(JsonObject json) {
+        loadLockedSlots(json);
+        loadBoundSlots(json);
+    }
 
-        // --- Save Slot Locking ---
-        config.put(LOCK_TRIGGER_KEY, isLockTriggerEnabled);
-        config.put(LOCKED_SLOTS_KEY, new ArrayList<>(lockedSlots));
-
-        // --- Save Slot Binding ---
-        Map<Integer, Integer> boundCopy = new HashMap<>();
-        for (Map.Entry<Integer, Integer> e : boundSlots.entrySet()) {
-            // Prevent saving mirrored pairs (e.g., both 10→17 and 17→10)
-            if (e.getKey() < e.getValue()) {
-                boundCopy.put(e.getKey(), e.getValue());
+    private static void loadLockedSlots(JsonObject json) {
+        if (json.has(Key.LOCKED_SLOTS)) {
+            JsonElement element = json.get(Key.LOCKED_SLOTS);
+            if (element.isJsonArray()) {
+                JsonArray array = element.getAsJsonArray();
+                for (JsonElement item : array) {
+                    if (item.isJsonPrimitive() && item.getAsJsonPrimitive().isNumber()) {
+                        int slot = item.getAsInt();
+                        slotData.set(LOCKED_PREFIX + slot, slot);
+                    }
+                }
             }
         }
-        config.put(BOUND_SLOTS_KEY, boundCopy);
+    }
 
-        // --- Save Blacklist ---
+    private static void loadBoundSlots(JsonObject json) {
+        if (json.has(Key.BOUND_SLOTS)) {
+            JsonElement element = json.get(Key.BOUND_SLOTS);
+            if (element.isJsonObject()) {
+                JsonObject boundObj = element.getAsJsonObject();
+                for (Map.Entry<String, JsonElement> entry : boundObj.entrySet()) {
+                    try {
+                        int from = Integer.parseInt(entry.getKey());
+                        int to = entry.getValue().getAsInt();
+                        slotData.set(BOUND_PREFIX + from, to);
+                        slotData.set(BOUND_PREFIX + to, from); // Bidirectional binding
+                    } catch (NumberFormatException e) {
+                        System.err.println("[ItemConfig] Invalid bound slot key: " + entry.getKey());
+                    }
+                }
+            }
+        }
+    }
+
+    private static void loadEquipmentData(JsonObject json) {
+        loadEquipmentTextures(json);
+        loadEquipmentItems(json);
+    }
+
+    private static void loadEquipmentTextures(JsonObject json) {
+        if (json.has(Key.EQUIPMENT_SKULL_TEXTURES)) {
+            JsonElement element = json.get(Key.EQUIPMENT_SKULL_TEXTURES);
+            if (element.isJsonObject()) {
+                JsonObject texturesObj = element.getAsJsonObject();
+                for (Map.Entry<String, JsonElement> entry : texturesObj.entrySet()) {
+                    try {
+                        int slot = Integer.parseInt(entry.getKey());
+                        String texture = entry.getValue().getAsString();
+                        equipmentData.set(TEXTURE_PREFIX + slot, texture);
+                    } catch (NumberFormatException e) {
+                        System.err.println("[ItemConfig] Invalid equipment texture slot: " + entry.getKey());
+                    }
+                }
+            }
+        }
+    }
+
+    private static void loadEquipmentItems(JsonObject json) {
+        if (json.has(Key.EQUIPMENT_SKULL_ITEMS)) {
+            JsonElement element = json.get(Key.EQUIPMENT_SKULL_ITEMS);
+            if (element.isJsonObject()) {
+                JsonObject itemsObj = element.getAsJsonObject();
+                for (Map.Entry<String, JsonElement> entry : itemsObj.entrySet()) {
+                    try {
+                        int slot = Integer.parseInt(entry.getKey());
+                        String itemData = entry.getValue().getAsString();
+                        equipmentData.set(ITEM_PREFIX + slot, itemData);
+                    } catch (NumberFormatException e) {
+                        System.err.println("[ItemConfig] Invalid equipment item slot: " + entry.getKey());
+                    }
+                }
+            }
+        }
+    }
+
+    private static void loadBlacklistData(JsonObject json) {
+        if (json.has(Key.BLACKLIST)) {
+            JsonElement element = json.get(Key.BLACKLIST);
+            if (element.isJsonArray()) {
+                List<Map<String, Object>> entries = parseBlacklistArray(element.getAsJsonArray());
+                BlacklistManager.loadUserBlacklistFromJson(entries);
+            }
+        }
+    }
+
+    private static List<Map<String, Object>> parseBlacklistArray(JsonArray array) {
+        List<Map<String, Object>> entries = new ArrayList<>();
+        for (JsonElement item : array) {
+            if (item.isJsonObject()) {
+                Map<String, Object> entry = parseBlacklistObject(item.getAsJsonObject());
+                entries.add(entry);
+            }
+        }
+        return entries;
+    }
+
+    private static Map<String, Object> parseBlacklistObject(JsonObject obj) {
+        Map<String, Object> entry = new HashMap<>();
+        for (Map.Entry<String, JsonElement> e : obj.entrySet()) {
+            JsonElement value = e.getValue();
+            if (value.isJsonPrimitive()) {
+                JsonPrimitive primitive = value.getAsJsonPrimitive();
+                if (primitive.isString()) {
+                    entry.put(e.getKey(), primitive.getAsString());
+                } else if (primitive.isNumber()) {
+                    entry.put(e.getKey(), primitive.getAsNumber());
+                } else if (primitive.isBoolean()) {
+                    entry.put(e.getKey(), primitive.getAsBoolean());
+                }
+            }
+        }
+        return entry;
+    }
+
+    public static synchronized void save() {
+        JsonObject json = new JsonObject();
+
+        settings.saveToJson(json);
+        protectedItems.saveToJson(json);
+        saveSlotData(json);
+        saveEquipmentData(json);
+
         List<Map<String, Object>> serializedBlacklist = BlacklistManager.getUserBlacklistAsJson();
-        config.put(BLACKLIST_KEY, serializedBlacklist);
-
-        // --- Save Equipment Skulls ---
-        config.put(EQUIPMENT_SKULL_TEXTURES_KEY, new HashMap<>(equipmentSkullTextures));
-        config.put(EQUIPMENT_SKULL_ITEMS_KEY, new HashMap<>(equipmentSkullItemData));
+        json.add(Key.BLACKLIST, GSON.toJsonTree(serializedBlacklist));
 
         try (Writer writer = new OutputStreamWriter(new FileOutputStream(CONFIG_FILE), java.nio.charset.StandardCharsets.UTF_8)) {
-            GSON.toJson(config, writer);
+            GSON.toJson(json, writer);
         } catch (IOException e) {
             System.err.println("[ItemConfig] Failed to save config: " + e.getMessage());
         }
+    }
+
+    private static void saveSlotData(JsonObject json) {
+        List<Integer> lockedSlots = new ArrayList<>();
+        Map<Integer, Integer> boundSlots = new HashMap<>();
+        
+        for (Map.Entry<String, Integer> entry : slotData.getValues().entrySet()) {
+            String key = entry.getKey();
+            Integer value = entry.getValue();
+            
+            if (key.startsWith(LOCKED_PREFIX)) {
+                lockedSlots.add(value);
+            } else if (key.startsWith(BOUND_PREFIX)) {
+                try {
+                    int slot = Integer.parseInt(key.substring(BOUND_PREFIX.length()));
+                    boundSlots.put(slot, value);
+                } catch (NumberFormatException e) {
+                    System.err.println("[ItemConfig] Invalid bound slot key format: " + key);
+                }
+            }
+        }
+
+        json.add(Key.LOCKED_SLOTS, GSON.toJsonTree(lockedSlots));
+
+        Map<Integer, Integer> filteredBoundSlots = new HashMap<>();
+        for (Map.Entry<Integer, Integer> entry : boundSlots.entrySet()) {
+            int from = entry.getKey();
+            int to = entry.getValue();
+            if (from < to) {
+                filteredBoundSlots.put(from, to);
+            }
+        }
+        json.add(Key.BOUND_SLOTS, GSON.toJsonTree(filteredBoundSlots));
+    }
+
+    private static void saveEquipmentData(JsonObject json) {
+        Map<String, String> textures = new HashMap<>();
+        Map<String, String> items = new HashMap<>();
+
+        for (Map.Entry<String, String> entry : equipmentData.getValues().entrySet()) {
+            String key = entry.getKey();
+            String value = entry.getValue();
+
+            if (key.startsWith(TEXTURE_PREFIX)) {
+                String slotStr = key.substring(TEXTURE_PREFIX.length());
+                textures.put(slotStr, value);
+            } else if (key.startsWith(ITEM_PREFIX)) {
+                String slotStr = key.substring(ITEM_PREFIX.length());
+                items.put(slotStr, value);
+            }
+        }
+
+        json.add(Key.EQUIPMENT_SKULL_TEXTURES, GSON.toJsonTree(textures));
+        json.add(Key.EQUIPMENT_SKULL_ITEMS, GSON.toJsonTree(items));
     }
 
     public static void saveBackup() {
@@ -416,6 +429,10 @@ public class ItemConfig {
         } catch (IOException e) {
             System.err.println("[ItemConfig] Failed to save backup: " + e.getMessage());
         }
+    }
+
+    private static boolean validate(JsonObject json) {
+        return json != null && json.size() > 0;
     }
 
     private static void loadOrRestore() {
@@ -430,63 +447,245 @@ public class ItemConfig {
                 System.err.println("[ItemConfig] Failed to restore from backup: " + e.getMessage());
             }
         }
-        // If restore fails or backup doesn't exist, create a new config
-        System.err.println("[ItemConfig] Creating a new config file...");
-        try {
-            boolean created = CONFIG_FILE.createNewFile();
-            if (created) {
-                System.out.println("[ItemConfig] New config file created.");
-            } else {
-                System.out.println("[ItemConfig] Failed to create new config file.");
+
+        System.err.println("[ItemConfig] No backup found. Creating default config...");
+        save();
+        recreatedConfig = true;
+    }
+
+    // --- Generalized Methods for Settings ---
+
+    // Boolean
+    public static boolean getState(String key, boolean def) {
+        Object v = settings.getValues().getOrDefault(key, def);
+        return v instanceof Boolean b ? b : def;
+    }
+
+    public static void enable(String key, boolean enabled) {
+        settings.set(key, enabled);
+        save();
+    }
+
+    public static void disable(String key) {
+        settings.set(key, false);
+        save();
+    }
+
+    public static void toggle(String key, boolean def) {
+        boolean current = getState(key, def);
+        enable(key, !current);
+    }
+
+    // Integer
+    public static int getInt(String key, int def) {
+        Object v = settings.getValues().getOrDefault(key, def);
+        return v instanceof Number n ? n.intValue() : def;
+    }
+
+    public static void setInt(String key, int value) {
+        settings.set(key, value);
+        save();
+    }
+
+    // String
+    public static String getString(String key, String def) {
+        Object v = settings.getValues().getOrDefault(key, def);
+        return v instanceof String str ? str : def;
+    }
+
+    public static void setString(String key, String value) {
+        settings.set(key, value);
+        save();
+    }
+
+    // Float
+    public static float getFloat(String key, float def) {
+        Object v = settings.getValues().getOrDefault(key, def);
+        return v instanceof Number n ? n.floatValue() : def;
+    }
+
+    public static void setFloat(String key, float value) {
+        settings.set(key, value);
+        save();
+    }
+
+    // --- Item Protection API ---
+    public static boolean isSellProtectionEnabled() {
+        return getState(Key.SELL_PROTECTION_ENABLED, true);
+    }
+
+    public static void setSellProtectionEnabled(boolean enabled) {
+        enable(Key.SELL_PROTECTION_ENABLED, enabled);
+    }
+
+    public static boolean isTooltipEnabled() {
+        return getState(Key.TOOLTIP_ENABLED, true);
+    }
+
+    public static void setTooltipEnabled(boolean enabled) {
+        enable(Key.TOOLTIP_ENABLED, enabled);
+    }
+
+    public static boolean isProtectTriggerEnabled() {
+        return getState(Key.PROTECT_TRIGGER_ENABLED, true);
+    }
+
+    public static void setProtectTriggerEnabled(boolean enabled) {
+        enable(Key.PROTECT_TRIGGER_ENABLED, enabled);
+    }
+
+    public static boolean isProtectNotiEnabled() {
+        return getState(Key.PROTECT_NOTI_ENABLED, true);
+    }
+
+    public static void setProtectNotiEnabled(boolean enabled) {
+        enable(Key.PROTECT_NOTI_ENABLED, enabled);
+    }
+
+    public static boolean isLockTriggerEnabled() {
+        return getState(Key.LOCK_TRIGGER_ENABLED, true);
+    }
+
+    public static void setLockTriggerEnabled(boolean enabled) {
+        enable(Key.LOCK_TRIGGER_ENABLED, enabled);
+    }
+
+    public static synchronized void addUUID(String uuid, Text displayName) {
+        String serialized = TextFormatUtil.serialize(displayName);
+        protectedItems.set(uuid, serialized);
+        save();
+    }
+
+    public static synchronized void removeUUID(String uuid) {
+        protectedItems.remove(uuid);
+        save();
+    }
+
+    public static synchronized void clearAll() {
+        protectedItems.clear();
+        save();
+    }
+
+    public static synchronized boolean isProtected(String uuid) {
+        return protectedItems.getValues().containsKey(uuid);
+    }
+
+    public static synchronized Text getDisplayName(String uuid) {
+        String serialized = protectedItems.getValues().get(uuid);
+        return serialized != null ? TextFormatUtil.deserialize(serialized) : null;
+    }
+
+    public static synchronized Map<String, String> getProtectedUUIDs() {
+        return new HashMap<>(protectedItems.getValues());
+    }
+
+    // --- Slot Locking ---
+    public static synchronized boolean isSlotLocked(int slot) {
+        return slotData.getValues().containsKey(LOCKED_PREFIX + slot);
+    }
+
+    public static synchronized void toggleSlotLock(int slot) {
+        String key = LOCKED_PREFIX + slot;
+        if (slotData.getValues().containsKey(key)) {
+            slotData.remove(key);
+        } else {
+            slotData.set(key, slot);
+        }
+        save();
+    }
+
+    // --- Slot Binding ---
+    public static synchronized boolean areSlotsBound(int slotA, int slotB) {
+        Integer boundSlotA = slotData.getValues().get(BOUND_PREFIX + slotA);
+        return boundSlotA != null && boundSlotA == slotB;
+    }
+
+    public static synchronized boolean isSlotBound(int slot) {
+        return slotData.getValues().containsKey(BOUND_PREFIX + slot);
+    }
+
+    public static synchronized int getBoundSlot(int slot) {
+        Integer bound = slotData.getValues().get(BOUND_PREFIX + slot);
+        return bound != null ? bound : -1;
+    }
+
+    public static synchronized void bindSlots(int slotA, int slotB) {
+        slotData.set(BOUND_PREFIX + slotA, slotB);
+        slotData.set(BOUND_PREFIX + slotB, slotA);
+        save();
+    }
+
+    public static synchronized void unbindSlots(int slotA, int slotB) {
+        slotData.remove(BOUND_PREFIX + slotA);
+        slotData.remove(BOUND_PREFIX + slotB);
+        save();
+    }
+
+    // --- Equipment Skulls ---
+    public static synchronized void setEqSkull(int slot, String textureUrl) {
+        String key = TEXTURE_PREFIX + slot;
+        if (textureUrl == null) {
+            equipmentData.remove(key);
+        } else {
+            equipmentData.set(key, textureUrl);
+        }
+        save();
+    }
+
+    public static synchronized String getEquipmentSkullTexture(int slot) {
+        return equipmentData.getValues().get(TEXTURE_PREFIX + slot);
+    }
+
+    public static synchronized void setEqItemData(int slot, String itemData) {
+        String key = ITEM_PREFIX + slot;
+        if (itemData == null) {
+            equipmentData.remove(key);
+        } else {
+            equipmentData.set(key, itemData);
+        }
+        save();
+    }
+
+    public static synchronized String getEquipmentSkullItemData(int slot) {
+        return equipmentData.getValues().get(ITEM_PREFIX + slot);
+    }
+
+    public static synchronized boolean hasEquipmentSkull(int slot) {
+        return equipmentData.getValues().containsKey(TEXTURE_PREFIX + slot);
+    }
+
+    public static synchronized void clearEquipmentSkulls() {
+        Set<String> keysToRemove = new HashSet<>();
+        for (String key : equipmentData.getValues().keySet()) {
+            if (key.startsWith(TEXTURE_PREFIX) || key.startsWith(ITEM_PREFIX)) {
+                keysToRemove.add(key);
             }
-            save();
-            recreatedConfig = true;
-        } catch (IOException e) {
-            System.err.println("[ItemConfig] Failed to create new config file: " + e.getMessage());
         }
+        for (String key : keysToRemove) {
+            equipmentData.remove(key);
+        }
+        save();
     }
 
-    private static boolean validate(Map<String, Object> config) {
-        if (config == null || config.isEmpty()) {
-            return false;
+    public static synchronized Map<Integer, String> getAllEquipmentSkullTextures() {
+        Map<Integer, String> result = new HashMap<>();
+        for (Map.Entry<String, String> entry : equipmentData.getValues().entrySet()) {
+            String key = entry.getKey();
+            if (key.startsWith(TEXTURE_PREFIX)) {
+                try {
+                    int slot = Integer.parseInt(key.substring(TEXTURE_PREFIX.length()));
+                    result.put(slot, entry.getValue());
+                } catch (NumberFormatException e) {
+                    System.err.println("[ItemConfig] Invalid texture slot key: " + key);
+                }
+            }
         }
-        // Check for required keys
-        if (!config.containsKey(UUIDS_KEY) || !config.containsKey(SELL_PROT_KEY) ||
-            !config.containsKey(TOOLTIP_KEY) || !config.containsKey(PROT_TRIGGER_KEY) ||
-            !config.containsKey(PROT_NOTI_KEY) || !config.containsKey(LOCKED_SLOTS_KEY) ||
-            !config.containsKey(LOCK_TRIGGER_KEY) || !config.containsKey(BOUND_SLOTS_KEY)){
-            return false;
-        }
-        // Validate types
-        boolean valid = (config.get(UUIDS_KEY) instanceof Map) &&
-               (config.get(SELL_PROT_KEY) instanceof Boolean) &&
-               (config.get(TOOLTIP_KEY) instanceof Boolean) &&
-               (config.get(PROT_TRIGGER_KEY) instanceof Boolean) &&
-               (config.get(PROT_NOTI_KEY) instanceof Boolean) &&
-               (config.get(LOCK_TRIGGER_KEY) instanceof Boolean) &&
-               (config.get(BOUND_SLOTS_KEY) instanceof Map) &&
-               (config.get(LOCKED_SLOTS_KEY) instanceof List);
-               
-        // Optional
-        if (config.containsKey(EQUIPMENT_SKULL_TEXTURES_KEY)) {
-            valid &= (config.get(EQUIPMENT_SKULL_TEXTURES_KEY) instanceof Map);
-        }
-        if (config.containsKey(EQUIPMENT_SKULL_ITEMS_KEY)) {
-            valid &= (config.get(EQUIPMENT_SKULL_ITEMS_KEY) instanceof Map);
-        }
-        
-        return valid;
+        return result;
     }
 
-    private static void markConfigChanged() {
-        configChanged = true;
-        saveConfigIfNeeded();
-    }
-
-    public static void saveConfigIfNeeded() {
-        if (configChanged) {
-            save();
-            configChanged = false;
-        }
+    public static synchronized void clearEquipmentSlot(int slot) {
+        equipmentData.remove(TEXTURE_PREFIX + slot);
+        equipmentData.remove(ITEM_PREFIX + slot);
+        save();
     }
 }

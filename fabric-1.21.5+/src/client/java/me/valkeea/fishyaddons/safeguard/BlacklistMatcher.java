@@ -78,6 +78,10 @@ public class BlacklistMatcher {
     }
 
     private static boolean matchesAnyIdentifier(GuiBlacklistEntry entry, ItemStack stack, List<Text> tooltip, String screenClassName) {
+        if (entry.identifiers == null || entry.identifiers.isEmpty()) {
+            return false;
+        }
+        
         for (String identifier : entry.identifiers) {
             String cleanIdentifier = getCleanIdentifier(identifier);
             if (cleanIdentifier == null) continue;

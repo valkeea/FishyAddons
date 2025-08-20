@@ -105,7 +105,6 @@ public class QolScreen extends Screen {
                     ColorWheel.intToRGB(FishyConfig.getInt("renderCoordsColor")),
                     rgb -> {
                         FishyConfig.setInt("renderCoordsColor", ColorWheel.rgbToInt(rgb));
-                        FishyConfig.saveConfigIfNeeded();
                         btn.setMessage(getColorButtonText());
                     }
                 ));

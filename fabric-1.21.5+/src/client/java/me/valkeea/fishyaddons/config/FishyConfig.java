@@ -1,14 +1,11 @@
 package me.valkeea.fishyaddons.config;
 
-import com.google.gson.*;
-import com.google.gson.reflect.TypeToken;
-
-import me.valkeea.fishyaddons.handler.CommandAlias;
-import me.valkeea.fishyaddons.handler.KeyShortcut;
-import me.valkeea.fishyaddons.handler.ChatReplacement;
-import net.minecraft.client.MinecraftClient;
-
-import java.io.*;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.Reader;
+import java.io.Writer;
 import java.lang.reflect.Type;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
@@ -16,12 +13,29 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Consumer;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonIOException;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonSyntaxException;
+import com.google.gson.reflect.TypeToken;
+
+import me.valkeea.fishyaddons.handler.ChatReplacement;
+import me.valkeea.fishyaddons.handler.CommandAlias;
+import me.valkeea.fishyaddons.handler.KeyShortcut;
+import net.minecraft.client.MinecraftClient;
+
 public class FishyConfig {
     private FishyConfig() {}
     private static final File CONFIG_FILE;
     private static final File BACKUP_DIR;
     private static final File BACKUP_FILE;
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+
+    private static final String RED = "customRed";
+    private static final String GREEN = "customGreen";
+    private static final String BLUE = "customBlue";
+    private static final String PRESET = "preset";
 
     // Config section handler
     public static class ConfigSection<V> {
@@ -251,7 +265,6 @@ public class FishyConfig {
     private static boolean firstLoad = false;
     private static boolean recreatedConfig = false;
     private static boolean restoredConfig = false;
-    private static boolean configChanged = false;
 
     // Custom RGB values for particles
     private static float customRed = 1.0f;
@@ -274,81 +287,8 @@ public class FishyConfig {
         load();
 
         if (firstLoad) {
-        commandAliases.set("/m7", "/joininstance MASTER_CATACOMBS_FLOOR_SEVEN");
-        keybinds.set("MOUSE3", "/pets");
-        chatReplacements.set(":cat:", "ᗢᘏᓗ");
-        chatReplacements.set(":hi:", "ඞ");
-        chatReplacements.set("heiiii", "Any string will be replaced one to one");
-        settings.set(Key.FISHY_LAVA, false);
-        settings.set(Key.FISHY_WATER, false);
-        settings.set(Key.RENDER_COORD_COLOR, -5653771);
-        settings.set(Key.CUSTOM_PARTICLE_COLOR_INDEX, Integer.valueOf(1));
-        settings.set(Key.XP_COLOR, 0xD0D1FF);
-        settings.set(Key.HD_FONT, false);
-        settings.set(Key.FISHY_GUI, false);
-        settings.set(Key.SKIP_F5, false);
-        settings.set(Key.CLEAN_HYPE, false);
-        settings.set(Key.MUTE_PHANTOM, false);
-        settings.set(Key.RENDER_COORDS, true);
-        settings.set(Key.COPY_CHAT, true);
-        settings.set(Key.COPY_NOTI, true);
-        settings.set(Key.CUSTOM_PARTICLE_MODE, "preset");
-        settings.set(Key.BEACON_ALARM, true);
-        settings.set(Key.HUD_PING_ENABLED, false);
-        settings.set(Key.HUD_TIMER_ENABLED, true);
-        settings.set(Key.HUD_PET_ENABLED, false);
-        settings.set(Key.HUD_PETXP, true);
-        settings.set(Key.HUD_PET_DYNAMIC, true);
-        settings.set(Key.TRACK_SACK, false);
-        settings.set(Key.DMG_SCALE, 0.15f);
-        settings.set(Key.SCALE_CRIT, false);
-        settings.set(Key.INV_SEARCH, false);
-        settings.set(Key.RENDER_COORDS, true);
-        settings.set(Key.HIDE_HOTSPOT, false);
-        settings.set(Key.HOTSPOT_DISTANCE, 7.0f);
-        settings.set(Key.PRICE_TYPE, "sellPrice");
-        settings.set(Key.BOOK_DROP_ALERT, true);
-        settings.set(Key.RAIN_NOTI, false);
-        settings.set(Key.EQ_DISPLAY, false);
-        hud.set(Key.HUD_PING_X, 5);
-        hud.set(Key.HUD_PING_Y, 12);
-        hud.set(Key.HUD_PING_SIZE, 12);
-        hud.set(Key.HUD_PING_COLOR, 1.5649516E7);
-        hud.set(Key.HUD_TIMER_X, 5);
-        hud.set(Key.HUD_TIMER_Y, 28);
-        hud.set(Key.HUD_TIMER_SIZE, 12);
-        hud.set(Key.HUD_TIMER_COLOR, 1.3228737E7);
-        hud.set(Key.HUD_TITLE_X, 600);
-        hud.set(Key.HUD_TITLE_Y, 120);
-        hud.set(Key.HUD_TITLE_SIZE, 55);
-        hud.set(Key.HUD_PET_X, 601);
-        hud.set(Key.HUD_PET_Y, 486);
-        hud.set(Key.HUD_PET_SIZE, 12);
-        hud.set(Key.HUD_PET_COLOR, 1.5649516E7);
-        hud.set(Key.HUD_TRACKER_X, 5);
-        hud.set(Key.HUD_TRACKER_Y, 44);
-        hud.set(Key.HUD_TRACKER_SIZE, 12);
-        hud.set(Key.HUD_TRACKER_COLOR, 1.5649516E7);
-        hud.set(Key.HUD_SEARCH_X, 870);
-        hud.set(Key.HUD_SEARCH_Y, 484);
-        hud.set(Key.HUD_SEARCH_SIZE, 14);
-        hud.set(Key.HUD_CENTURY_CAKE_X, 5);
-        hud.set(Key.HUD_CENTURY_CAKE_Y, 60);
-        hud.set(Key.HUD_CENTURY_CAKE_SIZE, 12);
-        hud.set(Key.HUD_CENTURY_CAKE_COLOR, 16513273);
-        modKeys.set("lockKey", "GLFW_KEY_SEMICOLON");
+            Key.setDefaults(commandAliases, keybinds, chatReplacements, settings, hud, modKeys);
             save();
-        }
-    }
-
-    public static void markConfigChanged() {
-        configChanged = true;
-    }
-
-    public static void saveConfigIfNeeded() {
-        if (configChanged) {
-            save();
-            configChanged = false;
         }
     }
 
@@ -378,9 +318,9 @@ public class FishyConfig {
             chatAlerts.loadFromJson(json);            
 
             // --- Load custom RGB ---
-            if (json.has("customRed")) customRed = json.get("customRed").getAsFloat();
-            if (json.has("customGreen")) customGreen = json.get("customGreen").getAsFloat();
-            if (json.has("customBlue")) customBlue = json.get("customBlue").getAsFloat();
+            if (json.has(RED)) customRed = json.get(RED).getAsFloat();
+            if (json.has(GREEN)) customGreen = json.get(GREEN).getAsFloat();
+            if (json.has(BLUE)) customBlue = json.get(BLUE).getAsFloat();
 
         } catch (JsonSyntaxException | JsonIOException e) {
             System.err.println("[FishyConfig] Malformed JSON: " + e.getMessage());
@@ -403,9 +343,9 @@ public class FishyConfig {
             chatAlerts.saveToJson(json);
 
             // --- Save custom RGB ---
-            json.addProperty("customRed", customRed);
-            json.addProperty("customGreen", customGreen);
-            json.addProperty("customBlue", customBlue);
+            json.addProperty(RED, customRed);
+            json.addProperty(GREEN, customGreen);
+            json.addProperty(BLUE, customBlue);
 
             GSON.toJson(json, writer);
         } catch (IOException e) {
@@ -435,6 +375,7 @@ public class FishyConfig {
             System.err.println("[FishyConfig] Restoring from backup...");
             try {
                 Files.copy(BACKUP_FILE.toPath(), CONFIG_FILE.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                TrackerProfiles.tryRestore();
                 load();
                 restoredConfig = true;
                 return;
@@ -476,11 +417,11 @@ public class FishyConfig {
 
     // Mod Keybinds
     public static String getLockKey() {
-        return modKeys.getValues().getOrDefault("lockKey", "GLFW_KEY_L");
+        return modKeys.getValues().getOrDefault(Key.MOD_KEY_LOCK, "GLFW_KEY_L");
     }
 
     public static void setLockKey(String key) {
-        modKeys.set("lockKey", key);
+        modKeys.set(Key.MOD_KEY_LOCK, key);
         save();
     }
 
@@ -508,8 +449,8 @@ public class FishyConfig {
     }
 
     public static String getParticleColorMode() {
-        Object value = settings.getValues().getOrDefault(Key.CUSTOM_PARTICLE_MODE, "preset");
-        return value instanceof String string ? string : "preset";
+        Object value = settings.getValues().getOrDefault(Key.CUSTOM_PARTICLE_MODE, PRESET);
+        return value instanceof String string ? string : PRESET;
     }
 
     public static void setParticleColorMode(String mode) {
@@ -574,12 +515,12 @@ public class FishyConfig {
 
     // --- Alert Data ---
     public static class AlertData {
-        public String msg;    
-        public String onscreen; 
-        public int color;
-        public String soundId; 
-        public float volume;
-        public boolean toggled; 
+        private String msg;
+        private String onscreen;
+        private int color;
+        private String soundId;
+        private float volume;
+        private boolean toggled;
 
         public AlertData() {
             this("", "", 0xFFFFFFFF, "", 1.0F, true); // Default volume 1.0F
@@ -596,6 +537,14 @@ public class FishyConfig {
             this.volume = volume;
             this.toggled = toggled;
         }
+
+        public String getMsg() { return msg; }
+        public void setMsg(String msg) { this.msg = msg; }
+        public String getOnscreen() { return onscreen; }
+        public int getColor() { return color; }
+        public String getSoundId() { return soundId; }
+        public float getVolume() { return volume; }
+        public boolean isToggled() { return toggled; }
     }
 
     // --- Section instance for alerts ---

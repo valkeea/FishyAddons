@@ -55,16 +55,20 @@ public class Key {
     public static final String FISHY_GUI = "fishyGui";
     public static final String DMG_SCALE = "dmgScale";
     public static final String SCALE_CRIT = "scaleCritParticles";
+    public static final String DEATH_ANI = "deathAni";
+    public static final String FIRE_ANI = "fireAni";
     public static final String CUSTOM_PARTICLE_COLOR_INDEX = "customParticleColorIndex";
     public static final String CUSTOM_PARTICLE_MODE = "customParticleMode";
     public static final String SKIP_F5 = "skipPerspective";
     public static final String CLEAN_HYPE = "cleanHype";
     public static final String MUTE_PHANTOM = "mutePhantom";
+    public static final String MUTE_RUNE = "muteRune";
     public static final String RENDER_COORDS = "renderCoords";
     public static final String BEACON_ALARM = "beaconAlarm";
     public static final String COPY_CHAT = "copyChat";
     public static final String COPY_NOTI = "ccNoti";
     public static final String INV_SEARCH = "invSearch";
+    public static final String INV_SEARCH_OPACITY = "searchOverlayOpacity";
     public static final String PRICE_TYPE = "priceType";
     public static final String HIDE_HOTSPOT = "hideHotspot";
     public static final String HOTSPOT_DISTANCE = "hotspotDistance";
@@ -72,5 +76,100 @@ public class Key {
     public static final String CAKE_NOTI = "centuryCakeChatReminder";
     public static final String RAIN_NOTI = "rainNoti";
     public static final String EQ_DISPLAY = "equipmentDisplay";
+    public static final String VALUE_FILTER = "minValueFilter";
+    public static final String FILTER_MIN_VALUE = "minItemValue";
+    public static final String MOD_KEY_LOCK = "lockKey";
 
+    // GUI Scale
+    public static final String MOD_UI_SCALE = "modUiScale";
+
+    // --- ItemConfig ---
+    public static final String SELL_PROTECTION_ENABLED = "sellProtectionEnabled";
+    public static final String TOOLTIP_ENABLED = "tooltipEnabled";
+    public static final String PROTECT_TRIGGER_ENABLED = "protectTriggerEnabled";
+    public static final String PROTECT_NOTI_ENABLED = "protectNotiEnabled";
+    public static final String LOCK_TRIGGER_ENABLED = "lockTriggerEnabled";
+    public static final String PROTECTED_UUIDS = "protectedUUIDs";
+    public static final String LOCKED_SLOTS = "lockedSlots";
+    public static final String BOUND_SLOTS = "boundSlots";
+    public static final String BLACKLIST = "blacklist";
+    public static final String EQUIPMENT_SKULL_TEXTURES = "equipmentSkullTextures";
+    public static final String EQUIPMENT_SKULL_ITEMS = "equipmentSkullItems";
+    public static final String EXCLUDED_ITEMS = "tracker_excluded_items"; 
+
+    public static void setDefaults(
+        FishyConfig.ConfigSection<String> commandAliases,
+        FishyConfig.ConfigSection<String> keybinds,
+        FishyConfig.ConfigSection<String> chatReplacements,
+        FishyConfig.SimpleConfigSection<Object> settings,
+        FishyConfig.SimpleConfigSection<Object> hud,
+        FishyConfig.SimpleConfigSection<String> modKeys
+    ) {
+        commandAliases.set("/m7", "/joininstance MASTER_CATACOMBS_FLOOR_SEVEN");
+        keybinds.set("MOUSE3", "/pets");
+        chatReplacements.set(":cat:", "ᗢᘏᓗ");
+        chatReplacements.set(":hi:", "ඞ");
+        chatReplacements.set("heiiii", "Any string will be replaced one to one");
+        settings.set(FISHY_LAVA, false);
+        settings.set(FISHY_WATER, false);
+        settings.set(RENDER_COORD_COLOR, -5653771);
+        settings.set(CUSTOM_PARTICLE_COLOR_INDEX, Integer.valueOf(1));
+        settings.set(XP_COLOR, 0xD0D1FF);
+        settings.set(HD_FONT, false);
+        settings.set(FISHY_GUI, false);
+        settings.set(SKIP_F5, false);
+        settings.set(CLEAN_HYPE, false);
+        settings.set(MUTE_PHANTOM, false);
+        settings.set(MUTE_RUNE, false);
+        settings.set(RENDER_COORDS, true);
+        settings.set(COPY_CHAT, true);
+        settings.set(COPY_NOTI, true);
+        settings.set(CUSTOM_PARTICLE_MODE, "preset");
+        settings.set(BEACON_ALARM, true);
+        settings.set(HUD_PING_ENABLED, false);
+        settings.set(HUD_TIMER_ENABLED, true);
+        settings.set(HUD_PET_ENABLED, false);
+        settings.set(HUD_PETXP, true);
+        settings.set(HUD_PET_DYNAMIC, true);
+        settings.set(TRACK_SACK, false);
+        settings.set(FILTER_MIN_VALUE, 1562.5f);
+        settings.set(DMG_SCALE, 0.15f);
+        settings.set(SCALE_CRIT, false);
+        settings.set(INV_SEARCH, false);
+        settings.set(RENDER_COORDS, true);
+        settings.set(HIDE_HOTSPOT, false);
+        settings.set(HOTSPOT_DISTANCE, 7.0f);
+        settings.set(PRICE_TYPE, "sellPrice");
+        settings.set(BOOK_DROP_ALERT, true);
+        settings.set(RAIN_NOTI, false);
+        settings.set(EQ_DISPLAY, false);
+        settings.set(MOD_UI_SCALE, 0.4265625f);
+        hud.set(HUD_PING_X, 5);
+        hud.set(HUD_PING_Y, 12);
+        hud.set(HUD_PING_SIZE, 12);
+        hud.set(HUD_PING_COLOR, 1.5649516E7);
+        hud.set(HUD_TIMER_X, 5);
+        hud.set(HUD_TIMER_Y, 28);
+        hud.set(HUD_TIMER_SIZE, 12);
+        hud.set(HUD_TIMER_COLOR, 1.3228737E7);
+        hud.set(HUD_TITLE_X, 600);
+        hud.set(HUD_TITLE_Y, 120);
+        hud.set(HUD_TITLE_SIZE, 55);
+        hud.set(HUD_PET_X, 601);
+        hud.set(HUD_PET_Y, 486);
+        hud.set(HUD_PET_SIZE, 12);
+        hud.set(HUD_PET_COLOR, 1.5649516E7);
+        hud.set(HUD_TRACKER_X, 5);
+        hud.set(HUD_TRACKER_Y, 44);
+        hud.set(HUD_TRACKER_SIZE, 12);
+        hud.set(HUD_TRACKER_COLOR, 1.5649516E7);
+        hud.set(HUD_SEARCH_X, 870);
+        hud.set(HUD_SEARCH_Y, 484);
+        hud.set(HUD_SEARCH_SIZE, 14);
+        hud.set(HUD_CENTURY_CAKE_X, 5);
+        hud.set(HUD_CENTURY_CAKE_Y, 60);
+        hud.set(HUD_CENTURY_CAKE_SIZE, 12);
+        hud.set(HUD_CENTURY_CAKE_COLOR, 16513273);
+        modKeys.set(MOD_KEY_LOCK, "NONE");
+    }
 }

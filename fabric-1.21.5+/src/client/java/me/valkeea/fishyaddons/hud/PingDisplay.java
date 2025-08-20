@@ -146,5 +146,5 @@ public class PingDisplay implements HudElement {
     @Override public boolean getHudBg() { return FishyConfig.getHudBg(HUD_KEY, true); }
     @Override public void setHudBg(boolean bg) { FishyConfig.setHudBg(HUD_KEY, bg); }
     @Override public void setEditingMode(boolean editing) { this.editingMode = editing; }
-    @Override public String getDisplayName() { return "Ping HUD"; }
+    @Override public String getDisplayName() { return "Ping Display"; }
 }

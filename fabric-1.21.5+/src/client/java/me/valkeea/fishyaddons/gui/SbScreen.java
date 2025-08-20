@@ -282,7 +282,7 @@ public class SbScreen extends Screen {
             minValueBtnX, minValueBtnY, minValueBtnW, minValueBtnH,
             getMinValueToggleText(), 
             btn -> {
-                FishyConfig.toggle("minValueFilter", false);
+                FishyConfig.toggle(Key.VALUE_FILTER, false);
                 TrackerDisplay.refreshDisplay();
                 btn.setMessage(getMinValueToggleText());
             }
@@ -378,7 +378,7 @@ public class SbScreen extends Screen {
     }    
 
     private static Text getMinValueToggleText() {
-        return GuiUtil.onOffLabel("Minimum Item Value Filter", FishyConfig.getState("minValueFilter", false));
+        return GuiUtil.onOffLabel("Minimum Item Value Filter", FishyConfig.getState(Key.VALUE_FILTER, false));
     }
 
     private static Text getTrackerText() {

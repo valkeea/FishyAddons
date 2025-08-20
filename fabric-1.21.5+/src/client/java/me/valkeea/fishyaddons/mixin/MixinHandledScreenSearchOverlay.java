@@ -15,7 +15,7 @@ public class MixinHandledScreenSearchOverlay {
     @Inject(method = "render", at = @At("TAIL"))
     private void renderSearchOverlay(DrawContext context, int mouseX, int mouseY, float delta, CallbackInfo ci) {
         HandledScreen<?> screen = (HandledScreen<?>) (Object) this;
-        ItemSearchOverlay.getInstance().render(context, screen, mouseX, mouseY, delta);
+        ItemSearchOverlay.getInstance().render(context, screen);
         SearchHudElement searchElement = SearchHudElement.getInstance();
         if (searchElement != null) {
             searchElement.render(context, mouseX, mouseY);

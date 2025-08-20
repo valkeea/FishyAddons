@@ -1,6 +1,5 @@
 package me.valkeea.fishyaddons.config;
 
-import me.valkeea.fishyaddons.gui.TabbedListScreen;
 import net.minecraft.text.Text;
 
 import java.nio.file.Files;
@@ -14,6 +13,8 @@ import java.util.regex.Pattern;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
+
+import me.valkeea.fishyaddons.gui.TabbedListScreen;
 
 public class FishyPresets {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();

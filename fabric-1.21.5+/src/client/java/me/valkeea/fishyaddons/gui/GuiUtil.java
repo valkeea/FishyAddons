@@ -1,11 +1,12 @@
 package me.valkeea.fishyaddons.gui;
 
-import net.minecraft.text.Text;
-import net.minecraft.client.gui.DrawContext;
+import java.util.List;
+
 import net.minecraft.client.font.TextRenderer;
+import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.text.Style;
-import java.util.List;
+import net.minecraft.text.Text;
 
 public class GuiUtil {
     public static void drawBox(DrawContext context, int x, int y, int width, int height, int color) {
@@ -77,5 +78,9 @@ public class GuiUtil {
         context.fill(x, y + 2, x + 2, y + 14, outerColor);
         context.fill(x + 14, y + 2, x + 16, y + 14, outerColor);
         context.fill(x + 2, y + 2, x + 14, y + 14, innerColor);
+    }
+
+    private GuiUtil() {
+        throw new UnsupportedOperationException("Utility class");
     }
 }

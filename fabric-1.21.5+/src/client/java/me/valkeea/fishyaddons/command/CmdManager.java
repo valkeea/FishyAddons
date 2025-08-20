@@ -42,12 +42,12 @@ public class CmdManager {
             .then(FishyCmd.registerPos())
             .then(FishyCmd.registerRain())
             .then(FishyCmd.registerFishing())
-            .then(buildProfitRoot("profit", root + " profit"))
+            .then(buildProfitRoot("profit"))
             .executes(context -> {
                 ProfitTrackerCommand.showUsage();
                 return 1;
             })
-            .then(buildGuardRoot("guard", root + " guard"))
+            .then(buildGuardRoot("guard"))
             .executes(context -> {
                 if (FishyCmd.checkGUI() == 1) return 1;
                 MinecraftClient.getInstance().execute(() ->
@@ -58,12 +58,12 @@ public class CmdManager {
     }
 
     private static void registerFgCommand(CommandDispatcher<FabricClientCommandSource> dispatcher, String root) {
-        dispatcher.register(buildGuardRoot(root, root));
+        dispatcher.register(buildGuardRoot(root));
     }
 
-    private static LiteralArgumentBuilder<FabricClientCommandSource> buildGuardRoot(String rootLiteral, String rootNameForMessages) {
+    private static LiteralArgumentBuilder<FabricClientCommandSource> buildGuardRoot(String rootLiteral) {
         LiteralArgumentBuilder<FabricClientCommandSource> builder = ClientCommandManager.literal(rootLiteral);
-        FishyCmd.addGuardSubcommands(builder, rootNameForMessages);
+        FishyCmd.addGuardSubcommands(builder);
         builder.executes(context -> {
             if (FishyCmd.checkGUI() == 1) return 1;
             MinecraftClient.getInstance().execute(() ->
@@ -74,10 +74,10 @@ public class CmdManager {
     }
 
     private static void registerFpCommand(CommandDispatcher<FabricClientCommandSource> dispatcher, String root) {
-        dispatcher.register(buildProfitRoot(root, root));
+        dispatcher.register(buildProfitRoot(root));
     }
 
-    private static LiteralArgumentBuilder<FabricClientCommandSource> buildProfitRoot(String rootLiteral, String rootNameForMessages) {
+    private static LiteralArgumentBuilder<FabricClientCommandSource> buildProfitRoot(String rootLiteral) {
         LiteralArgumentBuilder<FabricClientCommandSource> builder = ClientCommandManager.literal(rootLiteral);
         FishyCmd.addProfitSubcommands(builder);
         builder.executes(context -> {

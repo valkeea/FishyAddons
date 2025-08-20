@@ -1,6 +1,7 @@
 package me.valkeea.fishyaddons.handler;
 
 import me.valkeea.fishyaddons.config.FishyConfig;
+import me.valkeea.fishyaddons.config.Key;
 import me.valkeea.fishyaddons.hud.ElementRegistry;
 import me.valkeea.fishyaddons.hud.SearchHudElement;
 import me.valkeea.fishyaddons.mixin.HandledScreenAccessor;
@@ -23,7 +24,6 @@ public class ItemSearchOverlay {
     private boolean isSearching = false;
     private SearchHudElement searchHudElement;
     private long lastSlotContentHash = 0;
-    private static final String OVERLAY_OPACITY_CONFIG_KEY = "searchOverlayOpacity";
     private static final float DEFAULT_OVERLAY_OPACITY = 0.5f;
     
     private ItemSearchOverlay() {
@@ -41,16 +41,20 @@ public class ItemSearchOverlay {
         }
         return instance;
     }
+
+    public void refresh() {
+        setEnabled(!isEnabled());
+    }
     
     public float getOpacity() {
-        return FishyConfig.getFloat(OVERLAY_OPACITY_CONFIG_KEY, DEFAULT_OVERLAY_OPACITY);
+        return FishyConfig.getFloat(Key.INV_SEARCH_OPACITY, DEFAULT_OVERLAY_OPACITY);
     }
     
     public void setOpacity(float opacity) {
-        FishyConfig.setFloat(OVERLAY_OPACITY_CONFIG_KEY, Math.clamp(opacity, 0.0f, 1.0f));
+        FishyConfig.setFloat(Key.INV_SEARCH_OPACITY, Math.clamp(opacity, 0.0f, 1.0f));
     }
     
-    public void render(DrawContext context, HandledScreen<?> screen, int mouseX, int mouseY, float delta) {
+    public void render(DrawContext context, HandledScreen<?> screen) {
         if (!isEnabled()) {
             return;
         }

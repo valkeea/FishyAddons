@@ -1,14 +1,14 @@
 package me.valkeea.fishyaddons.tracker;
 
-import me.valkeea.fishyaddons.cache.ApiCache;
-import me.valkeea.fishyaddons.config.Key;
-import net.minecraft.text.HoverEvent;
-import net.minecraft.text.Text;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import me.valkeea.fishyaddons.cache.ApiCache;
+import me.valkeea.fishyaddons.config.Key;
+import net.minecraft.text.HoverEvent;
+import net.minecraft.text.Text;
 
 /**
  * Parses Hypixel Skyblock sack notification messages with hover events to extract item drops

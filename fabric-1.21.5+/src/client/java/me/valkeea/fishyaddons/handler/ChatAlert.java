@@ -26,7 +26,7 @@ public class ChatAlert {
         for (Map.Entry<String, AlertData> entry : alertCache.entrySet()) {
             String key = entry.getKey();
             AlertData data = entry.getValue();
-            if (data == null || !data.toggled) continue;
+            if (data == null || !data.isToggled()) continue;
             if (message.contains(key)) {
                 executeAlert(data);
                 break;
@@ -37,19 +37,19 @@ public class ChatAlert {
     public static void executeAlert(AlertData data) {
         MinecraftClient client = MinecraftClient.getInstance();
 
-        if (data.msg != null && !data.msg.isBlank() && client.player != null) {
-            client.player.networkHandler.sendChatMessage(data.msg);
+        if (data.getMsg() != null && !data.getMsg().isBlank() && client.player != null) {
+            client.player.networkHandler.sendChatMessage(data.getMsg());
         }
 
-        if (data.onscreen != null && !data.onscreen.isBlank() && client.inGameHud != null) {  
-            TitleDisplay.setTitle(data.onscreen, data.color);
+        if (data.getOnscreen() != null && !data.getOnscreen().isBlank() && client.inGameHud != null) {
+            TitleDisplay.setTitle(data.getOnscreen(), data.getColor());
         }
 
-        if (data.soundId != null && !data.soundId.isBlank() && client.player != null) {
+        if (data.getSoundId() != null && !data.getSoundId().isBlank() && client.player != null) {
             try {
-                Identifier id = Identifier.tryParse(data.soundId);
+                Identifier id = Identifier.tryParse(data.getSoundId());
                 if (id != null) {
-                    SoundUtil.playDynamicSound(id.toString(), data.volume, 1.0F);
+                    SoundUtil.playDynamicSound(id.toString(), data.getVolume(), 1.0F);
                 }
             } catch (Exception ignored) {}
         }

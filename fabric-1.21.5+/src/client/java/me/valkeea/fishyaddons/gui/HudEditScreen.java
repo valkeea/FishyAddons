@@ -1,30 +1,51 @@
 package me.valkeea.fishyaddons.gui;
 
+import java.awt.Rectangle;
+
 import me.valkeea.fishyaddons.hud.ElementRegistry;
 import me.valkeea.fishyaddons.hud.HudElement;
+import me.valkeea.fishyaddons.hud.PetDisplay;
 import me.valkeea.fishyaddons.hud.TitleDisplay;
+import me.valkeea.fishyaddons.hud.TrackerDisplay;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.text.Text;
 
-import java.awt.Rectangle;
-
 public class HudEditScreen extends Screen {
+    private static final String OUTLINE = "Outline"; 
+    private String targetElementName;
+    private VCPopup popup = null;
     private HudElement dragging = null;
     private HudElement selectedElement = null;
-    private int dragOffsetX;
-    private int dragOffsetY;
     private FaButton outlineBtn;
+    private FaButton colorBtn;
     private FaButton bgBtn;
+    private int dragOffsetX;
+    private int dragOffsetY;    
 
     public HudEditScreen() {
         super(Text.literal("Edit HUD Elements"));
+        this.targetElementName = null;
+    }
+    
+    public HudEditScreen(String targetElementName) {
+        super(Text.literal("Edit HUD Elements"));
+        this.targetElementName = targetElementName;
     }
 
     @Override
     protected void init() {
+        // Auto-select target element if specified
+        if (targetElementName != null) {
+            for (HudElement element : ElementRegistry.getElements()) {
+                if (targetElementName.equals(element.getDisplayName())) {
+                    selectedElement = element;
+                    break;
+                }
+            }
+        }
+        
         addDrawableChild(new FaButton(
             this.width / 2 - 40, this.height - 40, 80, 20,
             Text.literal("Exit"),
@@ -36,67 +57,18 @@ public class HudEditScreen extends Screen {
             }
         ));
 
-        addDrawableChild(new FaButton(
-            this.width / 2 - 40, this.height - 60, 80, 20,
-            Text.literal("Color"),
-            btn -> {
-                HudElement element = selectedElement;
-                if (element == null) {
-                    var elements = ElementRegistry.getElements();
-                    if (elements.isEmpty()) return;
-                    element = elements.get(0);
-                }
-                if (element instanceof me.valkeea.fishyaddons.hud.TitleDisplay) {
-                    this.client.setScreen(new Screen(Text.literal("Alert Color")) {
-                        FishyPopup popup;
-                        @Override
-                        protected void init() {
-                            popup = new FishyPopup(
-                                Text.literal("Alert color is set in the alert editor!"),
-                                Text.literal("GO"), () -> this.client.setScreen(new TabbedListScreen(
-                                    client.currentScreen, TabbedListScreen.Tab.ALERT)),
-                                Text.literal("Back"), () -> this.client.setScreen(HudEditScreen.this)
-                            );
-                            popup.init(this.width, this.height);
-                        }
-                        @Override
-                        public void render(DrawContext context, int mouseX, int mouseY, float delta) {   
-                            this.renderBackground(context, mouseX, mouseY, delta);
-                            super.render(context, mouseX, mouseY, delta);
-                            popup.render(context, this.textRenderer, mouseX, mouseY, delta);
-                        }
-                        @Override
-                        public boolean mouseClicked(double mouseX, double mouseY, int button) {
-                            return popup.mouseClicked(mouseX, mouseY, button) || super.mouseClicked(mouseX, mouseY, button);
-                        }
-                    });
-                    return;
-                }
-                // Normal color picker for other HUD elements
-                final HudElement finalElement = element;
-                int color = finalElement.getHudColor();
-                float red = ((color >> 16) & 0xFF) / 255.0f;
-                float green = ((color >> 8) & 0xFF) / 255.0f;
-                float blue = (color & 0xFF) / 255.0f;
-                MinecraftClient.getInstance().setScreen(
-                    new ColorWheel(this, new float[]{red, green, blue}, rgb -> {
-                        int newColor = ((int)(rgb[0] * 255) << 16) | ((int)(rgb[1] * 255) << 8) | (int)(rgb[2] * 255);
-                        finalElement.setHudColor(newColor);
-                        finalElement.invalidateCache();
-                    })
-                );
-            }));
+        colorBtn();
 
         outlineBtn = new FaButton(
             this.width / 2 - 40, this.height - 80, 80, 20,
-            GuiUtil.onOffLabel("Outline", selectedElement != null && selectedElement.getHudOutline()),
+            GuiUtil.onOffLabel(OUTLINE, selectedElement != null && selectedElement.getHudOutline()),
             btn -> {
                 HudElement element = selectedElement;
-                if (element != null) {
+                if (element != null && !(element instanceof TrackerDisplay)) {
                     boolean outlined = element.getHudOutline();
                     element.setHudOutline(!outlined);
                     element.invalidateCache();
-                    btn.setMessage(GuiUtil.onOffLabel("Outline", !outlined));
+                    btn.setMessage(GuiUtil.onOffLabel(OUTLINE, !outlined));
                 }
             }
         );
@@ -115,11 +87,56 @@ public class HudEditScreen extends Screen {
                 }
             }
         );
-        addDrawableChild(bgBtn); 
+        addDrawableChild(bgBtn);
+    }
+
+    private void colorBtn() {
+        colorBtn =new FaButton(
+            this.width / 2 - 40, this.height - 60, 80, 20,
+            Text.literal("Color"),
+            btn -> {
+                HudElement element = selectedElement;
+                if (element == null) {
+                    var elements = ElementRegistry.getElements();
+                    if (elements.isEmpty()) return;
+                    element = elements.get(0);
+                }
+                if (element instanceof TitleDisplay) {
+                    this.popup = new VCPopup(
+                        Text.literal("Alert color is set in the alert editor!"),
+                        "Back", () -> {
+                            this.client.setScreen(HudEditScreen.this);
+                            this.popup = null;
+                        },
+                        "GO", () -> {
+                            this.client.setScreen(new TabbedListScreen(client.currentScreen, TabbedListScreen.Tab.ALERT));
+                            this.popup = null;
+                        },
+                        1.0f
+                    );
+                    this.popup.init(this.textRenderer, this.width, this.height);
+                    return;
+                }
+
+                final HudElement finalElement = element;
+                int color = finalElement.getHudColor();
+                float red = ((color >> 16) & 0xFF) / 255.0f;
+                float green = ((color >> 8) & 0xFF) / 255.0f;
+                float blue = (color & 0xFF) / 255.0f;
+                MinecraftClient.getInstance().setScreen(
+                    new ColorWheel(this, new float[]{red, green, blue}, rgb -> {
+                        int newColor = ((int)(rgb[0] * 255) << 16) | ((int)(rgb[1] * 255) << 8) | (int)(rgb[2] * 255);
+                        finalElement.setHudColor(newColor);
+                        finalElement.invalidateCache();
+                    })
+                );
+            });
+        addDrawableChild(colorBtn);
     }
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        if (popup != null && popup.mouseClicked(mouseX, mouseY, button)) return true;
         MinecraftClient mc = MinecraftClient.getInstance();
         for (HudElement element : ElementRegistry.getElements()) {
             Rectangle bounds = element.getBounds(mc);
@@ -156,6 +173,12 @@ public class HudEditScreen extends Screen {
     }
 
     @Override
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (popup != null && popup.keyPressed(keyCode, scanCode, modifiers)) return true;
+        return super.keyPressed(keyCode, scanCode, modifiers);
+    }
+
+    @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         this.renderBackground(context, mouseX, mouseY, delta);
         for (HudElement element : ElementRegistry.getElements()) {
@@ -169,19 +192,15 @@ public class HudEditScreen extends Screen {
             int size = selectedElement.getHudSize();
             float scale = size / 12.0F;
             int width = (int)(80 * scale);
-            int height = (int)(size + 4);
+            int height = size + 4;
 
             if (selectedElement instanceof TitleDisplay) {
-                // Centered box for TitleDisplay
-                int textWidth = this.textRenderer.getWidth("Alert Title");
-                int scaledTextWidth = (int) (textWidth * scale);
-                int boxWidth = Math.max(80, scaledTextWidth + 8);
-                int scaledBoxWidth = (int) (boxWidth * scale);
+                Rectangle bounds = selectedElement.getBounds(MinecraftClient.getInstance());
                 GuiUtil.drawBox(
                     context,
-                    hudX - scaledBoxWidth / 2 - 2,
-                    hudY - 2,
-                    scaledBoxWidth + 4,
+                    bounds.x - 2,
+                    bounds.y - 2,
+                    bounds.width + 4,
                     (int)(size + 4 * scale),
                     0x80000000
                 );
@@ -189,21 +208,39 @@ public class HudEditScreen extends Screen {
                 GuiUtil.drawBox(context, hudX, hudY, width, height, 0x80000000);
             }
         }
-        // Dynamically update button labels based on selected element
-        if (outlineBtn != null) {
-            outlineBtn.setMessage(GuiUtil.onOffLabel("Outline", selectedElement != null && selectedElement.getHudOutline()));
-        }
-        if (bgBtn != null) {
-            bgBtn.setMessage(GuiUtil.onOffLabel("BG", selectedElement != null && selectedElement.getHudBg()));
-        }
+
+        updateButtons();
 
         super.render(context, mouseX, mouseY, delta);
+
+        if (popup != null) {
+            popup.render(context, this.textRenderer, mouseX, mouseY, delta);
+        }
 
         String helpText = "Select an element to edit";
         int textWidth = this.textRenderer.getWidth(helpText);
         int helpX = (this.width - textWidth) / 2;
         int helpY = this.height - 120;
         context.drawText(this.textRenderer, helpText, helpX, helpY, 0xFFFFD1FF, false);         
+    }
+
+    private void updateButtons() {
+        if (outlineBtn != null && (selectedElement instanceof TrackerDisplay)) {
+            outlineBtn.setMessage(Text.literal("-").styled(s -> s.withColor(0x848484)));
+        } else if (outlineBtn != null) {
+            outlineBtn.setMessage(GuiUtil.onOffLabel(OUTLINE, selectedElement != null && selectedElement.getHudOutline()));
+        }
+
+        if (colorBtn != null && (selectedElement instanceof PetDisplay)) {
+            colorBtn.setMessage(Text.literal("-").styled(s -> s.withColor(0x848484)));
+        } else if (colorBtn != null) {
+            int color = selectedElement != null ? selectedElement.getHudColor() : 0xFFFFFF;
+            colorBtn.setMessage(Text.literal("Color").styled(s -> s.withColor(color)));
+        }
+
+        if (bgBtn != null) {
+            bgBtn.setMessage(GuiUtil.onOffLabel("BG", selectedElement != null && selectedElement.getHudBg()));
+        }
     }
 
     @Override

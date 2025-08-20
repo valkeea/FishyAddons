@@ -3,6 +3,7 @@ package me.valkeea.fishyaddons.hud;
 import java.awt.Rectangle;
 
 import me.valkeea.fishyaddons.config.FishyConfig;
+import me.valkeea.fishyaddons.gui.GuiUtil;
 import net.fabricmc.fabric.api.client.rendering.v1.HudLayerRegistrationCallback;
 import net.fabricmc.fabric.api.client.rendering.v1.IdentifiedLayer;
 import net.minecraft.client.MinecraftClient;
@@ -58,19 +59,19 @@ public class TitleDisplay implements HudElement {
         context.getMatrices().pop();
 
         if (editingMode) {
-            int boxWidth = Math.max(80, textWidth + 8);
-            int scaledBoxWidth = (int) (boxWidth * scale);
-            context.fill(
-                hudX - scaledBoxWidth / 2 - 2,
-                hudY - 2,
-                hudX + scaledBoxWidth / 2 + 2,
-                hudY + (int)(size + 4 * scale),
+            Rectangle bounds = getBounds(MinecraftClient.getInstance());
+            GuiUtil.drawBox(
+                context,
+                bounds.x - 2,
+                bounds.y - 2,
+                bounds.width + 4,
+                (int)(size + 4 * scale),
                 0x80FFFFFF
             );
             context.drawText(
                 mc.textRenderer,
                 "Alert Title",
-                hudX - scaledBoxWidth / 2,
+                hudX - bounds.width / 2,
                 hudY + 2,
                 0xFFFFFF,
                 false
@@ -87,7 +88,7 @@ public class TitleDisplay implements HudElement {
         int hudX = getHudX();
         int hudY = getHudY();
         int size = getHudSize();
-        float scale = size / 12.0F;
+        float scale = size / 20.0F;
         int textWidth = mc.textRenderer.getWidth(title == null ? "" : title);
         int boxWidth = Math.max(80, textWidth + 8);
         int scaledBoxWidth = (int) (boxWidth * scale);
@@ -127,5 +128,5 @@ public class TitleDisplay implements HudElement {
     @Override public boolean getHudBg() { return FishyConfig.getHudBg(HUD_KEY, true); }
     @Override public void setHudBg(boolean bg) { FishyConfig.setHudBg(HUD_KEY, bg); }
     @Override public void setEditingMode(boolean editing) { this.editingMode = editing; }
-    @Override public String getDisplayName() { return "Ping HUD"; }
+    @Override public String getDisplayName() { return "Title HUD"; }
 }

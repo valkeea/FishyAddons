@@ -18,7 +18,11 @@ public class HudDisplayCache {
         }
         return instance;
     }
-    
+
+    public boolean hasData() {
+        return cachedData != null;
+    }
+
     public CachedHudData getDisplayData() {
         long currentTime = System.currentTimeMillis();
         long apiTimestamp = Math.max(
@@ -60,7 +64,7 @@ public class HudDisplayCache {
         
         boolean hasRecentApiData = apiTimestamp > 0 && (currentTime - apiTimestamp) < API_STALENESS_THRESHOLD;
         String formattedValue = formatCoins(totalValue);
-        String timeString = sessionDuration > 60 ? String.format(" (%dh)", sessionDuration / 60) : String.format(" (%dmin)", sessionDuration);
+        String timeString = sessionDuration > 60 ? String.format(" (%dh %dmin)", sessionDuration / 60, sessionDuration % 60) : String.format(" (%dmin)", sessionDuration);
         String apiIndicator = calculateApiIndicator(hasRecentApiData);
         
         cachedData = new CachedHudDataBuilder()

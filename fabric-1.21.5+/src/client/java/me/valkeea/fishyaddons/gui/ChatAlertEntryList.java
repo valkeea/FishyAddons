@@ -7,8 +7,11 @@ import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.config.FishyConfig.AlertData;
 import me.valkeea.fishyaddons.handler.ChatAlert;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.font.TextRenderer;
+import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
+import net.minecraft.text.Text;
 
 public class ChatAlertEntryList extends GenericEntryList {
     public ChatAlertEntryList(MinecraftClient client, int width, int height, int y, int itemHeight, TabbedListScreen parentScreen) {
@@ -20,7 +23,7 @@ public class ChatAlertEntryList extends GenericEntryList {
         Map<String, AlertData> alerts = FishyConfig.getChatAlerts();
         Map<String, String> result = new LinkedHashMap<>();
         for (Map.Entry<String, AlertData> e : alerts.entrySet()) {
-            result.put(e.getKey(), e.getValue() != null && e.getValue().msg != null ? e.getValue().msg : "");
+            result.put(e.getKey(), e.getValue() != null && e.getValue().getMsg() != null ? e.getValue().getMsg() : "");
         }
         return result;
     }
@@ -41,7 +44,7 @@ public class ChatAlertEntryList extends GenericEntryList {
     @Override
     public void setEntry(String key, String value) {
         AlertData data = FishyConfig.getChatAlerts().getOrDefault(key, new AlertData());
-        data.msg = value;
+        data.setMsg(value);
         FishyConfig.setChatAlert(key, data);
         ChatAlert.refresh();
     }
@@ -56,6 +59,12 @@ public class ChatAlertEntryList extends GenericEntryList {
     public void toggleEntry(String key, boolean toggled) {
         FishyConfig.toggleChatAlert(key, toggled);
         ChatAlert.refresh();
+    }
+
+    @Override
+    public void getGuideText(DrawContext context, TextRenderer tr, int x, int y) {
+        context.drawTextWithShadow(tr, Text.literal("Detected String"), x - 5, y - 10, 0xFFAAAAAA);
+        context.drawTextWithShadow(tr, Text.literal("Auto Chat"), x + 110, y - 10, 0xFFAAAAAA);
     }
 
     @Override public String getAddButtonText() { return "+ Add Alert"; }

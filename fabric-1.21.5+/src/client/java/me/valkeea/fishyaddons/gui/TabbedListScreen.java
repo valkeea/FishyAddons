@@ -33,11 +33,31 @@ public class TabbedListScreen extends Screen {
         this.currentTab = tab;
     }
 
+    public static void keyTab() {
+        MinecraftClient client = MinecraftClient.getInstance();
+        client.setScreen(new TabbedListScreen(client.currentScreen, TabbedListScreen.Tab.KEYBINDS));
+    }
+
+    public static void cmdTab() {
+        MinecraftClient client = MinecraftClient.getInstance();
+        client.setScreen(new TabbedListScreen(client.currentScreen, TabbedListScreen.Tab.COMMANDS));
+    }
+
+    public static void chatTab() {
+        MinecraftClient client = MinecraftClient.getInstance();
+        client.setScreen(new TabbedListScreen(client.currentScreen, TabbedListScreen.Tab.CHAT));
+    }
+
+    public static void alertTab() {
+        MinecraftClient client = MinecraftClient.getInstance();
+        client.setScreen(new TabbedListScreen(client.currentScreen, TabbedListScreen.Tab.ALERT));
+    }
+
     @Override
     protected void init() {
         int listWidth = 700;
         int listHeight = height - 120;
-        int listY = 70;
+        int listY = 90;
 
         // Tab buttons
         addDrawableChild(new FaButton(width / 2 - 200, 40, 80, 20,
@@ -138,9 +158,9 @@ public class TabbedListScreen extends Screen {
             presetDropdown.render(context, this, mouseX, mouseY);
         }
 
-        // Only show tooltips if popup is NOT open
         if (fishyPopup == null) {
             if (currentTab == Tab.COMMANDS) {
+                commandEntryList.getGuideText(context, this.textRenderer, width - 740, 85);
                 for (var entry : commandEntryList.children()) {
                     if (entry instanceof GenericEntryList.GenericEntry ge && ge.pendingTooltip != null) {
                         GuiUtil.fishyTooltip(context, this.textRenderer, ge.tooltipLines != null ? ge.tooltipLines : List.of(Text.literal(ge.pendingTooltip)), ge.tooltipX, ge.tooltipY);
@@ -148,6 +168,7 @@ public class TabbedListScreen extends Screen {
                     }
                 }
             } else if (currentTab == Tab.KEYBINDS) {
+                keybindEntryList.getGuideText(context, this.textRenderer, width - 740, 85);                
                 for (var entry : keybindEntryList.children()) {
                     if (entry instanceof GenericEntryList.GenericEntry ge && ge.pendingTooltip != null) {
                         GuiUtil.fishyTooltip(context, this.textRenderer, ge.tooltipLines != null ? ge.tooltipLines : List.of(Text.literal(ge.pendingTooltip)), ge.tooltipX, ge.tooltipY);
@@ -155,6 +176,7 @@ public class TabbedListScreen extends Screen {
                     }
                 }
             } else if (currentTab == Tab.CHAT) {
+                chatEntryList.getGuideText(context, this.textRenderer, width - 740, 85);
                 for (var entry : chatEntryList.children()) {
                     if (entry instanceof GenericEntryList.GenericEntry ge && ge.pendingTooltip != null) {
                         GuiUtil.fishyTooltip(context, this.textRenderer, ge.tooltipLines != null ? ge.tooltipLines : List.of(Text.literal(ge.pendingTooltip)), ge.tooltipX, ge.tooltipY);
@@ -162,6 +184,7 @@ public class TabbedListScreen extends Screen {
                     }
                 }
             } else if (currentTab == Tab.ALERT) {
+                alertEntryList.getGuideText(context, this.textRenderer, width - 740, 85);
                 for (var entry : alertEntryList.children()) {
                     if (entry instanceof GenericEntryList.GenericEntry ge && ge.pendingTooltip != null) {
                         GuiUtil.fishyTooltip(context, this.textRenderer, ge.tooltipLines != null ? ge.tooltipLines : List.of(Text.literal(ge.pendingTooltip)), ge.tooltipX, ge.tooltipY);

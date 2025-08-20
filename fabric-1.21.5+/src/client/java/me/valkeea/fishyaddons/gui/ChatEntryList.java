@@ -4,8 +4,11 @@ import java.util.Map;
 
 import me.valkeea.fishyaddons.config.FishyConfig;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.font.TextRenderer;
+import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
+import net.minecraft.text.Text;
 
 public class ChatEntryList extends GenericEntryList {
     public ChatEntryList(MinecraftClient client, int width, int height, int y, int itemHeight, TabbedListScreen parentScreen) {
@@ -36,6 +39,12 @@ public class ChatEntryList extends GenericEntryList {
     public void toggleEntry(String key, boolean toggled) {
         FishyConfig.toggleChatReplacement(key, toggled);
     }
+
+    @Override
+    public void getGuideText(DrawContext context, TextRenderer tr, int x, int y) {
+        context.drawTextWithShadow(tr, Text.literal("Detected String"), x - 5, y - 10, 0xFFAAAAAA);
+        context.drawTextWithShadow(tr, Text.literal("Replaced in chat with:"), x + 110, y - 10, 0xFFAAAAAA);
+    }     
 
     public GenericEntryList.GenericEntry getHoveredChatEntry() {
         return (GenericEntryList.GenericEntry) this.getHoveredEntry();

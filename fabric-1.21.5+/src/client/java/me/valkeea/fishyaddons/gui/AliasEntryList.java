@@ -4,8 +4,11 @@ import java.util.Map;
 
 import me.valkeea.fishyaddons.config.FishyConfig;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.font.TextRenderer;
+import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
+import net.minecraft.text.Text;
 
 public class AliasEntryList extends GenericEntryList {
     public AliasEntryList(MinecraftClient client, int width, int height, int y, int itemHeight, TabbedListScreen parentScreen) {
@@ -35,6 +38,12 @@ public class AliasEntryList extends GenericEntryList {
     @Override
     public void toggleEntry(String key, boolean toggled) {
         FishyConfig.toggleCommand(key, toggled);
+    }
+
+    @Override
+    public void getGuideText(DrawContext context, TextRenderer tr, int x, int y) {
+        context.drawTextWithShadow(tr, Text.literal("Alias"), x - 5, y - 10, 0xFFAAAAAA);
+        context.drawTextWithShadow(tr, Text.literal("Executed Command"), x + 110, y - 10, 0xFFAAAAAA);
     }
 
     @Override

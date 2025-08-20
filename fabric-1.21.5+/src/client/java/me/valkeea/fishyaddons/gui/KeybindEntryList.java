@@ -6,6 +6,8 @@ import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.handler.KeyShortcut;
 import me.valkeea.fishyaddons.util.KeyUtil;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.font.TextRenderer;
+import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.util.InputUtil;
@@ -44,6 +46,12 @@ public class KeybindEntryList extends GenericEntryList {
     @Override
     public void toggleEntry(String key, boolean toggled) {
         FishyConfig.toggleKeybind(key, toggled);
+    }
+
+    @Override
+    public void getGuideText(DrawContext context, TextRenderer tr, int x, int y) {
+        context.drawTextWithShadow(tr, Text.literal("Keybind"), x - 5, y - 10, 0xFFAAAAAA);
+        context.drawTextWithShadow(tr, Text.literal("Executed Command"), x + 110, y - 10, 0xFFAAAAAA);
     }
 
     @Override

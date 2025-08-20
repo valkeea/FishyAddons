@@ -4,8 +4,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import me.valkeea.fishyaddons.gui.FaButton;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.EntryListWidget;
@@ -34,6 +34,7 @@ public abstract class GenericEntryList extends EntryListWidget<GenericEntryList.
     public abstract void removeEntry(String key);
     public abstract void toggleEntry(String key, boolean toggled);
 
+    public abstract void getGuideText(DrawContext context, TextRenderer tr, int x, int y);    
     public abstract String getAddButtonText();
     public abstract String getSaveButtonText();
     public abstract String getDeleteButtonText();

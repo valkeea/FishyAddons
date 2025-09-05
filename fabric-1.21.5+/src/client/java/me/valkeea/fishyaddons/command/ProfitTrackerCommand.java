@@ -4,8 +4,10 @@ import java.util.Map;
 
 import me.valkeea.fishyaddons.api.HypixelPriceClient;
 import me.valkeea.fishyaddons.config.FishyConfig;
+import me.valkeea.fishyaddons.config.TrackerProfiles;
 import me.valkeea.fishyaddons.tracker.ItemTrackerData;
 import me.valkeea.fishyaddons.util.FishyNotis;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.text.Text;
 
 public class ProfitTrackerCommand {
@@ -14,7 +16,7 @@ public class ProfitTrackerCommand {
 
     public static boolean handle(String[] args) {
         if (args.length == 0) {
-            showUsage();
+            FishyNotis.fp();
             return false;
         }
 
@@ -23,10 +25,6 @@ public class ProfitTrackerCommand {
         switch (subcommand) {
             case "toggle":
                 return handleToggle();
-            case "on":
-                return handleOn();
-            case "off":
-                return handleOff();
             case "clear":
                 return handleClear();
             case "stats":
@@ -43,8 +41,12 @@ public class ProfitTrackerCommand {
                 return handlePriceType(args);
             case "profile":
                 return handleProfile(args);
+            case "ignored":
+                return handleIgnored();
+            case "restore":
+                return handleRestore(args);
             default:
-                showUsage();
+                FishyNotis.fp();
                 return false;
         }
     }
@@ -53,24 +55,24 @@ public class ProfitTrackerCommand {
         boolean newState = !FishyConfig.getState(KEY, false);
         FishyConfig.enable(KEY, newState);
         String status = newState ? "§aenabled" : "§cdisabled";
+        String msgStart = "§3Profit Tracker " + status;        
         me.valkeea.fishyaddons.tracker.TrackerUtils.refresh();
         
-        // When enabling, check for existing JSON file and load it
-        if (newState && ItemTrackerData.hasJsonFile()) {
-            if (ItemTrackerData.loadFromJson()) {
-                FishyNotis.send(Text.literal("§3Profit Tracker " + status + " §7(loaded from file)"));
+        if (newState && TrackerProfiles.hasJsonFile()) {
+            if (TrackerProfiles.loadFromJson()) {
+                FishyNotis.send(Text.literal(msgStart + " §7(loaded from file)"));
             } else {
-                FishyNotis.send(Text.literal("§3Profit Tracker " + status));
+                FishyNotis.send(Text.literal(msgStart));
             }
         } else {
-            FishyNotis.send(Text.literal("§3Profit Tracker " + status));
+            FishyNotis.send(Text.literal(msgStart));
         }
         return true;
     }
 
     private static boolean handlePriceType(String[] args) {
         if (args.length < 2) {
-            FishyNotis.alert(Text.literal("§cUsage: /fa profit type [insta_sell|sell_offer]"));
+            FishyNotis.themed("Usage: /fp type §3<insta_sell | sell_offer>");
             return false;
         }
 
@@ -85,50 +87,21 @@ public class ProfitTrackerCommand {
                 newType = "buyPrice";
                 break;
             default:
-                FishyNotis.alert(Text.literal("§cInvalid type! Use 'insta_sell' or 'sell_offer'."));
+                FishyNotis.warn("Invalid type! Use 'insta_sell' or 'sell_offer'.");
                 return false;
         }
 
-        me.valkeea.fishyaddons.api.HypixelPriceClient.setPriceType(newType);
-        me.valkeea.fishyaddons.config.FishyConfig.setString(me.valkeea.fishyaddons.config.Key.PRICE_TYPE, newType);
-        
-        // Clear cached values in ItemTrackerData to force re-calculation with new price type
+        HypixelPriceClient.setPriceType(newType);
+        FishyConfig.setString(me.valkeea.fishyaddons.config.Key.PRICE_TYPE, newType);
         ItemTrackerData.clearValueCache();
-        
-        // Refresh prices to populate cache with new price type
-        me.valkeea.fishyaddons.tracker.ItemTrackerData.refreshPrices();
+        ItemTrackerData.refreshPrices();
         FishyNotis.alert(Text.literal(String.format("§bPrice type set to §3%s", newType)));
-        return true;
-    }
-
-    private static boolean handleOn() {
-        FishyConfig.enable(KEY, false);
-        me.valkeea.fishyaddons.tracker.TrackerUtils.refresh();
-        handleInit(); // Ensure APIs are initialized
-        
-        if (ItemTrackerData.hasJsonFile()) {
-            if (ItemTrackerData.loadFromJson()) {
-                FishyNotis.send(Text.literal("§3Profit Tracker §aenabled §7(loaded from file)"));
-            } else {
-                FishyNotis.send(Text.literal("§3Profit Tracker §aenabled"));
-            }
-        } else {
-            FishyNotis.send(Text.literal("§3Profit Tracker §aenabled"));
-            FishyNotis.alert(Text.literal("§7Started background price updates..."));            
-        }
-        return true;
-    }
-    
-    private static boolean handleOff() {
-        FishyConfig.disable(KEY);
-        me.valkeea.fishyaddons.tracker.TrackerUtils.refresh();
-        FishyNotis.send(Text.literal("§3Profit Tracker §cdisabled"));
         return true;
     }
     
     private static boolean handleClear() {
         ItemTrackerData.clearAll();
-        FishyNotis.send(Text.literal("§3Profit Tracker data cleared"));
+        FishyNotis.send("Profit Tracker data cleared");
         return true;
     }
     
@@ -136,16 +109,23 @@ public class ProfitTrackerCommand {
         Map<String, Integer> items = ItemTrackerData.getAllItems();
         
         if (items.isEmpty()) {
-            FishyNotis.alert(Text.literal("§7No items tracked this session. Use /fp on to enable tracking, /fp to see available commands."));
+            FishyNotis.alert(Text.literal("§7No items tracked this session. Use §3/fp toggle §7to enable, §3/fp §7to see available commands."));
             return false;
         }
         
-        long sessionTime = ItemTrackerData.getSessionDurationMinutes();
+        long sessionTime = ItemTrackerData.getTotalDurationMinutes();
         int totalItems = ItemTrackerData.getTotalItemCount();
         double totalValue = ItemTrackerData.getTotalSessionValue();
+
+        FishyNotis.themed("α Profit Tracker Stats α");
+
+        String sessionTimeDisplay = String.format("§7Playtime: §3%d h", sessionTime / 60);
+        if (ItemTrackerData.isCurrentlyPaused()) {
+            long inactiveMinutes = ItemTrackerData.getInactiveMinutes();
+            sessionTimeDisplay += String.format(" §8(paused for %d min)", inactiveMinutes);
+        }
+        FishyNotis.alert(Text.literal(sessionTimeDisplay));
         
-        FishyNotis.alert(Text.literal("§b  α Profit Tracker Stats α  "));
-        FishyNotis.alert(Text.literal(String.format("§7Session: §3%d minutes", sessionTime)));
         FishyNotis.alert(Text.literal(String.format("§7Total items: §3%d", totalItems)));
         
         if (totalValue > 0) {
@@ -191,28 +171,32 @@ public class ProfitTrackerCommand {
     }
     
     private static boolean handleInit() {
+        initTracking();
+        FishyNotis.notice("Initialized price client");
+        return true;
+    }
+
+    private static void initTracking() {
         ItemTrackerData.init();
         HypixelPriceClient priceClient = ItemTrackerData.getPriceClient();
         if (priceClient != null) {
             priceClient.clearAuctionCache();
         }
         
-        ItemTrackerData.updateAllAsync();
-        FishyNotis.send(Text.literal("§3Initialized price client"));
-        return true;
+        ItemTrackerData.updateAllAsync();        
     }
-    
+
     private static boolean handleRefresh() {
         ItemTrackerData.refreshPrices();
-        FishyNotis.alert(Text.literal("§bRefreshing prices..."));
+        FishyNotis.notice("§b§oRefreshing prices...");
         return true;
     }
     
     private static boolean handleStatus() {
         long lastBazaar = ItemTrackerData.getLastBazaarUpdateTime();
         long lastAuction = ItemTrackerData.getLastAuctionUpdateTime();
-        
-        FishyNotis.alert(Text.literal("§b  α API Status α  "));
+
+        FishyNotis.themed("  α API Status α  ");
         FishyNotis.alert(Text.literal("§7Price type: §3" + me.valkeea.fishyaddons.api.HypixelPriceClient.getType()));
         
         if (lastBazaar > 0) {
@@ -226,7 +210,7 @@ public class ProfitTrackerCommand {
             long minutes = (System.currentTimeMillis() - lastAuction) / 60000;
             FishyNotis.alert(Text.literal(String.format("§7Auctions: §a✓ §7(%d min ago)", minutes)));
         } else {
-            FishyNotis.alert(Text.literal("§7Auctions: §c✗"));
+            FishyNotis.alert(Text.literal("§7Auctions: §c✗ §7(on-demand)"));
         }
         
         return true;
@@ -234,86 +218,148 @@ public class ProfitTrackerCommand {
     
     private static boolean handleProfile(String[] args) {
         if (args.length < 2) {
-            // Show current profile and available profiles
-            String currentProfile = ItemTrackerData.getCurrentProfile();
-            java.util.List<String> availableProfiles = ItemTrackerData.getAvailableProfiles();
-            
-            FishyNotis.send(Text.literal("§bCurrent Profile: §3" + currentProfile));
-            FishyNotis.alert(Text.literal("§7Available Profiles:"));
-            for (String profile : availableProfiles) {
-                String marker = profile.equals(currentProfile) ? "§a▶ " : "§7- ";
-                FishyNotis.alert(Text.literal(marker + "§f" + profile));
-            }
-            FishyNotis.alert(Text.literal("§7Usage: /fa profit profile <name> - Switch to or create profile"));
-            FishyNotis.alert(Text.literal("§7Usage: /fa profit profile delete <name> - Delete profile"));
+            sendProfileClickable();
             return true;
         }
 
         String action = args[1].toLowerCase();
-        
+
         if ("delete".equals(action)) {
-            if (args.length < 3) {
-                FishyNotis.alert(Text.literal("§cUsage: /fa profit profile delete <name>"));
-                return false;
-            }
-            
-            String profileToDelete = args[2];
-            if ("default".equals(profileToDelete)) {
-                FishyNotis.alert(Text.literal("§cCannot delete the default profile!"));
-                return false;
-            }
-            
-            if (ItemTrackerData.deleteProfile(profileToDelete)) {
-                FishyNotis.send(Text.literal("§cDeleted profile: " + profileToDelete));
-                // If current profile was deleted, switch to default
-                if (profileToDelete.equals(ItemTrackerData.getCurrentProfile())) {
-                    ItemTrackerData.setCurrentProfile("default");
-                    FishyNotis.send(Text.literal("§3Switched to default profile"));
-                }
-            } else {
-                FishyNotis.alert(Text.literal("§cProfile '" + profileToDelete + "' not found or cannot be deleted"));
-            }
-            return true;
+            return profileDelete(args);
         }
-        
-        String profileName = args[1];
-        String currentProfile = ItemTrackerData.getCurrentProfile();
+
+        if ("rename".equals(action)) {
+            return profileRename(args);
+        }
+
+        return profileSwitchOrCreate(args[1]);
+    }
+
+    private static boolean profileDelete(String[] args) {
+        if (args.length < 3) {
+            FishyNotis.themed("Usage: §3/fp profile delete <name>");
+            return false;
+        }
+
+        String profileToDelete = args[2];
+        if ("default".equals(profileToDelete)) {
+            FishyNotis.warn("Cannot delete the default profile!");
+            FishyNotis.alert(Text.literal("§7Use §3/fp clear §7if you wish to reset the session."));            
+            return false;
+        }
+
+        if (TrackerProfiles.deleteProfile(profileToDelete)) {
+            me.valkeea.fishyaddons.tracker.TrackerUtils.onDelete(profileToDelete);
+        } else {
+            FishyNotis.alert(Text.literal("§cProfile '" + profileToDelete + "' not found or cannot be deleted"));
+        }
+        return true;
+    }
+
+    private static boolean profileRename(String[] args) {
+        if (args.length < 4) {
+            FishyNotis.themed("Usage: §3/fp profile rename <old_name> <new_name>");
+            return false;
+        }
+
+        String oldName = args[2];
+        String newName = args[3];
+
+        if (TrackerProfiles.renameProfile(oldName, newName)) {
+            TrackerProfiles.setCurrentProfile(newName);
+            FishyNotis.send(Text.literal("§aRenamed profile §b" + oldName + " §ato §b" + newName));
+        } else {
+            FishyNotis.alert(Text.literal("§cInvalid profile name or profile not found"));
+        }
+
+        return true;
+    }
+
+    private static boolean profileSwitchOrCreate(String profileName) {
+        if (!FishyConfig.getState(KEY, false)) {
+            FishyConfig.enable(KEY, true);
+            initTracking();
+        }
+
+        String currentProfile = TrackerProfiles.getCurrentProfile();
 
         if (!"default".equals(currentProfile)) {
-            ItemTrackerData.saveToJson();
+            TrackerProfiles.saveToJson();
         }
 
         if (profileName.equals(currentProfile)) {
             FishyNotis.send(Text.literal("§7Already using profile: §3" + profileName));
             return true;
         }
-        
-        // Check if profile exists
-        java.util.List<String> availableProfiles = ItemTrackerData.getAvailableProfiles();
-        if (availableProfiles.contains(profileName)) {
-            ItemTrackerData.setCurrentProfile(profileName);
-            FishyNotis.send(Text.literal("§3Switched to profile: §b" + profileName));
+
+        java.util.List<String> availableProfiles = TrackerProfiles.getAvailableProfiles();
+        if (availableProfiles.contains(profileName.toLowerCase())) {
+            TrackerProfiles.setCurrentProfile(profileName);
+            FishyNotis.send(Text.literal("§dSwitched to profile: §3" + profileName));
         } else {
-            // Create new profile
-            if (ItemTrackerData.createProfile(profileName)) {
-                FishyNotis.send(Text.literal("§aCreated and switched to new profile: §b" + profileName));
+            if (TrackerProfiles.createProfile(profileName)) {
+                FishyNotis.send(Text.literal("§aCreated and switched to new profile: §3" + profileName));
             } else {
                 FishyNotis.alert(Text.literal("§cFailed to create profile: " + profileName));
+                return false;
             }
         }
-        
+
         return true;
     }
-    
+
+    public static void sendProfileClickable() {
+        MinecraftClient mc = MinecraftClient.getInstance();
+        if (mc.player == null) return;
+
+        String currentProfile = TrackerProfiles.getCurrentProfile();
+        java.util.List<String> availableProfiles = TrackerProfiles.getAvailableProfiles();
+
+        FishyNotis.alert(Text.literal("§b§lCurrent Profile: §3" + currentProfile));
+            FishyNotis.alert(Text.literal("§3Click chat to switch to an existing profile:"));
+            for (String profile : availableProfiles) {
+                String marker = profile.equals(currentProfile) ? "§a▶ " : "§8  ";
+                Text clickableProfile = Text.literal(marker + "§7"  + profile)
+                        .styled(style -> style.withClickEvent(new net.minecraft.text.ClickEvent.RunCommand("/fp profile " + profile)));
+                FishyNotis.alert(clickableProfile);
+            }
+            FishyNotis.alert(Text.literal("§3  /fp profile <name> §8- §bSwitch to or create profile"));
+            FishyNotis.alert(Text.literal("§3  /fp profile delete <name> §8- §bDelete profile"));
+    }    
+
     private static boolean handlePrice(String[] args) {
         if (args.length < 2) {
-            FishyNotis.alert(Text.literal("§cUsage: /fa profit price [amount] <item>"));
+            FishyNotis.alert(Text.literal("§cUsage: /fp price [amount] <item>"));
             return false;
         }
 
-        String fullArgument = args[1];
-        String[] splitArgs = fullArgument.split(" ");
+        PriceQuery priceQuery = parsePriceArgs(args[1]);
+        if (!priceQuery.isValid) {
+            return false;
+        }
 
+        displayPriceQueryHeader(priceQuery);
+
+        FishyNotis.alert(Text.literal("§7§oSearching..."));
+        ItemTrackerData.getItemValueAsync(priceQuery.itemName, (value, source) -> handlePriceAsyncCallback(value, source, priceQuery.amount));
+
+        return true;
+    }
+
+    private static class PriceQuery {
+        final int amount;
+        final String itemName;
+        final boolean isValid;
+
+        PriceQuery(int amount, String itemName, boolean isValid) {
+            this.amount = amount;
+            this.itemName = itemName;
+            this.isValid = isValid;
+        }
+    }
+
+    private static PriceQuery parsePriceArgs(String arg) {
+        String[] splitArgs = arg.split(" ");
         int amount = 1;
         int itemStartIndex = 0;
 
@@ -322,13 +368,13 @@ public class ProfitTrackerCommand {
                 amount = Integer.parseInt(splitArgs[0]);
                 if (amount <= 0) {
                     FishyNotis.send(Text.literal("§cAmount must be a positive number"));
-                    return false;
+                    return new PriceQuery(1, "", false);
                 }
                 itemStartIndex = 1;
 
                 if (splitArgs.length < 2) {
-                    FishyNotis.send(Text.literal("§cUsage: /fa profit price [amount] <item>"));
-                    return false;
+                    FishyNotis.send(Text.literal("§cUsage: /fp price [amount] <item>"));
+                    return new PriceQuery(1, "", false);
                 }
             } catch (NumberFormatException e) {
                 amount = 1;
@@ -342,30 +388,29 @@ public class ProfitTrackerCommand {
             itemName.append(splitArgs[i]);
         }
 
-        String item = itemName.toString();
-        final int finalAmount = amount;
+        return new PriceQuery(amount, itemName.toString(), true);
+    }
 
-        if (amount > 1) {
-            FishyNotis.alert(Text.literal(String.format("§bPrice for §3%dx %s", amount, item)));
+    private static void displayPriceQueryHeader(PriceQuery priceQuery) {
+        if (priceQuery.amount > 1) {
+            FishyNotis.alert(Text.literal(String.format("§bPrice for §3%dx %s", priceQuery.amount, priceQuery.itemName)));
         } else {
-            FishyNotis.alert(Text.literal(String.format("§bPrice for §3%s", item)));
+            FishyNotis.alert(Text.literal(String.format("§bPrice for §3%s", priceQuery.itemName)));
         }
-        FishyNotis.alert(Text.literal("§7Searching..."));
-        ItemTrackerData.getItemValueAsync(item, (value, source) -> {
-            if (value > 0) {
-                double totalValue = value * finalAmount;
-                if (finalAmount > 1) {
-                    FishyNotis.alert(Text.literal(String.format("§7[%s] §e%s §7each", source, formatCoins(value))));
-                    FishyNotis.alert(Text.literal(String.format("§7Total: §e%s", formatCoins(totalValue))));
-                } else {
-                    FishyNotis.alert(Text.literal(String.format("§7[%s] §e%s", source, formatCoins(value))));
-                }
-            } else {
-                FishyNotis.alert(Text.literal("§cNo price data found"));
-            }
-        });
+    }
 
-        return true;
+    private static void handlePriceAsyncCallback(double value, String source, int amount) {
+        if (value > 0) {
+            double totalValue = value * amount;
+            if (amount > 1) {
+                FishyNotis.alert(Text.literal(String.format("§7[%s] §e%s §7each", source, formatCoins(value))));
+                FishyNotis.alert(Text.literal(String.format("§7Total: §e%s", formatCoins(totalValue))));
+            } else {
+                FishyNotis.alert(Text.literal(String.format("§7[%s] §e%s", source, formatCoins(value))));
+            }
+        } else {
+            FishyNotis.alert(Text.literal("§cNo price data found"));
+        }
     }
     
     private static String formatCoins(double coins) {
@@ -378,19 +423,67 @@ public class ProfitTrackerCommand {
         }
     }
     
-    protected static void showUsage() {
-        FishyNotis.alert(Text.literal("§b  α Profit Tracker Commands α  "));
-        FishyNotis.alert(Text.literal("§3/fa profit = /fp"));
-        FishyNotis.alert(Text.literal("§3/fp on/off/toggle §7- Enable/disable"));        
-        FishyNotis.alert(Text.literal("§3/fp clear §7- Clear current data"));
-        FishyNotis.alert(Text.literal("§3/fp refresh §7- Refresh cached prices"));        
-        FishyNotis.alert(Text.literal("§3/fp stats §7- Show session stats"));
-        FishyNotis.alert(Text.literal("§3/fp init §7- Manually initialize APIs"));
-        FishyNotis.alert(Text.literal("§3/fp status §7- Check API status"));
-        FishyNotis.alert(Text.literal("§3/fp price [amount] <item> §7- Check and update price"));
-        FishyNotis.alert(Text.literal("§3/fp profile [name] §7- Create or switch to a profile"));
-        FishyNotis.send(Text.literal("§bYou can also switch profiles using HUD buttons!"));
-        FishyNotis.alert(Text.literal("§b       Profile data will save automatically on swap/disconnect."));
+    private static boolean handleIgnored() {
+        me.valkeea.fishyaddons.hud.TrackerDisplay trackerInstance = me.valkeea.fishyaddons.hud.TrackerDisplay.getInstance();
+        if (trackerInstance == null) {
+            FishyNotis.alert(Text.literal("§cTracker display not initialized"));
+            return false;
+        }
+        
+        java.util.Set<String> excludedItems = trackerInstance.getExcludedItemsForDisplay();
+        
+        if (excludedItems.isEmpty()) {
+            FishyNotis.alert(Text.literal("§7No items are currently ignored"));
+            return true;
+        }
+        
+        FishyNotis.send(Text.literal("§b§lIgnored Items:"));
+        
+        for (String itemName : excludedItems) {
+            String displayName = capitalizeItemName(itemName);
+            Text clickableItem = Text.literal("§8      - §f" + displayName + " §a[⟳]")
+                    .styled(style -> style.withClickEvent(new net.minecraft.text.ClickEvent.RunCommand("/fp restore \"" + itemName + "\"")));
+            FishyNotis.alert(clickableItem);
+        }
+
+        Text restoreAllText = Text.literal("§         [Restore All Items]").formatted(net.minecraft.util.Formatting.LIGHT_PURPLE)
+                .styled(style -> style.withClickEvent(new net.minecraft.text.ClickEvent.RunCommand("/fp restore all")));
+        FishyNotis.alert(restoreAllText);
+        
+        return true;
+    }
+    
+    private static boolean handleRestore(String[] args) {
+        me.valkeea.fishyaddons.hud.TrackerDisplay trackerInstance = me.valkeea.fishyaddons.hud.TrackerDisplay.getInstance();
+        if (trackerInstance == null) {
+            FishyNotis.alert(Text.literal("§cTracker display not initialized"));
+            return false;
+        }
+        
+        if (args.length < 2) {
+            FishyNotis.alert(Text.literal("§cUsage: /fp restore <item_name> or /fp restore all"));
+            return false;
+        }
+        
+        String restoreTarget = args[1];
+        
+        if ("all".equals(restoreTarget)) {
+            trackerInstance.restoreAllExcludedItems();
+            return true;
+        }
+        
+        if (restoreTarget.startsWith("\"") && restoreTarget.endsWith("\"")) {
+            restoreTarget = restoreTarget.substring(1, restoreTarget.length() - 1);
+        }
+        
+        if (!trackerInstance.getExcludedItemsForDisplay().contains(restoreTarget)) {
+            String displayName = capitalizeItemName(restoreTarget);
+            FishyNotis.alert(Text.literal("§c" + displayName + " is not in the ignored list"));
+            return false;
+        }
+        
+        trackerInstance.restoreExcludedItem(restoreTarget);
+        return true;
     }
     
     private static String capitalizeItemName(String itemName) {

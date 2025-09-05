@@ -7,6 +7,8 @@ import me.valkeea.fishyaddons.config.ItemConfig;
 import me.valkeea.fishyaddons.config.Key;
 import me.valkeea.fishyaddons.gui.AliasAddScreen;
 import me.valkeea.fishyaddons.gui.ChatAddScreen;
+import me.valkeea.fishyaddons.gui.FishyAddonsScreen;
+import me.valkeea.fishyaddons.gui.GUIChatAlert;
 import me.valkeea.fishyaddons.gui.HudEditScreen;
 import me.valkeea.fishyaddons.gui.QolScreen;
 import me.valkeea.fishyaddons.gui.SbScreen;
@@ -27,40 +29,39 @@ import net.minecraft.registry.RegistryWrapper;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 
-
 public class FishyCmd {
-    private FishyCmd() {}
+    private static final String PROFILE = "profile";
 
-        protected static LiteralArgumentBuilder<FabricClientCommandSource> registerCmd() {
-            return ClientCommandManager.literal("cmd")
-                    .then(ClientCommandManager.literal("add")
-                        .executes(context -> {
-                            if (checkGUI() == 1) return 1;
-                            MinecraftClient.getInstance().execute(() ->
-                                GuiScheduler.scheduleGui(new AliasAddScreen(MinecraftClient.getInstance().currentScreen))
-                            );
-                            return 1;
-                        }))
-                    .then(ClientCommandManager.literal("on")
-                        .executes(context -> {
-                            FishyConfig.getCommandAliases().keySet().forEach(alias -> FishyConfig.toggleCommand(alias, true));
-                            FishyNotis.send("Command aliases " + Formatting.GREEN + "ON.");
-                            return 1;
-                        }))
-                    .then(ClientCommandManager.literal("off")
-                        .executes(context -> {
-                            FishyConfig.getCommandAliases().keySet().forEach(alias -> FishyConfig.toggleCommand(alias, false));
-                            FishyNotis.send("Command aliases " + Formatting.RED + "OFF.");
-                            return 1;
-                        }))
+    protected static LiteralArgumentBuilder<FabricClientCommandSource> registerCmd() {
+        return ClientCommandManager.literal("cmd")
+                .then(ClientCommandManager.literal("add")
                     .executes(context -> {
                         if (checkGUI() == 1) return 1;
                         MinecraftClient.getInstance().execute(() ->
-                            GuiScheduler.scheduleGui(new TabbedListScreen(MinecraftClient.getInstance().currentScreen, TabbedListScreen.Tab.COMMANDS))
+                            GuiScheduler.scheduleGui(new AliasAddScreen(MinecraftClient.getInstance().currentScreen))
                         );
                         return 1;
-                    });     
-        }    
+                    }))
+                .then(ClientCommandManager.literal("on")
+                    .executes(context -> {
+                        FishyConfig.enable(Key.ALIASES_ENABLED, true);
+                        FishyNotis.on("Custom commands");
+                        return 1;
+                    }))
+                .then(ClientCommandManager.literal("off")
+                    .executes(context -> {
+                        FishyConfig.disable(Key.ALIASES_ENABLED);
+                        FishyNotis.off("Custom commands");
+                        return 1;
+                    }))
+            .executes(context -> {
+                if (checkGUI() == 1) return 1;
+                MinecraftClient.getInstance().execute(() ->
+                    GuiScheduler.scheduleGui(new TabbedListScreen(MinecraftClient.getInstance().currentScreen, TabbedListScreen.Tab.COMMANDS))
+                );
+                return 1;
+            });     
+    }    
 
         protected static LiteralArgumentBuilder<FabricClientCommandSource> registerChat() {
             return ClientCommandManager.literal("chat")
@@ -74,14 +75,14 @@ public class FishyCmd {
                         }))
                     .then(ClientCommandManager.literal("on")
                         .executes(context -> {
-                            FishyConfig.getChatReplacements().keySet().forEach(key -> FishyConfig.toggleChatReplacement(key, true));
-                            FishyNotis.send("Chat replacements " + Formatting.GREEN + "ON.");
+                            FishyConfig.enable(Key.CHAT_REPLACEMENTS_ENABLED, true);
+                            FishyNotis.on("Chat replacements");
                             return 1;
                         }))
                     .then(ClientCommandManager.literal("off")
                         .executes(context -> {
-                            FishyConfig.getChatReplacements().keySet().forEach(key -> FishyConfig.toggleChatReplacement(key, false));
-                            FishyNotis.send("Chat replacements " + Formatting.RED + "OFF.");
+                            FishyConfig.disable(Key.CHAT_REPLACEMENTS_ENABLED);
+                            FishyNotis.off("Chat replacements");
                             return 1;
                         }))
                     .executes(context -> {
@@ -97,14 +98,14 @@ public class FishyCmd {
             return ClientCommandManager.literal("key")
                     .then(ClientCommandManager.literal("on")
                         .executes(context -> {
-                            FishyConfig.getKeybinds().keySet().forEach(key -> FishyConfig.toggleKeybind(key, true));
-                            FishyNotis.send("Keybinds " + Formatting.GREEN + "ON.");
+                            FishyConfig.enable(Key.KEY_SHORTCUTS_ENABLED, true);
+                            FishyNotis.on("Keybinds");
                             return 1;
                         }))
                     .then(ClientCommandManager.literal("off")
                         .executes(context -> {
-                            FishyConfig.getKeybinds().keySet().forEach(key -> FishyConfig.toggleKeybind(key, false));
-                            FishyNotis.send("Keybinds " + Formatting.RED + "OFF.");
+                            FishyConfig.disable(Key.KEY_SHORTCUTS_ENABLED);
+                            FishyNotis.off("Keybinds");
                             return 1;
                         }))
                     .executes(context -> {
@@ -120,20 +121,20 @@ public class FishyCmd {
             return ClientCommandManager.literal("alert")
                     .then(ClientCommandManager.literal("on")
                         .executes(context -> {
-                            FishyConfig.getChatAlerts().keySet().forEach(key -> FishyConfig.toggleChatAlert(key, true));
-                            FishyNotis.send("Chat alerts " + Formatting.GREEN + "ON.");
+                            FishyConfig.enable(Key.CHAT_ALERTS_ENABLED, true);
+                            FishyNotis.on("Chat alerts");
                             return 1;
                         }))
                     .then(ClientCommandManager.literal("off")
                         .executes(context -> {
-                            FishyConfig.getChatAlerts().keySet().forEach(key -> FishyConfig.toggleChatAlert(key, false));
-                            FishyNotis.send("Chat alerts " + Formatting.RED + "OFF.");
+                            FishyConfig.disable(Key.CHAT_ALERTS_ENABLED);
+                            FishyNotis.off("Chat alerts");
                             return 1;
                         }))
                     .executes(context -> {
                         if (checkGUI() == 1) return 1;
                         MinecraftClient.getInstance().execute(() ->
-                            GuiScheduler.scheduleGui(new TabbedListScreen(MinecraftClient.getInstance().currentScreen, TabbedListScreen.Tab.ALERT))
+                            GuiScheduler.scheduleGui(new GUIChatAlert(null))
                         );
                         return 1;
                     });
@@ -156,7 +157,7 @@ public class FishyCmd {
                 });
         }
         
-        public static void addGuardSubcommands(LiteralArgumentBuilder<FabricClientCommandSource> root, String rootNameForMessages) {
+        public static void addGuardSubcommands(LiteralArgumentBuilder<FabricClientCommandSource> root) {
             root.then(ClientCommandManager.literal("add")
                     .executes(context -> {
                         MinecraftClient mc = MinecraftClient.getInstance();
@@ -164,21 +165,21 @@ public class FishyCmd {
 
                         ItemStack held = mc.player.getMainHandStack();
                         if (held == null || held.isEmpty()) {
-                            FishyNotis.send(Text.literal("You must be holding an item.").formatted(Formatting.GRAY));
+                            FishyNotis.notice("You must be holding an item to use this command.");
                             return 1;
                         }
 
                         RegistryWrapper.WrapperLookup registries = mc.world.getRegistryManager();
                         String uuid = ItemHandler.extractUUID(held, registries);
                         if (uuid == null || uuid.isEmpty()) {
-                            FishyNotis.send(Text.literal("Held item doesn't have a UUID.").formatted(Formatting.GRAY));
+                            FishyNotis.warn("Held item doesn't have a UUID.");
                             return 1;
                         }
                         String displayNameJson = TextFormatUtil.serialize(held.getName());
                         ItemConfig.addUUID(uuid, held.getName());
 
                         Text displayNameText = TextFormatUtil.deserialize(displayNameJson);
-                        FishyNotis.send(Text.literal("Your ").formatted(Formatting.GRAY)
+                        FishyNotis.format(Text.literal("Your ").formatted(Formatting.GRAY)
                             .append(displayNameText)
                             .append(Text.literal(" is now protected.").formatted(Formatting.GRAY)));
 
@@ -190,18 +191,18 @@ public class FishyCmd {
                         if (mc.player == null) return 1;
                         ItemStack held = mc.player.getMainHandStack();
                         if (held == null || held.isEmpty()) {
-                            FishyNotis.send(Text.literal("You must be holding an item.").formatted(Formatting.GRAY));
+                            FishyNotis.notice("You must be holding an item to use this command.");
                             return 1;
                         }
                         RegistryWrapper.WrapperLookup registries = mc.world.getRegistryManager();
                         String uuid = ItemHandler.extractUUID(held, registries);
                         if (uuid != null && ItemHandler.isProtected(held, registries)) {
                             ItemConfig.removeUUID(uuid);
-                            FishyNotis.send(Text.literal("Your ").formatted(Formatting.GRAY)
+                            FishyNotis.format(Text.literal("Your ").formatted(Formatting.GRAY)
                                 .append(Text.literal(held.getName().getString()).formatted(Formatting.RESET))
                                 .append(Text.literal(" is no longer protected.").formatted(Formatting.GRAY)));
                         } else {
-                            FishyNotis.send(Text.literal("Held item isn't protected or doesn't have a UUID.").formatted(Formatting.GRAY));
+                            FishyNotis.notice("Held item isn't protected or doesn't have a UUID.");
                         }
                         return 1;
                     }))
@@ -214,45 +215,35 @@ public class FishyCmd {
                     .executes(context -> {
                         if (!CmdChat.pendingClear) {
                             CmdChat.pendingClear = true;
-                            FishyNotis.send(Text.literal("Are you SURE you want to clear all protected items?").formatted(Formatting.GRAY));
+                            FishyNotis.send("Are you SURE you want to clear all protected items?");
                             sendClickable();
                         } else {
-                            FishyNotis.send(Text.literal("Please respond to the confirmation prompt for: /fa guard clear.").formatted(Formatting.GRAY));
+                            FishyNotis.warn("Please respond to the confirmation prompt for: /fa guard clear.");
                         }
                         return 1;
                     }))
                 .then(ClientCommandManager.literal("confirmclear")
                     .executes(context -> {
                         ItemConfig.clearAll();
-                        FishyNotis.send(Text.literal("All protected items have been cleared.").formatted(Formatting.GRAY));
+                        FishyNotis.send("All protected items have been cleared.");
                         CmdChat.pendingClear = false;
                         return 1;
                     }))
                 .then(ClientCommandManager.literal("cancelclear")
                     .executes(context -> {
-                        FishyNotis.send(Text.literal("/fa guard clear was canceled.").formatted(Formatting.GRAY));
+                        FishyNotis.notice("/fa guard clear was canceled.");
                         CmdChat.pendingClear = false;
                         return 1;
                     }))
                 .then(ClientCommandManager.literal("help")
                     .executes(context -> {
-                        FishyNotis.send(Text.literal("Usage: /" + rootNameForMessages + " <add|remove|list|clear>").formatted(Formatting.GRAY));
+                        FishyNotis.themed("Usage: /fa profit <add | remove | list | clear>");
                         return 1;
                     }));
         }   
 
         protected static void addProfitSubcommands(LiteralArgumentBuilder<FabricClientCommandSource> root) {
-            root.then(ClientCommandManager.literal("on")
-                    .executes(context -> {
-                        ProfitTrackerCommand.handle(new String[]{"on"});
-                        return 1;
-                    }))
-                .then(ClientCommandManager.literal("off")
-                    .executes(context -> {
-                        ProfitTrackerCommand.handle(new String[]{"off"});
-                        return 1;
-                    }))
-                .then(ClientCommandManager.literal("toggle")
+            root.then(ClientCommandManager.literal("toggle")
                     .executes(context -> {
                         ProfitTrackerCommand.handle(new String[]{"toggle"});
                         return 1;
@@ -282,6 +273,27 @@ public class FishyCmd {
                         ProfitTrackerCommand.handle(new String[]{"clear"});
                         return 1;
                     }))
+                .then(ClientCommandManager.literal("ignored")
+                    .executes(context -> {
+                        ProfitTrackerCommand.handle(new String[]{"ignored"});
+                        return 1;
+                    }))
+                .then(ClientCommandManager.literal("restore")
+                    .then(ClientCommandManager.literal("all")
+                        .executes(context -> {
+                            ProfitTrackerCommand.handle(new String[]{"restore", "all"});
+                            return 1;
+                        }))
+                    .then(ClientCommandManager.argument("item", com.mojang.brigadier.arguments.StringArgumentType.greedyString())
+                        .executes(context -> {
+                            String itemName = com.mojang.brigadier.arguments.StringArgumentType.getString(context, "item");
+                            ProfitTrackerCommand.handle(new String[]{"restore", itemName});
+                            return 1;
+                        }))
+                    .executes(context -> {
+                        ProfitTrackerCommand.handle(new String[]{"restore"});
+                        return 1;
+                    }))
                 .then(ClientCommandManager.literal("type")
                     .then(ClientCommandManager.literal("insta_sell")
                         .executes(context -> {
@@ -308,23 +320,31 @@ public class FishyCmd {
                         ProfitTrackerCommand.handle(new String[]{"price"});
                         return 1;
                     }))
-                // add profile <name> and profile <delete> <profile> commands
-                .then(ClientCommandManager.literal("profile")    
+                .then(ClientCommandManager.literal(PROFILE)
                     .then(ClientCommandManager.argument("name", com.mojang.brigadier.arguments.StringArgumentType.greedyString())
                         .executes(context -> {
                             String profileName = com.mojang.brigadier.arguments.StringArgumentType.getString(context, "name");
-                            ProfitTrackerCommand.handle(new String[]{"profile", profileName});
+                            ProfitTrackerCommand.handle(new String[]{PROFILE, profileName});
                             return 1;
                         }))
                     .then(ClientCommandManager.literal("delete")
-                        .then(ClientCommandManager.argument("profile", com.mojang.brigadier.arguments.StringArgumentType.greedyString())
+                        .then(ClientCommandManager.argument(PROFILE, com.mojang.brigadier.arguments.StringArgumentType.greedyString())
                             .executes(context -> {
-                                String profileName = com.mojang.brigadier.arguments.StringArgumentType.getString(context, "profile");
-                                ProfitTrackerCommand.handle(new String[]{"profile", "delete", profileName});
+                                String profileName = com.mojang.brigadier.arguments.StringArgumentType.getString(context, PROFILE);
+                                ProfitTrackerCommand.handle(new String[]{PROFILE, "delete", profileName});
                                 return 1;
                             })))
+                    .then(ClientCommandManager.literal("rename")
+                        .then(ClientCommandManager.argument("oldName", com.mojang.brigadier.arguments.StringArgumentType.word())
+                            .then(ClientCommandManager.argument("newName", com.mojang.brigadier.arguments.StringArgumentType.greedyString())
+                                .executes(context -> {
+                                    String oldName = com.mojang.brigadier.arguments.StringArgumentType.getString(context, "oldName");
+                                    String newName = com.mojang.brigadier.arguments.StringArgumentType.getString(context, "newName");
+                                    ProfitTrackerCommand.handle(new String[]{PROFILE, "rename", oldName, newName});
+                                    return 1;
+                                }))))
                     .executes(context -> {
-                        ProfitTrackerCommand.handle(new String[]{"profile"});
+                        ProfitTrackerCommand.handle(new String[]{PROFILE});
                         return 1;
                     }))
                 .executes(context -> {
@@ -338,13 +358,13 @@ public class FishyCmd {
                     .then(ClientCommandManager.literal("on")
                         .executes(context -> {
                             FishyConfig.settings.set(Key.FISHY_LAVA, true);
-                            FishyNotis.send(Text.literal("Clear Lava " + Formatting.GREEN + "ON.").formatted(Formatting.GRAY));
+                            FishyNotis.on("Clear Lava");
                             return 1;
                         }))
                     .then(ClientCommandManager.literal("off")
                         .executes(context -> {
                             FishyConfig.settings.set(Key.FISHY_LAVA, false);
-                            FishyNotis.send("Clear Lava " + Formatting.RED + "OFF.");
+                            FishyNotis.off("Clear Lava");
                             return 1;
                         }))
                     .executes(context -> {
@@ -358,28 +378,6 @@ public class FishyCmd {
 
         protected static LiteralArgumentBuilder<FabricClientCommandSource> registerHud() {
             return ClientCommandManager.literal("hud")
-                    .then(ClientCommandManager.literal("edit")
-                        .executes(context -> {
-                            if (checkGUI() == 1) return 1;
-                            MinecraftClient.getInstance().execute(() ->
-                                GuiScheduler.scheduleGui(new HudEditScreen())
-                            );
-                            return 1;
-                        }))
-                    .then(ClientCommandManager.literal("on")
-                        .executes(context -> {
-                            FishyConfig.enable(Key.HUD_PING_ENABLED, true);
-                            FishyConfig.enable(Key.HUD_TIMER_ENABLED, true);
-                            FishyNotis.send("Ping HUD " + Formatting.GREEN + "ON.");
-                            return 1;
-                        }))
-                    .then(ClientCommandManager.literal("off")
-                        .executes(context -> {
-                            FishyConfig.disable(Key.HUD_PING_ENABLED);
-                            FishyConfig.disable(Key.HUD_TIMER_ENABLED);
-                            FishyNotis.send("Ping HUD " + Formatting.RED + "OFF.");
-                            return 1;
-                        }))
                     .executes(context -> {
                         if (checkGUI() == 1) return 1;
                         MinecraftClient.getInstance().execute(() ->
@@ -394,36 +392,49 @@ public class FishyCmd {
                     .then(ClientCommandManager.literal("on")
                         .executes(context -> {
                             FishyConfig.enable(Key.HUD_PING_ENABLED, true);
-                            FishyNotis.send("Ping display " + Formatting.GREEN + "ON.");
+                            FishyNotis.on("Ping display");
+                            ClientPing.refresh();
                             return 1;
                         }))
                     .then(ClientCommandManager.literal("off")
                         .executes(context -> {
                             FishyConfig.disable(Key.HUD_PING_ENABLED);
-                            FishyNotis.send("Ping display " + Formatting.RED + "OFF.");
+                            FishyNotis.off("Ping display");
+                            ClientPing.refresh();
                             return 1;
                         }))
                     .executes(context -> {
                         ClientPing.send();
                         FishyNotis.send(
-                            Text.literal(ClientPing.get() + " ms").formatted(Formatting.WHITE)
+                            Text.literal(ClientPing.get() + " §8ms").formatted(Formatting.WHITE)
                         );
                         return 1;
                     });
-        } 
+        }
+
+        protected static LiteralArgumentBuilder<FabricClientCommandSource> registerOld() {
+            return ClientCommandManager.literal("old")
+                    .executes(context -> {
+                        if (checkGUI() == 1) return 1;
+                        MinecraftClient.getInstance().execute(() ->
+                            GuiScheduler.scheduleGui(new FishyAddonsScreen())
+                        );
+                        return 1;
+                    });
+        }        
         
         protected static LiteralArgumentBuilder<FabricClientCommandSource> registerCam() {
             return ClientCommandManager.literal("camera")
                     .then(ClientCommandManager.literal("on")
                         .executes(context -> {
                             FishyConfig.enable(Key.SKIP_F5, true);
-                            FishyNotis.send("Custom f5 " + Formatting.GREEN + "ON.");
+                            FishyNotis.on("Custom f5");
                             return 1;
                         }))
                     .then(ClientCommandManager.literal("off")
                         .executes(context -> {
                             FishyConfig.disable(Key.SKIP_F5);
-                            FishyNotis.send("Custom f5 " + Formatting.RED + "OFF.");
+                            FishyNotis.off("Custom f5");
                             return 1;
                         }))
                     .executes(context -> {
@@ -489,26 +500,26 @@ public class FishyCmd {
                             boolean isRaining = me.valkeea.fishyaddons.handler.WeatherTracker.isRaining();
                             me.valkeea.fishyaddons.handler.WeatherTracker.track();
                             String status = isRaining ? "It is currently raining. You will be notified when the rain stops." : "It is not currently raining.";
-                            FishyNotis.send(Text.literal(status).formatted(isRaining ? Formatting.DARK_AQUA : Formatting.RED));
+                            FishyNotis.format(Text.literal(status).formatted(isRaining ? Formatting.DARK_AQUA : Formatting.RED));
                             return 1;
                         }))
                     .then(ClientCommandManager.literal("on")
                         .executes(context -> {
                             FishyConfig.toggle(Key.RAIN_NOTI, true);
-                            FishyNotis.send("Rain notifications " + Formatting.GREEN + "ON.");
+                            FishyNotis.on("Rain notifications");
                             return 1;
                         }))
                     .then(ClientCommandManager.literal("off")
                         .executes(context -> {
                             FishyConfig.toggle(Key.RAIN_NOTI, false);
                             me.valkeea.fishyaddons.handler.WeatherTracker.reset();
-                            FishyNotis.send("Rain notifications " + Formatting.RED + "OFF.");
+                            FishyNotis.off("Rain notifications");
                             return 1;
                         }))
                     .executes(context -> {
-                        FishyNotis.send("§b2Rain Tracker:");
-                        FishyNotis.alert(Text.literal("§7- /fa rain track - §8Track the current rain state."));
-                        FishyNotis.alert(Text.literal("§7- /fa rain on | off - §8Enable/disable rain notifications"));
+                        FishyNotis.themed("§lRain Tracker:");
+                        FishyNotis.alert(Text.literal("§3/fa rain track §8- §7Track the current rain state."));
+                        FishyNotis.alert(Text.literal("§3/fa rain on | off §8- §7Enable/disable rain notifications"));
                         return 1;
                     });
     }    
@@ -549,10 +560,14 @@ public class FishyCmd {
     private static void sendClickable() {
         MinecraftClient mc = MinecraftClient.getInstance();
         if (mc.player == null) return;
-        Text yes = Text.literal("[Yes]").formatted(Formatting.GREEN)
-            .styled(style -> style.withClickEvent(new net.minecraft.text.ClickEvent.RunCommand("/fa guard confirmclear")));
-        Text no = Text.literal("[No]").formatted(Formatting.RED)
-            .styled(style -> style.withClickEvent(new net.minecraft.text.ClickEvent.RunCommand("/fa guard cancelclear")));
+        Text yes = Text.literal("[Yes]")
+            .styled(style -> style.withClickEvent(new net.minecraft.text.ClickEvent.RunCommand("/fa guard confirmclear")).withColor(0xCCFFCC));
+        Text no = Text.literal("[No]")
+            .styled(style -> style.withClickEvent(new net.minecraft.text.ClickEvent.RunCommand("/fa guard cancelclear")).withColor(0xFF8080));
         mc.player.sendMessage(Text.literal(" ").append(yes).append(Text.literal(" ")).append(no), false);
+    }
+
+    private FishyCmd() {
+        throw new UnsupportedOperationException("Utility class");
     }
 }

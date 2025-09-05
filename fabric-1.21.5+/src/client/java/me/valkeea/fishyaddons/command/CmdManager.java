@@ -1,16 +1,17 @@
 package me.valkeea.fishyaddons.command;
 
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 
-import me.valkeea.fishyaddons.gui.FishyAddonsScreen;
 import me.valkeea.fishyaddons.gui.SafeguardScreen;
+import me.valkeea.fishyaddons.gui.VCScreen;
+import me.valkeea.fishyaddons.gui.VCState;
 import me.valkeea.fishyaddons.tool.GuiScheduler;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.MinecraftClient;
-
 
 public class CmdManager {
     private CmdManager() {}
@@ -25,35 +26,48 @@ public class CmdManager {
     }
     
     private static void registerFaCommand(CommandDispatcher<FabricClientCommandSource> dispatcher, String root) {
-        dispatcher.register(ClientCommandManager.literal(root)
-            .then(FishyCmd.registerCmd())
-            .then(FishyCmd.registerChat())
-            .then(FishyCmd.registerAlert())
-            .then(FishyCmd.registerKey())
-            .then(FishyCmd.registerGuide())
-            .then(FishyCmd.registerHelp())
-            .then(FishyCmd.registerLava())
-            .then(FishyCmd.registerQol())
-            .then(FishyCmd.registerVisual())
-            .then(FishyCmd.registerSb())
-            .then(FishyCmd.registerHud())
-            .then(FishyCmd.registerPing())
-            .then(FishyCmd.registerCam())
-            .then(FishyCmd.registerPos())
-            .then(FishyCmd.registerRain())
-            .then(FishyCmd.registerFishing())
-            .then(buildProfitRoot("profit"))
-            .executes(context -> {
-                ProfitTrackerCommand.showUsage();
-                return 1;
-            })
-            .then(buildGuardRoot("guard"))
-            .executes(context -> {
-                if (FishyCmd.checkGUI() == 1) return 1;
-                MinecraftClient.getInstance().execute(() ->
-                    GuiScheduler.scheduleGui(new FishyAddonsScreen()));
-                return 1;
-            })               
+        dispatcher.register(
+            ClientCommandManager.literal(root)
+                .then(FishyCmd.registerCmd())
+                .then(FishyCmd.registerChat())
+                .then(FishyCmd.registerAlert())
+                .then(FishyCmd.registerKey())
+                .then(FishyCmd.registerGuide())
+                .then(FishyCmd.registerHelp())
+                .then(FishyCmd.registerLava())
+                .then(FishyCmd.registerQol())
+                .then(FishyCmd.registerVisual())
+                .then(FishyCmd.registerSb())
+                .then(FishyCmd.registerHud())
+                .then(FishyCmd.registerPing())
+                .then(FishyCmd.registerCam())
+                .then(FishyCmd.registerPos())
+                .then(FishyCmd.registerRain())
+                .then(FishyCmd.registerFishing())
+                .then(FishyCmd.registerOld())
+                .then(buildProfitRoot("profit"))
+                .executes(context -> {
+                    me.valkeea.fishyaddons.util.FishyNotis.fp();
+                    return 1;
+                })
+                .then(buildGuardRoot("guard"))
+                .executes(context -> {
+                    if (FishyCmd.checkGUI() == 1) return 1;
+                    MinecraftClient.getInstance().execute(() ->
+                        GuiScheduler.scheduleGui(new VCScreen()));
+                    return 1;
+                })
+                .then(
+                    ClientCommandManager.argument(
+                        "query",
+                        StringArgumentType.greedyString()
+                    ).executes(context -> {
+                        String query = StringArgumentType.getString(context, "query");
+                        VCState.setLastSearchText(query);
+                        GuiScheduler.scheduleGui(new VCScreen());
+                        return 1;
+                    })
+                )
         );
     }
 
@@ -81,7 +95,7 @@ public class CmdManager {
         LiteralArgumentBuilder<FabricClientCommandSource> builder = ClientCommandManager.literal(rootLiteral);
         FishyCmd.addProfitSubcommands(builder);
         builder.executes(context -> {
-            ProfitTrackerCommand.showUsage();
+            me.valkeea.fishyaddons.util.FishyNotis.fp();
             return 1;
         });
         return builder;

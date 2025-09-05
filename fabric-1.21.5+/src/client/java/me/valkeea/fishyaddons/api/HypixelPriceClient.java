@@ -11,21 +11,23 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+
 import com.google.gson.Gson;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+
 import me.valkeea.fishyaddons.cache.ApiCache;
 import net.minecraft.text.Text;
 
-
-// HTTP client for both Bazaar and Auction House APIs
 public class HypixelPriceClient {
     private static final String BZ_API_URL = "https://api.hypixel.net/v2/skyblock/bazaar";
     private static final String AUCTIONS_API_URL = "https://api.hypixel.net/v2/skyblock/auctions";
     private static final int BZ_CACHE_EXPIRY_MINUTES = 60;
-    
+    private static final String SELL_PRICE = "sellPrice";
+    private static final String BUY_PRICE = "buyPrice";
+
     private final HttpClient httpClient;
     private final Gson gson;
     private final Map<String, PriceData> bazaarCache;
@@ -34,7 +36,7 @@ public class HypixelPriceClient {
     private volatile long lastBazaarUpdate = 0;
     private volatile long lastAuctionUpdate = 0;
     private volatile long sessionStartTime = System.currentTimeMillis();
-    private static String type = "sellPrice";
+    private static String type = SELL_PRICE;
 
     public HypixelPriceClient() {
         this.httpClient = HttpClient.newBuilder()
@@ -58,7 +60,7 @@ public class HypixelPriceClient {
             throw new IllegalArgumentException("Price type cannot be null or empty");
         }
 
-        if (!newType.equals("sellPrice") && !newType.equals("buyPrice")) {
+        if (!newType.equals(SELL_PRICE) && !newType.equals(BUY_PRICE)) {
             throw new IllegalArgumentException("Invalid price type: " + newType);
         }
 
@@ -81,6 +83,14 @@ public class HypixelPriceClient {
         Double cachedPrice = ApiCache.getCachedPrice(apiId, ApiCache.PriceType.BEST_PRICE);
         if (cachedPrice != null) {
             return cachedPrice;
+        }
+        
+        if (isPetDrop(itemName)) {
+            double petPrice = getPetPrice(itemName);
+            if (petPrice > 0) {
+                ApiCache.cachePrice(apiId, ApiCache.PriceType.BEST_PRICE, petPrice);
+                return petPrice;
+            }
         }
         
         PriceData bazaarPrice = bazaarCache.get(apiId);
@@ -138,6 +148,169 @@ public class HypixelPriceClient {
         return price;
     }
     
+    /**
+     * Check if an item name represents a pet drop (rarity + pet name format)
+     */
+    private boolean isPetDrop(String itemName) {
+        if (itemName == null) return false;
+        String lower = itemName.toLowerCase().trim();
+        
+        return lower.startsWith("common ") || 
+               lower.startsWith("uncommon ") || 
+               lower.startsWith("rare ") || 
+               lower.startsWith("epic ") || 
+               lower.startsWith("legendary ") || 
+               lower.startsWith("mythic ");
+    }
+    
+    public double getPetPrice(String petDropName) {
+        String[] parts = getNameAndRarity(petDropName);
+        if (parts.length != 2) return 0.0;
+        
+        String petName = parts[0];
+        String rarity = parts[1];
+        String cacheKey = rarity.toLowerCase() + "_" + petName.toLowerCase().replace(" ", "_");
+        Double cachedPrice = ApiCache.getCachedPrice(cacheKey, ApiCache.PriceType.AH_BIN);
+        if (cachedPrice != null) {
+            return cachedPrice;
+        }
+        
+        double price = searchForPet(petName, rarity);
+        ApiCache.cachePrice(cacheKey, ApiCache.PriceType.AH_BIN, price);
+        return price;
+    }
+    
+    private String[] getNameAndRarity(String petDropName) {
+        if (petDropName == null) return new String[0];
+        
+        String lower = petDropName.toLowerCase().trim();
+        String[] rarities = {"mythic", "legendary", "epic", "rare", "uncommon", "common"};
+        
+        for (String rarity : rarities) {
+            if (lower.startsWith(rarity + " ")) {
+                String petName = petDropName.substring(rarity.length() + 1).trim();
+                return new String[]{petName, rarity.toUpperCase()};
+            }
+        }
+        
+        return new String[0];
+    }
+    
+    private double searchForPet(String petName, String rarity) {
+        try {
+            int maxPagesToSearch = 15;
+            double lowestPrice = 0.0;
+            int foundCount = 0;
+            int emptyPageCount = 0;
+            
+            for (int page = 0; page < maxPagesToSearch; page++) {
+                String url = AUCTIONS_API_URL + "?page=" + page;
+                HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(url))
+                    .timeout(Duration.ofSeconds(10))
+                    .header("User-Agent", "FishyAddons/2.0.6")
+                    .GET()
+                    .build();
+                
+                HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+                
+                if (response.statusCode() != 200) {
+                    System.err.println("Failed to fetch auction page " + page + " for pet: HTTP " + response.statusCode());
+                    continue;
+                }
+                
+                double pageLowestPrice = parseForPet(response.body(), petName, rarity);
+                if (pageLowestPrice > 0) {
+                    foundCount++;
+                    emptyPageCount = 0;
+                    if (lowestPrice == 0 || pageLowestPrice < lowestPrice) {
+                        lowestPrice = pageLowestPrice;
+                    }
+                    
+                    if (foundCount >= 3 && page >= 3) {
+                        break;
+                    }
+                } else {
+                    emptyPageCount++;
+                    if (foundCount > 0 && emptyPageCount >= 2) {
+                        break;
+                    }
+                }              
+                if (!handleSleep()) {
+                    break;
+                }
+            }
+            
+            return lowestPrice;
+            
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            System.err.println("Pet auction search interrupted for " + petName + ": " + e.getMessage());
+            return 0.0;
+        } catch (Exception e) {
+            System.err.println("Error during pet auction search for " + petName + ": " + e.getMessage());
+            return 0.0;
+        }
+    }
+    
+    private double parseForPet(String responseBody, String targetPetName, String targetRarity) {
+        try {
+            JsonObject root = JsonParser.parseString(responseBody).getAsJsonObject();
+            if (!root.has(SUCCESS_KEY) || !root.get(SUCCESS_KEY).getAsBoolean()) {
+                return 0.0;
+            }
+            
+            JsonArray auctions = root.getAsJsonArray("auctions");
+            double lowestPrice = 0.0;
+            
+            for (JsonElement auctionElement : auctions) {
+                JsonObject auction = auctionElement.getAsJsonObject();
+
+                if (!auction.has("bin") || !auction.get("bin").getAsBoolean()) {
+                    continue;
+                }
+                
+                if (isMatch(auction, targetPetName, targetRarity)) {
+                    double price = auction.get("starting_bid").getAsDouble();
+                    if (lowestPrice == 0 || price < lowestPrice) {
+                        lowestPrice = price;
+                    }
+                }
+            }
+            
+            return lowestPrice;
+            
+        } catch (Exception e) {
+            System.err.println("Error parsing auction page for pet " + targetPetName + ": " + e.getMessage());
+            return 0.0;
+        }
+    }
+    
+    /**
+     * Check if an auction matches the target pet name and rarity
+     */
+    private boolean isMatch(JsonObject auction, String targetPetName, String targetRarity) {
+        try {
+            if (!auction.has("item_name")) return false;
+            String itemName = auction.get("item_name").getAsString();
+            String cleanedName = itemName.replaceAll("§[0-9a-fk-or]", "")
+                                         .replaceAll("\\[Lvl \\d+\\]\\s*", "")
+                                         .trim();
+            
+            if (!cleanedName.equalsIgnoreCase(targetPetName)) {
+                return false;
+            }
+            
+            if (!auction.has("tier")) return false;
+            String auctionRarity = auction.get("tier").getAsString();
+            
+            return auctionRarity.equalsIgnoreCase(targetRarity);
+            
+        } catch (Exception e) {
+            return false;
+        }
+    }
+    
     public boolean hasBazaarData(String itemName) {
         String apiId = convertToApiId(itemName);
         PriceData priceData = bazaarCache.get(apiId);
@@ -173,11 +346,20 @@ public class HypixelPriceClient {
     }
     
     public void refreshBazaarAsync() {
+        if (System.currentTimeMillis() - lastBazaarUpdate < TimeUnit.MINUTES.toMillis(1)) {
+            me.valkeea.fishyaddons.util.FishyNotis.alert(
+                Text.literal("§8§oBazaar cache was refreshed recently. Try again in a minute."));
+            return;
+        }
         CompletableFuture.runAsync(this::refreshBazaar);
     }
     
-    // Refresh session cache for ah
     public void refreshAuctionsAsync() {
+        if (System.currentTimeMillis() - lastAuctionUpdate < TimeUnit.MINUTES.toMillis(1)) {
+            me.valkeea.fishyaddons.util.FishyNotis.alert(
+                Text.literal("§8§oAuction cache was refreshed recently, skipping..."));
+            return;
+        }
         if (auctionCache.isEmpty()) {
             return;
         }
@@ -248,9 +430,9 @@ public class HypixelPriceClient {
                 
                 JsonObject quickStatus = product.getAsJsonObject("quick_status");
                 if (quickStatus != null) {
-                    double buyPrice = quickStatus.has("buyPrice") ? quickStatus.get("buyPrice").getAsDouble() : 0.0;
-                    double sellPrice = quickStatus.has("sellPrice") ? quickStatus.get("sellPrice").getAsDouble() : 0.0;
-                    
+                    double buyPrice = quickStatus.has(BUY_PRICE) ? quickStatus.get(BUY_PRICE).getAsDouble() : 0.0;
+                    double sellPrice = quickStatus.has(SELL_PRICE) ? quickStatus.get(SELL_PRICE).getAsDouble() : 0.0;
+
                     PriceData priceData = new PriceData(buyPrice, sellPrice, now);
                     bazaarCache.put(productId, priceData);
                 }
@@ -259,9 +441,6 @@ public class HypixelPriceClient {
             System.err.println("Error parsing bazaar data: " + e.getMessage());
             e.printStackTrace();
         }
-
-        me.valkeea.fishyaddons.util.FishyNotis.alert(
-        Text.literal("§7Bazaar cache refreshed successfully!"));
     }
     
     private String convertToApiId(String itemName) {
@@ -304,7 +483,14 @@ public class HypixelPriceClient {
             .replaceAll("\\s+", "_")
             .toUpperCase();
         
-        return "SHARD_" + mobName;
+        // Special cases
+        String shardApiId = "SHARD_" + mobName;
+        switch (shardApiId) {
+            case "SHARD_LOCH_EMPEROR":
+                return "SHARD_SEA_EMPEROR";
+            default:
+                return shardApiId;
+        }
     }
     
     private boolean isEnchantment(String itemName) {
@@ -430,7 +616,7 @@ public class HypixelPriceClient {
         }
         
         double getPrice(String priceType) {
-            return "sellPrice".equals(priceType) ? sellPrice : buyPrice;
+            return SELL_PRICE.equals(priceType) ? sellPrice : buyPrice;
         }
     }
 
@@ -479,11 +665,8 @@ public class HypixelPriceClient {
                         break;
                     }
                 }
-    
-                try {
-                    Thread.sleep(15);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
+
+                if (!handleSleep()) {
                     break;
                 }
             }
@@ -499,7 +682,7 @@ public class HypixelPriceClient {
             return 0.0;
         }
     }
-    
+
     /**
      * Parse a single auction page response to find the lowest BIN price for a specific item.
      * Returns 0 if not found or if the API call was unsuccessful.
@@ -537,6 +720,16 @@ public class HypixelPriceClient {
             return 0.0;
         }
     }
+
+    private boolean handleSleep() {
+        try {
+            Thread.sleep(20);
+            return true;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return false;
+        }
+    }    
 
     public enum PriceSource {
         BAZAAR, AUCTION, NONE
@@ -631,8 +824,6 @@ public class HypixelPriceClient {
                 return "PET_ITEM_LUCKY_CLOVER_DROP";
             case "duplex i":
                 return "ENCHANTMENT_ULTIMATE_REITERATE_1";
-            case "loch emperor shard":
-                return "SHARD_SEA_EMPEROR";
             case "magmafish":
                 return "MAGMA_FISH";
             case "silver magmafish":

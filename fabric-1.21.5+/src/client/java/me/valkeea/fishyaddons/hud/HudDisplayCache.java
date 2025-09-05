@@ -4,6 +4,7 @@ import me.valkeea.fishyaddons.tracker.ItemTrackerData;
 import java.util.HashMap;
 import java.util.Map;
 
+@SuppressWarnings("squid:S6548")
 public class HudDisplayCache {
     private static HudDisplayCache instance;
     private CachedHudData cachedData;
@@ -48,8 +49,6 @@ public class HudDisplayCache {
     
     private void refreshCache(long apiTimestamp, long currentTime) {
         Map<String, Integer> items = ItemTrackerData.getAllItems();
-        
-        // Get item values from ItemTrackerData cache
         Map<String, Double> itemValues = new HashMap<>();
         for (String itemName : items.keySet()) {
             double unitPrice = ItemTrackerData.getCachedItemValue(itemName);
@@ -60,7 +59,7 @@ public class HudDisplayCache {
         
         int totalItems = ItemTrackerData.getTotalItemCount();
         double totalValue = ItemTrackerData.getTotalSessionValue();
-        long sessionDuration = ItemTrackerData.getSessionDurationMinutes();
+        long sessionDuration = ItemTrackerData.getTotalDurationMinutes();
         
         boolean hasRecentApiData = apiTimestamp > 0 && (currentTime - apiTimestamp) < API_STALENESS_THRESHOLD;
         String formattedValue = formatCoins(totalValue);
@@ -134,8 +133,6 @@ public class HudDisplayCache {
         }
     }
     
-    
-    // Builder to avoid too many constructor parameters
     private static class CachedHudDataBuilder {
         Map<String, Integer> items;
         Map<String, Double> itemValues;

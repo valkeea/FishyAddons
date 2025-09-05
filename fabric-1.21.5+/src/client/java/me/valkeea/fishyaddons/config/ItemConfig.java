@@ -43,13 +43,13 @@ public class ItemConfig {
     private static final File BACKUP_FILE;
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
-    // Constants for prefixes
     private static final String LOCKED_PREFIX = "locked_";
     private static final String BOUND_PREFIX = "bound_";
     private static final String TEXTURE_PREFIX = "texture_";
     private static final String ITEM_PREFIX = "item_";
+    private static final String GUIICONS_SCREEN_NAMES = "guiicons_screenNames";
+    private static final String GUIICONS_SCREEN_SLOT_MAP = "guiicons_screenSlotMap";    
 
-    // Simple config section (like FishyConfig)
     public static class SimpleConfigSection<V> {
         private final Map<String, V> values;
         private final String valuesKey;
@@ -189,15 +189,10 @@ public class ItemConfig {
                 loadOrRestore();
                 return;
             }
-
-            // Load settings section
             settings.loadFromJson(json);
-
-            // Load protected items (backward compatibility)
             if (json.has(Key.PROTECTED_UUIDS)) {
                 JsonElement element = json.get(Key.PROTECTED_UUIDS);
                 if (element.isJsonObject()) {
-                    // New format: Map<String, String>
                     protectedItems.loadFromJson(json);
                 } else if (element.isJsonArray()) {
                     // Old format: List<String> - convert to Map<String, String>
@@ -205,20 +200,16 @@ public class ItemConfig {
                     for (JsonElement item : array) {
                         if (item.isJsonPrimitive()) {
                             String uuid = item.getAsString();
-                            protectedItems.set(uuid, "Protected Item"); // Default display name
+                            protectedItems.set(uuid, "Protected Item");
                         }
                     }
                 }
             }
 
-            // Load slot data (locked slots and bound slots)
             loadSlotData(json);
-
-            // Load equipment data
             loadEquipmentData(json);
-
-            // Load blacklist
             loadBlacklistData(json);
+            loadGuiIconsConfig(json);
 
         } catch (JsonSyntaxException | JsonIOException e) {
             System.err.println("[ItemConfig] JSON parsing error: " + e.getMessage());
@@ -228,6 +219,7 @@ public class ItemConfig {
             loadOrRestore();
         }
     }
+
 
     private static void loadSlotData(JsonObject json) {
         loadLockedSlots(json);
@@ -348,6 +340,25 @@ public class ItemConfig {
         return entry;
     }
 
+    private static void loadGuiIconsConfig(JsonObject json) {
+        // screenNames
+        if (json.has(GUIICONS_SCREEN_NAMES)) {
+            JsonElement element = json.get(GUIICONS_SCREEN_NAMES);
+            Set<String> names = GSON.fromJson(element, new TypeToken<Set<String>>(){}.getType());
+            if (names != null) {
+                me.valkeea.fishyaddons.handler.GuiIcons.setScreenNames(names);
+            }
+        }
+        // screenSlotMap
+        if (json.has(GUIICONS_SCREEN_SLOT_MAP)) {
+            JsonElement element = json.get(GUIICONS_SCREEN_SLOT_MAP);
+            Map<String, Set<Integer>> map = GSON.fromJson(element, new TypeToken<Map<String, Set<Integer>>>(){}.getType());
+            if (map != null) {
+                me.valkeea.fishyaddons.handler.GuiIcons.setScreenSlotMap(map);
+            }
+        }
+    }    
+
     public static synchronized void save() {
         JsonObject json = new JsonObject();
 
@@ -355,6 +366,7 @@ public class ItemConfig {
         protectedItems.saveToJson(json);
         saveSlotData(json);
         saveEquipmentData(json);
+        saveGuiIconsConfig(json);
 
         List<Map<String, Object>> serializedBlacklist = BlacklistManager.getUserBlacklistAsJson();
         json.add(Key.BLACKLIST, GSON.toJsonTree(serializedBlacklist));
@@ -424,7 +436,6 @@ public class ItemConfig {
         try {
             if (CONFIG_FILE.exists()) {
                 Files.copy(CONFIG_FILE.toPath(), BACKUP_FILE.toPath(), StandardCopyOption.REPLACE_EXISTING);
-                System.out.println("[ItemConfig] Backup saved successfully.");
             }
         } catch (IOException e) {
             System.err.println("[ItemConfig] Failed to save backup: " + e.getMessage());
@@ -452,6 +463,13 @@ public class ItemConfig {
         save();
         recreatedConfig = true;
     }
+
+    private static void saveGuiIconsConfig(JsonObject json) {
+        Set<String> names = me.valkeea.fishyaddons.handler.GuiIcons.getScreenNames();
+        Map<String, Set<Integer>> map = me.valkeea.fishyaddons.handler.GuiIcons.getScreenSlotMap();
+        json.add(GUIICONS_SCREEN_NAMES, GSON.toJsonTree(names));
+        json.add(GUIICONS_SCREEN_SLOT_MAP, GSON.toJsonTree(map));
+    }    
 
     // --- Generalized Methods for Settings ---
 
@@ -509,7 +527,7 @@ public class ItemConfig {
         save();
     }
 
-    // --- Item Protection API ---
+    // --- Item Protection API (Legacy UI) ---
     public static boolean isSellProtectionEnabled() {
         return getState(Key.SELL_PROTECTION_ENABLED, true);
     }
@@ -686,6 +704,10 @@ public class ItemConfig {
     public static synchronized void clearEquipmentSlot(int slot) {
         equipmentData.remove(TEXTURE_PREFIX + slot);
         equipmentData.remove(ITEM_PREFIX + slot);
+        save();
+    }
+
+    public static void saveGuiIcons() {
         save();
     }
 }

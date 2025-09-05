@@ -73,12 +73,22 @@ public class Key {
     public static final String HIDE_HOTSPOT = "hideHotspot";
     public static final String HOTSPOT_DISTANCE = "hotspotDistance";
     public static final String BOOK_DROP_ALERT = "bookDropAlert";
+    public static final String TRACKER_NOTIS = "trackerNotis";
     public static final String CAKE_NOTI = "centuryCakeChatReminder";
     public static final String RAIN_NOTI = "rainNoti";
     public static final String EQ_DISPLAY = "equipmentDisplay";
     public static final String VALUE_FILTER = "minValueFilter";
     public static final String FILTER_MIN_VALUE = "minItemValue";
     public static final String MOD_KEY_LOCK = "lockKey";
+    public static final String MOD_KEY_LOCK_GUISLOT = "lockGuiSlotKey";
+    public static final String GLOBAL_FA_COLORS = "globalFaColors";
+    public static final String CUSTOM_FA_COLORS = "customFaColors";
+    public static final String CHAT_ALERTS_ENABLED = "chatAlertsOn";
+    public static final String ALIASES_ENABLED = "aliasesOn";
+    public static final String CHAT_REPLACEMENTS_ENABLED = "chatReplacementsOn";
+    public static final String KEY_SHORTCUTS_ENABLED = "keyShortcutsOn";
+    public static final String THEME_MODE = "themeMode";
+    public static final String INFO_ID = "infoId";
 
     // GUI Scale
     public static final String MOD_UI_SCALE = "modUiScale";
@@ -95,26 +105,26 @@ public class Key {
     public static final String BLACKLIST = "blacklist";
     public static final String EQUIPMENT_SKULL_TEXTURES = "equipmentSkullTextures";
     public static final String EQUIPMENT_SKULL_ITEMS = "equipmentSkullItems";
-    public static final String EXCLUDED_ITEMS = "tracker_excluded_items"; 
+    public static final String EXCLUDED_ITEMS = "tracker_excluded_items";
+    public static final String SCREEN_NAMES = "screenNames";
+    public static final String SCREEN_SLOT_MAP = "screenSlotMap";
 
     public static void setDefaults(
         FishyConfig.ConfigSection<String> commandAliases,
-        FishyConfig.ConfigSection<String> keybinds,
         FishyConfig.ConfigSection<String> chatReplacements,
         FishyConfig.SimpleConfigSection<Object> settings,
         FishyConfig.SimpleConfigSection<Object> hud,
         FishyConfig.SimpleConfigSection<String> modKeys
     ) {
         commandAliases.set("/m7", "/joininstance MASTER_CATACOMBS_FLOOR_SEVEN");
-        keybinds.set("MOUSE3", "/pets");
         chatReplacements.set(":cat:", "ᗢᘏᓗ");
         chatReplacements.set(":hi:", "ඞ");
-        chatReplacements.set("heiiii", "Any string will be replaced one to one");
+        chatReplacements.set("examplestring", "If sent by you, it will be replaced by this text. Not for commands.");
         settings.set(FISHY_LAVA, false);
         settings.set(FISHY_WATER, false);
         settings.set(RENDER_COORD_COLOR, -5653771);
         settings.set(CUSTOM_PARTICLE_COLOR_INDEX, Integer.valueOf(1));
-        settings.set(XP_COLOR, 0xD0D1FF);
+        settings.set(XP_COLOR, -3157761);
         settings.set(HD_FONT, false);
         settings.set(FISHY_GUI, false);
         settings.set(SKIP_F5, false);
@@ -132,7 +142,8 @@ public class Key {
         settings.set(HUD_PETXP, true);
         settings.set(HUD_PET_DYNAMIC, true);
         settings.set(TRACK_SACK, false);
-        settings.set(FILTER_MIN_VALUE, 1562.5f);
+        settings.set(FILTER_MIN_VALUE, 2.0f);
+        settings.set(VALUE_FILTER, true);
         settings.set(DMG_SCALE, 0.15f);
         settings.set(SCALE_CRIT, false);
         settings.set(INV_SEARCH, false);
@@ -141,9 +152,16 @@ public class Key {
         settings.set(HOTSPOT_DISTANCE, 7.0f);
         settings.set(PRICE_TYPE, "sellPrice");
         settings.set(BOOK_DROP_ALERT, true);
+        settings.set(TRACKER_NOTIS, false);
         settings.set(RAIN_NOTI, false);
         settings.set(EQ_DISPLAY, false);
         settings.set(MOD_UI_SCALE, 0.4265625f);
+        settings.set(GLOBAL_FA_COLORS, false);
+        settings.set(CUSTOM_FA_COLORS, false);
+        settings.set(CHAT_ALERTS_ENABLED, false);
+        settings.set(ALIASES_ENABLED, false);
+        settings.set(CHAT_REPLACEMENTS_ENABLED, false);
+        settings.set(KEY_SHORTCUTS_ENABLED, false);
         hud.set(HUD_PING_X, 5);
         hud.set(HUD_PING_Y, 12);
         hud.set(HUD_PING_SIZE, 12);
@@ -155,21 +173,23 @@ public class Key {
         hud.set(HUD_TITLE_X, 600);
         hud.set(HUD_TITLE_Y, 120);
         hud.set(HUD_TITLE_SIZE, 55);
+        hud.set(HUD_PET_ENABLED, false);
         hud.set(HUD_PET_X, 601);
         hud.set(HUD_PET_Y, 486);
         hud.set(HUD_PET_SIZE, 12);
-        hud.set(HUD_PET_COLOR, 1.5649516E7);
+        hud.set(HUD_PET_COLOR, 0xFFFFFF);
         hud.set(HUD_TRACKER_X, 5);
         hud.set(HUD_TRACKER_Y, 44);
         hud.set(HUD_TRACKER_SIZE, 12);
         hud.set(HUD_TRACKER_COLOR, 1.5649516E7);
-        hud.set(HUD_SEARCH_X, 870);
-        hud.set(HUD_SEARCH_Y, 484);
+        hud.set(HUD_SEARCH_X, 400);
+        hud.set(HUD_SEARCH_Y, 44);
         hud.set(HUD_SEARCH_SIZE, 14);
         hud.set(HUD_CENTURY_CAKE_X, 5);
         hud.set(HUD_CENTURY_CAKE_Y, 60);
         hud.set(HUD_CENTURY_CAKE_SIZE, 12);
         hud.set(HUD_CENTURY_CAKE_COLOR, 16513273);
         modKeys.set(MOD_KEY_LOCK, "NONE");
+        modKeys.set(MOD_KEY_LOCK_GUISLOT, "NONE");
     }
 }

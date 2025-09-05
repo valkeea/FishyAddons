@@ -7,8 +7,16 @@ import java.util.List;
 import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.config.Key;
 import me.valkeea.fishyaddons.gui.VCScreen.ExtraControl;
+import me.valkeea.fishyaddons.handler.ChatAlert;
+import me.valkeea.fishyaddons.handler.ChatReplacement;
+import me.valkeea.fishyaddons.handler.ChatTimers;
+import me.valkeea.fishyaddons.handler.ClientPing;
+import me.valkeea.fishyaddons.handler.CommandAlias;
 import me.valkeea.fishyaddons.handler.CopyChat;
+import me.valkeea.fishyaddons.handler.FaColors;
+import me.valkeea.fishyaddons.handler.GuiIcons;
 import me.valkeea.fishyaddons.handler.ItemSearchOverlay;
+import me.valkeea.fishyaddons.handler.KeyShortcut;
 import me.valkeea.fishyaddons.handler.MobAnimations;
 import me.valkeea.fishyaddons.handler.ParticleVisuals;
 import me.valkeea.fishyaddons.handler.PetInfo;
@@ -29,7 +37,6 @@ import net.minecraft.text.Text;
  * Manages all configuration entries for VCScreen.
  */
 public class VCManager {
-    private static final String CONFIGURE_LABEL = "Configure";
 
     /**
      * Creates and returns the complete list of configuration entries.
@@ -76,7 +83,7 @@ public class VCManager {
         entries.add(VCEntry.typedSlider(
             "Mod Theme",
             "Choose the visual theme for FishyAddons.\nThis affects colors and styling throughout the mod.",
-            "themeSlider",
+            Key.THEME_MODE,
             0.0f,
             4.0f,
             "%.0f",
@@ -95,7 +102,18 @@ public class VCManager {
             "Uses textures from ValksfullSbPack (WIP), currently being ported from 1.8.9.",
             Key.FISHY_GUI,
             false,
-            ResourceHandler::updateGuiPack
+            () -> { 
+                ResourceHandler.updateGuiPack();
+                MinecraftClient client = MinecraftClient.getInstance();
+                if (client.currentScreen instanceof VCScreen currentScreen) {
+                    VCState.preservePersistentState(
+                        currentScreen.getScrollOffset(),
+                        currentScreen.getLastSearchText(),
+                        currentScreen.getExpandedEntries()
+                    );
+                }
+                client.setScreen(new VCScreen());
+            }
         ));
 
         entries.add(VCEntry.toggle(
@@ -103,7 +121,18 @@ public class VCManager {
             "Replaces the default font with a high-definition one\nfrom ValksfullSbPack.",
             Key.HD_FONT,
             false,
-            ResourceHandler::updateFontPack
+            () -> {
+                ResourceHandler.updateFontPack();
+                MinecraftClient client = MinecraftClient.getInstance();
+                if (client.currentScreen instanceof VCScreen currentScreen) {
+                    VCState.preservePersistentState(
+                        currentScreen.getScrollOffset(),
+                        currentScreen.getLastSearchText(),
+                        currentScreen.getExpandedEntries()
+                    );
+                }
+                client.setScreen(new VCScreen());
+            }
         ));
     }
 
@@ -119,7 +148,7 @@ public class VCManager {
             Key.INV_SEARCH,
             false,
             null,
-            new ExtraControl("Item Search", false)
+            new ExtraControl("Item Search", false, false)
         ));
 
         invSearchSubEntries.add(VCEntry.slider(
@@ -150,7 +179,7 @@ public class VCManager {
             Key.RENDER_COORDS,
             false,
             null,
-            new ExtraControl(null, true)
+            new ExtraControl(null, true, false)
         ));
         
         entries.add(VCEntry.toggleColorOrHud(
@@ -158,8 +187,8 @@ public class VCManager {
             "Shows your current ping in the HUD.\nUse the HUD editor to customize position and appearance.\nUse /fa ping to send this value in chat.",
             Key.HUD_PING_ENABLED,
             false,
-            null,
-            new ExtraControl("Ping Display", false)
+            ClientPing::refresh,
+            new ExtraControl("Ping Display", false, false)
         ));
         
         entries.add(VCEntry.toggle2(
@@ -181,33 +210,41 @@ public class VCManager {
             null
         ));
 
-        entries.add(VCEntry.redirect(
+        entries.add(VCEntry.toggleColorOrHud(
             "Custom Keybinds",
             "Configure custom keybinds for commands.",
-            CONFIGURE_LABEL,
-            TabbedListScreen::keyTab
+            Key.KEY_SHORTCUTS_ENABLED,
+            false,
+            KeyShortcut::refresh,
+            new ExtraControl(null, false, true)
         ));
 
-        entries.add(VCEntry.redirect(
+        entries.add(VCEntry.toggleColorOrHud(
             "Custom Commands",
             "Configure custom commands.",
-            CONFIGURE_LABEL,
-            TabbedListScreen::cmdTab
+            Key.ALIASES_ENABLED,
+            false,
+            CommandAlias::refresh,
+            new ExtraControl(null, false, true)
         ));
 
-        entries.add(VCEntry.redirect(
-            "Chat Replacements",
+        entries.add(VCEntry.toggleColorOrHud(
+            "Chat Replacement",
             "Configure chat message replacements.",
-            CONFIGURE_LABEL,
-            TabbedListScreen::chatTab
+            Key.CHAT_REPLACEMENTS_ENABLED,
+            false,
+            ChatReplacement::refresh,
+            new ExtraControl(null, false, true)
         ));
 
-        entries.add(VCEntry.redirect(
+        entries.add(VCEntry.toggleColorOrHud(
             "Chat Alerts",
             "Custom alerts with optional title, sound and autochat on\nchat events. Be specific to prevent undesired matches.",
-            CONFIGURE_LABEL,
-            TabbedListScreen::alertTab
-        ));
+            Key.CHAT_ALERTS_ENABLED,
+            false,
+            ChatAlert::refresh,
+            new ExtraControl(null, false, true)
+        ));            
 
     }
     
@@ -216,6 +253,9 @@ public class VCManager {
      */
     private static void addRender(List<VCEntry> entries) {
         entries.add(VCEntry.header("── Rendering Tweaks ──", ""));
+
+        List<VCEntry> colorSubEntries = new ArrayList<>();
+        List<VCEntry> xpSubEntries = new ArrayList<>();
 
         entries.add(VCEntry.toggle(
             "Skip Death Animation",
@@ -243,19 +283,30 @@ public class VCManager {
 
         entries.add(VCEntry.toggle(
             "Clear Water",
-            "Removes underwater fog and improves visibility,\ndisabled outside Skyblock.",
+            "Removes underwater fog and improves visibility.\nDisabled outside Skyblock.",
             Key.FISHY_WATER,
             false,
             RenderTweaks::refresh
-        ));  
-        
-        entries.add(VCEntry.toggle2(
+        ));
+
+        xpSubEntries.add(VCEntry.toggleColorOrHud(
+            "Color and Outline",
+            "Set a color and toggle a bold outline.",
+            Key.XP_OUTLINE,
+            false,
+            XpColor::refresh,
+            new ExtraControl(null, true, false)
+        ));
+
+        entries.add(VCEntry.toggleExpandable(
             "XP Text Color",
             "Customize the appearance of vanilla experience display by\naltering the color and adding an outline.",
+            xpSubEntries,
+            Arrays.asList(
+                Text.literal("XP Color:"),
+                Text.literal("- §8Set the color and"),
+                Text.literal("  §8optional outline")),
             Key.XP_COLOR_ON,
-            false,
-            "OUTLINE",
-            Key.XP_OUTLINE,
             false,
             XpColor::refresh
         ));
@@ -277,6 +328,31 @@ public class VCManager {
             },
             VCEntry.SliderType.PRESET,
             true
+        ));
+
+        colorSubEntries.add(VCEntry.toggleColorOrHud(
+            "Custom Fa Colors",
+            "Add your own entries (not shared with others).",
+            Key.CUSTOM_FA_COLORS,
+            false,
+            FaColors::refresh,
+            new ExtraControl(null, false, true)
+        ));
+
+        entries.add(VCEntry.toggleExpandable(
+            "FA Colors",
+            "Colors player names for all users.\nNote: Name label recoloring is incompatible with Skyhanni.",
+            colorSubEntries,
+            Arrays.asList(
+                Text.literal("FA Colors:"),
+                Text.literal("- §8Predetermined list of players will be"),
+                Text.literal("  §8recolored globally"),
+                Text.literal("- §8You can add your own entries, but"),
+                Text.literal("  §8other players will not see them")
+            ),
+            Key.GLOBAL_FA_COLORS,
+            false,
+            FaColors::refresh
         ));
     }
     
@@ -300,11 +376,11 @@ public class VCManager {
 
         petSubEntries.add(VCEntry.toggleColorOrHud(
             "Dynamic",
-            "Updates data on tab updates, limited to onece per second.\nIf disabled, data will rely on chat.",
+            "Updates data on tab updates, limited to once per second.\nIf disabled, data will rely on chat.",
             Key.HUD_PET_DYNAMIC,
             false,
             PetInfo::refresh,
-            new ExtraControl("Pet Display", false)
+            new ExtraControl("Pet Display", false, false)
         ));
 
         petSubEntries.add(VCEntry.toggle(
@@ -351,7 +427,7 @@ public class VCManager {
             "Hides items under this value, set to 0 to disable.",
             Key.FILTER_MIN_VALUE,
             0,
-            100000,
+            50000,
             "%.0f",
             value -> {
                 FishyConfig.setFloat(Key.FILTER_MIN_VALUE, value);
@@ -364,6 +440,14 @@ public class VCManager {
             "Book Drop Message",
             "Displays a message with the book title when a book is dropped.",
             Key.BOOK_DROP_ALERT,
+            false,
+            null
+        ));
+
+        profitEntries.add(VCEntry.toggle(
+            "Tracker Drop Notifications",
+            "Adds a drop message to tracked items without one.",
+            Key.TRACKER_NOTIS,
             false,
             null
         ));
@@ -401,8 +485,8 @@ public class VCManager {
             Key.HUD_CENTURY_CAKE_ENABLED,
             false,
             TrackerUtils::refresh,
-            new ExtraControl("Century Cakes: ", false)
-        ));        
+            new ExtraControl("Century Cakes: ", false, false)
+        ));
 
         trackerEntries.add(VCEntry.header("── Rain Tracker ──", ""));
 
@@ -416,13 +500,21 @@ public class VCManager {
 
         trackerEntries.add(VCEntry.header("── Moonglade Minigame Alarm ──", ""));
 
-        trackerEntries.add(VCEntry.toggleColorOrHud(
-            "In-game Alarm and timer display",
-            "Adds a HUD timer if the minigame is on cooldown.",
+        trackerEntries.add(VCEntry.toggle(
+            "Alarm",
+            "Alerts you with a sound and system toast when the minigame is ready.",
             Key.BEACON_ALARM,
             false,
-            null,
-            new ExtraControl("Moonglade: ", false)
+            ChatTimers.getInstance()::refresh
+        ));
+
+        trackerEntries.add(VCEntry.toggleColorOrHud(
+            "Timer Display",
+            "Adds a HUD timer if the minigame is on cooldown.",
+            Key.HUD_TIMER_ENABLED,
+            false,
+            ChatTimers.getInstance()::refresh,
+            new ExtraControl("Moonglade: ", false, false)
         ));        
 
         entries.add(VCEntry.expandable(
@@ -440,7 +532,7 @@ public class VCManager {
 
         entries.add(VCEntry.toggle(
             "Clean Wither Impact",
-            "Removes explosion particles and any sound effects caused by\nwither blade abilities completely.",
+            "Removes explosion particles and any sound effects caused by\nwither blade abilities.",
             Key.CLEAN_HYPE,
             false,
             SkyblockCleaner::refresh
@@ -469,21 +561,31 @@ public class VCManager {
             false,
             Key.HOTSPOT_DISTANCE,
             0.0f,
-            100.0f,
+            20.0f,
             "%.0f blocks",
             SkyblockCleaner::refresh
         ));
 
-        entries.add(VCEntry.toggleSlider(
-            "Invisibug Helper",
-            "Scales the particles emitted by Invisibugs (crit) while on Galatea.",
-            Key.SCALE_CRIT,
+        entries.add(VCEntry.keybind(
+            "Hide Gui Buttons",
+            "Set the key to hide Skyblock gui icons. Tap the key to add/remove\n hovered slots, peek and bypass block by holding shift.",
+            Key.MOD_KEY_LOCK_GUISLOT,
             false,
+            GuiIcons::refresh
+        ));        
+
+        entries.add(VCEntry.slider(
+            "Invisibug Helper",
+            "Scales the particles emitted by Invisibugs (crit) while on Galatea.\nSet to 0 to disable.",
             Key.DMG_SCALE,
-            0.05f,
+            0.0f,
             1.5f,
             "%.2f",
-            ParticleVisuals::refreshCache
+                        value -> {
+                FishyConfig.setFloat(Key.DMG_SCALE, value);
+                FishyConfig.enable(Key.SCALE_CRIT, value > 0.0f);
+                ParticleVisuals.refreshCache();
+            }
         ));
     }
 
@@ -570,11 +672,9 @@ public class VCManager {
             "Bind and Lock Slots ",
             "Set the key to lock (tap) and bind (drag) slots.\nLeft-click again to remove key.",
             Key.MOD_KEY_LOCK,
-            false
+            false,
+            null
         ));
-
-
-        // to-do: fix key+btn
     }
 
     /**
@@ -603,11 +703,28 @@ public class VCManager {
         }
         
         String name = entry.name.startsWith("  ") ? entry.name.substring(2) : entry.name;
-        if (name.toLowerCase().contains(search)) {
-            return true;
-        }
+            String lowerName = name.toLowerCase();
+            int idx = lowerName.indexOf(search);
+            if (idx != -1) {
+                boolean atStart = idx == 0;
+                boolean afterSpace = idx > 0 && lowerName.charAt(idx - 1) == ' ';
+                if (atStart || afterSpace) {
+                    return true;
+                }
+            }
 
-        return entry.description != null && entry.description.toLowerCase().contains(search);
+            if (entry.description != null) {
+                String lowerDesc = entry.description.toLowerCase();
+                int descIdx = lowerDesc.indexOf(search);
+                if (descIdx != -1) {
+                    boolean atStart = descIdx == 0;
+                    boolean afterSpace = descIdx > 0 && lowerDesc.charAt(descIdx - 1) == ' ';
+                    if (atStart || afterSpace) {
+                        return true;
+                    }
+                }
+            }
+            return false;
     }
     
     public static boolean needsHudButton(VCEntry entry) {
@@ -616,6 +733,10 @@ public class VCManager {
     
     public static boolean needsColorButton(VCEntry entry) {
         return entry.hasColorControl;
+    }
+
+    public static boolean needsAddButton(VCEntry entry) {
+        return entry.hasAdd();
     }
 
     private VCManager() {

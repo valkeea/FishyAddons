@@ -28,7 +28,7 @@ public class TimerDisplay implements HudElement {
     }
     
     public void render(DrawContext context, int mouseX, int mouseY) {
-        if (!editingMode && (!FishyConfig.getState(HUD_KEY, false) || 
+        if (!editingMode && (!ChatTimers.getInstance().isBeaconAlarmHudOn() || 
             !ChatTimers.getInstance().isBeaconActive())) return;
         long secondsLeft = ChatTimers.getInstance().getBeaconTimer();
         if (secondsLeft < 0) return;
@@ -141,7 +141,7 @@ public class TimerDisplay implements HudElement {
     @Override public void setHudPosition(int x, int y) { FishyConfig.setHudX(HUD_KEY, x); FishyConfig.setHudY(HUD_KEY, y); }
     @Override public int getHudSize() { return FishyConfig.getHudSize(HUD_KEY, 12); }
     @Override public void setHudSize(int size) { FishyConfig.setHudSize(HUD_KEY, size); }
-    @Override public int getHudColor() { return FishyConfig.getHudColor(HUD_KEY, 0xFFFFFF); }
+    @Override public int getHudColor() { return FishyConfig.getHudColor(HUD_KEY, 0xC8D9C0); }
     @Override public void setHudColor(int color) { FishyConfig.setHudColor(HUD_KEY, color); }
     @Override public boolean getHudOutline() { return FishyConfig.getHudOutline(HUD_KEY, false); }
     @Override public void setHudOutline(boolean outline) { FishyConfig.setHudOutline(HUD_KEY, outline); }   

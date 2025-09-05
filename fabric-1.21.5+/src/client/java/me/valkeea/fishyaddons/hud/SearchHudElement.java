@@ -153,19 +153,6 @@ public class SearchHudElement implements HudElement {
         }
     }
 
-    @Override public int getHudX() { return FishyConfig.getHudX(HUD_CONFIG_KEY, 100); }
-    @Override public int getHudY() { return FishyConfig.getHudY(HUD_CONFIG_KEY, 10); }
-    @Override public int getHudSize() { return FishyConfig.getHudSize(HUD_CONFIG_KEY, 20); }
-    @Override public int getHudColor() { return FishyConfig.getHudColor(HUD_CONFIG_KEY, 0xFFFFFF); }    
-    @Override public boolean getHudOutline() { return FishyConfig.getHudOutline(HUD_CONFIG_KEY, false); }
-    @Override public boolean getHudBg() { return FishyConfig.getHudBg(HUD_CONFIG_KEY, true); }
-    @Override public String getDisplayName() { return "Item Search"; }    
-    @Override public void setEditingMode(boolean editing) { this.editingMode = editing; }
-    @Override public void setHudSize(int size) { FishyConfig.setHudSize(HUD_CONFIG_KEY, size); }
-    @Override public void setHudColor(int color) { FishyConfig.setHudColor(HUD_CONFIG_KEY, color); }
-    @Override public void setHudOutline(boolean outline) { FishyConfig.setHudOutline(HUD_CONFIG_KEY, outline); }
-    @Override public void setHudBg(boolean bg) { FishyConfig.setHudBg(HUD_CONFIG_KEY, bg); }    
-
     @Override
     public void setHudPosition(int x, int y) {
         FishyConfig.setHudX(HUD_CONFIG_KEY, x);
@@ -288,4 +275,17 @@ public class SearchHudElement implements HudElement {
             }
         }
     }
+
+    @Override public int getHudX() { return FishyConfig.getHudX(HUD_CONFIG_KEY, 100); }
+    @Override public int getHudY() { return FishyConfig.getHudY(HUD_CONFIG_KEY, 10); }
+    @Override public int getHudSize() { return FishyConfig.getHudSize(HUD_CONFIG_KEY, 20); }
+    @Override public int getHudColor() { return FishyConfig.getHudColor(HUD_CONFIG_KEY, 0xFFFFFF); }    
+    @Override public boolean getHudOutline() { return FishyConfig.getHudOutline(HUD_CONFIG_KEY, false); }
+    @Override public boolean getHudBg() { return FishyConfig.getHudBg(HUD_CONFIG_KEY, true); }
+    @Override public String getDisplayName() { return "Item Search"; }    
+    @Override public void setEditingMode(boolean editing) { this.editingMode = editing; }
+    @Override public void setHudSize(int size) { FishyConfig.setHudSize(HUD_CONFIG_KEY, size); }
+    @Override public void setHudColor(int color) { FishyConfig.setHudColor(HUD_CONFIG_KEY, color); }
+    @Override public void setHudOutline(boolean outline) { FishyConfig.setHudOutline(HUD_CONFIG_KEY, outline); }
+    @Override public void setHudBg(boolean bg) { FishyConfig.setHudBg(HUD_CONFIG_KEY, bg); }        
 }

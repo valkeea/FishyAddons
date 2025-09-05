@@ -1,8 +1,5 @@
 package me.valkeea.fishyaddons.handler;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.config.Key;
 import me.valkeea.fishyaddons.util.EqTextures;

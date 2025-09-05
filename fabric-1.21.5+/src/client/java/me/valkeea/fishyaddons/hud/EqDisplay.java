@@ -16,8 +16,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.Identifier;
 
 public class EqDisplay {
-    private EqDisplay() {}
-    public static EqDisplay getInstance() { return new EqDisplay(); }
+    private static EqDisplay instance = null;    
     private static final Logger LOGGER = LoggerFactory.getLogger("FishyAddons/ArmorDisplay");
     private static final Identifier SLOT_TEXTURE = Identifier.of("minecraft", "textures/gui/container/inventory.png");
 
@@ -32,6 +31,13 @@ public class EqDisplay {
     private static boolean renderedPositionsComputed = false;
     private static boolean shouldRender = false;
     private static long lastEquipmentCheck = 0;
+
+    public static EqDisplay getInstance() {
+        if (instance == null) {
+            instance = new EqDisplay();
+        }
+        return instance;
+    }    
     
     /**
      * Refresh cached equipment data
@@ -91,7 +97,7 @@ public class EqDisplay {
             // Fallback
             LOGGER.warn("Using fallback positions");
             for (int i = 0; i < 4; i++) {
-                int slotX = -50;  // Far left to avoid any conflicts
+                int slotX = -50;
                 int slotY = 10 + (i * 20);
                 renderedPositions.put(i, new Integer[]{slotX, slotY});
             }

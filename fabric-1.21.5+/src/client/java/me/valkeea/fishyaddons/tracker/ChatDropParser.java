@@ -1,6 +1,5 @@
 package me.valkeea.fishyaddons.tracker;
 
-import me.valkeea.fishyaddons.cache.ApiCache;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -8,15 +7,15 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import me.valkeea.fishyaddons.cache.ApiCache;
 
 public class ChatDropParser {
-    private ChatDropParser() {}
-    
     private static final String SHARD_KEYWORD = "shard";
     private static final String SHARD_PLURAL = " shards";
     private static final String COINS_KEYWORD = "coins";
     private static final String COIN_KEYWORD = "coin";
     private static final String CHARM_KEYWORD = "charm";
+    private static final String NAGA_KEYWORD = "naga";
     private static final String YOU_CAUGHT = "you caught";
     private static final String RARE_DROP = "rare drop";
     private static final String VERY_RARE_DROP = "very rare drop";
@@ -33,15 +32,14 @@ public class ChatDropParser {
     private static final String DROP_REGEX_SUFFIX = "!\\s*([^(\\r\\n]+?)(?:\\s*\\([^)]*\\).*)?$";
     private static final List<DropPattern> DROP_PATTERNS = new ArrayList<>();
     private static final Set<String> TRACKED_SHARDS = new HashSet<>();
-    private static final Set<String> TRACKED_VALUABLE_ITEMS = new HashSet<>();
     private static final Set<String> VALUABLE_KEYWORDS = new HashSet<>();
     
     static {
-        initShards();
+        init();
         initPatterns();
     }
     
-    private static void initShards() {
+    private static void init() {
         String[] shardNames = {
 
             // Murkwater/Galatea
@@ -83,16 +81,6 @@ public class ChatDropParser {
             TRACKED_SHARDS.add(shard.toLowerCase());
         }
         
-        // For the future
-        String[] valuableItems = {
-            "minos relic",
-            COINS_KEYWORD
-        };
-        
-        for (String item : valuableItems) {
-            TRACKED_VALUABLE_ITEMS.add(item.toLowerCase());
-        }
-        
         String[] keywords = {
             "enchanted", "rare", "epic", "legendary",
             "book", "talisman", "[Lvl 1]", COIN_KEYWORD, SHARD_KEYWORD
@@ -104,6 +92,12 @@ public class ChatDropParser {
     }
     
     private static void initPatterns() {
+        // Pattern 1a: "RARE DROP! You dug out ItemName!"
+        DROP_PATTERNS.add(new DropPattern(
+            Pattern.compile(RARE_DROP + "!\\s*You dug out an? ([^!]+)!", Pattern.CASE_INSENSITIVE),
+            -1, 1
+        ));
+        
         // Pattern 5b: "X DROP! (31x ItemName) (+Magic Find)"
         DROP_PATTERNS.add(new DropPattern(
             Pattern.compile(
@@ -177,7 +171,7 @@ public class ChatDropParser {
         // Pattern 11: "Wow! You dug out X coins!"
         DROP_PATTERNS.add(new DropPattern(
             Pattern.compile(WOW_DUG_OUT + " ([\\d,]+)\\s+coins!", Pattern.CASE_INSENSITIVE),
-            1, -2 // Special marker for coins
+            -2, 1 // Special marker for coins
         ));
         
         // Pattern 12: "You caught xX ItemName Shards!"
@@ -192,15 +186,15 @@ public class ChatDropParser {
             -1, 1
         ));
         
-        // Pattern 14: "CHARM You charmed a CreatureName and captured X Shards from it"
+        // Pattern 14: "CHARM/SALT/NAGA You charmed a CreatureName and captured X Shards from it"
         DROP_PATTERNS.add(new DropPattern(
-            Pattern.compile("(?:salt|charm)\\s+you charmed an?\\s+(.+?)\\s+and captured (\\d+)\\s+shards? from it", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("(?:salt|charm|naga)\\s+you charmed an?\\s+(.+?)\\s+and captured (\\d+)\\s+shards? from it", Pattern.CASE_INSENSITIVE),
             2, 1
         ));
         
-        // Pattern 14b: "CHARM/SALT You charmed a CreatureName and captured its Shard"
+        // Pattern 14b: "CHARM/SALT/NAGA You charmed a CreatureName and captured its Shard"
         DROP_PATTERNS.add(new DropPattern(
-            Pattern.compile("(?:salt|charm)\\s+you charmed an?\\s+(.+?)\\s+and captured its shard", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("(?:salt|charm|naga)\\s+you charmed an?\\s+(.+?)\\s+and captured its shard", Pattern.CASE_INSENSITIVE),
             -1, 1
         ));
         
@@ -263,17 +257,17 @@ public class ChatDropParser {
                lowerMessage.contains(WOW_DUG_OUT) ||
                lowerMessage.contains(YOU_CAUGHT) ||
                lowerMessage.contains(CHARM_KEYWORD) ||
+                lowerMessage.contains(NAGA_KEYWORD) ||
                lowerMessage.contains(SALT_YOU_CHARMED) ||
                lowerMessage.contains(LOOT_SHARE);
     }
-    
+
     private static boolean ignore(String lowerMessage) {
         if (lowerMessage.contains(CATCH_KEYWORD) ||
             lowerMessage.contains(SHARD_KEYWORD) ||
             lowerMessage.contains("coins!")) {
             return false;
         }
-        
         return lowerMessage.contains("double hook") ||
                lowerMessage.contains("you've hooked an");
     }
@@ -326,13 +320,9 @@ public class ChatDropParser {
                 }
             }
             
-            // Charm/salt messages - convert creature name to shard name
             itemName = handleSpecialMessages(itemName, cleanMessage);
-            
-            // Clean up item name
             itemName = cleanItemName(itemName);
             
-            // For coin drops, return immediately
             if (isCoinDrop) {
                 return new ParseResult(COINS_KEYWORD, quantity, true);
             }
@@ -383,10 +373,9 @@ public class ChatDropParser {
     private static String ensureShardSuffix(String itemName, String originalMessage) {
         String lowerMessage = originalMessage.toLowerCase();
         String lowerItem = itemName.toLowerCase();
-        
-        // Check if this message is definitely about shards
         boolean isShardMessage = lowerMessage.contains(SHARD_KEYWORD) || 
                                 lowerMessage.contains(CHARM_KEYWORD) || 
+                                lowerMessage.contains(NAGA_KEYWORD) ||
                                 lowerMessage.contains(SALT_YOU_CHARMED) ||
                                 lowerMessage.contains(LOOT_SHARE);
         
@@ -401,9 +390,8 @@ public class ChatDropParser {
     
     private static String handleSpecialMessages(String itemName, String cleanMessage) {
         String lowerMessage = cleanMessage.toLowerCase();
-        if ((lowerMessage.contains(CHARM_KEYWORD) || lowerMessage.contains("salt")) && 
+        if ((lowerMessage.contains(CHARM_KEYWORD) || lowerMessage.contains("salt")) || lowerMessage.contains(NAGA_KEYWORD) &&
             (lowerMessage.contains("captured") || lowerMessage.contains(SHARD_KEYWORD))) {
-            // For some charm/salt messages, the creature name becomes the shard name
             return itemName + " " + SHARD_KEYWORD;
         }
         return itemName;
@@ -414,7 +402,7 @@ public class ChatDropParser {
         
         // If it's a shard, ensure singular form for display
         if (normalized.contains(SHARD_KEYWORD) && normalized.endsWith(SHARD_PLURAL)) {
-            return itemName.substring(0, itemName.length() - 1); // Remove the 's'
+            return itemName.substring(0, itemName.length() - 1);
         }
         
         return itemName;
@@ -524,7 +512,7 @@ public class ChatDropParser {
             return false;
         }
         if (normalized.contains("raw salmon") || normalized.contains("shard of the shredded") || 
-            normalized.contains("prismarine shard")) {
+            normalized.contains("prismarine shard") || normalized.contains("earth shard")) {
             return false;
         }
         for (String shard : TRACKED_SHARDS) {
@@ -609,5 +597,9 @@ public class ChatDropParser {
             }
             return String.format("%dx %s", quantity, itemName);
         }
+    }
+
+    private ChatDropParser() {
+        throw new UnsupportedOperationException("Utility class");
     }
 }

@@ -250,14 +250,7 @@ public class SackDropParser {
      * Check if a sack item should be tracked
      */
     private static boolean isTrackableSackItem(String itemName) {
-        if (itemName == null || itemName.trim().isEmpty()) {
-            return false;
-        }
-        
-        String normalized = itemName.toLowerCase();
-        
-        // Don't track plain coins as items
-        return !normalized.equals("coins") && !normalized.equals("coin");
+        return itemName != null && !itemName.trim().isEmpty();
     }
     
     /**

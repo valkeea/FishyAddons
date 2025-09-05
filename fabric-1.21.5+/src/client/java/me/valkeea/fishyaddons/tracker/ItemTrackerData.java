@@ -1,33 +1,32 @@
 package me.valkeea.fishyaddons.tracker;
 
-import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+
 import me.valkeea.fishyaddons.api.HypixelPriceClient;
 import me.valkeea.fishyaddons.cache.ApiCache;
 import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.config.Key;
-
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 
-
-// Session-persistent storage
 public class ItemTrackerData {
     private static final Map<String, Integer> itemCounts = new ConcurrentHashMap<>();
     private static final Map<String, Double> itemValues = new ConcurrentHashMap<>();
+
     private static final String BOOK_DROP_MESSAGE = "BOOK DROP!";
+    private static final String ENCHANTED_BOOK = "enchanted book";
+    private static final String REGEX = "[^a-zA-Z0-9]";
+
     private static long sessionStartTime = System.currentTimeMillis();
+    private static long lastActivityTime = System.currentTimeMillis();
+    private static long totalPausedTime = 0;
+
+    private static final long INACTIVITY_THRESHOLD = 3L * 60 * 1000;
     private static double sessionCoins = 0.0;
     private static HypixelPriceClient priceClient = null;
-    private ItemTrackerData() {}
-    
+
     public static void init() {
         if (priceClient == null) {
             priceClient = new HypixelPriceClient();
@@ -42,15 +41,20 @@ public class ItemTrackerData {
     }
 
     public static void addDrop(String itemName, int quantity) {
-        addDrop(itemName, quantity, null);
-    }
-    
-    public static void addDrop(String itemName, int quantity, String tooltipContent) {
         if (itemName == null || itemName.trim().isEmpty()) return;
+
+        // Check if pause threshold has been exceeded
+        long currentTime = System.currentTimeMillis();
+        long timeSinceLastActivity = currentTime - lastActivityTime;
+        if (timeSinceLastActivity > INACTIVITY_THRESHOLD) {
+            totalPausedTime += timeSinceLastActivity;
+        }
+        
+        lastActivityTime = currentTime;
+        
         String normalizedName = normalizeItemName(itemName);
         itemCounts.merge(normalizedName, quantity, Integer::sum);
-        
-        // Async price lookup for new items to populate cache
+
         if (priceClient != null && !itemValues.containsKey(normalizedName)) {
             new Thread(() -> {
                 try {
@@ -61,7 +65,7 @@ public class ItemTrackerData {
                 } catch (Exception e) {
                     System.err.println("Error fetching price for " + normalizedName + ": " + e.getMessage());
                 }
-            }, "AutoPriceLookup-" + normalizedName.replaceAll("[^a-zA-Z0-9]", "")).start();
+            }, "AutoPriceLookup-" + normalizedName.replaceAll(REGEX, "")).start();
         }
     }
 
@@ -88,15 +92,40 @@ public class ItemTrackerData {
         itemValues.clear();
         sessionCoins = 0.0;
         sessionStartTime = System.currentTimeMillis();
+        lastActivityTime = System.currentTimeMillis();
+        totalPausedTime = 0;
         ApiCache.cleanupExpiredEntries();
     }
     
     public static long getSessionStartTime() {
         return sessionStartTime;
     }
+
+    public static long getTotalDurationMinutes() {
+        long currentTime = System.currentTimeMillis();
+        long totalElapsed = currentTime - sessionStartTime;
+        long currentPausedTime = totalPausedTime;
+        // add the current inactive time to paused time for calculation
+        long timeSinceLastActivity = currentTime - lastActivityTime;
+        if (timeSinceLastActivity > INACTIVITY_THRESHOLD) {
+            currentPausedTime += timeSinceLastActivity;
+        }
+        
+        long activeTime = totalElapsed - currentPausedTime;
+        return Math.max(0, activeTime) / (60 * 1000);
+    }
     
-    public static long getSessionDurationMinutes() {
-        return (System.currentTimeMillis() - sessionStartTime) / (60 * 1000);
+    public static boolean isCurrentlyPaused() {
+        long timeSinceLastActivity = System.currentTimeMillis() - lastActivityTime;
+        return timeSinceLastActivity > INACTIVITY_THRESHOLD;
+    }
+    
+    public static long getInactiveMinutes() {
+        if (!isCurrentlyPaused()) {
+            return 0;
+        }
+        long timeSinceLastActivity = System.currentTimeMillis() - lastActivityTime;
+        return timeSinceLastActivity / (60 * 1000);
     }
     
     private static String normalizeItemName(String itemName) {
@@ -150,8 +179,7 @@ public class ItemTrackerData {
             
             totalValue += unitPrice * quantity;
         }
-        
-        return totalValue + sessionCoins;
+        return totalValue;
     }
     
     public static double getCachedItemValue(String itemName) {
@@ -212,14 +240,14 @@ public class ItemTrackerData {
     }
     
     private static double getEstimatedValue(String itemName) {
-        // Common shard values (rough estimates - can be updated)
+        // Fallback shard value
         if (itemName.contains("shard")) {
             return 1000.0;
         }
 
         // Npc prices/ah stack estimates
         switch (itemName.toLowerCase()) {
-            case "enchanted book":
+            case ENCHANTED_BOOK:
                 return 5.0;
             case "ender chestplate", "ender leggings", "ender boots", "ender helmet":
                 return 10000.0;
@@ -243,7 +271,7 @@ public class ItemTrackerData {
     }
     
     public static long getLastApiUpdateTime() {
-        return priceClient != null ? Math.max(priceClient.getLastBazaarUpdate(), priceClient.getLastAuctionUpdate()) : 0;
+        return priceClient != null ? priceClient.getLastBazaarUpdate() : 0;
     }
     
     public static long getLastBazaarUpdateTime() {
@@ -271,11 +299,8 @@ public class ItemTrackerData {
             priceClient.refreshBazaarAsync();
         }
     }
-    
-    /**
-     * Get the price client instance for direct access (used by commands)
-     * @return The HypixelPriceClient instance, or null if not initialized
-     */
+
+    // Returns the price client instance for direct access (used by commands)
     public static HypixelPriceClient getPriceClient() {
         return priceClient;
     }
@@ -325,7 +350,7 @@ public class ItemTrackerData {
                 double estimatedValue = getEstimatedValue(normalizedName);
                 callback.onResult(estimatedValue, "ESTIMATED");
             }
-        }, "AsyncValueLookup-" + itemName.replaceAll("[^a-zA-Z0-9]", "")).start();
+        }, "AsyncValueLookup-" + itemName.replaceAll(REGEX, "")).start();
     }
     
     /**
@@ -346,8 +371,7 @@ public class ItemTrackerData {
             for (String normalizedItemName : currentItems.keySet()) {
                 try {
                     if (!itemValues.containsKey(normalizedItemName)) {
-                        double value = getItemValue(normalizedItemName);
-                        System.out.println("Updated price for " + normalizedItemName + ": " + value);
+                        getItemValue(normalizedItemName);
                         Thread.sleep(100);
                     }
                 } catch (InterruptedException e) {
@@ -361,173 +385,6 @@ public class ItemTrackerData {
         }, "BackgroundPriceUpdate").start();
     }
     
-    // --- Tracker profile management ---
-    private static final String TRACKER_BASE_PATH = "config/fishyaddons/tracker/";
-    private static final String DEFAULT_PROFILE = "default";
-    private static String currentProfile = DEFAULT_PROFILE;
-
-    public static void saveProfile() {
-        if (!DEFAULT_PROFILE.equals(currentProfile)) {
-            saveToJson();
-        }
-    }
-
-    private static String getCurrentTrackerFilePath() {
-        return TRACKER_BASE_PATH + "profittracker_" + currentProfile + ".json";
-    }
-    
-    private static String getTrackerFilePath(String profile) {
-        return TRACKER_BASE_PATH + "profittracker_" + profile + ".json";
-    }
-    
-    public static void setCurrentProfile(String profile) {
-        if (profile == null || profile.trim().isEmpty()) {
-            profile = DEFAULT_PROFILE;
-        }
-        
-        saveToJson();
-        currentProfile = profile.toLowerCase().replaceAll("[^a-z0-9_-]", "");
-        
-        itemCounts.clear();
-        itemValues.clear();
-        sessionCoins = 0.0;
-        sessionStartTime = System.currentTimeMillis();
-        loadFromJson();
-    }
-    
-    public static String getCurrentProfile() {
-        return currentProfile;
-    }
-    
-    public static java.util.List<String> getAvailableProfiles() {
-        java.util.List<String> profiles = new java.util.ArrayList<>();
-        try {
-            Path trackerDir = Paths.get(TRACKER_BASE_PATH);
-            if (Files.exists(trackerDir)) {
-                Files.list(trackerDir)
-                    .filter(Files::isRegularFile)
-                    .filter(path -> path.getFileName().toString().startsWith("profittracker_") && 
-                                   path.getFileName().toString().endsWith(".json"))
-                    .forEach(path -> {
-                        String fileName = path.getFileName().toString();
-                        String profileName = fileName.substring("profittracker_".length(), fileName.length() - ".json".length());
-                        profiles.add(profileName);
-                    });
-            }
-        } catch (Exception e) {
-            System.err.println("Error listing profiles: " + e.getMessage());
-        }
-        
-        if (!profiles.contains(DEFAULT_PROFILE)) {
-            profiles.add(0, DEFAULT_PROFILE);
-        }
-        
-        return profiles;
-    }
-    
-    /**
-     * Create a new profile with the given name
-     */
-    public static boolean createProfile(String profileName) {
-        if (profileName == null || profileName.trim().isEmpty()) {
-            return false;
-        }
-        
-        String cleanProfileName = profileName.toLowerCase().replaceAll("[^a-z0-9_-]", "");
-        if (cleanProfileName.isEmpty()) {
-            return false;
-        }
-        
-        if (getAvailableProfiles().contains(cleanProfileName)) {
-            return false;
-        }
-        
-        saveToJson();
-        setCurrentProfile(cleanProfileName);
-        return true;
-    }
-    
-    public static boolean deleteProfile(String profile) {
-        if (DEFAULT_PROFILE.equals(profile)) {
-            return false;
-        }
-        
-        try {
-            Path filePath = Paths.get(getTrackerFilePath(profile));
-            if (Files.exists(filePath)) {
-                Files.delete(filePath);
-                return true;
-            }
-        } catch (Exception e) {
-            System.err.println("Error deleting profile " + profile + ": " + e.getMessage());
-        }
-        return false;
-    }
-    
-    public static void saveToJson() {
-        try {
-            Path filePath = Paths.get(getCurrentTrackerFilePath());
-            Files.createDirectories(filePath.getParent());
-            
-            TrackerData data = new TrackerData();
-            data.itemCounts = new HashMap<>(itemCounts);
-            data.sessionStartTime = sessionStartTime;
-            data.savedAt = System.currentTimeMillis();
-            data.profileName = currentProfile;
-            
-            Gson gson = new GsonBuilder().setPrettyPrinting().create();
-            String json = gson.toJson(data);
-            
-            try (FileWriter writer = new FileWriter(filePath.toFile())) {
-                writer.write(json);
-            }
-        } catch (Exception e) {
-            System.err.println("Error saving tracker data: " + e.getMessage());
-        }
-    }
-    
-    public static boolean loadFromJson() {
-        try {
-            Path filePath = Paths.get(getCurrentTrackerFilePath());
-            if (!Files.exists(filePath)) {
-                return false;
-            }
-            
-            String json = Files.readString(filePath);
-            Gson gson = new Gson();
-            TrackerData data = gson.fromJson(json, TrackerData.class);
-            
-            if (data != null && data.itemCounts != null) {
-                itemCounts.clear();
-                itemCounts.putAll(data.itemCounts);
-                if (data.sessionStartTime > 0) {
-                    sessionStartTime = data.sessionStartTime;
-                }
-                return true;
-            }
-        } catch (Exception e) {
-            System.err.println("Error loading tracker data: " + e.getMessage());
-        }
-        return false;
-    }
-    
-    public static boolean deleteJsonFile() {
-        try {
-            Path filePath = Paths.get(getCurrentTrackerFilePath());
-            if (Files.exists(filePath)) {
-                Files.delete(filePath);
-                return true;
-            }
-        } catch (Exception e) {
-            System.err.println("Error deleting tracker data file: " + e.getMessage());
-        }
-        return false;
-    }
-    
-    public static boolean hasJsonFile() {
-        return Files.exists(Paths.get(getCurrentTrackerFilePath()));
-    }
-    
     // Force refresh from the hud buttons
     public static void forceRefreshAuctionCache() {
         if (priceClient == null) return;
@@ -539,20 +396,10 @@ public class ItemTrackerData {
                 int refreshCount = 0;
                 
                 for (String itemName : items.keySet()) {
-                    try {
-                        // Rebuild
-                        double price = priceClient.getLowestBinPrice(itemName);
-                        if (price > 0) {
-                            refreshCount++;
-                        }
-        
-                        Thread.sleep(200);
-
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
+                    if (!refreshAuctionItem(itemName)) {
                         break;
-                    } catch (Exception e) {
-                        System.err.println("Error refreshing " + itemName + ": " + e.getMessage());
+                    } else {
+                        refreshCount++;
                     }
                 }
                 
@@ -564,14 +411,24 @@ public class ItemTrackerData {
         }, "ForceAuctionRefresh").start();
     }
     
-    /**
-     * Data class for JSON serialization
-     */
-    private static class TrackerData {
-        Map<String, Integer> itemCounts;
-        long sessionStartTime;
-        long savedAt;
-        String profileName;
+    private static boolean refreshAuctionItem(String itemName) {
+        try {
+            // Rebuild
+            double price = priceClient.getLowestBinPrice(itemName);
+            if (price > 0) {
+                // price updated, nothing else needed here
+            }
+
+            Thread.sleep(200);
+
+            return true;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return false;
+        } catch (Exception e) {
+            System.err.println("Error refreshing " + itemName + ": " + e.getMessage());
+            return true;
+        }
     }
     
     /**
@@ -586,9 +443,9 @@ public class ItemTrackerData {
         String cleanItemName = normalizeItemName(rawItemName);
         
         // Special handling for enchanted books
-        if (cleanItemName.equals("enchanted book") && tooltipContent != null) {
+        if (cleanItemName.equals(ENCHANTED_BOOK) && tooltipContent != null) {
             String enhancedName = extractEnchantedBookName(tooltipContent);
-            if (enhancedName != null && !enhancedName.trim().isEmpty() && !enhancedName.equals("enchanted book")) {
+            if (enhancedName != null && !enhancedName.trim().isEmpty() && !enhancedName.equals(ENCHANTED_BOOK)) {
                 return enhancedName;
             }
         }
@@ -602,85 +459,44 @@ public class ItemTrackerData {
     public static void addEnchantedBookDrop(String rawItemName, int quantity, String tooltipContent, String magicFind) {
         String enhancedName = enhanceItemName(rawItemName, tooltipContent);
         
-        if (enhancedName != null && !enhancedName.equals("enchanted book") && tooltipContent != null) {
+        if (enhancedName != null && !enhancedName.equals(ENCHANTED_BOOK) && tooltipContent != null) {
             // Check if it's an ultimate enchantment based on color
             boolean isUltimate = tooltipContent.contains("color=light_purple") || tooltipContent.contains("color=magenta");
-            
+
             // Add the specific enchantment with magic find for alert
             addEnchantedBook(enhancedName, quantity, isUltimate, magicFind);
         } else {
             // Fallback to generic enchanted book
-            addDrop("enchanted book", quantity);
+            addDrop(ENCHANTED_BOOK, quantity);
         }
     }
     
     /**
      * Extract the specific enchantment name from enchanted book tooltip content
      */
-    private static String extractEnchantedBookName(String tooltipContent) {
+    protected static String extractEnchantedBookName(String tooltipContent) {
         if (tooltipContent == null || tooltipContent.trim().isEmpty()) {
             return null;
         }
-        if (tooltipContent.contains("siblings=[literal{") && tooltipContent.contains("}[style=")) {
-            return extractFromMinecraftTextFormat(tooltipContent);
-        }
-        return extractFromPlainTextFormat(tooltipContent);
+        return extractFromMinecraftTextFormat(tooltipContent);
     }
     
-    /**
-     * Extract enchantment name from Minecraft Text object format
-     */
     private static String extractFromMinecraftTextFormat(String tooltipContent) {
-        String pattern = "siblings=\\[literal\\{([^}]+)\\}\\[style=\\{([^}]*)\\}\\]";
-        java.util.regex.Pattern regex = java.util.regex.Pattern.compile(pattern);
-        java.util.regex.Matcher matcher = regex.matcher(tooltipContent);
-        
-        if (matcher.find()) {
-            String enchantmentName = matcher.group(1);
-            String styleInfo = matcher.group(2);
-            
-            // Check if it's an ultimate enchantment (pink color)
-            boolean isUltimate = styleInfo.contains("color=light_purple") || styleInfo.contains("color=magenta");
-            return enchantmentName;
-        }
-        return null;
-    }
-    
-    /**
-     * Extract enchantment name from plain text format
-     */
-    private static String extractFromPlainTextFormat(String tooltipContent) {
-        String[] lines = tooltipContent.split("\\n");
-        
-        for (String line : lines) {
-            String cleanLine = line.trim()
-                .replaceAll("§[0-9a-fk-or]", "") // Remove color codes
-                .trim();
-            
-            if (shouldSkipLine(cleanLine)) {
-                continue;
-            }
-            
-            // Look for lines that contain enchantment information
-            if (cleanLine.matches(".*\\b(I|II|III|IV|V|VI|VII|VIII|IX|X)\\b.*") ||
-                (cleanLine.length() > 3 && !cleanLine.contains("§") && Character.isUpperCase(cleanLine.charAt(0)))) {
-                return cleanLine;
+        java.util.regex.Pattern literalPattern = java.util.regex.Pattern.compile("literal\\{([^}]+)\\}\\[style=\\{([^}]*)\\}\\]", java.util.regex.Pattern.DOTALL);
+        java.util.regex.Matcher literalMatcher = literalPattern.matcher(tooltipContent);
+        String firstLiteral = null;
+        while (literalMatcher.find()) {
+            String name = literalMatcher.group(1);
+            String style = literalMatcher.group(2);
+            if (firstLiteral == null) firstLiteral = name;
+            if (style.contains("light_purple")) {
+                return name;
             }
         }
+        if (firstLiteral != null) {
+            return firstLiteral;
+        }
         return null;
-    }
-    
-    /**
-     * Check if a line should be skipped during enchantment parsing
-     */
-    private static boolean shouldSkipLine(String cleanLine) {
-        return cleanLine.isEmpty() || 
-               cleanLine.startsWith("Right-click") ||
-               cleanLine.startsWith("Click to") ||
-               cleanLine.startsWith("Combine") ||
-               cleanLine.contains("Enchanted Book") ||
-               cleanLine.contains("Apply this book") ||
-               cleanLine.contains("NBT:");
     }
     
     /**
@@ -737,7 +553,7 @@ public class ItemTrackerData {
                 } catch (Exception e) {
                     System.err.println("Error fetching enchantment price for " + enchantmentName + ": " + e.getMessage());
                 }
-            }, "EnchantmentPriceLookup-" + normalizedName.replaceAll("[^a-zA-Z0-9]", "")).start();
+            }, "EnchantmentPriceLookup-" + normalizedName.replaceAll(REGEX, "")).start();
         }
     }
     
@@ -745,7 +561,7 @@ public class ItemTrackerData {
      * Remove generic enchanted book entries
      */
     public static void removeGenericEnchantedBook(int quantity) {
-        String genericName = normalizeItemName("enchanted book");
+        String genericName = normalizeItemName(ENCHANTED_BOOK);
         Integer genericCount = itemCounts.get(genericName);
         
         if (genericCount != null && genericCount >= quantity) {
@@ -762,5 +578,37 @@ public class ItemTrackerData {
      */
     public static void clearValueCache() {
         itemValues.clear();
+    }
+
+    // --- State accessors for profile management ---
+    public static long getLastActivityTime() {
+        return lastActivityTime;
+    }
+
+    public static long getTotalPausedTime() {
+        return totalPausedTime;
+    }
+
+    public static void setAllItems(Map<String, Integer> items) {
+        itemCounts.clear();
+        if (items != null) {
+            itemCounts.putAll(items);
+        }
+    }
+
+    public static void setSessionStartTime(long time) {
+        sessionStartTime = time;
+    }
+
+    public static void setLastActivityTime(long time) {
+        lastActivityTime = time;
+    }
+
+    public static void setTotalPausedTime(long time) {
+        totalPausedTime = time;
+    }
+
+    private ItemTrackerData() {
+        throw new UnsupportedOperationException("Utility class");
     }
 }

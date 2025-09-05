@@ -27,7 +27,10 @@ public class InventoryTracker {
     
     private static final Map<String, String> TRACKED_PLAYER_HEADS = new ConcurrentHashMap<>();
     private static final Map<String, String> TRACKED_GHAST_TEARS = new ConcurrentHashMap<>();
-    
+    private static final Map<String, String> TRACKED_AXES = new ConcurrentHashMap<>();
+
+    private static final String CLEAN_REGEX = "§[0-9a-fk-or]";
+
     /**
      * Data class to store enchanted book drop information
      */
@@ -44,6 +47,12 @@ public class InventoryTracker {
     static {
         TRACKED_PLAYER_HEADS.put("emperor's skull", "DIVER_FRAGMENT");
         TRACKED_PLAYER_HEADS.put("magma lord fragment", "MAGMA_LORD_FRAGMENT");
+        TRACKED_PLAYER_HEADS.put("soul fragment", "SOUL_FRAGMENT");
+        TRACKED_PLAYER_HEADS.put("foraging exp boost", "Foraging Exp Boost");
+        TRACKED_PLAYER_HEADS.put("minos relic", "Minos Relic");
+        TRACKED_PLAYER_HEADS.put("dwarf turtle shelmet", "Dwarf Turtle Shelmet");
+        TRACKED_PLAYER_HEADS.put("antique remedies", "Antique Remedies");
+        TRACKED_PLAYER_HEADS.put("crown of greed", "Crown of Greed");
     }
 
     static {
@@ -93,6 +102,10 @@ public class InventoryTracker {
         if (stack.getItem() == Items.GHAST_TEAR) {
             handleGhastTearAdded(stack);
         }
+
+        if (stack.getItem() == Items.IRON_AXE) {
+            handleAxeAdded(stack);
+        }
     }
     
     private static boolean isMonitoringActive() {
@@ -101,6 +114,7 @@ public class InventoryTracker {
         long currentTime = System.currentTimeMillis();
         if (currentTime - monitoringStartTime > MONITORING_WINDOW) {
             monitoringEnabled = false;
+            monitoringStartTime = 0;
             return false;
         }
         return true;
@@ -136,11 +150,11 @@ public class InventoryTracker {
                 return;
             }
         }
-    }
+    } 
     
     private static void handlePlayerHeadAdded(ItemStack stack) {
         String displayName = stack.getName().getString().toLowerCase().trim();
-        String cleanDisplayName = displayName.replaceAll("§[0-9a-fk-or]", "").trim();
+        String cleanDisplayName = displayName.replaceAll(CLEAN_REGEX, "").trim();
         String bazaarId = TRACKED_PLAYER_HEADS.get(cleanDisplayName);
         
         if (bazaarId == null) {
@@ -158,7 +172,7 @@ public class InventoryTracker {
             int newItems = (rawIncrease > STACK_INCREASE_THRESHOLD) ? 1 : rawIncrease;
             
             lastKnownStackSizes.put(cleanDisplayName, currentStackSize);
-            
+            TrackerUtils.trackerNoti(cleanDisplayName);
             ItemTrackerData.addDrop(cleanDisplayName, newItems);
         } else {
             // Stack size didn't increase, just update our tracking
@@ -168,7 +182,7 @@ public class InventoryTracker {
 
     private static void handleGhastTearAdded(ItemStack stack) {
         String displayName = stack.getName().getString().toLowerCase().trim();
-        String cleanDisplayName = displayName.replaceAll("§[0-9a-fk-or]", "").trim();
+        String cleanDisplayName = displayName.replaceAll(CLEAN_REGEX, "").trim();
         String bazaarId = TRACKED_GHAST_TEARS.get(cleanDisplayName);
         
         if (bazaarId == null) {
@@ -186,19 +200,29 @@ public class InventoryTracker {
             int newItems = (rawIncrease > STACK_INCREASE_THRESHOLD) ? 1 : rawIncrease;
             
             lastKnownStackSizes.put(cleanDisplayName, currentStackSize);
-            
+            TrackerUtils.trackerNoti(cleanDisplayName);
             ItemTrackerData.addDrop(cleanDisplayName, newItems);
         } else {
             // Stack size didn't increase, just update our tracking
             lastKnownStackSizes.put(cleanDisplayName, currentStackSize);
         }
     }
-    
+
+    private static void handleAxeAdded(ItemStack stack) {
+        String displayName = stack.getName().getString().toLowerCase().trim();
+        String cleanDisplayName = displayName.replaceAll(CLEAN_REGEX, "").trim();
+        String auctionId = TRACKED_AXES.get(cleanDisplayName);
+        if (auctionId == null) {
+            return;
+        }
+        TrackerUtils.trackerNoti(cleanDisplayName);
+        ItemTrackerData.addDrop(cleanDisplayName, 1);
+    }
+
     /**
      * Cleanup method to be called periodically to reset correlation state
      */
     public static void cleanup() {
-
         long currentTime = System.currentTimeMillis();
         for (Map.Entry<Long, EnchantedBookDrop> entry : recentEnchantedBookDrops.entrySet()) {
             long dropTime = entry.getKey();
@@ -233,27 +257,6 @@ public class InventoryTracker {
     public static void onValuableEntityDamaged() {
         monitoringEnabled = true;
         monitoringStartTime = System.currentTimeMillis();
-    }
-    
-    /**
-     * Check if an entity is valuable based on its display name
-     * Uses the same patterns as EntityTracker
-     */
-    private static boolean isEntityValuable(String displayName) {
-        if (displayName == null) return false;
-        String nameToCheck = displayName.toLowerCase();
-        
-        // Check for valuable sea creatures
-        if (nameToCheck.matches(".*\\b(the loch emperor|lord jawbus|thunder)\\b.*")) {
-            return true;
-        }
-        
-        // Check for valuable player entities
-        if (nameToCheck.matches(".*\\b(great white shark|tiger shark|ent)\\b.*")) {
-            return true;
-        }
-        
-        return false;
     }
     
     /**

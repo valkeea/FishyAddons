@@ -156,19 +156,19 @@ public class FishyConfig {
         new ConfigSection<>("commandAliases", "toggledCommands",
             new TypeToken<Map<String, String>>(){}.getType(),
             new TypeToken<Map<String, Boolean>>(){}.getType(),
-            v -> { save(); CommandAlias.refreshCache(); });
+            v -> { save(); CommandAlias.refresh(); });
 
     public static final ConfigSection<String> chatReplacements =
         new ConfigSection<>("chatReplacements", "toggledChatReplacements",
             new TypeToken<Map<String, String>>(){}.getType(),
             new TypeToken<Map<String, Boolean>>(){}.getType(),
-            v -> { save(); ChatReplacement.refreshCache(); });
+            v -> { save(); ChatReplacement.refresh(); });
 
     public static final ConfigSection<String> keybinds =
         new ConfigSection<>("keybinds", "toggledKeybinds",
             new TypeToken<Map<String, String>>(){}.getType(),
             new TypeToken<Map<String, Boolean>>(){}.getType(),
-            v -> { save(); KeyShortcut.refreshCache();});
+            v -> { save(); KeyShortcut.refresh();});
 
     // --- Mod Settings ---
     public static final SimpleConfigSection<Object> settings =
@@ -188,14 +188,22 @@ public class FishyConfig {
             new TypeToken<Map<String, Object>>(){}.getType(),
             v -> save());
 
+    // --- FaColors ---
+    public static final SimpleConfigSection<Integer> faColors =
+        new SimpleConfigSection<>("faColors",
+            new com.google.gson.reflect.TypeToken<Map<String, Integer>>(){}.getType(),
+            v -> save());
+
     // Generalized HUD position getters/setters
     public static int getHudX(String hudKey, int defaultX) {
         Object value = hud.getValues().getOrDefault(hudKey + "X", defaultX);
+        value = Math.clamp(value instanceof Number n ? n.intValue() : defaultX, 0, MinecraftClient.getInstance().getWindow().getWidth());
         return value instanceof Number n ? n.intValue() : defaultX;
     }
 
     public static int getHudY(String hudKey, int defaultY) {
         Object value = hud.getValues().getOrDefault(hudKey + "Y", defaultY);
+        value = Math.clamp(value instanceof Number n ? n.intValue() : defaultY, 0, MinecraftClient.getInstance().getWindow().getHeight());
         return value instanceof Number n ? n.intValue() : defaultY;
     }
 
@@ -255,6 +263,20 @@ public class FishyConfig {
         save();
     }
 
+    public static Map<String, Integer> getFaC() {
+        return faColors.getValues();
+    }
+
+    public static void setFaC(String key, int color) {
+        faColors.set(key, color);
+        save();
+    }
+
+    public static void removeFaC(String key) {
+        faColors.remove(key);
+        save();
+    }    
+
     static {
         File root = new File(MinecraftClient.getInstance().runDirectory, "config/fishyaddons");
         CONFIG_FILE = new File(root, "fishyaddons.json");
@@ -287,7 +309,7 @@ public class FishyConfig {
         load();
 
         if (firstLoad) {
-            Key.setDefaults(commandAliases, keybinds, chatReplacements, settings, hud, modKeys);
+            Key.setDefaults(commandAliases, chatReplacements, settings, hud, modKeys);
             save();
         }
     }
@@ -315,7 +337,8 @@ public class FishyConfig {
             settings.loadFromJson(json);
             modKeys.loadFromJson(json);
             hud.loadFromJson(json);
-            chatAlerts.loadFromJson(json);            
+            chatAlerts.loadFromJson(json);
+            faColors.loadFromJson(json);
 
             // --- Load custom RGB ---
             if (json.has(RED)) customRed = json.get(RED).getAsFloat();
@@ -341,6 +364,7 @@ public class FishyConfig {
             modKeys.saveToJson(json);
             hud.saveToJson(json);
             chatAlerts.saveToJson(json);
+            faColors.saveToJson(json);
 
             // --- Save custom RGB ---
             json.addProperty(RED, customRed);
@@ -422,6 +446,15 @@ public class FishyConfig {
 
     public static void setLockKey(String key) {
         modKeys.set(Key.MOD_KEY_LOCK, key);
+        save();
+    }
+
+    public static String getKeyString(String modKey) {
+        return modKeys.getValues().getOrDefault(modKey, "NONE");
+    }
+
+    public static void setKeyString(String modKey, String key) {
+        modKeys.set(modKey, key);
         save();
     }
 
@@ -523,7 +556,7 @@ public class FishyConfig {
         private boolean toggled;
 
         public AlertData() {
-            this("", "", 0xFFFFFFFF, "", 1.0F, true); // Default volume 1.0F
+            this("", "", 0x6DE6B5, "", 1.0F, true);
         }
 
         public AlertData(String msg, String onscreen, int color, String soundId, float volume, boolean toggled) {
@@ -538,13 +571,13 @@ public class FishyConfig {
             this.toggled = toggled;
         }
 
+        public void setMsg(String msg) { this.msg = msg; }        
         public String getMsg() { return msg; }
-        public void setMsg(String msg) { this.msg = msg; }
         public String getOnscreen() { return onscreen; }
         public int getColor() { return color; }
         public String getSoundId() { return soundId; }
         public float getVolume() { return volume; }
-        public boolean isToggled() { return toggled; }
+        public boolean isToggled() { return toggled; }       
     }
 
     // --- Section instance for alerts ---

@@ -1,7 +1,7 @@
 package me.valkeea.fishyaddons.util;
 
-import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.config.ItemConfig;
+import me.valkeea.fishyaddons.handler.ChatTimers;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.sound.SoundEvent;
 import net.minecraft.sound.SoundEvents;
@@ -21,18 +21,18 @@ public class PlaySound {
 
     public static void playBindOrLock() {
         if (mc.player != null && ItemConfig.isLockTriggerEnabled()) {
-            amethyst(1.2F); // pitched up
+            amethyst(1.2F);
         }
     }
         
     public static void playUnbindOrUnlock() {
         if (mc.player != null && ItemConfig.isLockTriggerEnabled()) {
-            amethyst(0.8F); // pitched down
+            amethyst(0.8F);
         }
     }
 
     public static void beaconAlarm() {
-        if (mc.player != null && FishyConfig.getState(me.valkeea.fishyaddons.config.Key.BEACON_ALARM, false)) {
+        if (mc.player != null && ChatTimers.getInstance().isBeaconAlarmOn()) {
             mc.player.playSound(SoundEvents.BLOCK_BELL_USE, 1.0F, 1.0F);  
         }
     }

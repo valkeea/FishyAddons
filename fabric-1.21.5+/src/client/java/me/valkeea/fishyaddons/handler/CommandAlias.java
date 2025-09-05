@@ -1,19 +1,23 @@
 package me.valkeea.fishyaddons.handler;
 
-import me.valkeea.fishyaddons.config.FishyConfig;
 import java.util.HashMap;
 import java.util.Map;
 
+import me.valkeea.fishyaddons.config.FishyConfig;
+
 public class CommandAlias {
     private CommandAlias() {}
+    private static boolean enabled = false;
     private static final Map<String, String> cachedCommandAliases = new HashMap<>();
 
-    public static void refreshCache() {
+    public static void refresh() {
+        enabled = FishyConfig.getState(me.valkeea.fishyaddons.config.Key.ALIASES_ENABLED, true);
         cachedCommandAliases.clear();
         cachedCommandAliases.putAll(FishyConfig.getCommandAliases());
     }
 
     public static String getActualCommand(String input) {
+        if (!enabled) return input;
         Map<String, String> aliases = cachedCommandAliases;
 
         String bestMatchAlias = null;

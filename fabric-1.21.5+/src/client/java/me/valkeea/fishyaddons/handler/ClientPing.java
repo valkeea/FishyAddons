@@ -1,17 +1,20 @@
 package me.valkeea.fishyaddons.handler;
 
-import net.minecraft.network.packet.s2c.query.PingResultS2CPacket;
-import net.minecraft.network.packet.c2s.query.QueryPingC2SPacket;
-import net.minecraft.client.network.ClientPlayNetworkHandler;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.util.Util;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
+import me.valkeea.fishyaddons.config.FishyConfig;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.network.ClientPlayNetworkHandler;
+import net.minecraft.network.packet.c2s.query.QueryPingC2SPacket;
+import net.minecraft.network.packet.s2c.query.PingResultS2CPacket;
+import net.minecraft.util.Util;
 
 public class ClientPing {
     private ClientPing() {}
     private static final Map<Long, Long> pendingPings = new ConcurrentHashMap<>();
     private static volatile int lastPing = -1;
+    private static boolean enabled = false;
 
     public static void send() {
         ClientPlayNetworkHandler handler = MinecraftClient.getInstance().getNetworkHandler();
@@ -34,4 +37,12 @@ public class ClientPing {
     public static int get() {
         return lastPing;
     }
+
+    public static void refresh() {
+        enabled = FishyConfig.getState(me.valkeea.fishyaddons.config.Key.HUD_PING_ENABLED, false);
+    }
+
+    public static boolean isOn() {
+        return enabled;
+    }    
 }

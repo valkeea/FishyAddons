@@ -17,6 +17,7 @@ import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 
+@SuppressWarnings("squid:S6548")
 public class ClientChat {
     private static final ClientChat INSTANCE = new ClientChat();
     private ClientChat() {}
@@ -42,6 +43,9 @@ public class ClientChat {
     }
 
     private static void handleGameplayMessages(String text) {
+        if (text.contains("❤") && text.contains("❈") && text.contains("✎")) {
+            return;
+        }      
         INSTANCE.onClientChat(text);
         ChatAlert.handleMatch(text);
         PetInfo.handleChat(text);
@@ -69,7 +73,7 @@ public class ClientChat {
             if (!newPos.equals(BeaconRenderer.getActualPos(new Vec3d(newPos))) && 
                 FishyConfig.getState(me.valkeea.fishyaddons.config.Key.RENDER_COORDS, false)) {
                 BeaconRenderer.setBeacon(BeaconRenderer.getActualPos(new Vec3d(newPos)),
-                FishyConfig.getInt("renderCoordsColor"), label);
+                FishyConfig.getInt(me.valkeea.fishyaddons.config.Key.RENDER_COORD_COLOR), label);
             }
         }
     }

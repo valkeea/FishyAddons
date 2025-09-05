@@ -5,6 +5,7 @@ import java.util.List;
 
 import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.config.Key;
+import me.valkeea.fishyaddons.handler.ChatTimers;
 import me.valkeea.fishyaddons.handler.ParticleVisuals;
 import me.valkeea.fishyaddons.handler.PetInfo;
 import me.valkeea.fishyaddons.handler.SkyblockCleaner;
@@ -179,6 +180,7 @@ public class SbScreen extends Screen {
             getAlarmText(),
             btn -> {
                 FishyConfig.toggle(Key.BEACON_ALARM, false);
+                ChatTimers.getInstance().refresh();
                 btn.setMessage(getAlarmText());
                 this.setFocused(null);
             }
@@ -189,6 +191,7 @@ public class SbScreen extends Screen {
             getTimerText(),
             btn -> {
                 FishyConfig.toggle(Key.HUD_TIMER_ENABLED, false);
+                ChatTimers.getInstance().refresh();
                 btn.setMessage(getTimerText());
                 this.setFocused(null);
             }

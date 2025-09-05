@@ -1,20 +1,24 @@
 package me.valkeea.fishyaddons.handler;
 
+import me.valkeea.fishyaddons.config.Key;
 import me.valkeea.fishyaddons.hud.FishyToast;
 import me.valkeea.fishyaddons.util.PlaySound;
 
+@SuppressWarnings("squid:S6548")
 public class ChatTimers {
     private static final ChatTimers INSTANCE = new ChatTimers();
     private ChatTimers() {}
     private long timerStart = 0L;
     private boolean timerAlerted = false;
+    private boolean alarmEnabled = false;
+    private boolean hudEnabled = false;
 
     public static ChatTimers getInstance() {
         return INSTANCE;
     }
 
     public void beaconStart() {
-        if (timerStart == 0L) {
+        if (alarmEnabled && timerStart == 0L) {
             timerStart = System.currentTimeMillis();
             timerAlerted = false;
         }
@@ -41,5 +45,18 @@ public class ChatTimers {
         } else if (timer > 0) {
             timerAlerted = false;
         }
+    }
+
+    public void refresh() {
+        alarmEnabled = me.valkeea.fishyaddons.config.FishyConfig.getState(Key.BEACON_ALARM, false);
+        hudEnabled = me.valkeea.fishyaddons.config.FishyConfig.getState(Key.HUD_TIMER_ENABLED, false);
+    }
+
+    public boolean isBeaconAlarmOn() {
+        return alarmEnabled;
+    }
+
+    public boolean isBeaconAlarmHudOn() {
+        return hudEnabled && alarmEnabled;
     }
 }

@@ -11,6 +11,7 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientWorldEvents;
 import net.minecraft.client.MinecraftClient;
 
+@SuppressWarnings("squid:S6548")
 public class WorldEvent {
     private boolean updateRulesNextTick = false;
     private int scoreboardDelay = 0;
@@ -78,6 +79,7 @@ public class WorldEvent {
                 ZoneUtils.update();
                 updateRulesNextTick = false;
                 scoreboardDelay = 100;
+                timedCheck = false;
             } else if (scoreboardDelay == 1) {
                 ClientConnected.triggerAction();
                 PetInfo.onTablistReady();

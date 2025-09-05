@@ -7,27 +7,28 @@ import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.config.FishyConfig.AlertData;
 import me.valkeea.fishyaddons.hud.TitleDisplay;
 import me.valkeea.fishyaddons.util.SoundUtil;
+import me.valkeea.fishyaddons.util.HelpUtil;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.util.Identifier;
 
 public class ChatAlert {
+    private ChatAlert() {}
     private static final Map<String, AlertData> alertCache = new HashMap<>();
+    private static boolean enabled = false;
 
     public static void refresh() {
         alertCache.clear();
         alertCache.putAll(FishyConfig.getChatAlerts());
+        enabled = FishyConfig.getState(me.valkeea.fishyaddons.config.Key.CHAT_ALERTS_ENABLED, false);
     }
 
-    public static void handleMatch(String message) {
-        // Ignore status bar messages
-        if (message.contains("❤") || message.contains("❈") || message.contains("✎") || message.contains("ʬ")) {
-            return;
-        }
+    public static void handleMatch(String s) {
+        if (!enabled) return;
+        String message = HelpUtil.stripColor(s);
         for (Map.Entry<String, AlertData> entry : alertCache.entrySet()) {
             String key = entry.getKey();
             AlertData data = entry.getValue();
-            if (data == null || !data.isToggled()) continue;
-            if (message.contains(key)) {
+            if (data != null && data.isToggled() && message.contains(key)) {
                 executeAlert(data);
                 break;
             }
@@ -51,7 +52,9 @@ public class ChatAlert {
                 if (id != null) {
                     SoundUtil.playDynamicSound(id.toString(), data.getVolume(), 1.0F);
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+                // Ignore sound playback errors
+            }
         }
     }
 }

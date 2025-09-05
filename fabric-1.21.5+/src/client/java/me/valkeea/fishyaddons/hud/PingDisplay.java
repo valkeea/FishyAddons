@@ -17,6 +17,12 @@ public class PingDisplay implements HudElement {
     private static final String HUD_KEY = me.valkeea.fishyaddons.config.Key.HUD_PING_ENABLED;
     private HudElementState cachedState = null;
 
+    private int lastPing = -1;
+    private Text cachedPingLabel = Text.literal("Ping:");
+    private Text cachedPingValue = Text.literal(" ?");
+    private int cachedLabelWidth = -1;
+    private int cachedValueWidth = -1;
+
     public void register() {
         HudLayerRegistrationCallback.EVENT.register(layeredDrawer ->
             layeredDrawer.attachLayerAfter(
@@ -29,7 +35,7 @@ public class PingDisplay implements HudElement {
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY) {
-        if (!editingMode && !FishyConfig.getState(HUD_KEY, false)) return;
+        if (!editingMode && !ClientPing.isOn()) return;
         int ping = ClientPing.get();
         if (ping < 0) return;
 
@@ -45,18 +51,18 @@ public class PingDisplay implements HudElement {
 
         float scale = size / 12.0F;
 
-        Text pingLabel = Text.literal("Ping:");
-        Text pingValue = Text.literal(" " + ping + " ms");
-
-        int labelWidth = mc.textRenderer.getWidth(pingLabel);
-        int valueWidth = mc.textRenderer.getWidth(pingValue);
-        int textWidth = labelWidth + valueWidth;
+        if (ping != lastPing) {
+            lastPing = ping;
+            cachedPingValue = Text.literal(" " + ping + " ms");
+            cachedLabelWidth = mc.textRenderer.getWidth(cachedPingLabel);
+            cachedValueWidth = mc.textRenderer.getWidth(cachedPingValue);
+        }
 
         // Draw background if enabled or in editing mode
         if (editingMode || showBg) {
             int shadowX1 = hudX + 1;
             int shadowY1 = hudY + 2;
-            int shadowX2 = hudX + (int)(textWidth * scale) + 2;
+            int shadowX2 = hudX + (int)((cachedLabelWidth + cachedValueWidth) * scale) + 2;
             int shadowY2 = hudY + (int)(size * 0.8F) - 1;
             context.fill(shadowX1, shadowY1, shadowX2, shadowY2, 0x80000000);            
         }
@@ -70,7 +76,7 @@ public class PingDisplay implements HudElement {
             TextUtils.drawOutlinedText(
                 context,
                 mc.textRenderer,
-                pingLabel,
+                cachedPingLabel,
                 0, 0,
                 color,
                 0xFF000000,
@@ -82,8 +88,8 @@ public class PingDisplay implements HudElement {
             TextUtils.drawOutlinedText(
                 context,
                 mc.textRenderer,
-                pingValue,
-                labelWidth, 0,
+                cachedPingValue,
+                cachedLabelWidth, 0,
                 0xFFFFFF,
                 0xFF000000,
                 context.getMatrices().peek().getPositionMatrix(),
@@ -92,13 +98,13 @@ public class PingDisplay implements HudElement {
                 0xF000F0
             );
         } else {
-            context.drawText(mc.textRenderer, pingLabel, 0, 0, color, true);
-            context.drawText(mc.textRenderer, pingValue, labelWidth, 0, 0xFFFFFF, true);
+            context.drawText(mc.textRenderer, cachedPingLabel, 0, 0, color, true);
+            context.drawText(mc.textRenderer, cachedPingValue, cachedLabelWidth, 0, 0xFFFFFF, true);
         }
         context.getMatrices().pop();
 
         if (editingMode) {
-            context.fill(hudX - 2, hudY - 2, hudX + (int)(textWidth * scale) + 18, hudY + (int)(size * 1.1F) + 4, 0x80FFFFFF);
+            context.fill(hudX - 2, hudY - 2, hudX + (int)((cachedLabelWidth + cachedValueWidth) * scale) + 18, hudY + (int)(size * 1.1F) + 4, 0x80FFFFFF);
         }
     }
 
@@ -132,14 +138,14 @@ public class PingDisplay implements HudElement {
     @Override
     public void invalidateCache() {
         cachedState = null;
-    }    
+    }
 
     @Override public int getHudX() { return FishyConfig.getHudX(HUD_KEY, 5); }
     @Override public int getHudY() { return FishyConfig.getHudY(HUD_KEY, 5); }
     @Override public void setHudPosition(int x, int y) { FishyConfig.setHudX(HUD_KEY, x); FishyConfig.setHudY(HUD_KEY, y); }
     @Override public int getHudSize() { return FishyConfig.getHudSize(HUD_KEY, 12); }
     @Override public void setHudSize(int size) { FishyConfig.setHudSize(HUD_KEY, size); }
-    @Override public int getHudColor() { return FishyConfig.getHudColor(HUD_KEY, 0xFFFFFF); }
+    @Override public int getHudColor() { return FishyConfig.getHudColor(HUD_KEY, 0xEECAEC); }
     @Override public void setHudColor(int color) { FishyConfig.setHudColor(HUD_KEY, color); }
     @Override public boolean getHudOutline() { return FishyConfig.getHudOutline(HUD_KEY, false); }
     @Override public void setHudOutline(boolean outline) { FishyConfig.setHudOutline(HUD_KEY, outline); }   

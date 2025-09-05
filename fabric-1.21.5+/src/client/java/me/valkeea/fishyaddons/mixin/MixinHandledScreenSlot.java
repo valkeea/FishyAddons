@@ -22,12 +22,21 @@ public class MixinHandledScreenSlot {
         HandledScreen<?> screen = (HandledScreen<?>) (Object) this;
         Slot hovered = ((HandledScreenAccessor) screen).getFocusedSlot();
         if (hovered == null) return;
+        if (handleIcons(hovered, cir)) return;          
         int index = hovered.id;
-        int invIndex = SlotProtectionManager.remap(screen, index );
+        int invIndex = SlotProtectionManager.remap(screen, index );      
         if (invIndex <= 8 || invIndex >= 44) return;
-
         if (handleLockedSlot(invIndex, cir)) return;
         handleBoundSlot(screen, hovered, index, invIndex, cir);
+    }
+
+    private boolean handleIcons(Slot hovered, CallbackInfoReturnable<Boolean> cir) {
+        if (!me.valkeea.fishyaddons.util.SbGui.getInstance().inGui()) return false;
+        if (me.valkeea.fishyaddons.handler.GuiIcons.isBlocked(hovered.id)) {
+            cir.setReturnValue(false);
+            return true;
+        }
+        return false;
     }
 
     private boolean handleLockedSlot(int invIndex, CallbackInfoReturnable<Boolean> cir) {

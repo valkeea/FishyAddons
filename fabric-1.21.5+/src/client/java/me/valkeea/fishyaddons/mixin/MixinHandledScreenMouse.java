@@ -17,7 +17,6 @@ import net.minecraft.registry.RegistryWrapper;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.text.Text;
 
-
 @Mixin(HandledScreen.class)
 public abstract class MixinHandledScreenMouse extends Screen {
     protected MixinHandledScreenMouse(String titleString) {
@@ -29,16 +28,8 @@ public abstract class MixinHandledScreenMouse extends Screen {
         MinecraftClient mc = MinecraftClient.getInstance();
         HandledScreen<?> screen = (HandledScreen<?>) (Object) this;
 
-        // Check for profit tracker button clicks first
         TrackerDisplay profitTracker = TrackerDisplay.getInstance();
         if (profitTracker != null && profitTracker.handleMouseClick(mouseX, mouseY, button)) {
-            cir.setReturnValue(true);
-            return;
-        }
-        
-        // Check for search field clicks
-        me.valkeea.fishyaddons.hud.SearchHudElement searchElement = me.valkeea.fishyaddons.hud.SearchHudElement.getInstance();
-        if (searchElement != null && searchElement.handleMouseClick(mouseX, mouseY, button)) {
             cir.setReturnValue(true);
             return;
         }

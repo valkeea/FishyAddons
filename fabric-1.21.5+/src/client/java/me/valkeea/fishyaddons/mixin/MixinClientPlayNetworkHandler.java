@@ -10,6 +10,7 @@ import me.valkeea.fishyaddons.handler.PetInfo;
 import me.valkeea.fishyaddons.handler.TabScanner;
 import me.valkeea.fishyaddons.tracker.InventoryTracker;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
+import net.minecraft.network.packet.s2c.play.InventoryS2CPacket;
 import net.minecraft.network.packet.s2c.play.PlayerListS2CPacket;
 import net.minecraft.network.packet.s2c.play.ScreenHandlerSlotUpdateS2CPacket;
 import net.minecraft.network.packet.s2c.query.PingResultS2CPacket;
@@ -47,5 +48,13 @@ public class MixinClientPlayNetworkHandler {
                 InventoryTracker.onItemAdded(stack);
             }
         }
+    }
+
+    @Inject(
+        method = "onInventory",
+        at = @At("TAIL")
+    )
+    private void inventory(InventoryS2CPacket packet, CallbackInfo ci) {
+        me.valkeea.fishyaddons.util.SbGui.getInstance().onInvUpdate();
     }
 }

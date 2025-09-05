@@ -4,6 +4,7 @@ import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.text.MutableText;
+import net.minecraft.text.Text;
 
 /**
  * Standardized buttons
@@ -54,7 +55,8 @@ public class VCButton {
         TOGGLE,
         SIMPLE,
         KEYBIND,
-        NAVIGATION
+        NAVIGATION,
+        MCTOGGLE
     }
     
     /**
@@ -66,12 +68,13 @@ public class VCButton {
             case SIMPLE -> renderToggleWithText(context, textRenderer, config, config.text);
             case KEYBIND -> renderKeybind(context, textRenderer, config);
             case NAVIGATION -> renderNavigation(context, textRenderer, config);
+            case MCTOGGLE -> renderMcToggle(context, textRenderer, config);
             default -> renderStandard(context, textRenderer, config);
         }
     }
     
     /**
-     * Creates a functional ButtonWidget with the standardized styling
+     * Functional ButtonWidget with the standardized styling
      */
     public static ButtonWidget createNavigationButton(int x, int y, int width, int height, MutableText message, 
                                                      ButtonWidget.PressAction onPress, float uiScale) {
@@ -89,6 +92,24 @@ public class VCButton {
         };
     }
 
+    public static ButtonWidget createMcToggle(int x, int y, int width, int height, boolean enabled,
+                                                  ButtonWidget.PressAction onPress, float uiScale) {
+
+        MutableText message = enabled ? Text.literal("ON") : Text.literal("OFF");
+        return new ButtonWidget(x, y, width, height, message, onPress, button -> message) {
+            @Override
+            protected void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
+                ButtonConfig config = new ButtonConfig(this.getX(), this.getY(), this.width, this.height, this.getMessage().getString())
+                    .withScale(uiScale)
+                    .withEnabled(enabled)
+                    .withHovered(this.isHovered())
+                    .withType(ButtonType.MCTOGGLE);
+
+                VCButton.render(context, net.minecraft.client.MinecraftClient.getInstance().textRenderer, config);
+            }
+        };
+    }
+
     // -- Internal rendering methods --
     private static void renderNavigation(DrawContext context, TextRenderer textRenderer, ButtonConfig config) {
 
@@ -98,11 +119,24 @@ public class VCButton {
         VCRenderUtils.gradient(context, config.x, config.y, config.width, config.height, bgColor);
         context.drawBorder(config.x, config.y, config.width, config.height, borderColor);
 
-        int baseTextColor = config.enabled ? 0xFF808080 : 0xFFA0A0A0;
-        int textColor = (config.hovered && config.enabled) ? 0xFFFFFFFF : baseTextColor;
+        int textColor = config.enabled ? 0xFFFFFFFF : 0xFFC4FFFF;
         int textX = config.x + config.width / 2;
         int textY = config.y + (config.height - (int)(8 * config.uiScale)) / 2;
         
+        VCText.drawScaledCenteredText(context, textRenderer, config.text, textX, textY, textColor, config.uiScale);
+    }
+
+    private static void renderMcToggle(DrawContext context, TextRenderer textRenderer, ButtonConfig config) {
+        int textColor = config.enabled ? 0xCCFFCC : 0xFF8080;
+        int bgColor = VCVisuals.bgHex2(config.hovered);
+        int borderColor = VCVisuals.borderHex2(config.hovered);
+
+        VCRenderUtils.gradient(context, config.x, config.y, config.width, config.height, bgColor);
+        context.drawBorder(config.x, config.y, config.width, config.height, borderColor);
+
+        int textX = config.x + config.width / 2;
+        int textY = config.y + (config.height - (int)(8 * config.uiScale)) / 2;
+
         VCText.drawScaledCenteredText(context, textRenderer, config.text, textX, textY, textColor, config.uiScale);
     }
 
@@ -127,7 +161,7 @@ public class VCButton {
         
         int textX = config.x + config.width / 2 - (int)(textRenderer.getWidth(config.text) * Math.min(config.uiScale, 1.0f)) / 2;
         int textY = config.y + (config.height - textRenderer.fontHeight) / 2 + 2;
-        VCText.drawScaledButtonText(context, textRenderer, config.text, textX, textY, textColor, false, config.uiScale);
+        VCText.drawScaledButtonText(context, textRenderer, config.text, textX, textY, textColor, config.uiScale);
     }
 
     private static void renderToggle(DrawContext context, TextRenderer textRenderer, ButtonConfig config) {
@@ -142,7 +176,7 @@ public class VCButton {
 
         int textX = config.x + config.width / 2 - (int)(textRenderer.getWidth(text) * Math.min(config.uiScale, 1.0f)) / 2;
         int textY = config.y + (config.height - textRenderer.fontHeight) / 2 + 2;
-        VCText.drawScaledButtonText(context, textRenderer, text, textX, textY, textColor, false, config.uiScale);
+        VCText.drawScaledButtonText(context, textRenderer, text, textX, textY, textColor, config.uiScale);
     }
 
     private static void renderToggleWithText(DrawContext context, TextRenderer textRenderer, ButtonConfig config, String buttonText) {
@@ -158,7 +192,7 @@ public class VCButton {
 
         int textX = config.x + config.width / 2 - (int)(textRenderer.getWidth(text) * Math.min(config.uiScale, 1.0f)) / 2;
         int textY = config.y + (config.height - textRenderer.fontHeight) / 2 + 2;
-        VCText.drawScaledButtonText(context, textRenderer, text, textX, textY, textColor, false, config.uiScale);
+        VCText.drawScaledButtonText(context, textRenderer, text, textX, textY, textColor, config.uiScale);
     }
 
     private static void renderKeybind(DrawContext context, TextRenderer textRenderer, ButtonConfig config) {
@@ -181,7 +215,7 @@ public class VCButton {
 
         int textX = config.x + config.width / 2 - (int)(textRenderer.getWidth(config.text) * Math.min(config.uiScale, 1.0f)) / 2;
         int textY = config.y + (config.height - textRenderer.fontHeight) / 2 + 2;
-        VCText.drawScaledButtonText(context, textRenderer, config.text, textX, textY, textColor, false, config.uiScale);
+        VCText.drawScaledButtonText(context, textRenderer, config.text, textX, textY, textColor, config.uiScale);
     }
 
     // -- Convenience methods for button creation --

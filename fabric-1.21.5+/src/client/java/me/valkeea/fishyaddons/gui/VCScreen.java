@@ -83,7 +83,6 @@ public class VCScreen extends Screen {
     
     @Override
     protected void init() {
-
         // Initialize scaled dimensions and add entries
         calcScaledDimensions();
         this.configEntries = VCManager.createAllEntries();
@@ -200,7 +199,6 @@ public class VCScreen extends Screen {
     }
     
     private void onSearchChanged(String text) {
-        if (text.equals(lastSearchText)) return;
         lastSearchText = text;
         
         if (text.isEmpty()) {
@@ -254,10 +252,10 @@ public class VCScreen extends Screen {
         }
         
         if (targetIndex != -1) {
-            // Calculate scroll offset to center the target entry
             int actualMaxVisible = calculateActualMaxVisibleEntries(allVisibleEntries);
-            int centerPosition = targetIndex - actualMaxVisible / 2;
-            scrollOffset = Math.clamp(centerPosition, 0, allVisibleEntries.size() - actualMaxVisible);
+                // Force header to top unless too low
+                int maxScroll = allVisibleEntries.size() - actualMaxVisible;
+                scrollOffset = Math.clamp(targetIndex, 0, maxScroll);
         }
     }
     
@@ -333,7 +331,7 @@ public class VCScreen extends Screen {
 
         MatrixStack matrices = context.getMatrices();
         matrices.push();
-        matrices.translate(0, 0, 100);
+        matrices.translate(0, 0, 300);
 
         VCText.drawScaledCenteredText(context, textRenderer, "─ α FishyAddons Configuration α ─", width / 2, 20, 0xFF55FFFF, uiScale);
         matrices.pop();
@@ -388,7 +386,7 @@ public class VCScreen extends Screen {
         VCEntry currentEntry = visibleEntries.get(currentIndex);
         VCEntry nextEntry = visibleEntries.get(currentIndex + 1);
         
-        if (isSubEntry(currentEntry) && !isSubEntry(nextEntry)) {
+        if (isSubEntry(currentEntry) && !isSubEntry(nextEntry) || nextEntry == null) {
             return true;
         }
         
@@ -477,11 +475,15 @@ public class VCScreen extends Screen {
         int actualMaxVisible = calculateActualMaxVisibleEntries(visibleEntries);
         int maxVisibleIndex = scrollOffset + actualMaxVisible - 1;
         
-        // If the last sub-entry is not visible, scroll just enough to show it
+        // If the last is not visible, scroll to show it unless it would hide the main entry
         if (lastSubEntryIndex > maxVisibleIndex) {
             int newScrollOffset = lastSubEntryIndex - actualMaxVisible + 1;
             newScrollOffset = Math.max(0, newScrollOffset);
             newScrollOffset = Math.min(newScrollOffset, visibleEntries.size() - actualMaxVisible);
+
+            if (expandedEntryIndex < newScrollOffset) {
+                newScrollOffset = expandedEntryIndex;
+            }
             scrollOffset = newScrollOffset;
         }
     }
@@ -531,11 +533,11 @@ public class VCScreen extends Screen {
     }
     
     private int getCurrentColor(VCEntry entry) {
-        if ("Highlight Coordinates".equals(entry.name)) {
-            return FishyConfig.getInt("renderCoordsColor");
-        } else if ("XP Color".equals(entry.name)) {
+        if (Key.RENDER_COORDS.equals(entry.configKey)) {
+            return FishyConfig.getInt(Key.RENDER_COORD_COLOR);
+        } else if ("Color and Outline".equals(entry.name)) {
             return FishyConfig.getInt(Key.XP_COLOR);
-        } else if ("Redstone Particle Color".equals(entry.name)) {
+        } else if (Key.CUSTOM_PARTICLE_COLOR_INDEX.equals(entry.configKey)) {
             // For particle colors, show current color based on mode and selection
             if ("custom".equals(FishyConfig.getParticleColorMode())) {
                 float[] rgb = FishyConfig.getCustomParticleRGB();
@@ -567,19 +569,18 @@ public class VCScreen extends Screen {
                 currentScreen.getLastSearchText(),
                 currentScreen.getExpandedEntries()
             );
-        }
-
+        }        
         float[] currentColor = ColorWheel.intToRGB(getCurrentColor(entry));
         
         Consumer<float[]> onColorSelected = rgb -> {
             int colorInt = ColorWheel.rgbToInt(rgb);
             
-            if ("Highlight Coordinates".equals(entry.name)) {
-                FishyConfig.setInt("renderCoordsColor", colorInt);
-            } else if ("XP Color".equals(entry.name)) {
+            if (Key.RENDER_COORDS.equals(entry.configKey)) {
+                FishyConfig.setInt(Key.RENDER_COORD_COLOR, colorInt);
+            } else if ("Color and Outline".equals(entry.name)) {
                 FishyConfig.setInt(Key.XP_COLOR, colorInt);
                 XpColor.refresh();
-            } else if ("Redstone Particle Color".equals(entry.name)) {
+            } else if (Key.CUSTOM_PARTICLE_COLOR_INDEX.equals(entry.configKey)) {
                 ParticleVisuals.setCustomColor(rgb);
                 FishyConfig.setParticleColorMode("custom");
                 ParticleVisuals.refreshCache();
@@ -590,17 +591,20 @@ public class VCScreen extends Screen {
     }
     
     private void renderScrollIndicator(DrawContext context, int x, int y) {
-        int indicatorHeight = maxVisibleEntries * entryHeight;
-        int totalEntries = filteredEntries.size();
-        
+        // Use actualMaxVisible for correct scrollbar sizing
+        List<VCEntry> visibleEntries = getVisibleEntries();
+        int actualMaxVisible = calculateActualMaxVisibleEntries(visibleEntries);
+        int indicatorHeight =  actualMaxVisible * entryHeight;
+        int totalEntries = visibleEntries.size();
+
         int scrollbarWidth = Math.max(4, (int)(8 * uiScale));
-        
+
         context.fill(x, y, x + scrollbarWidth, y + indicatorHeight, 0x44000000);
-        
-        if (totalEntries > maxVisibleEntries) {
-            int thumbHeight = Math.max((int)(10 * uiScale), (maxVisibleEntries * indicatorHeight) / totalEntries);
-            int thumbY = y + (scrollOffset * (indicatorHeight - thumbHeight)) / (totalEntries - maxVisibleEntries);
-            
+
+        if (totalEntries > actualMaxVisible) {
+            int thumbHeight = Math.max((int)(10 * uiScale), (actualMaxVisible * indicatorHeight) / totalEntries);
+            int thumbY = y + (scrollOffset * (indicatorHeight - thumbHeight)) / (totalEntries - actualMaxVisible);
+
             context.fill(x + 1, thumbY, x + scrollbarWidth - 1, thumbY + thumbHeight, getThemeColor());
             context.fill(x + 1, thumbY + thumbHeight - 1, x + scrollbarWidth - 1, thumbY + thumbHeight, 0xFF000000);
         }
@@ -817,23 +821,41 @@ public class VCScreen extends Screen {
             return true;
         }
 
-        currentButtonX += (int)(40 * uiScale) + area.buttonGap;
+        currentButtonX += (int)(30 * uiScale);
 
-        if (entry.hasHudControls()) {
-            if (isClickOnHudButton(mouseX, mouseY, currentButtonX, area.controlY)) {
-                MinecraftClient.getInstance().setScreen(new HudEditScreen(entry.getHudElementName()));
-                return true;
-            }
-            currentButtonX += (int)(40 * uiScale) + area.buttonGap;
+        if (entry.hasHudControls() && isClickOnHudButton(mouseX, mouseY, currentButtonX, area.controlY)) {
+            VCState.preservePersistentState(scrollOffset, lastSearchText, expandedEntries);
+            MinecraftClient.getInstance().setScreen(new HudEditScreen(entry.getHudElementName()));
+            return true;
         }
 
         if (entry.hasColorControl() && isClickOnColorButton(mouseX, mouseY, currentButtonX, area.controlY)) {
+            VCState.preservePersistentState(scrollOffset, lastSearchText, expandedEntries);            
             openColorWheel(entry);
             return true;
         }
-        
+
+        if (entry.hasAdd() && isClickOnAddButton(mouseX, mouseY, currentButtonX, area.controlY)) {
+            VCState.preservePersistentState(scrollOffset, lastSearchText, expandedEntries);            
+            openListGui(entry);
+            return true;
+        }
         return false;
     }
+
+    private void openListGui(VCEntry entry) {
+        if (entry.name == null) return;
+        switch (entry.name) {
+            case "Custom Fa Colors" -> MinecraftClient.getInstance().setScreen(new GUIFaColor(this));
+            case "Chat Alerts" -> MinecraftClient.getInstance().setScreen(new GUIChatAlert(this));
+            case "Custom Command" -> MinecraftClient.getInstance().setScreen(new TabbedListScreen(this, TabbedListScreen.Tab.COMMANDS));
+            case "Custom Keybinds" -> MinecraftClient.getInstance().setScreen(new TabbedListScreen(this, TabbedListScreen.Tab.KEYBINDS));
+            case "Chat Replacement" -> MinecraftClient.getInstance().setScreen(new TabbedListScreen(this, TabbedListScreen.Tab.CHAT));
+            default -> {
+                // Unknown entry type
+            }
+        }
+    } 
     
     private boolean simpleButtonClick(double mouseX, double mouseY, VCEntry entry, int entryX, int currentY) {
         ControlClickArea area = calculateControlArea(entry, entryX, currentY);
@@ -963,13 +985,21 @@ public class VCScreen extends Screen {
     }
     
     private boolean isClickOnHudButton(double mouseX, double mouseY, int buttonX, int buttonY) {
-        int hudWidth = (int)(30 * uiScale);
+        int hudWidth = (int)(40 * uiScale);
         int buttonHeight = (int)(18 * uiScale);
         
         return mouseX >= buttonX && mouseX <= buttonX + hudWidth &&
                mouseY >= buttonY && mouseY <= buttonY + buttonHeight;
     }
-    
+
+    private boolean isClickOnAddButton(double mouseX, double mouseY, int buttonX, int buttonY) {
+        int addWidth = (int)(40 * uiScale);
+        int buttonHeight = (int)(18 * uiScale);
+
+        return mouseX >= buttonX && mouseX <= buttonX + addWidth &&
+               mouseY >= buttonY && mouseY <= buttonY + buttonHeight;
+    }
+
     private boolean isClickOnColorButton(double mouseX, double mouseY, int buttonX, int buttonY) {
         int colorSize = (int)(18 * uiScale);
         
@@ -1128,16 +1158,18 @@ public class VCScreen extends Screen {
     }
 
     /**
-    * Optional redirection button for hud/colorwheel with autofocus,
+    * Optional redirection button for hud/colorwheel/gui redirect with autofocus,
     * always last in reading order
     */
     public static class ExtraControl {
         private final String elementName;
         private final boolean hasColorControl;
-        
-        public ExtraControl(String elementName, boolean hasColorControl) {
+        private final boolean hasAdd;
+
+        public ExtraControl(String elementName, boolean hasColorControl, boolean hasAdd) {
             this.elementName = elementName;
             this.hasColorControl = hasColorControl;
+            this.hasAdd = hasAdd;
         }
         
         public String getElementName() {
@@ -1146,6 +1178,10 @@ public class VCScreen extends Screen {
         
         public boolean hasColorControl() {
             return hasColorControl;
+        }
+
+        public boolean hasAdd() {
+            return hasAdd;
         }
     }
 }

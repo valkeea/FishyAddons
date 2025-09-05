@@ -13,19 +13,9 @@ import me.valkeea.fishyaddons.tool.FishyMode;
 import net.minecraft.text.Text;
 
 /**
- * Constants for VCEntry
- */
-final class VCEntryConstants {
-    static final String DEFAULT_FORMAT_PERCENTAGE = "%.0f%%";
-    
-    private VCEntryConstants() {
-        throw new UnsupportedOperationException("This is a constants class and cannot be instantiated");
-    }
-}
-
-/**
  * Represents a configuration entry in VCScreen
  */
+@SuppressWarnings("squid:S107")
 public class VCEntry {
     public enum EntryType {
         TOGGLE,
@@ -59,7 +49,8 @@ public class VCEntry {
     // HUD entries
     protected final String hudElementName;
     protected final boolean hasColorControl;
-    
+    protected final boolean hasAdd;
+
     // Keybind entries
     private boolean isListening = false;
     
@@ -95,6 +86,7 @@ public class VCEntry {
         this.subEntries = builder.subEntries;
         this.hudElementName = builder.hudElementName;
         this.hasColorControl = builder.hasColorControl;
+        this.hasAdd = builder.hasAdd;
         this.buttonText = builder.buttonText;
         this.simpleButtonConfigKey = builder.simpleButtonConfigKey;
         this.simpleButtonDefault = builder.simpleButtonDefault;
@@ -121,6 +113,7 @@ public class VCEntry {
         private List<VCEntry> subEntries = null;
         private String hudElementName = null;
         private boolean hasColorControl = false;
+        private boolean hasAdd = false;
         private String buttonText = null;
         private String simpleButtonConfigKey = null;
         private boolean simpleButtonDefault = false;
@@ -175,11 +168,17 @@ public class VCEntry {
             this.hasColorControl = hasColorControl;
             return this;
         }
-        
+
+        public Builder hasAdd(boolean hasAdd) {
+            this.hasAdd = hasAdd;
+            return this;
+        }
+
         public Builder extraControl(ExtraControl extraControl) {
             if (extraControl != null) {
                 this.hudElementName = extraControl.getElementName();
                 this.hasColorControl = extraControl.hasColorControl();
+                this.hasAdd = extraControl.hasAdd();
             }
             return this;
         }
@@ -335,10 +334,11 @@ public class VCEntry {
     }    
 
     // Keybind button
-    public static VCEntry keybind(String name, String description, String configKey, boolean defaultValue) {
+    public static VCEntry keybind(String name, String description, String configKey, boolean defaultValue, Runnable refreshAction) {
         return new Builder(name, description, EntryType.KEYBIND)
             .configKey(configKey)
             .defaultValue(defaultValue)
+            .refreshAction(refreshAction)
             .build();
     }
 
@@ -494,7 +494,11 @@ public class VCEntry {
     public boolean hasColorControl() {
         return hasColorControl;
     }
-    
+
+    public boolean hasAdd() {
+        return hasAdd;
+    }
+
     // Keybind entry methods
     public boolean isListening() {
         return isListening;
@@ -505,19 +509,15 @@ public class VCEntry {
     }
     
     public String getKeybindValue() {
-        if (type == EntryType.KEYBIND && Key.MOD_KEY_LOCK.equals(configKey)) {
-            return FishyConfig.getLockKey();
+        if (type == EntryType.KEYBIND && configKey != null) {
+            return FishyConfig.getKeyString(configKey);
         }
         return "NONE";
     }
     
     public void setKeybindValue(String key) {
-        if (type == EntryType.KEYBIND && Key.MOD_KEY_LOCK.equals(configKey)) {
-            FishyConfig.setLockKey(key);
-            // If no key is set, disable the lock trigger feature
-            if ("NONE".equals(key)) {
-                ItemConfig.enable(Key.LOCK_TRIGGER_ENABLED, false);
-            }
+        if (type == EntryType.KEYBIND && configKey != null && key != null) {
+            FishyConfig.setKeyString(configKey, key);
         }
     }
     
@@ -526,7 +526,7 @@ public class VCEntry {
         if (type == EntryType.SLIDER && configKey != null) {
             if (Key.MOD_UI_SCALE.equals(configKey)) {
                 return uiScaleValue();
-            } else if ("themeSlider".equals(configKey)) {
+            } else if (Key.THEME_MODE.equals(configKey)) {
                 return themeValue();
             } else if (Key.CUSTOM_PARTICLE_COLOR_INDEX.equals(configKey)) {
                 return presetIndexValue();

@@ -5,19 +5,16 @@ import java.util.List;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.text.MutableText;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 
 public class GuiUtil {
     public static void drawBox(DrawContext context, int x, int y, int width, int height, int color) {
         context.fill(x, y, x + width, y + height, 0x80000000);
-        // Top
         context.fill(x - 1, y - 1, x + width + 1, y, color);
-        // Bottom
         context.fill(x - 1, y + height, x + width + 1, y + height + 1, color);
-        // Left
         context.fill(x - 1, y, x, y + height, color);
-        // Right
         context.fill(x + width, y, x + width + 1, y + height, color);
     }
 
@@ -55,18 +52,26 @@ public class GuiUtil {
         int color = enabled ? 0xCCFFCC : 0xFF8080;
         return Text.literal(label + ": ")
                 .append(Text.literal(state).setStyle(Style.EMPTY.withColor(color)));
-    } 
+    }
+
+    public static MutableText onOffLabel(String label, boolean enabled, boolean drawsTitle) {
+        String state = enabled ? "ON" : "OFF";
+        int color = enabled ? 0xCCFFCC : 0xFF8080;
+        if (drawsTitle) {
+            return Text.literal(label + ": ")
+                    .append(Text.literal(state).setStyle(Style.EMPTY.withColor(color)));
+        }
+        return Text.literal(state).setStyle(Style.EMPTY.withColor(color));
+    }    
 
     // Replaced by texture overlays but may be added back later
     public static void lockedOverlay(DrawContext context, int x, int y) {
         int outerColor = 0x80E2CAE9;
         int innerColor = 0xC0E2CAE9;
-        // Outer border (2px)
         context.fill(x, y, x + 16, y + 2, outerColor);
         context.fill(x, y + 14, x + 16, y + 16, outerColor);
         context.fill(x, y + 2, x + 2, y + 14, outerColor);
         context.fill(x + 14, y + 2, x + 16, y + 14, outerColor);
-        // Inner fill
         context.fill(x + 2, y + 2, x + 14, y + 14, innerColor);
     }
 

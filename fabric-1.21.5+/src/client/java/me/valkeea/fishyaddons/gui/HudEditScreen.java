@@ -36,7 +36,6 @@ public class HudEditScreen extends Screen {
 
     @Override
     protected void init() {
-        // Auto-select target element if specified
         if (targetElementName != null) {
             for (HudElement element : ElementRegistry.getElements()) {
                 if (targetElementName.equals(element.getDisplayName())) {
@@ -87,7 +86,7 @@ public class HudEditScreen extends Screen {
                 }
             }
         );
-        addDrawableChild(bgBtn);
+        addDrawableChild(bgBtn);        
     }
 
     private void colorBtn() {
@@ -109,7 +108,7 @@ public class HudEditScreen extends Screen {
                             this.popup = null;
                         },
                         "GO", () -> {
-                            this.client.setScreen(new TabbedListScreen(client.currentScreen, TabbedListScreen.Tab.ALERT));
+                            this.client.setScreen(new GUIChatAlert(client.currentScreen));
                             this.popup = null;
                         },
                         1.0f
@@ -185,7 +184,6 @@ public class HudEditScreen extends Screen {
             element.setEditingMode(true);
             element.render(context, mouseX, mouseY);
         }
-        // Draw border around selected element
         if (selectedElement != null) {
             int hudX = selectedElement.getHudX();
             int hudY = selectedElement.getHudY();

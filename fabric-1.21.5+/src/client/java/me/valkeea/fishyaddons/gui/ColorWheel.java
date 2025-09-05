@@ -44,12 +44,18 @@ public class ColorWheel extends Screen {
             this.red = initialColor[0];
             this.green = initialColor[1];
             this.blue = initialColor[2];
-            
-            // Convert RGB to HSL
             float[] hsl = rgbToHsl(red, green, blue);
             this.hue = hsl[0];
             this.saturation = hsl[1];
             this.lightness = hsl[2];
+        } else {
+            this.hue = 0.0f;
+            this.saturation = 1.0f;
+            this.lightness = 0.5f;
+            float[] rgb = hslToRgb(this.hue * 360, this.saturation, this.lightness);
+            this.red = rgb[0];
+            this.green = rgb[1];
+            this.blue = rgb[2];
         }
     }
 
@@ -105,6 +111,7 @@ public class ColorWheel extends Screen {
 
         // Render background and color wheel
         this.renderBackground(context, mouseX, mouseY, delta);
+        super.render(context, mouseX, mouseY, delta);        
         renderColorWheel(context);
         renderLightnessBar(context);
         
@@ -118,8 +125,6 @@ public class ColorWheel extends Screen {
         
         // Render selection indicators
         renderSelectionIndicators(context);
-        
-        super.render(context, mouseX, mouseY, delta);
     }
     
     private void renderColorWheel(DrawContext context) {

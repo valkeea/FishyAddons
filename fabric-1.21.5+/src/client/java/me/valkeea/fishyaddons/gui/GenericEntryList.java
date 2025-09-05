@@ -14,8 +14,6 @@ import net.minecraft.text.Text;
 
 public abstract class GenericEntryList extends EntryListWidget<GenericEntryList.GenericEntry> {
     protected final TabbedListScreen parentScreen;
-
-    // Persist full entries and widgets by input key
     private final Map<String, GenericEntry> entryMap = new LinkedHashMap<>();
 
     protected GenericEntryList(MinecraftClient client, int width, int height, int y, int itemHeight, TabbedListScreen parentScreen) {
@@ -61,10 +59,8 @@ public abstract class GenericEntryList extends EntryListWidget<GenericEntryList.
                 if (!existing.outputField.getText().equals(entry.getValue())) {
                     existing.outputField.setText(entry.getValue());
                 }
-                if (existing.inputWidget instanceof TextFieldWidget field) {
-                    if (!field.getText().equals(entry.getKey())) {
-                        field.setText(entry.getKey());
-                    }
+                if (existing.inputWidget instanceof TextFieldWidget field && !field.getText().equals(entry.getKey())) {
+                    field.setText(entry.getKey());
                 }
             } else {
                 // New entry
@@ -262,6 +258,7 @@ public abstract class GenericEntryList extends EntryListWidget<GenericEntryList.
                     });
                 return;
             }
+
             if (!entryList.isValidEntry(enteredInput, enteredOutput)) {
                 parentScreen.showFishyPopup(
                     Text.literal("Invalid entry! Please fix or discard."),
@@ -274,24 +271,29 @@ public abstract class GenericEntryList extends EntryListWidget<GenericEntryList.
                     });
                 return;
             }
-            // Only show dupePopup if another entry (not this one) already exists with this key
+
+            boolean keyChanged = !enteredInput.equals(this.input);
             boolean duplicateExists = entryList.children().stream()
                 .anyMatch(e -> e instanceof GenericEntryList.GenericEntry ge
                     && ge != this
                     && !ge.isNew
                     && ge.input.equals(enteredInput));
+
             if (duplicateExists && !duplicatePopupShown) {
                 dupePopup();
                 return;
             }
-            duplicatePopupShown = false; // reset after successful save
-            if (inputWidget instanceof TextFieldWidget field) {
-                field.setFocused(false);
-            }
+            duplicatePopupShown = false;
+
             if (inputWidget instanceof TextFieldWidget field) {
                 field.setFocused(false);
             }
             outputField.setFocused(false);
+
+            if (keyChanged && !this.isNew) {
+                entryList.removeEntry(this.input);
+            }
+
             entryList.setEntry(enteredInput, enteredOutput);
             this.input = enteredInput;
             this.output = enteredOutput;
@@ -312,10 +314,12 @@ public abstract class GenericEntryList extends EntryListWidget<GenericEntryList.
         public void checkAndSave() {
             handleSave();
         }
+
         private void handleDelete() {
             if (inputWidget instanceof TextFieldWidget field) {
                 field.setFocused(false);
             }
+
             outputField.setFocused(false);
             if (isNew) {
                 parentScreen.addingNewEntry = false;
@@ -355,7 +359,7 @@ public abstract class GenericEntryList extends EntryListWidget<GenericEntryList.
         @Override
         public void render(DrawContext context, int index, int y, int x, int entryWidth, int entryHeight,
                            int mouseX, int mouseY, boolean hovered, float delta) {
-            this.pendingTooltip = null; // Clear at start of render
+            this.pendingTooltip = null;
 
             int ax = x, ay = y, aw = 100, ah = 20;
             int cx = x + 110, cy = y, cw = 200, ch = 20;
@@ -382,15 +386,13 @@ public abstract class GenericEntryList extends EntryListWidget<GenericEntryList.
 
         @Override
         public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-            // Enter key triggers save
-            if (keyCode == 257 || keyCode == 335) { // GLFW_KEY_ENTER, GLFW_KEY_KP_ENTER
+            if (keyCode == 257 || keyCode == 335) {
                 handleSave();
                 return true;
             }
 
-            // Tab navigation
-            if (keyCode == 258) { // GLFW_KEY_TAB
-                boolean shift = (modifiers & 0x1) != 0; // Shift modifier
+            if (keyCode == 258) {
+                boolean shift = (modifiers & 0x1) != 0;
                 // List of focusable widgets in order
                 java.util.List<net.minecraft.client.gui.widget.ClickableWidget> widgets = new java.util.ArrayList<>();
                 if (inputWidget instanceof TextFieldWidget field) widgets.add(field);
@@ -470,7 +472,6 @@ public abstract class GenericEntryList extends EntryListWidget<GenericEntryList.
 
         private void updateTooltipState(int cx, int cy, int cw, int ch, int mouseX, int mouseY) {
             if (parentScreen.fishyPopup == null) {
-                // Output field tooltip
                 String outputText = outputField.getText();
                 boolean outputTooltip = false;
                 if (outputText.length() > 31) {
@@ -491,7 +492,7 @@ public abstract class GenericEntryList extends EntryListWidget<GenericEntryList.
                         this.tooltipLines = tooltipLines;
                     }
                 }
-                // Input field tooltip (if inputWidget is a TextFieldWidget)
+
                 if (!outputTooltip && inputWidget instanceof TextFieldWidget field) {
                     String inputText = field.getText();
                     if (inputText.length() > 31) {

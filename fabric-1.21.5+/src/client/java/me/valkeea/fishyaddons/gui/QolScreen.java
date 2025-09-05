@@ -5,6 +5,7 @@ import java.util.List;
 
 import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.config.Key;
+import me.valkeea.fishyaddons.handler.ClientPing;
 import me.valkeea.fishyaddons.handler.CopyChat;
 import me.valkeea.fishyaddons.handler.MobAnimations;
 import me.valkeea.fishyaddons.handler.SkyblockCleaner;
@@ -80,7 +81,7 @@ public class QolScreen extends Screen {
         addDrawableChild(new FaButton(
             alertBtnX, alertBtnY, alertBtnW, alertBtnH,
             Text.literal("Chat Alerts").styled(style -> style.withColor(0xE2CAE9)),
-            btn -> MinecraftClient.getInstance().setScreen(new TabbedListScreen(MinecraftClient.getInstance().currentScreen, TabbedListScreen.Tab.ALERT))
+            btn -> MinecraftClient.getInstance().setScreen(new GUIChatAlert(this))
         ));
 
         rndrBtnX = centerX - 100;
@@ -116,6 +117,7 @@ public class QolScreen extends Screen {
             getPingHudText(),
             btn -> {
                 FishyConfig.toggle(Key.HUD_PING_ENABLED, false);
+                ClientPing.refresh();
                 btn.setMessage(getPingHudText());
             }
         ));

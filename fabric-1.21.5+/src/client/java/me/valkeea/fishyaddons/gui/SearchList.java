@@ -54,7 +54,7 @@ public class SearchList {
     private static void keybinds () { client.setScreen(new TabbedListScreen(screen, TabbedListScreen.Tab.KEYBINDS)); }
     private static void aliases () { client.setScreen(new TabbedListScreen(screen, TabbedListScreen.Tab.COMMANDS)); }
     private static void chat () { client.setScreen(new TabbedListScreen(screen, TabbedListScreen.Tab.CHAT)); }
-    private static void alerts () { client.setScreen(new TabbedListScreen(screen, TabbedListScreen.Tab.ALERT)); }
+    private static void alerts () { client.setScreen(new GUIChatAlert(screen)); }
     private static void hud () { client.setScreen(new HudEditScreen()); }
     private static void guard () { client.setScreen(new SafeguardScreen()); }
     private static void qol () { client.setScreen(new QolScreen()); }    

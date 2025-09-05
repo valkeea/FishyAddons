@@ -19,7 +19,7 @@ public class VCVisuals {
         if (hovered) {
             return (themeColor & 0x088FFFFF) | 0x99000000;
         } else if (!enabled) {
-            return 0xFFAAAAAA;
+            return 0xFF444444;
         } else {
             return (themeColor & 0x00FFFFFF) | 0x10000000;
         }
@@ -40,7 +40,7 @@ public class VCVisuals {
         if (hovered) {
             return (themeColor & 0x088FFFFF) | 0x99000000;
         } else if (!enabled) {
-            return 0xFF848484;
+            return 0xFF444444;
         } else {
             return (themeColor & 0x00FFFFFF) | 0x10000000;
         }

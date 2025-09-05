@@ -25,7 +25,29 @@ public class AlertEditScreen extends Screen {
     private TextFieldWidget alertTextField;
     private TextFieldWidget soundIdField;
     private TextFieldWidget volumeField;
-    private int alertColor = 0xFFFFFFFF;
+    private TextFieldWidget keyField;
+    private int alertColor = 0x6DE6B5;
+
+    private String stateKey = null;
+    private String stateMsg = null;
+    private String stateOnscreen = null;
+    private String stateSoundId = null;
+    private String stateVolume = null; 
+    
+    private static String prefer(String... values) {
+        for (String v : values) {
+            if (v != null) return v;
+        }
+        return "";
+    }    
+
+    private void storeState() {
+        stateKey = keyField.getText();
+        stateMsg = msgField.getText();
+        stateOnscreen = alertTextField.getText();
+        stateSoundId = soundIdField.getText();
+        stateVolume = volumeField.getText();
+    }
 
     public AlertEditScreen(String key, FishyConfig.AlertData data, Screen parent) {
         super(Text.literal("Edit Alert"));
@@ -45,32 +67,35 @@ public class AlertEditScreen extends Screen {
         int w = 300;
         int h = 20;
 
-        TextFieldWidget keyField = new FaTextField(this.textRenderer, x, y, w, h, Text.literal("Key"));
-        keyField.setText(alertKey != null ? alertKey : "");
+        keyField = new FaTextField(this.textRenderer, x, y, w, h, Text.literal("Key"));
+        keyField.setMaxLength(50);
+        keyField.setText(prefer(stateKey, alertKey));
         this.addDrawableChild(keyField);
 
         msgField = new FaTextField(this.textRenderer, x, y + 40, w, h, Text.literal("Chat message"));
-        msgField.setText(initialData.getMsg() != null ? initialData.getMsg() : "");
+        msgField.setText(prefer(stateMsg, initialData.getMsg()));
         this.addDrawableChild(msgField);
 
         alertTextField = new FaTextField(this.textRenderer, x, y + 80, w, h, Text.literal("On-screen Alert"));
-        alertTextField.setText(initialData.getOnscreen() != null ? initialData.getOnscreen() : "");
+        alertTextField.setText(prefer(stateOnscreen, initialData.getOnscreen()));
         this.addDrawableChild(alertTextField);
 
         addDrawableChild(new FaButton(x + w, centerY, 50, h, 
             Text.literal(COLOR).styled(style -> style.withColor(alertColor)),
             btn -> { 
+                storeState();
                 float[] rgb = ColorWheel.intToRGB(alertColor);
                 this.client.setScreen(new ColorWheel(this, rgb, selected -> {
                     alertColor = ColorWheel.rgbToInt(selected);
                     btn.setMessage(Text.literal(COLOR).styled(s -> s.withColor(alertColor)));
+                    ChatAlert.refresh();
                     this.client.setScreen(this);
                 }));
             }
         ));
 
         soundIdField = new FaTextField(this.textRenderer, x, y + 120, w, h, Text.literal("SoundEvent ID"));
-        soundIdField.setText(initialData.getSoundId() != null ? initialData.getSoundId() : "");
+        soundIdField.setText(prefer(stateSoundId, initialData.getSoundId()));
         this.addDrawableChild(soundIdField);
 
         List<String> soundIds = Registries.SOUND_EVENT.stream()
@@ -97,7 +122,6 @@ public class AlertEditScreen extends Screen {
             soundIdField
         );
 
-        // Update searchMenu filter when soundIdField changes
         soundIdField.setChangedListener(
             query -> searchMenu.setVisible(soundIdField.isFocused() && !query.isEmpty())
         );
@@ -105,61 +129,88 @@ public class AlertEditScreen extends Screen {
         searchMenu.setVisible(!soundIdField.getText().isEmpty());
 
         volumeField = new FaTextField(this.textRenderer, x + width, sy, 50, 20, Text.literal("Volume"));
-        volumeField.setText(String.valueOf(initialData.getVolume()));
+        if (stateVolume != null) {
+            volumeField.setText(stateVolume);
+        } else if (initialData.getVolume() != 1.0F) {
+            volumeField.setText(String.valueOf(initialData.getVolume()));
+        } else {
+            volumeField.setText("1.0");
+        }
         this.addDrawableChild(volumeField);
 
         this.addDrawableChild(new FaButton(x + w / 2 + 80, soundIdField.getY() + 80, 80, 20,
             Text.literal("HUD").styled(style -> style.withColor(0xE2CAE9)),
-            btn -> MinecraftClient.getInstance().setScreen(new HudEditScreen("Title HUD"))
-        ));        
+            btn -> {
+                MinecraftClient.getInstance().setScreen(new HudEditScreen("Title HUD"));
+                save();
+                ChatAlert.refresh();
+            }
+        ));
 
-        this.addDrawableChild(done(x + w / 2, keyField));
+        this.addDrawableChild(new FaButton(x + w / 2, soundIdField.getY() + 80, 80, 20,
+            Text.literal("Save").styled(style -> style.withColor(0xE2CAE9)),
+            btn -> {
+            save();
+            ChatAlert.refresh();
+            this.client.setScreen(parent);
+        }));
+
+        this.addDrawableChild(new FaButton(x + w / 2 - 80, soundIdField.getY() + 80, 80, 20,
+            Text.literal("Cancel").styled(style -> style.withColor(0xE2CAE9)),
+            btn -> this.client.setScreen(parent)
+        ));
     }
 
-    private FaButton done(int x, TextFieldWidget keyField) {
-        return new FaButton(x, soundIdField.getY() + 80, 80, 20,
-            Text.literal("Done").styled(style -> style.withColor(0xE2CAE9)),
-            btn -> {
-                float volume = 1.0F;
-                try {
-                String input = volumeField.getText().trim();
-                if (!input.isEmpty()) {
-                    volume = Float.parseFloat(input);
-                    if (volume < 0.0F) volume = 0.0F;
-                    if (volume > 5.0F) volume = 5.0F;
-                }
+    private void save() {
+        float volume = 1.0F;
+        try {
+        String input = volumeField.getText().trim();
+        if (!input.isEmpty()) {
+            volume = Float.parseFloat(input);
+                if (volume < 0.0F) volume = 0.0F;
+                if (volume > 5.0F) volume = 5.0F;
+            }
             } catch (NumberFormatException ignored) {
                 System.err.println("Invalid volume input: " + volumeField.getText());
             }
             String newKey = keyField.getText().trim();
-            if (newKey.isEmpty()) {
-                return;
-            }
-            FishyConfig.AlertData newData = new FishyConfig.AlertData(
-                msgField.getText(),
-                alertTextField.getText(),
-                alertColor,
-                soundIdField.getText(),
-                volume,
-                true
-            );
-            if (!newKey.equals(alertKey)) {
-                FishyConfig.removeChatAlert(alertKey);
-            }
-            FishyConfig.setChatAlert(newKey, newData);
-            alertKey = newKey;
-            ChatAlert.refresh();
-            this.client.setScreen(parent);
-        });
+        if (newKey.isEmpty()) {
+            warn();
+            return;
+        }
+        FishyConfig.AlertData newData = new FishyConfig.AlertData(
+            msgField.getText(),
+            alertTextField.getText(),
+            alertColor,
+            soundIdField.getText(),
+            volume,
+            true
+        );
+
+        if (!newKey.equals(alertKey)) {
+            FishyConfig.removeChatAlert(alertKey);
+        }
+        FishyConfig.setChatAlert(newKey, newData);
+        volumeField.setText(stateVolume != null ? stateVolume : String.valueOf(initialData.getVolume()));
     }
+
+	public void warn() {
+        MinecraftClient cl = MinecraftClient.getInstance();        
+        VCPopup popup = new VCPopup(
+            Text.literal("Empty field detected! Would you like to restore it?"),
+            "No", () -> cl.setScreen(parent),
+            "Yes", () -> keyField.setText(alertKey),
+            1.0f
+            );
+        cl.setScreen(new VCOverlay(cl.currentScreen, popup));
+	}    
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         this.renderBackground(context, mouseX, mouseY, delta);
-        renderGuideText(context);
         super.render(context, mouseX, mouseY, delta);
+        renderGuideText(context);
 
-        // Only show dropdown if field is focused and has text
         if (searchMenu != null) {
             searchMenu.setVisible(soundIdField.isFocused() && !soundIdField.getText().isEmpty());
             if (searchMenu.isVisible()) {
@@ -216,8 +267,8 @@ public class AlertEditScreen extends Screen {
             " • §7You can preview sounds by right-clicking",
             "   them in the dropdown",
             " • §7Volume is affected by internal settings",
-            "   §3Note: FA provides 3 custom events.",
-            "   §3You can replace with a resource pack",
+            "   §3Note: FA provides 3 custom events with placeholder sounds.",
+            "   §3You can replace them with a normal resource pack",
             "   §3by placing fishyaddons_1.ogg, (1-3)",
             "   §3in assets/fishyaddons/sounds/custom.",
             " • §7Alerts can also be loaded from JSON"           

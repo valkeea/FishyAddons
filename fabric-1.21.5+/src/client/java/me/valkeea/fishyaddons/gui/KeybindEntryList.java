@@ -219,7 +219,7 @@ public class KeybindEntryList extends GenericEntryList {
                 if (parentScreen != null) parentScreen.addingNewEntry = false;
             }
             if (parentScreen != null) parentScreen.refreshEntryList();
-            KeyShortcut.refreshCache();
+            KeyShortcut.refresh();
         }
 
         public String getKeyValue() {

@@ -5,6 +5,7 @@ import java.util.function.Supplier;
 
 import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.config.Key;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 
 /**
@@ -56,7 +57,7 @@ public class VCGui {
         // Name
         int nameColor = isSubEntry ? darkenColor(themeColorSupplier.get()) : themeColorSupplier.get();
         String displayName = entry.name;
-        VCText.drawScaledText(renderCtx.context, screen.getTextRenderer(), displayName, contentX, contentY, nameColor, false, uiScale);
+        VCText.drawScaledText(renderCtx.context, screen.getTextRenderer(), displayName, contentX, contentY, nameColor, uiScale);
 
         // Desc if available
         desc(renderCtx, screen, entry, contentX, contentY, uiScale, isSubEntry);
@@ -92,14 +93,14 @@ public class VCGui {
             int descStartY = contentY + (int)(16 * uiScale);
                 
             for (int i = 0; i < Math.min(descLines.length, 2); i++) { // Max 2 lines to prevent overlap
-                VCText.drawScaledText(renderCtx.context, screen.getTextRenderer(), descLines[i], contentX, descStartY + i * lineSpacing, 0xFFCCCCCC, false, uiScale);
+                VCText.drawScaledText(renderCtx.context, screen.getTextRenderer(), descLines[i], contentX, descStartY + i * lineSpacing, 0xFFCCCCCC, uiScale);
             }
         } else if (isSubEntry && entry.description != null) {
             // For sub-entries, show only one line
             String[] descLines = entry.description.split("\n");
             if (descLines.length > 0) {
                 int descY = contentY + (int)(16 * uiScale);
-                VCText.drawScaledText(renderCtx.context, screen.getTextRenderer(), descLines[0], contentX, descY, 0xFFC4C4C4, false, uiScale);
+                VCText.drawScaledText(renderCtx.context, screen.getTextRenderer(), descLines[0], contentX, descY, 0xFFC4C4C4, uiScale);
             }
         }
     }
@@ -137,7 +138,7 @@ public class VCGui {
             int textX = x + (int)(20 * uiScale);
             int textY = y + (int)(15 * uiScale);
 
-            VCText.drawScaledText(context, screen.getTextRenderer(), entry.name, textX, textY, 0xFF888888, false, uiScale);
+            VCText.drawScaledText(context, screen.getTextRenderer(), entry.name, textX, textY, 0xFF888888, uiScale);
             int subBgWidth = (int)(entryWidth * 0.95f); // 95% width of entry, offset start x to the right
             context.fill(x + (int)(5 * uiScale), y, x + subBgWidth, y + headerHeight, 0x30000000);
 
@@ -186,7 +187,7 @@ public class VCGui {
             context.fill(gapEnd, lineY, x + entryWidth, lineY + lineHeight, 0xFF55FFFF);
         }
         
-        VCText.drawScaledText(context, screen.getTextRenderer(), entry.name, textX, textY, 0xFF55FFFF, false, uiScale);
+        VCText.drawScaledText(context, screen.getTextRenderer(), entry.name, textX, textY, 0xFF55FFFF, uiScale);
         
         return headerHeight;
     }
@@ -220,12 +221,13 @@ public class VCGui {
         String text = isExpanded ? "Collapse" : "Expand";
         int textWidth = screen.getTextRenderer().getWidth(text);
         int textX = expandButtonX + (expandButtonWidth / 2) - (int)(textWidth * Math.min(uiScale, 1.0f) / 2);
-        VCText.drawScaledText(renderCtx.context, screen.getTextRenderer(), text, textX, expandButtonY, themeColorSupplier.get(), false, uiScale);
+        VCText.drawScaledText(renderCtx.context, screen.getTextRenderer(), text, textX, expandButtonY, themeColorSupplier.get(), uiScale);
 
         // Tooltip to preview subentries
         if (expandButtonHovered && entry.tooltipText != null) {
-            int tooltipX = expandButtonX + expandButtonWidth;
-            int tooltipY = renderCtx.mouseY;
+            int width = MinecraftClient.getInstance().getWindow().getWidth();
+            int tooltipX = Math.min(expandButtonX + expandButtonWidth / 3, width - 100);
+            int tooltipY = expandButtonY;
             VCRenderUtils.preview(renderCtx.context, screen.getTextRenderer(), entry.tooltipText, tooltipX, tooltipY, themeColorSupplier.get(), uiScale);
         }
     }
@@ -294,6 +296,16 @@ public class VCGui {
         if (entry.hasColorControl()) {
             renderColorButton(context, entry, currentX, y);
         }
+
+        if (entry.hasAdd()) {
+            int addWidth = uiScale < 0.7f ? Math.max(20, (int)(40 * uiScale)) : (int)(30 * uiScale);
+            boolean addHovered = VCButton.isHovered(currentX, y, addWidth, buttonHeight, mouseX, mouseY);
+            VCButton.render(context, screen.getTextRenderer(),
+                VCButton.standard(currentX, y, addWidth, buttonHeight, "ADD")
+                    .withHovered(addHovered)
+                    .withScale(uiScale)
+            );                                    
+        }
     }
 
     private void renderColorButton(DrawContext context, VCEntry entry, int x, int y) {
@@ -306,11 +318,11 @@ public class VCGui {
     
     private int getCurrentColor(VCEntry entry) {
         // Determine which color setting this entry controls
-        if ("Highlight Coordinates".equals(entry.name)) {
-            return FishyConfig.getInt("renderCoordsColor");
-        } else if ("XP Color".equals(entry.name)) {
+        if (Key.RENDER_COORDS.equals(entry.configKey)) {
+            return FishyConfig.getInt(Key.RENDER_COORD_COLOR);
+        } else if (Key.XP_OUTLINE.equals(entry.configKey)) {
             return FishyConfig.getInt(Key.XP_COLOR);
-        } else if ("Redstone Particle Color".equals(entry.name)) {
+        } else if (Key.CUSTOM_PARTICLE_COLOR_INDEX.equals(entry.configKey)) {
             if ("custom".equals(FishyConfig.getParticleColorMode())) {
                 float[] rgb = FishyConfig.getCustomParticleRGB();
                 if (rgb != null && rgb.length == 3) {
@@ -431,7 +443,7 @@ public class VCGui {
         String valueText = formatSliderValue(entry);
         int textColor = getSliderTextColor(entry);
 
-        VCText.drawScaledText(context, screen.getTextRenderer(), valueText, valueTextX, valueTextY, textColor, false, uiScale);
+        VCText.drawScaledText(context, screen.getTextRenderer(), valueText, valueTextX, valueTextY, textColor, uiScale);
 
         if (entry.hasColorControl()) {
             int buttonGap = uiScale < 0.7f ? Math.max(1, (int)(2 * uiScale)) : (int)(3 * uiScale);
@@ -473,7 +485,7 @@ public class VCGui {
                 valueText = String.format(entry.getFormatString(), value);
             }
             int textColor = getSliderTextColor(entry);
-            VCText.drawScaledText(context, screen.getTextRenderer(), valueText, currentX, y + (int)(7 * uiScale), textColor, false, uiScale);
+            VCText.drawScaledText(context, screen.getTextRenderer(), valueText, currentX, y + (int)(7 * uiScale), textColor, uiScale);
         }
     }
 
@@ -502,7 +514,7 @@ public class VCGui {
         float value = entry.getSliderValue();
         
         if (entry.getSliderType() == VCEntry.SliderType.STRING) {
-            String[] themes = {"Default", "Purple", "Blue", "White", "Green"};
+            String[] themes = {"Default", "purple", "Blue", "White", "Green"};
             int index = Math.clamp((int)value, 0, themes.length - 1);
             return themes[index];
         } else if (entry.getSliderType() == VCEntry.SliderType.PRESET) {
@@ -524,7 +536,7 @@ public class VCGui {
     }
 
     private int getSliderTextColor(VCEntry entry) {
-        if ("Redstone Particle Color".equals(entry.name)) {
+        if (Key.CUSTOM_PARTICLE_COLOR_INDEX.equals(entry.configKey)) {
             return getCurrentColor(entry);
         }
         return themeColorSupplier.get();

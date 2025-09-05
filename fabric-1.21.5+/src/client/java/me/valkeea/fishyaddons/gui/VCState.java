@@ -32,7 +32,11 @@ public class VCState {
         persistentExpandedEntries = new HashMap<>(expandedEntries != null ? expandedEntries : new HashMap<>());
         preserveState(scrollOffset, searchText, expandedEntries);
     }
-    
+
+    // search setter
+    public static void setLastSearchText(String searchText) {
+        preservedSearchText = searchText != null ? searchText : "";
+    }
 
     // -- Getters for preserved state
     public static int getLastScrollOffset() {

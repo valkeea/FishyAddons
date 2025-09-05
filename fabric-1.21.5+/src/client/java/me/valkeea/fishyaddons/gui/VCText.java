@@ -12,46 +12,44 @@ public class VCText {
      * Render text with scaling for smaller GUI scales
      */
     public static void drawScaledText(DrawContext context, TextRenderer textRenderer, String text, 
-                                    int x, int y, int color, boolean shadow, float uiScale) {
+                                    int x, int y, int color, float uiScale) {
         if (uiScale < 0.7f) {
             context.getMatrices().push();
             context.getMatrices().scale(uiScale, uiScale, 1.0f);
             int scaledX = (int)(x / uiScale);
             int scaledY = (int)(y / uiScale);
-            if (shadow) {
-                context.drawTextWithShadow(textRenderer, text, scaledX, scaledY, color);
-            } else {
-                context.drawText(textRenderer, text, scaledX, scaledY, color, false);
-            }
+            context.drawText(textRenderer, text, scaledX, scaledY, color, false);
             context.getMatrices().pop();
         } else {
-            if (shadow) {
-                context.drawTextWithShadow(textRenderer, text, x, y, color);
-            } else {
-                context.drawText(textRenderer, text, x, y, color, false);
-            }
+            context.drawText(textRenderer, text, x, y, color, false);
         }
     }
 
     public static void drawScaledButtonText(DrawContext context, TextRenderer textRenderer, String text, 
-                                    int x, int y, int color, boolean shadow, float uiScale) {
+                                    int x, int y, int color, float uiScale) {
         if (uiScale < 1.2f) {
             context.getMatrices().push();
             context.getMatrices().scale(uiScale, uiScale, 1.0f);
             int scaledX = (int)(x / uiScale);
             int scaledY = (int)(y / uiScale);
-            if (shadow) {
-                context.drawTextWithShadow(textRenderer, text, scaledX, scaledY, color);
-            } else {
                 context.drawText(textRenderer, text, scaledX, scaledY, color, false);
-            }
             context.getMatrices().pop();
         } else {
-            if (shadow) {
-                context.drawTextWithShadow(textRenderer, text, x, y, color);
-            } else {
-                context.drawText(textRenderer, text, x, y, color, false);
-            }
+            context.drawText(textRenderer, text, x, y, color, false);
+        }
+    }
+
+    public static void drawScaledCenteredButtonText(DrawContext context, TextRenderer textRenderer, String text, 
+                                            int centerX, int y, int color, float uiScale) {
+        if (uiScale < 1.2f) {
+            context.getMatrices().push();
+            context.getMatrices().scale(uiScale, uiScale, 1.0f);
+            int scaledCenterX = (int)(centerX / uiScale);
+            int scaledY = (int)(y / uiScale);
+            context.drawText(textRenderer, text, scaledCenterX, scaledY, color, false);
+            context.getMatrices().pop();
+        } else {
+            context.drawText(textRenderer, text, centerX, y, color, false);
         }
     }
 

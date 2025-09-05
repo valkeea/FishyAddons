@@ -34,9 +34,8 @@ public class EntityTracker {
         Pattern.CASE_INSENSITIVE
     );
 
-    // wip
     private static final Pattern VALUABLE_PLAYERENTITY_PATTERN = Pattern.compile(
-        ".*\\b(great white shark|minos inquisitor)\\b.*",
+        ".*\\b(great white shark|minos inquisitor|grim reaper|ent|minotaur)\\b.*",
         Pattern.CASE_INSENSITIVE
     );
     
@@ -91,13 +90,13 @@ public class EntityTracker {
         double distance = client.player.distanceTo(entity);
         if (distance > TRACKING_DISTANCE) return;
         if (trackedEntities.add(entity) && !mobData.containsKey(entity)) {
-            handleNewEntity(entity, distance);
+            handleNewEntity(entity);
         }
     }
     
     public static void onEntityRemoved(Entity entity) {
         if (entity == null) return;
-        
+
         trackedEntities.remove(entity);
         TrackedMob trackedMob = mobData.remove(entity);
         if (trackedMob != null && trackedMob.isValuable()) {
@@ -108,10 +107,10 @@ public class EntityTracker {
         mobData.values().removeIf(mob -> mob.getNameArmorStand() == entity);
     }
     
-    private static void handleNewEntity(Entity entity, double distance) {
+    private static void handleNewEntity(Entity entity) {
         switch (entity) {
-            case MobEntity mobEntity -> handleMobDetected(mobEntity, distance);
-            case ArmorStandEntity armorStand -> handleArmorStandDetected(armorStand, distance);
+            case MobEntity mobEntity -> handleMobDetected(mobEntity);
+            case ArmorStandEntity armorStand -> handleArmorStandDetected(armorStand);
             case PlayerEntity player -> handlePlayerEntityDetected(player);
             default -> {
                 break;
@@ -133,7 +132,6 @@ public class EntityTracker {
         if (!isValuablePlayer && !hasNearbyMobArmorStand(player)) {
             return;
         }
-        
         String mobType = "player_" + playerName.toLowerCase().replace(" ", "_");
         TrackedMob trackedPlayer = new TrackedMob(player, mobType);
         trackedPlayer.setDisplayName(displayName.isEmpty() ? playerName : displayName);
@@ -175,7 +173,7 @@ public class EntityTracker {
             });
     }
     
-    private static void handleMobDetected(MobEntity mob, double distance) {
+    private static void handleMobDetected(MobEntity mob) {
         if (mobData.containsKey(mob)) {
             return;
         }
@@ -188,51 +186,54 @@ public class EntityTracker {
         scheduleArmorStandAssociation(trackedMob);
     }
     
-    private static void handleArmorStandDetected(ArmorStandEntity armorStand, double distance) {
+    private static void handleArmorStandDetected(ArmorStandEntity armorStand) {
         armorStandSpawnTimes.put(armorStand, System.currentTimeMillis());
     }
     
     private static void scheduleArmorStandAssociation(TrackedMob trackedMob) {
-        new Thread(() -> {
+        Thread.ofVirtual().start(() -> {
             try {
                 Thread.sleep(100);
                 tryAssociateWithNearbyArmorStands(trackedMob);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
-        }).start();
+        });
     }
     
     private static void tryAssociateWithNearbyArmorStands(TrackedMob trackedMob) {
         MinecraftClient client = MinecraftClient.getInstance();
         if (client.world == null) return;
         
-        for (Entity entity : armorStandSpawnTimes.keySet()) {
-            if (!(entity instanceof ArmorStandEntity armorStand)) continue;
-            
-            // Check if armor stand spawned recently (within last 2 seconds)
-            long timeDiff = System.currentTimeMillis() - armorStandSpawnTimes.get(entity);
-            if (timeDiff > 2000) continue;
-            
-            // Check distance between mob and armor stand
-            double distance = trackedMob.mobEntity.distanceTo(armorStand);
-            if (distance <= ASSOCIATION_DISTANCE) {
-                // Try all name sources for this armor stand
-                String[] possibleNames = {
-                    armorStand.getName().getString(),
-                    armorStand.getCustomName() != null ? armorStand.getCustomName().getString() : null,
-                    armorStand.getDisplayName().getString()
-                };
-                
-                for (String nameToCheck : possibleNames) {
-                    if (nameToCheck == null) continue;
-                    
-                    if (tryExtractAndAssociateMobInfo(armorStand, nameToCheck, trackedMob)) {
-                        return;
+        for (Map.Entry<Entity, Long> entry : armorStandSpawnTimes.entrySet()) {
+            Entity entity = entry.getKey();
+            Long spawnTime = entry.getValue();
+
+            if (entity instanceof ArmorStandEntity armorStand) {
+                // Check if armor stand spawned recently (within last 2 seconds)
+                long timeDiff = System.currentTimeMillis() - spawnTime;
+                if (timeDiff <= 2000) {
+                    double distance = trackedMob.mobEntity.distanceTo(armorStand);
+                    if (distance <= ASSOCIATION_DISTANCE) {
+                        tryAll(armorStand, trackedMob);
                     }
                 }
             }
         }
+    }
+
+    private static void tryAll(ArmorStandEntity armorStand, TrackedMob trackedMob) {
+        String[] possibleNames = {
+            armorStand.getName().getString(),
+            armorStand.getCustomName() != null ? armorStand.getCustomName().getString() : null,
+            armorStand.getDisplayName().getString()
+        };
+
+        for (String nameToCheck : possibleNames) {
+            if (nameToCheck != null && tryExtractAndAssociateMobInfo(armorStand, nameToCheck, trackedMob)) {
+                return;
+            }
+        }        
     }
     
     private static boolean tryExtractAndAssociateMobInfo(ArmorStandEntity armorStand, String nameToCheck, TrackedMob trackedMob) {
@@ -247,7 +248,7 @@ public class EntityTracker {
             trackedMob.setNameArmorStand(armorStand);
             
             if (trackedMob.isValuable()) {
-                foundVal = true; // Indicate we found a valuable mob
+                foundVal = true;
             }
             return true;
         }

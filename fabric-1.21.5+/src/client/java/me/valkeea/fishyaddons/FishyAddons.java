@@ -11,8 +11,11 @@ import me.valkeea.fishyaddons.event.FishyKeys;
 import me.valkeea.fishyaddons.handler.CakeTimer;
 import me.valkeea.fishyaddons.handler.ChatAlert;
 import me.valkeea.fishyaddons.handler.ChatReplacement;
+import me.valkeea.fishyaddons.handler.ChatTimers;
+import me.valkeea.fishyaddons.handler.ClientPing;
 import me.valkeea.fishyaddons.handler.CommandAlias;
 import me.valkeea.fishyaddons.handler.CopyChat;
+import me.valkeea.fishyaddons.handler.GuiIcons;
 import me.valkeea.fishyaddons.handler.KeyShortcut;
 import me.valkeea.fishyaddons.handler.MobAnimations;
 import me.valkeea.fishyaddons.handler.ParticleVisuals;
@@ -21,15 +24,8 @@ import me.valkeea.fishyaddons.handler.RenderTweaks;
 import me.valkeea.fishyaddons.handler.ResourceHandler;
 import me.valkeea.fishyaddons.handler.SkyblockCleaner;
 import me.valkeea.fishyaddons.handler.XpColor;
-import me.valkeea.fishyaddons.hud.CakeDisplay;
 import me.valkeea.fishyaddons.hud.ElementRegistry;
 import me.valkeea.fishyaddons.hud.FishyToast;
-import me.valkeea.fishyaddons.hud.PetDisplay;
-import me.valkeea.fishyaddons.hud.PingDisplay;
-import me.valkeea.fishyaddons.hud.SearchHudElement;
-import me.valkeea.fishyaddons.hud.TimerDisplay;
-import me.valkeea.fishyaddons.hud.TitleDisplay;
-import me.valkeea.fishyaddons.hud.TrackerDisplay;
 import me.valkeea.fishyaddons.listener.ClientChat;
 import me.valkeea.fishyaddons.listener.ClientConnected;
 import me.valkeea.fishyaddons.listener.ClientDisconnected;
@@ -39,6 +35,7 @@ import me.valkeea.fishyaddons.listener.WorldEvent;
 import me.valkeea.fishyaddons.render.BeaconRenderer;
 import me.valkeea.fishyaddons.tool.FishyMode;
 import me.valkeea.fishyaddons.tool.GuiScheduler;
+import me.valkeea.fishyaddons.tool.ModCheck;
 import me.valkeea.fishyaddons.tracker.ItemTrackerData;
 import me.valkeea.fishyaddons.tracker.SackDropParser;
 import me.valkeea.fishyaddons.tracker.TrackerUtils;
@@ -60,14 +57,14 @@ public class FishyAddons implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
-        CustomSounds.init();
-        FishyConfig.init();
+
+        FishyConfig.init();        
         ItemConfig.init();
-        FishyMode.init();
-        FishyKeys.register();
-        KeyShortcut.refreshCache();
-        ChatReplacement.refreshCache();
-        CommandAlias.refreshCache();
+
+        KeyShortcut.refresh();
+        ChatReplacement.refresh();
+        CommandAlias.refresh();
+        GuiIcons.refresh();
         ParticleVisuals.refreshCache();
         ChatAlert.refresh();
         CopyChat.refresh();
@@ -78,9 +75,11 @@ public class FishyAddons implements ClientModInitializer {
         SkyblockCleaner.refresh();
         TrackerUtils.refresh();
         SackDropParser.refresh();
-        GuiScheduler.register();
-        CmdManager.register();  
-
+        ClientPing.refresh();
+        ChatTimers.getInstance().refresh();
+        
+        CustomSounds.init();        
+        FishyMode.init();        
         ClientTick.init();
         ModifyChat.init();
         WorldEvent.init();
@@ -90,38 +89,16 @@ public class FishyAddons implements ClientModInitializer {
         BeaconRenderer.init();
         ClientChat.init();
         FishyToast.init();
+        ModCheck.init();
+        ElementRegistry.init();
+        ItemTrackerData.init();        
 
-        PingDisplay pingDisplay = new PingDisplay();
-        TimerDisplay timerDisplay = new TimerDisplay();
-        TitleDisplay titleDisplay = new TitleDisplay();
-        PetDisplay petDisplay = new PetDisplay();
-        TrackerDisplay trackerDisplay = new TrackerDisplay();
-        SearchHudElement searchHudElement = new SearchHudElement();
-        CakeDisplay centuryCakeDisplay = new CakeDisplay();
-
-        ResourceHandler.register();
-        ElementRegistry.register(pingDisplay);
-        ElementRegistry.register(timerDisplay);
-        ElementRegistry.register(titleDisplay);
-        ElementRegistry.register(petDisplay);
-        ElementRegistry.register(trackerDisplay);
-        ElementRegistry.register(searchHudElement);
-        ElementRegistry.register(centuryCakeDisplay);
-        
-        pingDisplay.register();
-        timerDisplay.register();
-        titleDisplay.register();
-        petDisplay.register();
-        trackerDisplay.register();
-        searchHudElement.register();
-        centuryCakeDisplay.register();
-
-        ItemTrackerData.init();
         FishyPresets.ensureDefaultPresets();
 
-        me.valkeea.fishyaddons.handler.ItemSearchOverlay searchOverlay = me.valkeea.fishyaddons.handler.ItemSearchOverlay.getInstance();
-        searchOverlay.setSearchHudElement(searchHudElement);
-
+        FishyKeys.register();        
+        GuiScheduler.register();
+        CmdManager.register();  
+        ResourceHandler.register();        
         Registry.register(Registries.SOUND_EVENT, PlaySound.PROTECT_TRIGGER_ID, PlaySound.PROTECT_TRIGGER_EVENT);
 
         KeyBinding mainKey = KeyBindingHelper.registerKeyBinding(

@@ -26,9 +26,8 @@ public class WorldElements {
             Math.pow(y - playerPos.y, 2) + 
             Math.pow(z - playerPos.z, 2)
         );
-        
-        // Minimum scale of 0.03f at any distance, grows with distance
-        float baseScale = 0.03f;
+
+        float baseScale = 0.07f;
         float distanceScale = Math.max(1.0f, (float)(distance / 20.0f));
         float finalScale = baseScale * distanceScale;
         

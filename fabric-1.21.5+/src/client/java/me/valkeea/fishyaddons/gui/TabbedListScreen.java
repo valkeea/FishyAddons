@@ -10,6 +10,9 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
+import me.valkeea.fishyaddons.handler.ChatReplacement;
+import me.valkeea.fishyaddons.handler.CommandAlias;
+import me.valkeea.fishyaddons.handler.KeyShortcut;
 import net.minecraft.text.Text;
 
 public class TabbedListScreen extends Screen {
@@ -288,9 +291,18 @@ public class TabbedListScreen extends Screen {
             suffix -> {
                 loadPresetForCurrentTab(suffix);
                 refreshEntryList();
+                refreshCache();
                 presetDropdown.setVisible(false);
             }
         );
+    }
+
+    private void refreshCache() {
+        switch (currentTab) {
+            case COMMANDS -> CommandAlias.refresh();
+            case KEYBINDS -> KeyShortcut.refresh();
+            case CHAT -> ChatReplacement.refresh();
+        }
     }
 
     // Overload loadPresetForCurrentTab to accept a suffix:

@@ -365,6 +365,7 @@ public class GUIChatAlert extends Screen {
                 btn -> {
                     String currentKey = this.keyField.getText().trim();
                     FishyConfig.removeChatAlert(currentKey);
+                    ChatAlert.refresh();
                     entries.remove(this);
                     GUIChatAlert.this.remove(this.keyField);
                     GUIChatAlert.this.remove(this.editBtn);

@@ -15,6 +15,11 @@ import me.valkeea.fishyaddons.gui.SbScreen;
 import me.valkeea.fishyaddons.gui.TabbedListScreen;
 import me.valkeea.fishyaddons.gui.VisualSettingsScreen;
 import me.valkeea.fishyaddons.handler.ClientPing;
+import me.valkeea.fishyaddons.handler.CommandAlias;
+import me.valkeea.fishyaddons.handler.ChatAlert;
+import me.valkeea.fishyaddons.handler.ChatReplacement;
+import me.valkeea.fishyaddons.handler.KeyShortcut;
+import me.valkeea.fishyaddons.handler.RenderTweaks;
 import me.valkeea.fishyaddons.safeguard.ItemHandler;
 import me.valkeea.fishyaddons.tool.GuiScheduler;
 import me.valkeea.fishyaddons.util.FishyNotis;
@@ -46,12 +51,14 @@ public class FishyCmd {
                     .executes(context -> {
                         FishyConfig.enable(Key.ALIASES_ENABLED, true);
                         FishyNotis.on("Custom commands");
+                        CommandAlias.refresh();
                         return 1;
                     }))
                 .then(ClientCommandManager.literal("off")
                     .executes(context -> {
                         FishyConfig.disable(Key.ALIASES_ENABLED);
                         FishyNotis.off("Custom commands");
+                        CommandAlias.refresh();
                         return 1;
                     }))
             .executes(context -> {
@@ -77,12 +84,14 @@ public class FishyCmd {
                         .executes(context -> {
                             FishyConfig.enable(Key.CHAT_REPLACEMENTS_ENABLED, true);
                             FishyNotis.on("Chat replacements");
+                            ChatReplacement.refresh();
                             return 1;
                         }))
                     .then(ClientCommandManager.literal("off")
                         .executes(context -> {
                             FishyConfig.disable(Key.CHAT_REPLACEMENTS_ENABLED);
                             FishyNotis.off("Chat replacements");
+                            ChatReplacement.refresh();
                             return 1;
                         }))
                     .executes(context -> {
@@ -100,12 +109,14 @@ public class FishyCmd {
                         .executes(context -> {
                             FishyConfig.enable(Key.KEY_SHORTCUTS_ENABLED, true);
                             FishyNotis.on("Keybinds");
+                            KeyShortcut.refresh();
                             return 1;
                         }))
                     .then(ClientCommandManager.literal("off")
                         .executes(context -> {
                             FishyConfig.disable(Key.KEY_SHORTCUTS_ENABLED);
                             FishyNotis.off("Keybinds");
+                            KeyShortcut.refresh();
                             return 1;
                         }))
                     .executes(context -> {
@@ -123,12 +134,14 @@ public class FishyCmd {
                         .executes(context -> {
                             FishyConfig.enable(Key.CHAT_ALERTS_ENABLED, true);
                             FishyNotis.on("Chat alerts");
+                            ChatAlert.refresh();
                             return 1;
                         }))
                     .then(ClientCommandManager.literal("off")
                         .executes(context -> {
                             FishyConfig.disable(Key.CHAT_ALERTS_ENABLED);
                             FishyNotis.off("Chat alerts");
+                            ChatAlert.refresh();
                             return 1;
                         }))
                     .executes(context -> {
@@ -359,12 +372,14 @@ public class FishyCmd {
                         .executes(context -> {
                             FishyConfig.settings.set(Key.FISHY_LAVA, true);
                             FishyNotis.on("Clear Lava");
+                            RenderTweaks.refresh();
                             return 1;
                         }))
                     .then(ClientCommandManager.literal("off")
                         .executes(context -> {
                             FishyConfig.settings.set(Key.FISHY_LAVA, false);
                             FishyNotis.off("Clear Lava");
+                            RenderTweaks.refresh();
                             return 1;
                         }))
                     .executes(context -> {
@@ -428,13 +443,13 @@ public class FishyCmd {
                     .then(ClientCommandManager.literal("on")
                         .executes(context -> {
                             FishyConfig.enable(Key.SKIP_F5, true);
-                            FishyNotis.on("Custom f5");
+                            FishyNotis.on("Custom F5");
                             return 1;
                         }))
                     .then(ClientCommandManager.literal("off")
                         .executes(context -> {
                             FishyConfig.disable(Key.SKIP_F5);
-                            FishyNotis.off("Custom f5");
+                            FishyNotis.off("Custom F5");
                             return 1;
                         }))
                     .executes(context -> {

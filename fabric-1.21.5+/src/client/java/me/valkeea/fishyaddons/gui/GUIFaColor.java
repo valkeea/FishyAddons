@@ -21,7 +21,7 @@ public class GUIFaColor extends Screen {
     private static final int FIELD_WIDTH = 160;
     private static final int FIELD_HEIGHT = 20; 
 
-    private static final MutableText COLOR_TEXT = Text.literal("Color");
+    private static final String COLOR_TEXT = "Color";
 
     private final Screen parent;
     private final List<Entry> entries = new ArrayList<>();
@@ -164,12 +164,12 @@ public class GUIFaColor extends Screen {
 
             this.colorBtn = new FaButton(
                 0, 0, COLOR_BTN_WIDTH, FIELD_HEIGHT,
-                COLOR_TEXT.styled(s -> s.withColor(color)),
+                Text.literal(COLOR_TEXT).styled(s -> s.withColor(color)),
                 btn -> {
                     float[] rgb = ColorWheel.intToRGB(this.color);
                     MinecraftClient.getInstance().setScreen(new ColorWheel(GUIFaColor.this, rgb, selected -> {
                         this.color = ColorWheel.rgbToInt(selected);
-                        this.colorBtn.setMessage(COLOR_TEXT.styled(s -> s.withColor(this.color)));
+                        this.colorBtn.setMessage(Text.literal(COLOR_TEXT).styled(s -> s.withColor(this.color)));
                         this.nameField.setEditableColor(this.color);                        
                         String name = this.nameField.getText().trim();
                         if (!name.isEmpty()) {
@@ -349,12 +349,12 @@ public class GUIFaColor extends Screen {
             this.nameField.setFocused(false);
             this.colorBtn = new FaButton(
                 0, 0, COLOR_BTN_WIDTH, FIELD_HEIGHT,
-                COLOR_TEXT.styled(s -> s.withColor(color)),
+                Text.literal(COLOR_TEXT).styled(s -> s.withColor(color)),
                 btn -> {
                     float[] rgb = me.valkeea.fishyaddons.gui.ColorWheel.intToRGB(this.color);
                     MinecraftClient.getInstance().setScreen(new ColorWheel(GUIFaColor.this, rgb, selected -> {
                         this.color = ColorWheel.rgbToInt(selected);
-                        btn.setMessage(COLOR_TEXT.styled(s -> s.withColor(this.color)));
+                        btn.setMessage(Text.literal(COLOR_TEXT).styled(s -> s.withColor(this.color)));
                         MinecraftClient.getInstance().setScreen(GUIFaColor.this);
                         this.changed = true;
                         FaColors.saveUserEntry(this.originalName, this.color & 0xFFFFFF);

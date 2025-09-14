@@ -2,6 +2,7 @@ package me.valkeea.fishyaddons.listener;
 
 import me.valkeea.fishyaddons.handler.CakeTimer;
 import me.valkeea.fishyaddons.handler.PetInfo;
+import me.valkeea.fishyaddons.handler.TransLava;
 import me.valkeea.fishyaddons.handler.WeatherTracker;
 import me.valkeea.fishyaddons.render.BeaconRenderer;
 import me.valkeea.fishyaddons.util.AreaUtils;
@@ -77,6 +78,7 @@ public class WorldEvent {
             if (scoreboardDelay == 0) {
                 SkyblockCheck.getInstance().updateSkyblockCache();
                 ZoneUtils.update();
+                TransLava.update();
                 updateRulesNextTick = false;
                 scoreboardDelay = 100;
                 timedCheck = false;

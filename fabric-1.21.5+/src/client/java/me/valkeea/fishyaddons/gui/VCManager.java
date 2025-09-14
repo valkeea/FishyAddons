@@ -23,6 +23,7 @@ import me.valkeea.fishyaddons.handler.PetInfo;
 import me.valkeea.fishyaddons.handler.RenderTweaks;
 import me.valkeea.fishyaddons.handler.ResourceHandler;
 import me.valkeea.fishyaddons.handler.SkyblockCleaner;
+import me.valkeea.fishyaddons.handler.TransLava;
 import me.valkeea.fishyaddons.handler.WeatherTracker;
 import me.valkeea.fishyaddons.handler.XpColor;
 import me.valkeea.fishyaddons.hud.EqDisplay;
@@ -271,6 +272,15 @@ public class VCManager {
             Key.FIRE_ANI,
             false,
             MobAnimations::refresh
+        ));
+
+        entries.add(VCEntry.toggleColorOrHud(
+                "Translucent Lava",
+                "Makes lava look translucent like water, with a custom tint.",
+                Key.FISHY_TRANS_LAVA,
+                false,
+                TransLava::update,
+                new ExtraControl(null, true, false)
         ));
 
         entries.add(VCEntry.toggle(

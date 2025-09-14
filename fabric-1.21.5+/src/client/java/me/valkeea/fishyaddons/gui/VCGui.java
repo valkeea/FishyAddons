@@ -318,7 +318,9 @@ public class VCGui {
     
     private int getCurrentColor(VCEntry entry) {
         // Determine which color setting this entry controls
-        if (Key.RENDER_COORDS.equals(entry.configKey)) {
+        if (Key.FISHY_TRANS_LAVA.equals(entry.configKey)) {
+            return FishyConfig.getInt(Key.FISHY_TRANS_LAVA_COLOR);
+        } else if (Key.RENDER_COORDS.equals(entry.configKey)) {
             return FishyConfig.getInt(Key.RENDER_COORD_COLOR);
         } else if (Key.XP_OUTLINE.equals(entry.configKey)) {
             return FishyConfig.getInt(Key.XP_COLOR);

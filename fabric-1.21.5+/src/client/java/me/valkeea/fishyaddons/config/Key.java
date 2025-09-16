@@ -50,6 +50,7 @@ public class Key {
     public static final String XP_COLOR_ON = "xpColorEnabled";
     public static final String FISHY_TRANS_LAVA = "fishyTransLava";
     public static final String FISHY_TRANS_LAVA_COLOR = "fishyTransLavaColor";
+    public static final String FISHY_FIRE_OVERLAY = "fishyFireOverlay";       
     public static final String FISHY_LAVA = "fishyLava";
     public static final String FISHY_WATER = "fishyWater";
     public static final String XP_OUTLINE = "xpOutline";
@@ -122,10 +123,11 @@ public class Key {
         chatReplacements.set(":cat:", "ᗢᘏᓗ");
         chatReplacements.set(":hi:", "ඞ");
         chatReplacements.set("examplestring", "If sent by you, it will be replaced by this text. Not for commands.");
-        settings.set(FISHY_TRANS_LAVA, false);
-        settings.set(FISHY_TRANS_LAVA_COLOR, 0x3F76E4);
         settings.set(FISHY_LAVA, false);
         settings.set(FISHY_WATER, false);
+        settings.set(FISHY_TRANS_LAVA, false);
+        settings.set(FISHY_TRANS_LAVA_COLOR, 0x3F76E4);        
+        settings.set(FISHY_FIRE_OVERLAY, false);
         settings.set(RENDER_COORD_COLOR, -5653771);
         settings.set(CUSTOM_PARTICLE_COLOR_INDEX, Integer.valueOf(1));
         settings.set(XP_COLOR, -3157761);

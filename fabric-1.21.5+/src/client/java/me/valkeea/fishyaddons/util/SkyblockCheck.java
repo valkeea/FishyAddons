@@ -1,16 +1,24 @@
 package me.valkeea.fishyaddons.util;
 
+import me.valkeea.fishyaddons.listener.WorldEvent;
+import me.valkeea.fishyaddons.util.ScoreboardUtils;
 import net.minecraft.client.MinecraftClient;
 
-
+@SuppressWarnings("squid:S6548")
 public class SkyblockCheck {
     private boolean cachedIsInSkyblock = false;
     private boolean cachedIsInHypixel = false;
+    private boolean bypass = false;
     private static final SkyblockCheck INSTANCE = new SkyblockCheck();
     private SkyblockCheck() {}
 
     public static SkyblockCheck getInstance() {
         return INSTANCE;
+    }
+
+    public void bypass() {
+        this.bypass = true;
+        this.cachedIsInSkyblock = true;
     }
 
     public void setInSkyblock(boolean value) {
@@ -48,9 +56,14 @@ public class SkyblockCheck {
             cachedIsInSkyblock = false;
             return;
         }
+        if (bypass && cachedIsInSkyblock) {
+            bypass = false;
+            return;
+        }
         MinecraftClient client = MinecraftClient.getInstance();
         if (client.world == null || client.world.getScoreboard() == null) {
             cachedIsInSkyblock = false;
+            WorldEvent.getInstance().reCheck(100);
             return;
         }
         String objective = ScoreboardUtils.getSidebarObjectiveName();

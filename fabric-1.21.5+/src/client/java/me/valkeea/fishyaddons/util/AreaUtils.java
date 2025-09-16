@@ -3,6 +3,7 @@ package me.valkeea.fishyaddons.util;
 import java.util.Arrays;
 import java.util.List;
 
+import me.valkeea.fishyaddons.handler.TransLava;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.util.math.BlockPos;
 
@@ -27,12 +28,14 @@ public class AreaUtils {
 
     private static final MinecraftClient mc = MinecraftClient.getInstance();
     private static String currentIsland = DEF;
-    private static boolean isGalatea = false;    
+    private static boolean isGalatea = false;
+    private static boolean isCrimson = false;  
 
     private static final List<SpawnData> SPAWN_DATA = Arrays.asList(
         // Crimson Isles
         new SpawnData(CI, -370, -350, 75, 120, -450, -420),
         new SpawnData(CI, -380, -360, 110, 125, -1000, -970),
+        new SpawnData(CI, -376, -373, 113, 115, -1035, -1030),
         // Hub
         new SpawnData(HUB, -45, -43, null, null, 10, 13),
         new SpawnData(HUB, -223, -200, null, null, -16, -14),
@@ -80,8 +83,8 @@ public class AreaUtils {
 
     public static void setIsland(String island) {
         currentIsland = island;
-        isGalatea = setGalatea(island);
-        //RetexHandler.setIsland(island);
+        isGalatea = GAL.equalsIgnoreCase(island);
+        checkCrimson(island);
     }
 
     public static void updateIsland() {
@@ -96,17 +99,24 @@ public class AreaUtils {
                 return;
             }
         }
-        setIsland("default");
+        setIsland(DEF);
     
     }
 
-    public static boolean setGalatea(String island) {
-        if (GAL.equalsIgnoreCase(island)) {
-            isGalatea = true;
-            return true;
+    public static boolean isCrimson() {
+        return isCrimson;
+    }
+
+    public static void checkCrimson(String island) {
+        isCrimson = CI.equalsIgnoreCase(island);
+        TransLava.update();
+    }
+
+    public static void updateCi() {
+        if (!isCrimson) {
+            TransLava.update();
         }
-        isGalatea = false;
-        return false;
+        isCrimson = true;
     }
 
     public static boolean isGalatea() {
@@ -117,7 +127,6 @@ public class AreaUtils {
         return DEN.equalsIgnoreCase(currentIsland) || PARK.equalsIgnoreCase(currentIsland);
     }
 
-    // Inner class for spawn data
     public static class SpawnData {
         public final String name;
         public final int x1, x2;

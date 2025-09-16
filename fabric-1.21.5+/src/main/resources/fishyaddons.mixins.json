@@ -23,6 +23,7 @@
 		"MixinHandledScreenMouseRelease",
 		"MixinScreen",
 		"MixinInGameHud",
+		"MixinInGameHudFireOverlay",
 		"MixinInGameHudOutline",
 		"MixinInGameHudSidebar",
 		"MixinInventoryScreen",

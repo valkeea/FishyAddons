@@ -4,6 +4,7 @@ import org.joml.Vector4f;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import me.valkeea.fishyaddons.handler.RenderTweaks;
@@ -15,6 +16,22 @@ import net.minecraft.client.render.FogShape;
 
 @Mixin(BackgroundRenderer.class)
 public abstract class MixinBackgroundRenderer {
+
+    @Redirect(
+            method = "getFogColor",
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/Camera;getSubmersionType()Lnet/minecraft/block/enums/CameraSubmersionType;")
+    )
+    private static CameraSubmersionType redirectFogColorSubmersionType(Camera camera) {
+        return RenderTweaks.modifyFogSubmersionType(camera.getSubmersionType());
+    }
+
+    @Redirect(
+            method = "applyFog",
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/Camera;getSubmersionType()Lnet/minecraft/block/enums/CameraSubmersionType;")
+    )
+    private static CameraSubmersionType redirectApplyFogSubmersionType(Camera camera) {
+        return RenderTweaks.modifyFogSubmersionType(camera.getSubmersionType());
+    }
 
     @Inject(
         method = "applyFog",
@@ -30,8 +47,7 @@ public abstract class MixinBackgroundRenderer {
         float tickProgress,
         CallbackInfoReturnable<Fog> cir
     ) {
-        if (camera.getSubmersionType() == CameraSubmersionType.LAVA && RenderTweaks.shouldRemoveLavaFog(camera)) {
-            // Return a "no fog" Fog instance
+        if (RenderTweaks.shouldRemoveWaterFog(camera)) {
             cir.setReturnValue(new Fog(
                 0.0f,
                 1000.0f,
@@ -43,17 +59,34 @@ public abstract class MixinBackgroundRenderer {
             ));
         }
 
-        if (camera.getSubmersionType() == CameraSubmersionType.WATER && RenderTweaks.shouldRemoveWaterFog(camera)) {
-            // Return a "no fog" Fog instance
-            cir.setReturnValue(new Fog(
-                0.0f,
-                1000.0f,
-                FogShape.SPHERE,
-                1.0f,
-                1.0f,
-                1.0f,
-                1.0f
-            ));
+        var tint = RenderTweaks.shouldRemoveLavaFog(camera);
+        if (tint != 0) {
+            boolean isColored = tint != 1;
+            if (isColored) {
+                float red = ((tint >> 16) & 0xFF) / 255.0f;
+                float green = ((tint >> 8) & 0xFF) / 255.0f;
+                float blue = (tint & 0xFF) / 255.0f;
+                
+                cir.setReturnValue(new Fog(
+                    0.0f,
+                    25.0f,
+                    FogShape.SPHERE,
+                    red,
+                    green,
+                    blue,
+                    0.3f
+                ));
+            } else {
+                cir.setReturnValue(new Fog(
+                    0.0f,
+                    1000.0f,
+                    FogShape.SPHERE,
+                    1.0f,
+                    1.0f,
+                    1.0f,
+                    1.0f
+                ));
+            }
         }
     }
 }

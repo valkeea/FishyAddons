@@ -9,6 +9,7 @@ import java.util.function.Consumer;
 import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.config.Key;
 import me.valkeea.fishyaddons.handler.ParticleVisuals;
+import me.valkeea.fishyaddons.handler.TransLava;
 import me.valkeea.fishyaddons.handler.XpColor;
 import me.valkeea.fishyaddons.tool.FishyMode;
 import net.minecraft.client.MinecraftClient;
@@ -533,7 +534,9 @@ public class VCScreen extends Screen {
     }
     
     private int getCurrentColor(VCEntry entry) {
-        if (Key.RENDER_COORDS.equals(entry.configKey)) {
+        if (Key.FISHY_TRANS_LAVA.equals(entry.configKey)) {
+            return FishyConfig.getInt(Key.FISHY_TRANS_LAVA_COLOR);
+        } else if (Key.RENDER_COORDS.equals(entry.configKey)) {
             return FishyConfig.getInt(Key.RENDER_COORD_COLOR);
         } else if ("Color and Outline".equals(entry.name)) {
             return FishyConfig.getInt(Key.XP_COLOR);
@@ -574,8 +577,11 @@ public class VCScreen extends Screen {
         
         Consumer<float[]> onColorSelected = rgb -> {
             int colorInt = ColorWheel.rgbToInt(rgb);
-            
-            if (Key.RENDER_COORDS.equals(entry.configKey)) {
+
+            if (Key.FISHY_TRANS_LAVA.equals(entry.configKey)) {
+                FishyConfig.setInt(Key.FISHY_TRANS_LAVA_COLOR, colorInt);
+                TransLava.update();
+            } else if (Key.RENDER_COORDS.equals(entry.configKey)) {
                 FishyConfig.setInt(Key.RENDER_COORD_COLOR, colorInt);
             } else if ("Color and Outline".equals(entry.name)) {
                 FishyConfig.setInt(Key.XP_COLOR, colorInt);

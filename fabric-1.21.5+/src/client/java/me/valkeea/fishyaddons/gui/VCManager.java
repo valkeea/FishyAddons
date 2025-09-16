@@ -23,6 +23,7 @@ import me.valkeea.fishyaddons.handler.PetInfo;
 import me.valkeea.fishyaddons.handler.RenderTweaks;
 import me.valkeea.fishyaddons.handler.ResourceHandler;
 import me.valkeea.fishyaddons.handler.SkyblockCleaner;
+import me.valkeea.fishyaddons.handler.TransLava;
 import me.valkeea.fishyaddons.handler.WeatherTracker;
 import me.valkeea.fishyaddons.handler.XpColor;
 import me.valkeea.fishyaddons.hud.EqDisplay;
@@ -256,6 +257,7 @@ public class VCManager {
 
         List<VCEntry> colorSubEntries = new ArrayList<>();
         List<VCEntry> xpSubEntries = new ArrayList<>();
+        List<VCEntry> lavaSubEntries = new ArrayList<>();
 
         entries.add(VCEntry.toggle(
             "Skip Death Animation",
@@ -273,12 +275,54 @@ public class VCManager {
             MobAnimations::refresh
         ));
 
-        entries.add(VCEntry.toggle(
+        lavaSubEntries.add(VCEntry.toggleColorOrHud(
+                "Translucent Lava",
+                "Makes lava look translucent like water, with a custom tint. Disabled outside Crimson Isles\nto prevent misuse.",
+                Key.FISHY_TRANS_LAVA,
+                false,
+                TransLava::update,
+                new ExtraControl(null, true, false)
+        ));        
+
+        lavaSubEntries.add(VCEntry.toggle(
             "Clear Lava",
-            "Removes the red fog overlay when submerged in lava.\nDisabled outside Skyblock.",
+            "Removes any fog overlay when submerged in lava.\nDisabled outside Skyblock.",
             Key.FISHY_LAVA,
             false,
             RenderTweaks::refresh
+        ));
+
+        lavaSubEntries.add(VCEntry.toggle(
+            "Fire FOV",
+            "Uses a less intrusive texture for fire matching the configured lava color.",
+            Key.FISHY_FIRE_OVERLAY,
+            false,
+            () -> { 
+                ResourceHandler.updateGuiPack();
+                MinecraftClient client = MinecraftClient.getInstance();
+                if (client.currentScreen instanceof VCScreen currentScreen) {
+                    VCState.preservePersistentState(
+                        currentScreen.getScrollOffset(),
+                        currentScreen.getLastSearchText(),
+                        currentScreen.getExpandedEntries()
+                    );
+                }
+                RenderTweaks.refresh();
+                client.setScreen(new VCScreen());
+            }
+        ));
+
+        entries.add(VCEntry.expandable(
+            "Lava Options",
+            "Configure Translucent Lava, fog effects and fire overlay.",
+            lavaSubEntries,
+            Arrays.asList(
+                Text.literal("Lava Options:"),
+                Text.literal("- §8Translucent, water-like lava"),
+                Text.literal("  §8with custom tint"),
+                Text.literal("- §8Remove lava fog overlay when submerged"),
+                Text.literal("- §8Custom fire texture matching lava color")
+            )
         ));
 
         entries.add(VCEntry.toggle(

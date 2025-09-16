@@ -2,6 +2,8 @@ package me.valkeea.fishyaddons.util;
 
 import me.valkeea.fishyaddons.handler.WeatherTracker;
 import me.valkeea.fishyaddons.listener.WorldEvent;
+import me.valkeea.fishyaddons.util.ScoreboardUtils;
+import java.util.Arrays;
 
 public class ZoneUtils {
     private ZoneUtils() {}
@@ -10,25 +12,29 @@ public class ZoneUtils {
 
     private static void setDungeon() {
         StringBuilder areaBuilder = new StringBuilder();
-        String line10 = ScoreboardUtils.getLine(9);
-        String line9 = ScoreboardUtils.getLine(8);
-        String line8 = ScoreboardUtils.getLine(7);
-        String line7 = ScoreboardUtils.getLine(6);
-        String line6 = ScoreboardUtils.getLine(5);
-        String line5 = ScoreboardUtils.getLine(4);
+        String l10 = ScoreboardUtils.getLine(9);
+        String l9 = ScoreboardUtils.getLine(8);
+        String l8 = ScoreboardUtils.getLine(7);
+        String l7 = ScoreboardUtils.getLine(6);
+        String l6 = ScoreboardUtils.getLine(5);
+        String l5 = ScoreboardUtils.getLine(4);
 
-        if (line5 != null) areaBuilder.append(line5).append(" ");
-        if (line6 != null) areaBuilder.append(line6).append(" ");
-        if (line7 != null) areaBuilder.append(line7).append(" ");
-        if (line8 != null) areaBuilder.append(line8).append(" ");
-        if (line9 != null) areaBuilder.append(line9).append(" ");
-        if (line10 != null) areaBuilder.append(line10);
+        for (String line : Arrays.asList(l5, l6, l7, l8, l9, l10)) {
+            if (line != null) areaBuilder.append(line).append(" ");
+        }
 
         String area = areaBuilder.toString().trim();
+
         if (!area.isEmpty()) {
             area = area.replaceAll("[^a-zA-Z0-9\\s]", "");
+            boolean hasCrimson = area.contains("Crimson Isle");
             boolean hasCatacombs = area.contains("The Catacombs");
             boolean hasTimeElapsed = area.contains("Time Elapsed");
+
+            if (hasCrimson) {
+                AreaUtils.updateCi();
+            }
+
             if (hasCatacombs && hasTimeElapsed) {
                 isDungeons = true;
                 AreaUtils.setIsland("dungeon");
@@ -46,6 +52,7 @@ public class ZoneUtils {
         if (AreaUtils.isDenOrPark() || denOrPark) {
             return true;
         }
+
         ScoreboardUtils.getSidebarLines().forEach(line -> {
             if (line != null && (line.contains("The Park") || line.contains("Birch Park"))) {
                 AreaUtils.setIsland("park");
@@ -59,12 +66,19 @@ public class ZoneUtils {
                 return;
             }
         });
+
         denOrPark = false;
         return false;
     }
 
     public static boolean isInDungeon() {
         return isDungeons;
+    }
+
+    public static void resetDungeon() {
+        if (isDungeons) {
+            isDungeons = false;
+        }
     }
 
     public static void update() {

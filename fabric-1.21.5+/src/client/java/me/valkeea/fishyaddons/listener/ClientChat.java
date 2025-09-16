@@ -8,6 +8,7 @@ import me.valkeea.fishyaddons.handler.CakeTimer;
 import me.valkeea.fishyaddons.handler.ChatAlert;
 import me.valkeea.fishyaddons.handler.ChatTimers;
 import me.valkeea.fishyaddons.handler.PetInfo;
+import me.valkeea.fishyaddons.handler.TransLava;
 import me.valkeea.fishyaddons.render.BeaconRenderer;
 import me.valkeea.fishyaddons.tracker.TrackerUtils;
 import me.valkeea.fishyaddons.util.AreaUtils;
@@ -92,8 +93,9 @@ public class ClientChat {
             AreaUtils.setIsland("mineshaft");
         }
 
-        if (message.contains("You are playing on profile:")) {
-            SkyblockCheck.getInstance().setInSkyblock(true);
+        if (message.contains("Welcome to Hypixel SkyBlock!")) {
+            SkyblockCheck.getInstance().bypass();
+            TransLava.update();
         }
 
         if (message.contains("You adjusted the frequency of the Beacon!")) {

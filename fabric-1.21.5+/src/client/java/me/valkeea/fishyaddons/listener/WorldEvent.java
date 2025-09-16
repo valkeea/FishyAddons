@@ -46,6 +46,7 @@ public class WorldEvent {
         updateRulesNextTick = true;
         scoreboardDelay = 180;
         PetInfo.onWorldLoad();
+        ZoneUtils.resetDungeon();
         BeaconRenderer.clearBeacons();
         CakeTimer.getInstance().onLoad();
         
@@ -75,11 +76,11 @@ public class WorldEvent {
                 scoreboardDelay--;
             }
             if (scoreboardDelay == 0) {
+                timedCheck = false;
                 SkyblockCheck.getInstance().updateSkyblockCache();
                 ZoneUtils.update();
                 updateRulesNextTick = false;
                 scoreboardDelay = 100;
-                timedCheck = false;
             } else if (scoreboardDelay == 1) {
                 ClientConnected.triggerAction();
                 PetInfo.onTablistReady();

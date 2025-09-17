@@ -32,7 +32,7 @@ import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 
 import me.valkeea.fishyaddons.safeguard.BlacklistManager;
-import me.valkeea.fishyaddons.util.TextFormatUtil;
+import me.valkeea.fishyaddons.util.text.TextFormatUtil;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.text.Text;
 

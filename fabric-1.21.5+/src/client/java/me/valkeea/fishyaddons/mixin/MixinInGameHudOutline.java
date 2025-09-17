@@ -6,8 +6,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import me.valkeea.fishyaddons.util.TextUtils;
 import me.valkeea.fishyaddons.handler.XpColor;
+import me.valkeea.fishyaddons.util.text.TextUtils;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
@@ -24,6 +24,7 @@ public class MixinInGameHudOutline {
     private void renderExperienceLevel(DrawContext context, RenderTickCounter tickCounter, CallbackInfo ci) {
         MinecraftClient c = MinecraftClient.getInstance();
         PlayerEntity plr = c.player;
+        
         if (plr == null || plr.experienceLevel <= 0 || 
         !me.valkeea.fishyaddons.handler.XpColor.isOutlineEnabled()) return;
 

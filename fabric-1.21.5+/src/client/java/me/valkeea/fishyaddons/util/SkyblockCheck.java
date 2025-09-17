@@ -1,7 +1,7 @@
 package me.valkeea.fishyaddons.util;
 
 import me.valkeea.fishyaddons.listener.WorldEvent;
-import me.valkeea.fishyaddons.util.ScoreboardUtils;
+import me.valkeea.fishyaddons.util.text.ScoreboardUtils;
 import net.minecraft.client.MinecraftClient;
 
 @SuppressWarnings("squid:S6548")

@@ -5,8 +5,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import me.valkeea.fishyaddons.util.FishyNotis;
-import me.valkeea.fishyaddons.util.TablistUtils;
-import me.valkeea.fishyaddons.util.TextUtils;
+import me.valkeea.fishyaddons.util.text.TablistUtils;
+import me.valkeea.fishyaddons.util.text.TextUtils;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
@@ -31,7 +31,6 @@ public class TabScanner {
     private static final int MIN_SUMMON_WAIT_MS = 500;
     private static final int MAX_SUMMON_WAIT_MS = 5000;
 
-    // Direct override methods
     public static void setOverride(Text petInfo) { 
         directOverride = petInfo; 
         clearPet();
@@ -46,7 +45,6 @@ public class TabScanner {
         overrideOutline = null;
     }
 
-    // Summon handling
     public static void startSummonScan() {
         String currentPetText = l1Scanned != null ? extract(l1Scanned.l1) : null;
         prevl1 = currentPetText;
@@ -64,7 +62,6 @@ public class TabScanner {
         l1Scanned = null;
     }
 
-    // Public getters for the HUD
     public static Text getPet() {
         // Priority: direct override > scanned pet
         if (directOverride != null) {
@@ -85,7 +82,6 @@ public class TabScanner {
     }
 
     public static void onUpdate() {
-        // Safety check
         if (pendingSummon && (System.currentTimeMillis() - summonStartTime > MAX_SUMMON_WAIT_MS * 2)) {
             pendingSummon = false;
             prevl1 = null;
@@ -93,7 +89,6 @@ public class TabScanner {
             failCount = 0;
         }
 
-        // Dynamic mode: clear overrides
         if (PetInfo.isDynamic()) {
             clearOverride();
         }
@@ -133,7 +128,6 @@ public class TabScanner {
         if (pendingSummon) {
             long timeSinceSummon = System.currentTimeMillis() - summonStartTime;
 
-            // Assume line has changed after max wait time
             if (timeSinceSummon > MAX_SUMMON_WAIT_MS) {
                 pendingSummon = false;
                 prevl1 = null;
@@ -152,6 +146,7 @@ public class TabScanner {
                 sendFailNotification();
             }
         } else {
+
             clearPet();
         }
     }
@@ -160,7 +155,6 @@ public class TabScanner {
         String currentl1 = l1Result.lineText;
         long timeSinceSummon = System.currentTimeMillis() - summonStartTime;
         
-        // Always check for timeout first, regardless of pet line content
         if (timeSinceSummon > MAX_SUMMON_WAIT_MS) {
             l1Scanned = new PetTabInfo(l1Result.line, null);
             pendingSummon = false;
@@ -174,18 +168,17 @@ public class TabScanner {
             return;
         }
         
-        // Compare normalized pet identifiers
         String currentPetId = getIdentifier(currentl1);
         String prevPetId = getIdentifier(prevl1);
         boolean hasChanged = prevPetId == null || !currentPetId.equals(prevPetId);
 
         if (hasChanged) {
-            // l1 has changed - confirm the new pet
             l1Scanned = new PetTabInfo(l1Result.line, null);
             pendingSummon = false;
             prevl1 = null;
             summonStartTime = 0;
             failCount = 0;
+
         } else {
             failCount++;
         }
@@ -211,7 +204,6 @@ public class TabScanner {
         return null;
     }
 
-    // Raw l1 for summon comparison
     private static String extract(Text l1) {
         if (l1 == null) return null;
         String fullText = l1.getString().trim();
@@ -238,7 +230,6 @@ public class TabScanner {
     private static boolean isXpLine(Text line) {
         List<Text> siblings = line.getSiblings();
         
-        // Check for MAX LEVEL
         if (siblings.size() == 2) {
             Text maxLevel = siblings.get(1);
             if (maxLevel.getString().trim().equals("MAX LEVEL") &&
@@ -249,7 +240,6 @@ public class TabScanner {
             }
         }
         
-        // Check for XP format
         if (siblings.size() >= 5) {
             Text t1 = siblings.get(1);
             Text t2 = siblings.get(2);

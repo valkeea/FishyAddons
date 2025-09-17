@@ -63,7 +63,7 @@ public class TimerDisplay implements HudElement {
         context.getMatrices().scale(scale, scale, 1.0F);
 
         if (outlined) {
-            me.valkeea.fishyaddons.util.TextUtils.drawOutlinedText(
+            me.valkeea.fishyaddons.util.text.TextUtils.drawOutlinedText(
                 context,
                 mc.textRenderer,
                 timerLabel,
@@ -75,7 +75,7 @@ public class TimerDisplay implements HudElement {
                 net.minecraft.client.font.TextRenderer.TextLayerType.NORMAL,
                 0xF000F0
             );
-            me.valkeea.fishyaddons.util.TextUtils.drawOutlinedText(
+            me.valkeea.fishyaddons.util.text.TextUtils.drawOutlinedText(
                 context,
                 mc.textRenderer,
                 timerValue,

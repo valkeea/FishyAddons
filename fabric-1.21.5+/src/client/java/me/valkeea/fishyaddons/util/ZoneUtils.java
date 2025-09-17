@@ -2,7 +2,7 @@ package me.valkeea.fishyaddons.util;
 
 import me.valkeea.fishyaddons.handler.WeatherTracker;
 import me.valkeea.fishyaddons.listener.WorldEvent;
-import me.valkeea.fishyaddons.util.ScoreboardUtils;
+import me.valkeea.fishyaddons.util.text.ScoreboardUtils;
 import java.util.Arrays;
 
 public class ZoneUtils {
@@ -34,7 +34,6 @@ public class ZoneUtils {
             if (hasCrimson) {
                 AreaUtils.updateCi();
             }
-
             if (hasCatacombs && hasTimeElapsed) {
                 isDungeons = true;
                 AreaUtils.setIsland("dungeon");
@@ -52,7 +51,6 @@ public class ZoneUtils {
         if (AreaUtils.isDenOrPark() || denOrPark) {
             return true;
         }
-
         ScoreboardUtils.getSidebarLines().forEach(line -> {
             if (line != null && (line.contains("The Park") || line.contains("Birch Park"))) {
                 AreaUtils.setIsland("park");
@@ -66,7 +64,6 @@ public class ZoneUtils {
                 return;
             }
         });
-
         denOrPark = false;
         return false;
     }

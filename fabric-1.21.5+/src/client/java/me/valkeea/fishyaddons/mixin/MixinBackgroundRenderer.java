@@ -31,7 +31,7 @@ public abstract class MixinBackgroundRenderer {
     )
     private static CameraSubmersionType redirectApplyFogSubmersionType(Camera camera) {
         return RenderTweaks.modifyFogSubmersionType(camera.getSubmersionType());
-    }
+    }    
 
     @Inject(
         method = "applyFog",

@@ -4,7 +4,7 @@ import java.awt.Rectangle;
 
 import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.handler.ClientPing;
-import me.valkeea.fishyaddons.util.TextUtils;
+import me.valkeea.fishyaddons.util.text.TextUtils;
 import net.fabricmc.fabric.api.client.rendering.v1.HudLayerRegistrationCallback;
 import net.fabricmc.fabric.api.client.rendering.v1.IdentifiedLayer;
 import net.minecraft.client.MinecraftClient;
@@ -58,7 +58,6 @@ public class PingDisplay implements HudElement {
             cachedValueWidth = mc.textRenderer.getWidth(cachedPingValue);
         }
 
-        // Draw background if enabled or in editing mode
         if (editingMode || showBg) {
             int shadowX1 = hudX + 1;
             int shadowY1 = hudY + 2;
@@ -67,7 +66,6 @@ public class PingDisplay implements HudElement {
             context.fill(shadowX1, shadowY1, shadowX2, shadowY2, 0x80000000);            
         }
 
-        // Draw scaled text
         context.getMatrices().push();
         context.getMatrices().translate(hudX, hudY, 0);
         context.getMatrices().scale(scale, scale, 1.0F); 

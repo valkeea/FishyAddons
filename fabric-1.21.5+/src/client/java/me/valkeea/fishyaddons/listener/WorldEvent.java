@@ -1,9 +1,9 @@
 package me.valkeea.fishyaddons.listener;
 
+import me.valkeea.fishyaddons.handler.ActiveBeacons;
 import me.valkeea.fishyaddons.handler.CakeTimer;
 import me.valkeea.fishyaddons.handler.PetInfo;
 import me.valkeea.fishyaddons.handler.WeatherTracker;
-import me.valkeea.fishyaddons.render.BeaconRenderer;
 import me.valkeea.fishyaddons.util.AreaUtils;
 import me.valkeea.fishyaddons.util.SkyblockCheck;
 import me.valkeea.fishyaddons.util.ZoneUtils;
@@ -21,7 +21,6 @@ public class WorldEvent {
     private boolean timedCheck = false;
 
     private static final WorldEvent INSTANCE = new WorldEvent();
-    private WorldEvent() {}
     public static WorldEvent getInstance() { return INSTANCE; }
 
     public static void init() {
@@ -47,7 +46,7 @@ public class WorldEvent {
         scoreboardDelay = 180;
         PetInfo.onWorldLoad();
         ZoneUtils.resetDungeon();
-        BeaconRenderer.clearBeacons();
+        ActiveBeacons.clearBeacons();
         CakeTimer.getInstance().onLoad();
         
         if (pendingBypass) {
@@ -87,4 +86,6 @@ public class WorldEvent {
             }
         }
     }
+
+    private WorldEvent() {}    
 }

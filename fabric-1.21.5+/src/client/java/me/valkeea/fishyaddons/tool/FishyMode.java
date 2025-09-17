@@ -11,7 +11,7 @@ public class FishyMode {
     public static void init() {
         cachedTheme = FishyConfig.getString(me.valkeea.fishyaddons.config.Key.THEME_MODE, "default");
         cachedColor = getThemeColor(cachedTheme);
-        me.valkeea.fishyaddons.gui.VCVisuals.set(cachedColor);
+        me.valkeea.fishyaddons.ui.widget.VCVisuals.set(cachedColor);
     }
 
     private static int getThemeColor(String theme) {
@@ -47,7 +47,7 @@ public class FishyMode {
         FishyConfig.setString(Key.THEME_MODE, mode);
         int color = getThemeColor(mode);
         setColor(color);
-        me.valkeea.fishyaddons.gui.VCVisuals.set(color);
+        me.valkeea.fishyaddons.ui.widget.VCVisuals.set(color);
         cachedTheme = mode;
     }
 

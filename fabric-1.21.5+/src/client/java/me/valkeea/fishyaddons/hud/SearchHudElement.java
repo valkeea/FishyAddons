@@ -3,8 +3,8 @@ package me.valkeea.fishyaddons.hud;
 import java.awt.Rectangle;
 
 import me.valkeea.fishyaddons.config.FishyConfig;
-import me.valkeea.fishyaddons.gui.FaTextField;
 import me.valkeea.fishyaddons.render.FaLayers;
+import me.valkeea.fishyaddons.ui.widget.FaTextField;
 import net.fabricmc.fabric.api.client.rendering.v1.HudLayerRegistrationCallback;
 import net.fabricmc.fabric.api.client.rendering.v1.IdentifiedLayer;
 import net.minecraft.client.MinecraftClient;

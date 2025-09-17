@@ -3,7 +3,7 @@ package me.valkeea.fishyaddons.hud;
 import java.awt.Rectangle;
 
 import me.valkeea.fishyaddons.config.FishyConfig;
-import me.valkeea.fishyaddons.gui.GuiUtil;
+import me.valkeea.fishyaddons.ui.GuiUtil;
 import net.fabricmc.fabric.api.client.rendering.v1.HudLayerRegistrationCallback;
 import net.fabricmc.fabric.api.client.rendering.v1.IdentifiedLayer;
 import net.minecraft.client.MinecraftClient;

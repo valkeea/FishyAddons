@@ -4,14 +4,17 @@ import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.config.Key;
 import me.valkeea.fishyaddons.hud.InfoDisplay;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.util.InputUtil;
 
 public class ModInfo {
-    private static final int CLOSE_NOTIFICATION_KEY = 88;
-    private static final boolean FOR_NEW = true;
+    private static final int CLOSE_KEY = 88;
+    private static final int COPY_LINK_KEY = 67;
+    private static final boolean FOR_NEW = false;
 
     private static String infoId = "";
     private static String infoMessage = "";
     private static boolean showInfo = false;
+    private static boolean wasPressed = false;
 
     static {
         fetchInfo();
@@ -46,25 +49,27 @@ public class ModInfo {
         }
     }
 
-    /**
-     * Closes the info overlay if it's open and "x" is pressed.
-     */
     public static void tick() {
         if (shouldShowInfo()) {
-            boolean xPressed = net.minecraft.client.util.InputUtil.isKeyPressed(
-            MinecraftClient.getInstance().getWindow().getHandle(), CLOSE_NOTIFICATION_KEY
-            );
-            if (xPressed) {
+            var client = MinecraftClient.getInstance();
+            var handle = client.getWindow().getHandle();
+
+            if (InputUtil.isKeyPressed(handle, CLOSE_KEY)) {
                 InfoDisplay.getInstance().hide();
                 FishyConfig.setString(Key.INFO_ID, getInfoId());
                 showInfo = false;
             }
-        } 
+
+            boolean keyDown = InputUtil.isKeyPressed(handle, COPY_LINK_KEY);
+            if (wasPressed && !keyDown) {
+                client.keyboard.setClipboard("https://modrinth.com/project/QOUIa2cU");
+                FishyNotis.ccNoti();
+            }
+            wasPressed = keyDown;
+        }
     }
 
-    /**
-    * Checks if the info overlay should be shown based on the stored last info ID (YYMMDD)
-    */
+
     private static void check() {
         if (infoId == null || infoId.isEmpty()) return;
 

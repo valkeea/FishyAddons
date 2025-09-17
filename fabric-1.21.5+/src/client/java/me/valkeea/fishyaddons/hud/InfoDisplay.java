@@ -11,6 +11,7 @@ import net.minecraft.util.Identifier;
 
 public class InfoDisplay implements HudElement {
     private InfoDisplay() {}
+    private static final boolean LINK_BTN = true;    
     private static InfoDisplay instance = null;
     public static InfoDisplay getInstance() {
         if (instance == null) {
@@ -18,7 +19,7 @@ public class InfoDisplay implements HudElement {
         }
         return instance;
     }
-    
+
     private boolean visible = false;
     private String message = "";
     private int hudX = 20;
@@ -78,11 +79,17 @@ public class InfoDisplay implements HudElement {
             context.drawText(mc.textRenderer, Text.literal(lines[i]), textX, textY + i * lineHeight, textColor, false);
         }
 
-        int guideWidth = mc.textRenderer.getWidth("Press X to close");
-        // fully opaque dark grey / black
-        context.fill(hudX + 6, textY + lines.length * lineHeight + 6, hudX + guideWidth + 14, textY + lines.length * lineHeight + 18, 0xAA000000);
-        context.drawText(mc.textRenderer, Text.literal("Press X to close"), textX, textY + lines.length * lineHeight + 8, 0xAAAAAA, false);
-    }
+        int guideW = mc.textRenderer.getWidth("Press X to close");
+        int btnY = textY + lines.length * lineHeight + 6;
+        context.fill(hudX + 6, btnY, hudX + guideW + 14, btnY + 12, 0xAA000000);
+        context.drawText(mc.textRenderer, Text.literal("Press X to close"), textX, btnY + 2, 0xAAAAAA, false);
+
+        if (!LINK_BTN) return;
+        int copyW = mc.textRenderer.getWidth("C to copy link");
+        int copyX = hudX + 18 + guideW;
+        context.fill(copyX, btnY, hudX + guideW + copyW + 28, btnY + 12, 0xAA000000);
+        context.drawText(mc.textRenderer, Text.literal("C to copy link"), copyX + 7, btnY + 2, 0xAAAAAA, false);
+    }  
 
     @Override
     public Rectangle getBounds(MinecraftClient mc) {

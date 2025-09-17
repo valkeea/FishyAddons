@@ -18,9 +18,9 @@ import com.google.gson.reflect.TypeToken;
 
 import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.config.Key;
+import me.valkeea.fishyaddons.util.FishyNotis;
 import me.valkeea.fishyaddons.util.HelpUtil;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.text.Text;
 
 public class CakeTimer {
     private static final CakeTimer INSTANCE = new CakeTimer();
@@ -45,8 +45,8 @@ public class CakeTimer {
         loadTimers();
         scheduleNoti();
     }
-    
-    public void handleChat(String message) {
+
+    public boolean handleChat(String message) {
         String cleanMessage = HelpUtil.stripColor(message);
         Matcher matcher = CAKE_PATTERN.matcher(cleanMessage);
 
@@ -60,7 +60,9 @@ public class CakeTimer {
             long expiryTime = currentTime + CAKE_DURATION_MS;
             activeCakes.put(buffName, expiryTime);
             saveTimers();
+            return true;
         }
+        return false;
     }
     
     public void onLoad() {
@@ -108,7 +110,7 @@ public class CakeTimer {
                 
                 // Notify 5 minutes before expiry
                 if (timeLeft > 0 && timeLeft <= 5 * 60 * 1000) {
-                    mc.player.sendMessage(Text.literal("§6[FishyAddons] §e" + entry.getKey() + " §7expires in §c" + formatTimeLeft(timeLeft) + "§7!"), false);
+                    FishyNotis.send("§d" + entry.getKey() + " §7expires in §c" + formatTimeLeft(timeLeft) + "§7!");
                     activeCakes.remove(entry.getKey());
                     saveTimers();
                     break;

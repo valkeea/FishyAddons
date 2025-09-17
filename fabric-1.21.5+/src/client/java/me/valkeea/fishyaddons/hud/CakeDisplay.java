@@ -34,7 +34,6 @@ public class CakeDisplay implements HudElement {
         if (!editingMode && !FishyConfig.getState(HUD_KEY, false)) return;
         
         CakeTimer timer = CakeTimer.getInstance();
-        if (!editingMode && !timer.hasActiveCakes()) return;
 
         MinecraftClient mc = MinecraftClient.getInstance();
         HudElementState state = getCachedState();
@@ -69,7 +68,6 @@ public class CakeDisplay implements HudElement {
         int symbolWidth = symbolText.isEmpty() ? 0 : mc.textRenderer.getWidth(symbolTextComponent);
         int symbolPadding = symbolText.isEmpty() ? 0 : 2;
         
-        // Calculate icon size based on scale
         int iconSize = (int)(12 * scale);
         int totalWidth = iconSize + 2 + symbolWidth + symbolPadding + textWidth;
 
@@ -85,7 +83,6 @@ public class CakeDisplay implements HudElement {
         context.getMatrices().translate(hudX, hudY, 0);
         context.getMatrices().scale(scale, scale, 1.0F);
 
-        // Draw cake icon
         Identifier cakeTexture = Identifier.of("fishyaddons", "textures/gui/" + FishyMode.getTheme() + "/cake.png");
         context.drawTexture(
             RenderLayer::getGuiTextured,
@@ -93,13 +90,11 @@ public class CakeDisplay implements HudElement {
             0, -3, 0, 0, 12, 12, 12, 12
         );
 
-        // Draw text next to icon
         int textX = iconSize + 2;
 
-        // Draw symbol in grey first
         if (!symbolText.isEmpty()) {
             if (outlined) {
-                me.valkeea.fishyaddons.util.TextUtils.drawOutlinedText(
+                me.valkeea.fishyaddons.util.text.TextUtils.drawOutlinedText(
                     context,
                     mc.textRenderer,
                     symbolTextComponent,
@@ -117,9 +112,8 @@ public class CakeDisplay implements HudElement {
             textX += symbolWidth + symbolPadding;
         }
 
-        // Draw time text in normal color
         if (outlined) {
-            me.valkeea.fishyaddons.util.TextUtils.drawOutlinedText(
+            me.valkeea.fishyaddons.util.text.TextUtils.drawOutlinedText(
                 context,
                 mc.textRenderer,
                 timerText,
@@ -149,10 +143,9 @@ public class CakeDisplay implements HudElement {
         float scale = size / 12.0F;
         int iconSize = (int)(12 * scale);
         
-        // Calculate approximate text width for bounds
         String sampleText = this.getDisplayName() == null ? "⚡ 1d 23h 45m" : this.getDisplayName();
         int textWidth = mc.textRenderer.getWidth(sampleText);
-        int totalWidth = iconSize + 2 + textWidth; // icon + padding + text
+        int totalWidth = iconSize + 2 + textWidth;
         int width = (int)(Math.max(100, totalWidth) * scale);
         int height = (int)(size + 4 * scale);
         return new Rectangle(hudX, hudY, width, height);

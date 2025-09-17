@@ -1,30 +1,27 @@
 package me.valkeea.fishyaddons.command;
 
+import com.mojang.brigadier.arguments.IntegerArgumentType;
+import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 
 import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.config.ItemConfig;
 import me.valkeea.fishyaddons.config.Key;
-import me.valkeea.fishyaddons.gui.AliasAddScreen;
-import me.valkeea.fishyaddons.gui.ChatAddScreen;
-import me.valkeea.fishyaddons.gui.FishyAddonsScreen;
-import me.valkeea.fishyaddons.gui.GUIChatAlert;
-import me.valkeea.fishyaddons.gui.HudEditScreen;
-import me.valkeea.fishyaddons.gui.QolScreen;
-import me.valkeea.fishyaddons.gui.SbScreen;
-import me.valkeea.fishyaddons.gui.TabbedListScreen;
-import me.valkeea.fishyaddons.gui.VisualSettingsScreen;
-import me.valkeea.fishyaddons.handler.ClientPing;
-import me.valkeea.fishyaddons.handler.CommandAlias;
+import me.valkeea.fishyaddons.handler.ActiveBeacons;
 import me.valkeea.fishyaddons.handler.ChatAlert;
 import me.valkeea.fishyaddons.handler.ChatReplacement;
+import me.valkeea.fishyaddons.handler.ClientPing;
+import me.valkeea.fishyaddons.handler.CommandAlias;
 import me.valkeea.fishyaddons.handler.KeyShortcut;
 import me.valkeea.fishyaddons.handler.RenderTweaks;
 import me.valkeea.fishyaddons.safeguard.ItemHandler;
 import me.valkeea.fishyaddons.tool.GuiScheduler;
+import me.valkeea.fishyaddons.ui.HudEditScreen;
+import me.valkeea.fishyaddons.ui.list.ChatAlerts;
+import me.valkeea.fishyaddons.ui.list.TabbedListScreen;
 import me.valkeea.fishyaddons.util.FishyNotis;
 import me.valkeea.fishyaddons.util.PlayerPosition;
-import me.valkeea.fishyaddons.util.TextFormatUtil;
+import me.valkeea.fishyaddons.util.text.TextFormatUtil;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.MinecraftClient;
@@ -39,14 +36,6 @@ public class FishyCmd {
 
     protected static LiteralArgumentBuilder<FabricClientCommandSource> registerCmd() {
         return ClientCommandManager.literal("cmd")
-                .then(ClientCommandManager.literal("add")
-                    .executes(context -> {
-                        if (checkGUI() == 1) return 1;
-                        MinecraftClient.getInstance().execute(() ->
-                            GuiScheduler.scheduleGui(new AliasAddScreen(MinecraftClient.getInstance().currentScreen))
-                        );
-                        return 1;
-                    }))
                 .then(ClientCommandManager.literal("on")
                     .executes(context -> {
                         FishyConfig.enable(Key.ALIASES_ENABLED, true);
@@ -72,14 +61,6 @@ public class FishyCmd {
 
         protected static LiteralArgumentBuilder<FabricClientCommandSource> registerChat() {
             return ClientCommandManager.literal("chat")
-                    .then(ClientCommandManager.literal("add")
-                        .executes(context -> {
-                            if (checkGUI() == 1) return 1;
-                            MinecraftClient.getInstance().execute(() ->
-                                GuiScheduler.scheduleGui(new ChatAddScreen(MinecraftClient.getInstance().currentScreen))
-                            );
-                            return 1;
-                        }))
                     .then(ClientCommandManager.literal("on")
                         .executes(context -> {
                             FishyConfig.enable(Key.CHAT_REPLACEMENTS_ENABLED, true);
@@ -147,7 +128,7 @@ public class FishyCmd {
                     .executes(context -> {
                         if (checkGUI() == 1) return 1;
                         MinecraftClient.getInstance().execute(() ->
-                            GuiScheduler.scheduleGui(new GUIChatAlert(null))
+                            GuiScheduler.scheduleGui(new ChatAlerts(null))
                         );
                         return 1;
                     });
@@ -383,10 +364,7 @@ public class FishyCmd {
                             return 1;
                         }))
                     .executes(context -> {
-                        if (checkGUI() == 1) return 1;
-                        MinecraftClient.getInstance().execute(() ->
-                            GuiScheduler.scheduleGui(new VisualSettingsScreen())
-                        );
+                        FishyNotis.alert(Text.literal("Usage: /fa lava <on | off>"));
                         return 1;
                     });
         }
@@ -425,21 +403,10 @@ public class FishyCmd {
                         );
                         return 1;
                     });
-        }
-
-        protected static LiteralArgumentBuilder<FabricClientCommandSource> registerOld() {
-            return ClientCommandManager.literal("old")
-                    .executes(context -> {
-                        if (checkGUI() == 1) return 1;
-                        MinecraftClient.getInstance().execute(() ->
-                            GuiScheduler.scheduleGui(new FishyAddonsScreen())
-                        );
-                        return 1;
-                    });
-        }        
+        }   
         
         protected static LiteralArgumentBuilder<FabricClientCommandSource> registerCam() {
-            return ClientCommandManager.literal("camera")
+            return ClientCommandManager.literal("cam")
                     .then(ClientCommandManager.literal("on")
                         .executes(context -> {
                             FishyConfig.enable(Key.SKIP_F5, true);
@@ -452,11 +419,19 @@ public class FishyCmd {
                             FishyNotis.off("Custom F5");
                             return 1;
                         }))
+                    .then(ClientCommandManager.literal("toggle")
+                        .executes(context -> {
+                            boolean current = FishyConfig.getState(Key.SKIP_F5, false);
+                            FishyConfig.enable(Key.SKIP_F5, !current);
+                            if (!current) {
+                                FishyNotis.on("Custom F5");
+                            } else {
+                                FishyNotis.off("Custom F5");
+                            }
+                            return 1;
+                        }))                        
                     .executes(context -> {
-                        if (checkGUI() == 1) return 1;
-                        MinecraftClient.getInstance().execute(() ->
-                            GuiScheduler.scheduleGui(new QolScreen())
-                        );
+                        FishyNotis.alert(Text.literal("Usage: /fa cam <on | off> | <toggle>"));
                         return 1;
                     });
         }
@@ -469,41 +444,49 @@ public class FishyCmd {
                         PlayerPosition.giveAwayCoordsWithLabel(label);
                         return 1;
                     }))
+                .then(ClientCommandManager.literal("last")
+                    .executes(context -> {
+                        ActiveBeacons.redrawLast();
+                        return 1;
+                    }))
+                .then(ClientCommandManager.literal("hide")
+                    .then(ClientCommandManager.argument("x", IntegerArgumentType.integer())
+                        .then(ClientCommandManager.argument("y", IntegerArgumentType.integer())
+                            .then(ClientCommandManager.argument("z", IntegerArgumentType.integer())
+                                .executes(context -> {
+                                    int x = context.getArgument("x", Integer.class);
+                                    int y = context.getArgument("y", Integer.class);
+                                    int z = context.getArgument("z", Integer.class);
+                                    net.minecraft.util.math.BlockPos pos = new net.minecraft.util.math.BlockPos(x, y, z);
+                                    ActiveBeacons.removeBeaconAt(pos);
+                                    return 1;
+                                })))))
+                .then(ClientCommandManager.literal("redraw")
+                    .then(ClientCommandManager.argument("x", IntegerArgumentType.integer())
+                        .then(ClientCommandManager.argument("y", IntegerArgumentType.integer())
+                            .then(ClientCommandManager.argument("z", IntegerArgumentType.integer())
+                                .executes(context -> {
+                                    // Redraw without label
+                                    int x = context.getArgument("x", Integer.class);
+                                    int y = context.getArgument("y", Integer.class);
+                                    int z = context.getArgument("z", Integer.class);
+                                    net.minecraft.util.math.BlockPos pos = new net.minecraft.util.math.BlockPos(x, y, z);
+                                    ActiveBeacons.redraw(pos, "");
+                                    return 1;
+                                })
+                                .then(ClientCommandManager.argument("label", StringArgumentType.greedyString())
+                                    .executes(context -> {
+                                        // Redraw with label
+                                        int x = context.getArgument("x", Integer.class);
+                                        int y = context.getArgument("y", Integer.class);
+                                        int z = context.getArgument("z", Integer.class);
+                                        String label = context.getArgument("label", String.class);
+                                        net.minecraft.util.math.BlockPos pos = new net.minecraft.util.math.BlockPos(x, y, z);
+                                        ActiveBeacons.redraw(pos, label);
+                                        return 1;
+                                    }))))))
                 .executes(context -> {
                     PlayerPosition.giveAwayCoords();
-                    return 1;
-                });
-    }
-
-    protected static LiteralArgumentBuilder<FabricClientCommandSource> registerQol() {
-        return ClientCommandManager.literal("qol")
-                .executes(context -> {
-                    if (checkGUI() == 1) return 1;
-                    MinecraftClient.getInstance().execute(() ->
-                        GuiScheduler.scheduleGui(new QolScreen())
-                    );
-                    return 1;
-                });
-    }
-
-    protected static LiteralArgumentBuilder<FabricClientCommandSource> registerVisual() {
-        return ClientCommandManager.literal("visual")
-                .executes(context -> {
-                    if (checkGUI() == 1) return 1;
-                    MinecraftClient.getInstance().execute(() ->
-                        GuiScheduler.scheduleGui(new VisualSettingsScreen())
-                    );
-                    return 1;
-                });
-    }
-
-    protected static LiteralArgumentBuilder<FabricClientCommandSource> registerSb() {
-        return ClientCommandManager.literal("sb")
-                .executes(context -> {
-                    if (checkGUI() == 1) return 1;
-                    MinecraftClient.getInstance().execute(() ->
-                        GuiScheduler.scheduleGui(new SbScreen())
-                    );
                     return 1;
                 });
     }

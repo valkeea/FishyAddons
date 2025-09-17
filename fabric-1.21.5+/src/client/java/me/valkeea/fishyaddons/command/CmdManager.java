@@ -4,10 +4,9 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 
-import me.valkeea.fishyaddons.gui.SafeguardScreen;
-import me.valkeea.fishyaddons.gui.VCScreen;
-import me.valkeea.fishyaddons.gui.VCState;
 import me.valkeea.fishyaddons.tool.GuiScheduler;
+import me.valkeea.fishyaddons.ui.VCScreen;
+import me.valkeea.fishyaddons.ui.VCState;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
@@ -35,16 +34,12 @@ public class CmdManager {
                 .then(FishyCmd.registerGuide())
                 .then(FishyCmd.registerHelp())
                 .then(FishyCmd.registerLava())
-                .then(FishyCmd.registerQol())
-                .then(FishyCmd.registerVisual())
-                .then(FishyCmd.registerSb())
                 .then(FishyCmd.registerHud())
                 .then(FishyCmd.registerPing())
                 .then(FishyCmd.registerCam())
                 .then(FishyCmd.registerPos())
                 .then(FishyCmd.registerRain())
                 .then(FishyCmd.registerFishing())
-                .then(FishyCmd.registerOld())
                 .then(buildProfitRoot("profit"))
                 .executes(context -> {
                     me.valkeea.fishyaddons.util.FishyNotis.fp();
@@ -79,9 +74,8 @@ public class CmdManager {
         LiteralArgumentBuilder<FabricClientCommandSource> builder = ClientCommandManager.literal(rootLiteral);
         FishyCmd.addGuardSubcommands(builder);
         builder.executes(context -> {
-            if (FishyCmd.checkGUI() == 1) return 1;
-            MinecraftClient.getInstance().execute(() ->
-                GuiScheduler.scheduleGui(new SafeguardScreen()));
+            VCState.setLastSearchText("safeguard");
+            GuiScheduler.scheduleGui(new VCScreen());
             return 1;
         });
         return builder;

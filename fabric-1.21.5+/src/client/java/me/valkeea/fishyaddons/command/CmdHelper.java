@@ -6,7 +6,7 @@ import java.util.Map;
 
 import me.valkeea.fishyaddons.config.ItemConfig;
 import me.valkeea.fishyaddons.util.FishyNotis;
-import me.valkeea.fishyaddons.util.TextFormatUtil;
+import me.valkeea.fishyaddons.util.text.TextFormatUtil;
 import net.minecraft.text.Text;
 import net.minecraft.text.TextColor;
 import net.minecraft.util.Formatting;
@@ -16,16 +16,14 @@ public class CmdHelper {
     private CmdHelper() {}
 
     public static void sendSortedProtectedList() {
-        // Color order: 4 (red), a (green), 9 (blue), 5 (purple), 6 (gold), d (pink), b (aqua), c (light red), '\0' (no color)
-        String colorOrder = "4a956dbc\0";
 
+        String colorOrder = "4a956dbc\0";
         List<Map.Entry<String, String>> entries = new ArrayList<>(ItemConfig.getProtectedUUIDs().entrySet());
 
         entries.sort((a, b) -> {
             Text aText = TextFormatUtil.deserialize(a.getValue());
             Text bText = TextFormatUtil.deserialize(b.getValue());
 
-            // Extract first color code from the Text's style
             char aColor = getFirstColorCode(aText);
             char bColor = getFirstColorCode(bText);
 
@@ -38,7 +36,7 @@ public class CmdHelper {
             if (aIndex != bIndex) {
                 return Integer.compare(aIndex, bIndex);
             }
-            // Sort alphabetically (ignore color)
+
             String aAlpha = aText.getString();
             String bAlpha = bText.getString();
             return aAlpha.compareToIgnoreCase(bAlpha);
@@ -51,7 +49,6 @@ public class CmdHelper {
         }
     }
 
-    // Helper to get the first color code character from a Text's style
     private static char getFirstColorCode(Text text) {
         TextColor color = text.getStyle().getColor();
         if (color != null) {
@@ -60,14 +57,13 @@ public class CmdHelper {
                 return formatting.getCode();
             }
         }
-        // If this Text has children, check the first one recursively
+
         if (!text.getSiblings().isEmpty()) {
             return getFirstColorCode(text.getSiblings().get(0));
         }
-        return '\0'; // No color found
+        return '\0';
     }
 
-    // Map a TextColor to the closest Formatting color
     private static Formatting getFormattingFromTextColor(TextColor color) {
         int rgb = color.getRgb() & 0xFFFFFF;
         for (Formatting formatting : Formatting.values()) {

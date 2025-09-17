@@ -1,4 +1,4 @@
-package me.valkeea.fishyaddons.util;
+package me.valkeea.fishyaddons.util.text;
 
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.registry.RegistryWrapper;
@@ -7,13 +7,11 @@ import net.minecraft.text.Text;
 public class TextFormatUtil {
     private TextFormatUtil() {}
 
-    // Serialize a Text object to JSON for config storage
     public static String serialize(Text text) {
         RegistryWrapper.WrapperLookup registries = MinecraftClient.getInstance().world.getRegistryManager();
         return Text.Serialization.toJsonString(text, registries);
     }
 
-    // Deserialize from JSON (or fallback to plain text if not JSON)
     public static Text deserialize(String jsonOrPlain) {
         if (jsonOrPlain == null || jsonOrPlain.isEmpty()) return Text.empty();
         if (jsonOrPlain.trim().startsWith("{") || jsonOrPlain.trim().startsWith("[")) {

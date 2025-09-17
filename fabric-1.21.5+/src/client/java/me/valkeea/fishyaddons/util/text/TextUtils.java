@@ -1,4 +1,4 @@
-package me.valkeea.fishyaddons.util;
+package me.valkeea.fishyaddons.util.text;
 
 import java.util.List;
 
@@ -26,7 +26,6 @@ public class TextUtils {
         TextRenderer.TextLayerType layerType,
         int light
     ) {
-        // Draw text offset in 8 directions
         for (int dx = -1; dx <= 1; dx++) {
             for (int dy = -1; dy <= 1; dy++) {
                 if (dx != 0 || dy != 0) {
@@ -46,7 +45,6 @@ public class TextUtils {
             }
         }
 
-        // Foreground
         textRenderer.draw(
             text,
             x,
@@ -72,7 +70,6 @@ public class TextUtils {
     public static Text recolor(Text original) {
         Text copied = original.copy();
 
-        // Modify style to black, preserve bold
         Style origStyle = copied.getStyle() != null ? copied.getStyle() : Style.EMPTY;
         boolean isMaxLevel = copied.getString().equals("MAX LEVEL");
         Style newStyle = Style.EMPTY.withColor(0x000000);
@@ -85,12 +82,10 @@ public class TextUtils {
             mutableText.setStyle(newStyle);
         }
 
-        // Recursively recolor siblings
         List<Text> recoloredSiblings = copied.getSiblings().stream()
             .map(TextUtils::recolor)
             .toList();
 
-        // Clear existing siblings and add recolored ones
         copied.getSiblings().clear();
         if (copied instanceof MutableText mutableText) {
             recoloredSiblings.forEach(mutableText::append);

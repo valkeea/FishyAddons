@@ -1,4 +1,4 @@
-package me.valkeea.fishyaddons.util;
+package me.valkeea.fishyaddons.util.text;
 
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.scoreboard.Scoreboard;
@@ -64,21 +64,19 @@ public class ScoreboardUtils {
     public static String getSidebarObjectiveName() {
         MinecraftClient mc = MinecraftClient.getInstance();
         if (mc.world == null) return null;
+        
         Scoreboard scoreboard = mc.world.getScoreboard();
         ScoreboardObjective sidebar = scoreboard.getObjectiveForSlot(ScoreboardDisplaySlot.SIDEBAR);
 
-        // Get the sidebar title as a plain string
         Text titleText = sidebar != null ? sidebar.getDisplayName() : Text.empty();
         String title = titleText.getString();
         return title.isEmpty() ? null : title;
     }
 
-    // Simple color strip
     public static String stripColor(String input) {
         return input == null ? null : input.replaceAll("§[0-9a-fk-or]", "");
     }
 
-    // For debugging purposes
     public static void logSidebar() {
         List<String> sidebar = getSidebarLines();
         for (String line : sidebar) {

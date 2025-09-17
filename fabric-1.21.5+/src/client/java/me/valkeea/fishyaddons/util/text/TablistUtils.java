@@ -1,4 +1,4 @@
-package me.valkeea.fishyaddons.util;
+package me.valkeea.fishyaddons.util.text;
 
 import java.util.Collection;
 import java.util.List;

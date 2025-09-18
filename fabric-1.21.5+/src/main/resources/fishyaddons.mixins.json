@@ -13,6 +13,7 @@
 		"MixinBackgroundRenderer",
 		"MixinBillboardParticle",
 		"MixinChatScreen",
+		"MixinChatFilter",
 		"MixinClientPlayerEntity",
 		"MixinClientPlayNetworkHandler",
 		"MixinDamageParticleFactory",

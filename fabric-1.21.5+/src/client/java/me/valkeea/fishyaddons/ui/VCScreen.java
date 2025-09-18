@@ -531,7 +531,7 @@ public class VCScreen extends Screen {
     
     private int getCurrentColor(VCEntry entry) {
         if (Key.RENDER_COORD_MS.equals(entry.configKey)) {
-            return FishyConfig.getInt(Key.RENDER_COORD_COLOR);
+            return FishyConfig.getInt(Key.RENDER_COORD_COLOR, -5653771);
         } else if ("Color and Outline".equals(entry.name)) {
             return FishyConfig.getInt(Key.XP_COLOR);
         } else if (Key.FISHY_TRANS_LAVA.equals(entry.configKey)) {

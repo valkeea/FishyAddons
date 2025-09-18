@@ -1,0 +1,669 @@
+{
+  "categories": {
+    "mythic": {
+      "priority": 85,
+      "prefix": "",
+      "doubleHookPrefix": "§b§kA§r§{bold}§[rose] DOUBLE HOOK 🎣 ",
+      "enabled": true
+    },
+    "legendary": {
+      "priority": 85,
+      "prefix": "§[sunset]",
+      "doubleHookPrefix": "§[aquamarine]DOUBLE HOOK 🎣 ",
+      "enabled": true
+    },
+    "epic": {
+      "priority": 90,
+      "prefix": "§{purple}",
+      "doubleHookPrefix": "§[epic]DOUBLE HOOK ",
+      "enabled": true
+    },
+    "water": {
+      "priority": 95,
+      "prefix": "§{sky_blue}",
+      "doubleHookPrefix": "§[sapphire]DOUBLE HOOK 🎣 ",
+      "enabled": true
+    },
+    "lava": {
+      "priority": 95,
+      "prefix": "§{coral}",
+      "doubleHookPrefix": "§[fire]DOUBLE HOOK 🎣 ",
+      "enabled": true
+    },
+    "bayou": {
+      "priority": 95,
+      "prefix": "§{jade}",
+      "doubleHookPrefix": "§[emerald]DOUBLE HOOK 🎣 ",
+      "enabled": true
+    },
+    "galatea": {
+      "priority": 95,
+      "prefix": "§{pine}",
+      "doubleHookPrefix": "§[peridot]DOUBLE HOOK 🎣 ",
+      "enabled": true
+    },    
+    "spooky": {
+      "priority": 80,
+      "prefix": "§{violet}",
+      "doubleHookPrefix": "§[end]DOUBLE HOOK 🎣 ",
+      "enabled": true
+    },
+    "winter": {
+      "priority": 80,
+      "prefix": "§{vista_blue}",
+      "doubleHookPrefix": "§[ice]DOUBLE HOOK 🎣 ",
+      "enabled": true
+    }
+  },
+  
+  "triggerMessages": [
+    "It's a Double Hook!",
+    "It's a Double Hook! Woot woot!"
+  ],
+  
+  "creatures": [
+    {
+      "id": "wiki_tiki",
+      "triggerText": "The water bubbles and froths. A massive form emerges- you have disturbed the Wiki Tiki! You shall pay the price.",
+      "displayName": "Wiki Tiki",
+      "displayNamePlural": "two Wiki Tikis",
+      "category": "mythic",
+      "emoji": "🌊",
+      "customMessage": "§b§l§kA§r §{bold}§[fishy] {emoji} {name} {emoji} §b§l§kA§"
+    },
+    {
+      "id": "titanoboa",
+      "triggerText": "A massive Titanoboa surfaces. It's body stretches as far as the eye can see.",
+      "displayName": "Titanoboa",
+      "displayNamePlural": "two Titanoboas",
+      "category": "mythic",
+      "emoji": "🐍",
+      "customMessage": "§b§l§kA§r §{bold}§[fishy] {emoji} {name} {emoji} §b§l§kA§"
+    },
+    {
+      "id": "reindrake",
+      "triggerText": "A Reindrake forms from the depths.",
+      "displayName": "Reindrake",
+      "displayNamePlural": "two Reindrakes",
+      "category": "mythic",
+      "emoji": "🎄",
+      "customMessage": "§b§l§kA§r §{bold}§[ruby] {emoji} {name} {emoji} §b§l§kA§"
+    },
+    {
+      "id": "ragnarok",
+      "triggerText": "The sky darkens and the air thickens. The end times are upon us: Ragnarok is here.",
+      "displayName": "Ragnarok",
+      "displayNamePlural": "two Ragnaroks",
+      "category": "mythic",
+      "emoji": "🔥",
+      "customMessage": "§b§l§kA§r §{bold}§[slayer] {emoji} {name} {emoji} §b§l§kA§"
+    },
+    {
+      "id": "thunder",
+      "triggerText": "You hear a massive rumble as Thunder emerges.",
+      "displayName": "Thunder",
+      "displayNamePlural": "two Thunders",
+      "category": "mythic",
+      "emoji": "🗲",
+      "customMessage": "§l§b{emoji} §{bold}§[ruby]{name} §l§b{emoji}"
+    },
+    {
+      "id": "plhlegblast",
+      "triggerText": "WOAH! A Plhlegblast appeared.",
+      "displayName": "Plhlegblast",
+      "displayNamePlural": "two Plhlegblasts",
+      "category": "mythic",
+      "emoji": "🦑",
+      "customMessage": "§b§l§kA§r §{bold}§[ruby] {emoji} {name} {emoji} §b§l§kA§"
+    },
+    {
+      "id": "lord_jawbus",
+      "triggerText": "You have angered a legendary creature... Lord Jawbus has arrived.",
+      "displayName": "Lord Jawbus",
+      "displayNamePlural": "two Lord Jawbuses",
+      "category": "mythic",
+      "emoji": "👁",
+      "customMessage": "§b§l§kA§r §{bold}§[ruby] {emoji} {name} {emoji} §b§l§kA§"
+    },
+    {
+      "id": "the_loch_emperor",
+      "triggerText": "The Loch Emperor arises from the depths.",
+      "displayName": "The Loch Emperor",
+      "displayNamePlural": "two Loch Emperors",
+      "category": "legendary",
+      "emoji": "♚",
+      "customMessage": "{emoji} {name} awakened! {emoji}"
+    },  
+    {
+      "id": "carrot_king",
+      "triggerText": "Is this even a fish? It's the Carrot King!",
+      "displayName": "Carrot King",
+      "displayNamePlural": "two Carrot Kings",
+      "category": "legendary",
+      "emoji": "🥕",
+      "customMessage": "{name}! {emoji}"
+    },
+    {
+      "id": "blue_ringed_octopus",
+      "triggerText": "A garish set of tentacles arise. It's a Blue Ringed Octopus!",
+      "displayName": "Blue Ringed Octopus",
+      "displayNamePlural": "two Blue Ringed Octopuses",
+      "category": "legendary",
+      "emoji": "🐙",
+      "customMessage": "A {name}! {emoji}"
+    },  
+    {
+      "id": "abyssal_miner",
+      "triggerText": "An Abyssal Miner breaks out of the water!",
+      "displayName": "Abyssal Miner",
+      "displayNamePlural": "two Abyssal Miners",
+      "category": "legendary",
+      "emoji": "⛏",
+      "customMessage": "{emoji} {name} {emoji}"
+    },   
+    {
+      "id": "alligator",
+      "triggerText": "A long snout breaks the surface of the water. It's an Alligator!",
+      "displayName": "Alligator",
+      "displayNamePlural": "two Alligators",
+      "category": "legendary",
+      "emoji": "🐊",
+      "customMessage": "An {name}!"
+    },       
+    {
+      "id": "phantom_fisher",
+      "triggerText": "The spirit of a long lost Phantom Fisher has come to haunt you.",
+      "displayName": "Phantom Fisher",
+      "displayNamePlural": "two Phantom Fishers",
+      "category": "legendary",
+      "emoji": "🝇",
+      "customMessage": "{emoji} {name} {emoji}"
+    },
+    {
+      "id": "grim_reaper",
+      "triggerText": "This can't be! The manifestation of death himself!",
+      "displayName": "Grim Reaper",
+      "displayNamePlural": "two Grim Reapers",
+      "category": "legendary",
+      "emoji": "💀",
+      "customMessage": "{emoji} {name} {emoji}"
+    },  
+    {
+      "id": "yeti",
+      "triggerText": "What is this creature!?",
+      "displayName": "Yeti",
+      "displayNamePlural": "two Yetis",
+      "category": "legendary",
+      "emoji": "❄",
+      "customMessage": "{emoji} {name} {emoji}"
+    }, 
+    {
+      "id": "great_white_shark",
+      "triggerText": "Hide no longer, a Great White Shark has tracked your scent and thirsts for your blood!",
+      "displayName": "Great White Shark",
+      "displayNamePlural": "two Great White Sharks",
+      "category": "legendary",
+      "emoji": "🦈",
+      "customMessage": "{emoji} {name} {emoji}"
+    },
+    {
+      "id": "fiery_scuttler",
+      "triggerText": "A Fiery Scuttler inconspicuously waddles up to you, friends in tow.",
+      "displayName": "Fiery Scuttler",
+      "displayNamePlural": "two Fiery Scuttlers",
+      "category": "legendary",
+      "emoji": "🛡️",
+      "customMessage": "A {name}!"
+    },          
+    {
+      "id": "water_hydra",
+      "triggerText": "The Water Hydra has come to test your strength.",
+      "displayName": "Water Hydra",
+      "displayNamePlural": "two Water Hydras",
+      "category": "epic",
+      "emoji": "🐲",
+      "customMessage": "A {name} emerged! {emoji}"
+    },
+    {
+      "id": "ent",
+      "triggerText": "You've hooked an Ent, as ancient as the forest itself.",
+      "displayName": "Ent",
+      "displayNamePlural": "two Ents",
+      "category": "epic",
+      "emoji": "🌿",
+      "customMessage": "You caught an {name}! {emoji}"
+    },    
+    {
+      "id": "werewolf",
+      "triggerText": "It must be a full moon, a Werewolf appears.",
+      "displayName": "Werewolf",
+      "displayNamePlural": "two Werewolves",
+      "category": "epic",
+      "emoji": "🐺",
+      "customMessage": "A {name}! {emoji}"
+    },
+    {
+      "id": "tiger_shark",
+      "triggerText": "A striped beast bounds from the depths, the wild Tiger Shark!",
+      "displayName": "Tiger Shark",
+      "displayNamePlural": "two Tiger Sharks",
+      "category": "epic",
+      "emoji": "🦈",
+      "customMessage": "{emoji} {name} caught!"
+    },
+    {
+      "id": "taurus",
+      "triggerText": "Taurus and his steed emerge.",
+      "displayName": "Taurus",
+      "displayNamePlural": "two Tauruses",
+      "category": "epic",
+      "emoji": "ɤ",
+      "customMessage": "{emoji} {name} {emoji}"
+    },   
+    {
+      "id": "lava_blaze",
+      "triggerText": "A Lava Blaze has surfaced from the depths!",
+      "displayName": "Lava Blaze",
+      "displayNamePlural": "two Lava Blazes",
+      "category": "epic",
+      "emoji": "🛡️",
+      "customMessage": "A {name}!"
+    },
+    {
+      "id": "lava_pigman",
+      "triggerText": "A Lava Pigman arose from the depths!",
+      "displayName": "Lava Pigman",
+      "displayNamePlural": "two Lava Pigmen",
+      "category": "epic",
+      "emoji": "🛡️",
+      "customMessage": "A {name}!"
+    },
+    {
+      "id": "frozen_steve",
+      "triggerText": "Frozen Steve fell into the pond long ago, never to resurface...until now!",
+      "displayName": "Frozen Steve",
+      "displayNamePlural": "two Frozen Steves",
+      "category": "winter",
+      "emoji": "🛡️",
+      "customMessage": "A {name}!"
+    },
+    {
+      "id": "frosty",
+      "triggerText": "It's a snowman! He looks harmless.",
+      "displayName": "Frosty",
+      "displayNamePlural": "two Frosties",
+      "category": "winter",
+      "emoji": "🛡️",
+      "customMessage": "A {name}!"
+    },
+    {
+      "id": "grinch",
+      "triggerText": "The Grinch stole Jerry's Gifts...get them back!",
+      "displayName": "Grinch",
+      "displayNamePlural": "two Grinches",
+      "category": "winter",
+      "emoji": "🛡️",
+      "customMessage": "A {name}!"
+    },
+    {
+      "id": "nutcracker",
+      "triggerText": "You found a forgotten Nutcracker laying beneath the ice.",
+      "displayName": "Nutcracker",
+      "displayNamePlural": "two Nutcrackers",
+      "category": "winter",
+      "emoji": "🛡️",
+      "customMessage": "A {name}!"
+    },
+    {
+      "id": "scarecrow",
+      "triggerText": "Phew! It's only a Scarecrow.",
+      "displayName": "Scarecrow",
+      "displayNamePlural": "two Scarecrows",
+      "category": "spooky",
+      "emoji": "🛡️",
+      "customMessage": "A {name}!"
+    },
+    {
+      "id": "nightmare",
+      "triggerText": "You hear trotting from beneath the waves, you caught a Nightmare.",
+      "displayName": "Nightmare",
+      "displayNamePlural": "two Nightmares",
+      "category": "spooky",
+      "emoji": "🛡️",
+      "customMessage": "It's a {name}!"
+    },     
+    {
+      "id": "banshee",
+      "triggerText": "The desolate wail of a Banshee breaks the silence.",
+      "displayName": "Banshee",
+      "displayNamePlural": "two Banshees",
+      "category": "bayou",
+      "emoji": "🛡️",
+      "customMessage": "A {name}!"
+    },
+    {
+      "id": "bayou_sludge",
+      "triggerText": "A swampy mass of slime emerges, the Bayou Sludge!",
+      "displayName": "Bayou Sludge",
+      "displayNamePlural": "two Bayou Sludges",
+      "category": "bayou",
+      "emoji": "🛡️",
+      "customMessage": "A {name}!"
+    },
+    {
+      "id": "dumpster_diver",
+      "triggerText": "A Dumpster Diver has emerged from the swamp!",
+      "displayName": "Dumpster Diver",
+      "displayNamePlural": "two Dumpster Divers",
+      "category": "bayou",
+      "emoji": "🛡️",
+      "customMessage": "A {name}!"
+    },
+    {
+      "id": "trash_gobbler",
+      "triggerText": "The Trash Gobbler is hungry for you!",
+      "displayName": "Trash Gobbler",
+      "displayNamePlural": "two Trash Gobblers",
+      "category": "bayou",
+      "emoji": "🛡️",
+      "customMessage": "A {name}!"
+    },    
+    {
+      "id": "bogged",
+      "triggerText": "You've hooked a Bogged!",
+      "displayName": "Bogged",
+      "displayNamePlural": "Bogged",
+      "category": "galatea",
+      "emoji": "🛡️",
+      "customMessage": "A {name}!"
+    },
+    {
+      "id": "wetwing",
+      "triggerText": "Look! A Wetwing emerges!",
+      "displayName": "Wetwing",
+      "displayNamePlural": "two Wetwings",
+      "category": "galatea",
+      "emoji": "🛡️",
+      "customMessage": "A {name}!"
+    },
+    {
+      "id": "liltad",
+      "triggerText": "A gang of Liltads!",
+      "displayName": "Liltad",
+      "displayNamePlural": "two Liltads",
+      "category": "galatea",
+      "emoji": "🛡️",
+      "customMessage": "A {name}!"
+    },
+    {
+      "id": "fried_chicken",
+      "triggerText": "Smells of burning. Must be a Fried Chicken.",
+      "displayName": "Fried Chicken",
+      "displayNamePlural": "two Fried Chickens",
+      "category": "lava",
+      "emoji": "🛡️",
+      "customMessage": "A {name}!"
+    },
+    {
+      "id": "fireproof_witch",
+      "triggerText": "Trouble's brewing, it's a Fireproof Witch!",
+      "displayName": "Fireproof Witch",
+      "displayNamePlural": "two Fireproof Witches",
+      "category": "lava",
+      "emoji": "🛡️",
+      "customMessage": "A {name}!"
+    },
+    {
+      "id": "flaming_worm",
+      "triggerText": "A Flaming Worm surfaces from the depths!",
+      "displayName": "Flaming Worm",
+      "displayNamePlural": "two Flaming Worms",
+      "category": "lava",
+      "emoji": "🛡️",
+      "customMessage": "A {name}!"
+    },
+    {
+      "id": "magma_slug",
+      "triggerText": "From beneath the lava appears a Magma Slug.",
+      "displayName": "Magma Slug",
+      "displayNamePlural": "two Magma Slugs",
+      "category": "lava",
+      "emoji": "🛡️",
+      "customMessage": "A {name}!"
+    },
+    {
+      "id": "moogma",
+      "triggerText": "You hear a faint Moo from the lava... A Moogma appears.",
+      "displayName": "Moogma",
+      "displayNamePlural": "two Moogmas",
+      "category": "lava",
+      "emoji": "🛡️",
+      "customMessage": "A {name}!"
+    },
+    {
+      "id": "lava_leech",
+      "triggerText": "A small but fearsome Lava Leech emerges.",
+      "displayName": "Lava Leech",
+      "displayNamePlural": "two Lava Leeches",
+      "category": "lava",
+      "emoji": "🛡️",
+      "customMessage": "A {name}!"
+    },
+    {
+      "id": "pyroclastic_worm",
+      "triggerText": "You feel the heat radiating as a Pyroclastic Worm surfaces.",
+      "displayName": "Pyroclastic Worm",
+      "displayNamePlural": "two Pyroclastic Worms",
+      "category": "lava",
+      "emoji": "🛡️",
+      "customMessage": "A {name}!"
+    },
+    {
+      "id": "lava_flame",
+      "triggerText": "A Lava Flame flies out from beneath the lava.",
+      "displayName": "Lava Flame",
+      "displayNamePlural": "two Lava Flames",
+      "category": "lava",
+      "emoji": "🛡️",
+      "customMessage": "A {name}!"
+    },
+    {
+      "id": "fire_eel",
+      "triggerText": "A Fire Eel slithers out from the depths.",
+      "displayName": "Fire Eel",
+      "displayNamePlural": "two Fire Eels",
+      "category": "lava",
+      "emoji": "🛡️",
+      "customMessage": "A {name}!"
+    },
+    {
+      "id": "squid",
+      "triggerText": "A Squid appeared.",
+      "displayName": "Squid",
+      "displayNamePlural": "two Squids",
+      "category": "water",
+      "emoji": "🦑",
+      "customMessage": "A {name}!"
+    },
+    {
+      "id": "sea_leech",
+      "triggerText": "Gross! A Sea Leech!",
+      "displayName": "Sea Leech",
+      "displayNamePlural": "two Sea Leeches",
+      "category": "water",
+      "emoji": "🪱",
+      "customMessage": "Ew, a {name}!"
+    },
+    {
+      "id": "sea_guardian",
+      "triggerText": "You stumbled upon a Sea Guardian.",
+      "displayName": "Sea Guardian",
+      "displayNamePlural": "two Sea Guardians",
+      "category": "water",
+      "emoji": "🛡️",
+      "customMessage": "A {name}!"
+    },
+    {
+      "id": "night_squid",
+      "triggerText": "Pitch darkness reveals a Night Squid.",
+      "displayName": "Night Squid",
+      "displayNamePlural": "two Night Squids",
+      "category": "water",
+      "emoji": "🌙",
+      "customMessage": "{name}! {emoji}"
+    },
+    {
+      "id": "agarimoo",
+      "triggerText": "Your Chumcap Bucket trembles, it's an Agarimoo.",
+      "displayName": "Agarimoo",
+      "displayNamePlural": "two Agarimoos",
+      "category": "water",
+      "emoji": "🍄",
+      "customMessage": "An {name}!"
+    },
+    {
+      "id": "sea_walker",
+      "triggerText": "You caught a Sea Walker.",
+      "displayName": "Sea Walker",
+      "displayNamePlural": "two Sea Walkers",
+      "category": "water",
+      "emoji": "🚶",
+      "customMessage": "A {name}!"
+    },
+    {
+      "id": "rider_of_the_deep",
+      "triggerText": "The Rider of the Deep has emerged.",
+      "displayName": "Rider of the Deep",
+      "displayNamePlural": "two Riders of the Deep",
+      "category": "water",
+      "emoji": "🏇",
+      "customMessage": "A {name}!"
+    },
+    {
+      "id": "sea_archer",
+      "triggerText": "You reeled in a Sea Archer.",
+      "displayName": "Sea Archer",
+      "displayNamePlural": "two Sea Archers",
+      "category": "water",
+      "emoji": "🏹",
+      "customMessage": "A {name}!"
+    },
+    {
+      "id": "sea_witch",
+      "triggerText": "It looks like you've disrupted the Sea Witch's brewing session. Watch out, she's furious!",
+      "displayName": "Sea Witch",
+      "displayNamePlural": "two Sea Witches",
+      "category": "water",
+      "emoji": "🧙‍♀️",
+      "customMessage": "A {name}!"
+    },
+    {
+      "id": "catfish",
+      "triggerText": "Huh? A Catfish!",
+      "displayName": "Catfish",
+      "displayNamePlural": "two Catfish",
+      "category": "water",
+      "emoji": "🐱",
+      "customMessage": "A {name}! {emoji}"
+    },
+    {
+      "id": "guardian_defender",
+      "triggerText": "You've discovered a Guardian Defender of the sea.",
+      "displayName": "Guardian Defender",
+      "displayNamePlural": "two Guardian Defenders",
+      "category": "water",
+      "emoji": "🛡️",
+      "customMessage": "A {name}!"
+    },
+    {
+      "id": "frog_man",
+      "triggerText": "Is it a frog? Is it a man? Well, yes, sorta, IT'S FROG MAN!!!!!!",
+      "displayName": "Frog Man",
+      "displayNamePlural": "two Frog Men",
+      "category": "water",
+      "emoji": "🐸",
+      "customMessage": "You caught a {name}!"
+    },
+    {
+      "id": "snapping_turtle",
+      "triggerText": "A Snapping Turtle is coming your way, and it's ANGRY!",
+      "displayName": "Snapping Turtle",
+      "displayNamePlural": "two Snapping Turtles",
+      "category": "water",
+      "emoji": "🛡️",
+      "customMessage": "A {name}!"
+    },
+    {
+      "id": "deep_sea_protector",
+      "triggerText": "You have awoken the Deep Sea Protector, prepare for a battle!",
+      "displayName": "Deep Sea Protector",
+      "displayNamePlural": "two Deep Sea Protectors",
+      "category": "water",
+      "emoji": "🛡️",
+      "customMessage": "A {name}!"
+    },
+    {
+      "id": "oasis_rabbit",
+      "triggerText": "An Oasis Rabbit appears from the water.",
+      "displayName": "Oasis Rabbit",
+      "displayNamePlural": "two Oasis Rabbits",
+      "category": "water",
+      "emoji": "🐰",
+      "customMessage": "{emoji} {name}!"
+    },
+    {
+      "id": "oasis_sheep",
+      "triggerText": "An Oasis Sheep appears from the water.",
+      "displayName": "Oasis Sheep",
+      "displayNamePlural": "two Oasis Sheep",
+      "category": "water",
+      "emoji": "🐑",
+      "customMessage": "{emoji} {name}!"
+    },
+    {
+      "id": "water_worm",
+      "triggerText": "A Water Worm surfaces!",
+      "displayName": "Water Worm",
+      "displayNamePlural": "two Water Worms",
+      "category": "water",
+      "emoji": "🛡️",
+      "customMessage": "A {name}!"
+    },
+    {
+      "id": "poisoned_water_worm",
+      "triggerText": "A Poisoned Water Worm surfaces!",
+      "displayName": "Poisoned Water Worm",
+      "displayNamePlural": "two Poisoned Water Worms",
+      "category": "water",
+      "emoji": "🛡️",
+      "customMessage": "A {name}!"
+    },
+    {
+      "id": "mithril_grubber",
+      "triggerText": "A leech of the mines surfaces...",
+      "displayName": "Mithril Grubber",
+      "displayNamePlural": "two Mithril Grubbers",
+      "category": "water",
+      "emoji": "🛡️",
+      "customMessage": "A {name}!"
+    },
+    {
+      "id": "nurse_shark",
+      "triggerText": "A tiny fin emerges from the water, you've caught a Nurse Shark.",
+      "displayName": "Nurse Shark",
+      "displayNamePlural": "two Nurse Sharks",
+      "category": "water",
+      "emoji": "🛡️",
+      "customMessage": "A {name}!"
+    },
+    {
+      "id": "blue_shark",
+      "triggerText": "You spot a fin as blue as the water it came from, it's a Blue Shark.",
+      "displayName": "Blue Shark",
+      "displayNamePlural": "two Blue Sharks",
+      "category": "water",
+      "emoji": "𓆝",
+      "customMessage": "{emoji} {name} caught!"
+    }
+  ]
+}

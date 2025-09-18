@@ -25,8 +25,8 @@ public class ActiveBeacons {
     private static long duration = 60000;
 
     public static void refresh() {
-        duration = FishyConfig.getInt(Key.RENDER_COORD_MS) * 1000L;
-        hideNear = FishyConfig.getState(Key.RENDER_COORD_HIDE_CLOSE, false);
+        duration = FishyConfig.getInt(Key.RENDER_COORD_MS, 60000) * 1000L;
+        hideNear = FishyConfig.getState(Key.RENDER_COORD_HIDE_CLOSE, true);
     }
 
     public static void init() {
@@ -121,7 +121,7 @@ public class ActiveBeacons {
         
         beacons.removeIf(beacon -> beacon.getPos().equals(actualPos));
         
-        int color = FishyConfig.getInt(Key.RENDER_COORD_COLOR);
+        int color = FishyConfig.getInt(Key.RENDER_COORD_COLOR, -5653771);
         String label = (title != null && !title.isEmpty()) ? title : "";
         setBeacon(pos, color, label);
     }

@@ -34,7 +34,7 @@ public class TransLava {
         isEnabled = SkyblockCheck.getInstance().rules() && AreaUtils.isCrimson()
                 && FishyConfig.getState(Key.FISHY_TRANS_LAVA, false);
 
-        color = FishyConfig.getInt(Key.FISHY_TRANS_LAVA_COLOR);
+        color = FishyConfig.getInt(Key.FISHY_TRANS_LAVA_COLOR, -13700380);
 
         if (wasEnabled != isEnabled || (isEnabled && prevColor != color)) {
             reloadRenderHandler();

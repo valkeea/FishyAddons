@@ -320,7 +320,7 @@ public class VCGui {
     
     private int getCurrentColor(VCEntry entry) {
         if (Key.RENDER_COORD_MS.equals(entry.configKey)) {
-            return FishyConfig.getInt(Key.RENDER_COORD_COLOR);
+            return FishyConfig.getInt(Key.RENDER_COORD_COLOR, -5653771);
         } else if (Key.XP_OUTLINE.equals(entry.configKey)) {
             return FishyConfig.getInt(Key.XP_COLOR);
         } else if (Key.FISHY_TRANS_LAVA.equals(entry.configKey)) {

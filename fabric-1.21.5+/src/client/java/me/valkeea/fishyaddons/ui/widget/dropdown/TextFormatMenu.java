@@ -5,6 +5,7 @@ import java.util.function.Consumer;
 
 import me.valkeea.fishyaddons.ui.widget.VCVisuals;
 import me.valkeea.fishyaddons.util.text.Enhancer;
+import me.valkeea.fishyaddons.util.text.GradientRenderer;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
@@ -215,7 +216,7 @@ public class TextFormatMenu {
     }
     
     private void renderGradientPreview(DrawContext context, int x, int y, int width, int height, String gradientName) {
-        int[] gradientColors = getGradientColors(gradientName);
+        int[] gradientColors = GradientRenderer.getGradientColors(gradientName);
         
         if (gradientColors.length >= 2) {
             int segmentWidth = width / gradientColors.length;
@@ -388,41 +389,6 @@ public class TextFormatMenu {
 
     public void setMaxEntries(int maxEntries) {
         this.maxEntries = maxEntries;
-    }
-
-    private int[] getGradientColors(String gradientName) {
-        switch (gradientName.toLowerCase()) {
-            case "ocean": return new int[]{0x1E90FF, 0x00BFFF, 0x87CEEB};
-            case "fire": return new int[]{0xFF0000, 0xFF4500, 0xFF8C00};
-            case "leg": return new int[]{0xFF8000, 0xFFD700, 0xFF8000};
-            case "epic": return new int[]{0xFF00FF, 0x8000FF, 0xFF00FF};
-            case "sunset": return new int[]{0xFF0084, 0xFF4500, 0xFF8C00, 0xFFD700};
-            case "depths": return new int[]{0x000080, 0x1E90FF, 0x87CEEB};
-            case "emerald": return new int[]{0x228B22, 0x32CD32, 0x90EE90};
-            case "ice": return new int[]{0x87CEEB, 0xB0E0E6, 0xF0F8FF};
-            case "rainbow": return new int[]{0xFF0000, 0xFF8000, 0xFFFF00, 0x80FF00, 0x00FF00, 0x00FF80, 0x00FFFF, 0x0080FF, 0x0000FF, 0x8000FF, 0xFF00FF, 0xFF0080};
-            case "pastel": return new int[]{0xFFB3BA, 0xFFDFBA, 0xFFFFBA, 0xBAFFC9, 0xBAE1FF};
-            case "candy": return new int[]{0xFFB6C1, 0xFF69B4, 0xBA55D3, 0x9370DB, 0x00BFFF};
-            case "void": return new int[]{0x000000, 0x003300, 0x000000};
-            case "abyss": return new int[]{0x000000, 0x000033, 0x000066, 0x000099, 0x0000CC, 0x0000FF};
-            case "snow": return new int[]{0xFFFFFF, 0xE0FFFF, 0xAFEEEE, 0xADD8E6, 0x87CEEB};
-            case "meow": return new int[]{0xFFB6C1, 0xFF69B4, 0xFFB6C1};
-            case "shore": return new int[]{0x00FFCC, 0x66FFFF, 0xCCFFFF};
-            case "rose": return new int[]{0xFF007F, 0xFF69B4, 0xFF1493};
-            case "gold": return new int[]{0xFFD700, 0xFFFF00, 0xFFFACD};
-            case "silver": return new int[]{0xC0C0C0, 0xFFFFFF, 0xD3D3D3};
-            case "ruby": return new int[]{0xFF0000, 0xFF4500, 0xFF6347};
-            case "sapphire": return new int[]{0x0000FF, 0x1E90FF, 0x00BFFF};
-            case "aquamarine": return new int[]{0x7FFFD4, 0x40E0D0, 0xE0FFFF};
-            case "onyx": return new int[]{0x0F0F0F, 0x2F2F2F, 0x4F4F4F};
-            case "slayer": return new int[]{0x8B0000, 0xB22222, 0xFF0000};
-            case "peridot": return new int[]{0xADFF2F, 0x7CFC00, 0x00FF00};
-            case "end": return new int[]{0x8A2BE2, 0x4B0082, 0x0000FF};
-            case "nebula": return new int[]{0xE926FF, 0x9812FF, 0x262AFF};
-            case "fishy": return new int[]{0x00FFFF, 0x7FFFD4, 0xFF00FF};
-            case "swamp": return new int[]{0x2E8B57, 0x3CB371, 0x20B2AA};    
-            default: return new int[]{0x888888, 0xAAAAAA};
-        }
     }
     
     private String getFormatIndicator(String code) {

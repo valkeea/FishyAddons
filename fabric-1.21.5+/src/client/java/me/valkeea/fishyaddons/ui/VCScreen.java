@@ -1136,7 +1136,7 @@ public class VCScreen extends Screen {
         List<VCEntry> visibleEntries = getVisibleEntries();
         for (VCEntry entry : visibleEntries) {
             if (entry.type == VCEntry.EntryType.KEYBIND && entry.isListening()) {
-                String newKey = me.valkeea.fishyaddons.util.KeyUtil.getGlfwKeyName(keyCode);
+                String newKey = me.valkeea.fishyaddons.util.Keyboard.getGlfwKeyName(keyCode);
                 if (keyCode == 256 || keyCode == 257) {
                     entry.setListening(false);
                     return true;

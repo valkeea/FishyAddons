@@ -8,8 +8,8 @@
     },
     "legendary": {
       "priority": 85,
-      "prefix": "§[sunset]",
-      "doubleHookPrefix": "§[aquamarine]DOUBLE HOOK 🎣 ",
+      "prefix": "§[sun]",
+      "doubleHookPrefix": "§[warm]DOUBLE HOOK 🎣 ",
       "enabled": true
     },
     "epic": {
@@ -26,8 +26,8 @@
     },
     "lava": {
       "priority": 95,
-      "prefix": "§{coral}",
-      "doubleHookPrefix": "§[fire]DOUBLE HOOK 🎣 ",
+      "prefix": "§{fire}",
+      "doubleHookPrefix": "§[sun]DOUBLE HOOK 🎣 ",
       "enabled": true
     },
     "bayou": {
@@ -51,7 +51,7 @@
     "winter": {
       "priority": 80,
       "prefix": "§{vista_blue}",
-      "doubleHookPrefix": "§[ice]DOUBLE HOOK 🎣 ",
+      "doubleHookPrefix": "§[snow]DOUBLE HOOK 🎣 ",
       "enabled": true
     }
   },

@@ -18,35 +18,43 @@ public class GradientRenderer {
     private static final Map<String, String> PRESETS = new HashMap<>();
     
     static {
+        PRESETS.put("warm", "FF74B3>FFB0DE>DEBCF6>FFBCCA");
+        PRESETS.put("sky", "2E85D2>CBD7F0>FDE5C2>92AFF1");
+        PRESETS.put("yangii", "877DF5>09E6A8>CCB9FA>C5CED7");
+        PRESETS.put("atoll", "0A5FC8>12E6B0>00BCE7>0060D1");
+        PRESETS.put("purple", "9052B2>FCD0DE>FEA4D0>B51A8D");
+        PRESETS.put("pink", "B6AFFD>84D1FD>CEB8FD>F073F6");
+        PRESETS.put("night", "402E90>0A4ACB>743DB2>83B9F1");
+        PRESETS.put("soft", "83B9F7>D26DFB>F15CF6>FFE2C0");
+        PRESETS.put("melon", "FC6B78>E4E5E9>A8EDF4");
+        PRESETS.put("fishy", "F85AE5>A1F6CF>5AEFE9>C3BAD7");
+        PRESETS.put("mint", "C4FA9A>F1F1B3>94E5E9");
+        PRESETS.put("moonlit", "13F5FA>BC86FE>13F5FA");
+        PRESETS.put("peach", "FEB884>FC1F6E>FEB884");
+        PRESETS.put("sun", "FF9A76>FCD77F>FF9A76");
         PRESETS.put("ocean", "1E90FF>00BFFF>87CEEB");
-        PRESETS.put("fire", "FF0000>FF4500>FF8C00");
-        PRESETS.put("shore", "00FFCC>66FFFF>CCFFFF");
-        PRESETS.put("leg", "FF8000>FFD700>FF8000");
         PRESETS.put("epic", "FF00FF>8000FF>FF00FF");
-        PRESETS.put("meow", "FFB6C1>FF69B4>FFB6C1");
+        PRESETS.put("thulite", "FFB6C1>FF69B4>FFB6C1");
         PRESETS.put("sunset", "FF0084>FF4500>FF8C00>FFD700");
         PRESETS.put("depths", "000080>1E90FF>87CEEB");
         PRESETS.put("emerald", "228B22>32CD32>90EE90");
-        PRESETS.put("ice", "87CEEB>B0E0E6>F0F8FF");
-        PRESETS.put("void", "000000>003300>000000");
         PRESETS.put("rose", "FF007F>FF69B4>FF1493");
-        PRESETS.put("gold", "FFD700>FFFF00>FFFACD");
-        PRESETS.put("silver", "C0C0C0>FFFFFF>D3D3D3");
         PRESETS.put("ruby", "FF0000>FF4500>FF6347");
         PRESETS.put("sapphire", "0000FF>1E90FF>00BFFF");
         PRESETS.put("emerald", "008000>32CD32>90EE90");
         PRESETS.put("aquamarine", "7FFFD4>40E0D0>E0FFFF");
-        PRESETS.put("onyx", "0F0F0F>2F2F2F>4F4F4F");
         PRESETS.put("slayer", "8B0000>B22222>FF0000");
         PRESETS.put("peridot", "ADFF2F>7CFC00>00FF00");
         PRESETS.put("end", "8A2BE2>4B0082>0000FF");
-        PRESETS.put("nebula", "E926FF>9812FF>262AFF");
-        PRESETS.put("fishy", "00FFFF>7FFFD4>FF00FF");
-        PRESETS.put("swamp", "2E8B57>3CB371>20B2AA");
-        PRESETS.put("abyss", "262626>000033>000066>000099>0000CC>0000FF");        
+        PRESETS.put("nebula", "E926FF>9812FF>262AFF");       
         PRESETS.put("snow", "FFFFFF>E0FFFF>AFEEEE>ADD8E6>87CEEB");        
-        PRESETS.put("candy", "FFB6C1>FF69B4>BA55D3>9370DB>00BFFF");
         PRESETS.put("pastel", "FFB3BA>FFDFBA>FFFFBA>BAFFC9>BAE1FF");
+        PRESETS.put("metal", "334455>7F8FE>FED3E0>C2B2F1>4A7C94");   
+        PRESETS.put("gold", "A9630B>FCAF1E>B36F16>FAE079>E29311>E69B13");                
+        PRESETS.put("chartreuse", "1DAF44>98FE64>EBFF6B>E0FE55>73D14B>29C347");        
+        PRESETS.put("abyss", "1D1D30>262658>22227E>000099>0000CC>0000FF");         
+        PRESETS.put("opal", "FBCBE3>C19CEF>ADD8F3>EBF5E2>FBC5DF>ADACF7>B7F1ED>F1F3E3>FCD2E6");
+        PRESETS.put("holo", "4FB2FC>6AFBE0>C3F2DA>F8C7DA>C4B6F1>51BBF8>51BBF8>C1F0D5>A1F4DA>C4D1E0>57ACFA");        
         PRESETS.put("rainbow", "FF0000>FF8000>FFFF00>80FF00>00FF00>00FF80>00FFFF>0080FF>0000FF>8000FF>FF00FF>FF0080");
         init();
     }
@@ -196,9 +204,7 @@ public class GradientRenderer {
             }
         }
         
-        // Handle Unicode properly by using code points
         int[] codePoints = text.codePoints().toArray();
-        
         if (codePoints.length == 1) {
             return Text.literal(text).setStyle(baseStyle.withColor(TextColor.fromRgb(colors[0])));
         }
@@ -268,6 +274,24 @@ public class GradientRenderer {
         }
         String firstColor = gradientDef.split(">")[0];
         return parseHex(firstColor);
+    }
+    
+    public static int getGradientStartColor(String gradientName) {
+        return getStartColor(gradientName);
+    }
+    
+    public static int[] getGradientColors(String gradientName) {
+        String gradientDef = PRESETS.get(gradientName.toLowerCase());
+        if (gradientDef == null) {
+            return new int[]{0x888888, 0xAAAAAA};
+        }
+        
+        String[] colorHexes = gradientDef.split(">");
+        int[] colors = new int[colorHexes.length];
+        for (int i = 0; i < colorHexes.length; i++) {
+            colors[i] = parseHex(colorHexes[i]);
+        }
+        return colors;
     }
     
     public static String[] getAvailableGradients() {

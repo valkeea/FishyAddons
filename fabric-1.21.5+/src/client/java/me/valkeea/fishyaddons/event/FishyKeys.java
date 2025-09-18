@@ -6,7 +6,7 @@ import me.valkeea.fishyaddons.handler.KeyShortcut;
 import me.valkeea.fishyaddons.mixin.HandledScreenAccessor;
 import me.valkeea.fishyaddons.safeguard.SlotProtectionManager;
 import me.valkeea.fishyaddons.util.HelpUtil;
-import me.valkeea.fishyaddons.util.KeyUtil;
+import me.valkeea.fishyaddons.util.Keyboard;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
@@ -52,7 +52,7 @@ public class FishyKeys {
             return;
         }
 
-        int guiKeyCode = KeyUtil.getKeyCodeFromString(guiKey);
+        int guiKeyCode = Keyboard.getKeyCodeFromString(guiKey);
 
         if (guiKeyCode == -1) {
             return;
@@ -85,7 +85,7 @@ public class FishyKeys {
             return;
         }
 
-        int lockKeyCode = KeyUtil.getKeyCodeFromString(lockKey);
+        int lockKeyCode = Keyboard.getKeyCodeFromString(lockKey);
         
         if (lockKeyCode == -1) {
             resetLockKeyState();

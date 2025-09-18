@@ -4,7 +4,7 @@ import java.util.Map;
 
 import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.handler.KeyShortcut;
-import me.valkeea.fishyaddons.util.KeyUtil;
+import me.valkeea.fishyaddons.util.Keyboard;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
@@ -109,7 +109,7 @@ public class KeybindEntryList extends GenericEntryList {
         public KeybindButtonWidget(String keyValue, GenericEntryList.GenericEntry entry, KeybindEntryList entryList, TabbedListScreen parentScreen) {
             super(
                 - 40, 5, 100, 20,
-                Text.literal(keyValue.isEmpty() ? "Set Key" : KeyUtil.getDisplayNameFor(keyValue)),
+                Text.literal(keyValue.isEmpty() ? "Set Key" : Keyboard.getDisplayNameFor(keyValue)),
                 b -> {},
                 DEFAULT_NARRATION_SUPPLIER
             );
@@ -127,7 +127,7 @@ public class KeybindEntryList extends GenericEntryList {
         @Override
         public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
             if (listening) {
-                String keyName = KeyUtil.getGlfwKeyName(keyCode);
+                String keyName = Keyboard.getGlfwKeyName(keyCode);
                 if (keyName != null) {
                     keyValue = keyName;
                 } else {
@@ -140,13 +140,7 @@ public class KeybindEntryList extends GenericEntryList {
                 }
                 handleKeyChange();
                 listening = false;
-                if (keyValue.startsWith("MOUSE")) {
-                    int btn = -1;
-                    try { btn = Integer.parseInt(keyValue.substring(5)); } catch (Exception ignored) {}
-                    this.setMessage(Text.literal("Mouse " + (btn + 1)));
-                } else {
-                    this.setMessage(Text.literal(String.valueOf(KeyUtil.getKeyCodeFromString(keyValue))));
-                }
+                this.setMessage(Text.literal(Keyboard.getDisplayNameFor(keyValue)));
                 if (parentScreen != null) parentScreen.refreshEntryList();
                 this.setFocused(false);
                 return true;

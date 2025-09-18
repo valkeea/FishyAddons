@@ -54,7 +54,7 @@ public class ScRules extends Screen {
 
     private Entry hoveredEntry = null;
     private long hoverStartTime = 0;
-    private static final long TOOLTIP_DELAY = 500;
+    private static final long TOOLTIP_DELAY = 250;
 
     public ScRules(Screen parent) {
         super(Text.literal(TITLE_TEXT));
@@ -356,17 +356,16 @@ public class ScRules extends Screen {
             tooltipY = mouseY + 20;
         }
 
-        int hzGap = 6 * (int)uiScale;
-        int vertGap = 4 * (int)uiScale;
+        int gap = 6 * (int)uiScale;
 
         context.getMatrices().push();
         context.getMatrices().translate(0, 0, 400);
         context.fill(tooltipX, tooltipY,
-                tooltipX + tooltipWidth + hzGap, tooltipY + tooltipHeight + vertGap,
+                tooltipX + tooltipWidth, tooltipY + tooltipHeight + gap,
                 0xFF171717);
 
         context.drawText(this.textRenderer, text,
-                tooltipX + hzGap / 2, tooltipY + vertGap / 2, success ? 0xFFFFFFFF : 0xFF8080, true);
+                tooltipX, tooltipY + tooltipHeight / 3, success ? 0xFFFFFFFF : 0xFF8080, true);
         context.getMatrices().pop();
     }
 

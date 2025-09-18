@@ -3,7 +3,7 @@ package me.valkeea.fishyaddons.ui.widget;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import me.valkeea.fishyaddons.util.KeyUtil;
+import me.valkeea.fishyaddons.util.Keyboard;
 import net.minecraft.text.Text;
 
 public class ListeningWidget extends FaButton {
@@ -27,7 +27,7 @@ public class ListeningWidget extends FaButton {
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
         if (listening) {
-            String newKey = KeyUtil.getGlfwKeyName(keyCode);
+            String newKey = Keyboard.getGlfwKeyName(keyCode);
             if (newKey != null) {
                 keyName = newKey;
                 onKeySet.accept(keyName);

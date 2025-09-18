@@ -188,7 +188,7 @@ public class FilterEditScreen extends Screen {
                                0xFF171717);
                     
                     context.drawText(this.textRenderer, formattedPreview, 
-                                   tooltipX + 3, tooltipY + 2, 0xFFFFFFFF, true);
+                                   tooltipX + 3, tooltipY + tooltipHeight / 3, 0xFFFFFFFF, true);
                                    
                 } catch (Exception e) {
                     System.err.println("[FishyAddons] Error rendering tooltip: " + e.getMessage());

@@ -413,7 +413,7 @@ public class VCGui {
         if (listening || !hasKey) {
             displayText = "> <";
         } else {
-            displayText = me.valkeea.fishyaddons.util.KeyUtil.getDisplayNameFor(currentKey);
+            displayText = me.valkeea.fishyaddons.util.Keyboard.getDisplayNameFor(currentKey);
         }
         
         int buttonWidth = (int)(30 * uiScale);

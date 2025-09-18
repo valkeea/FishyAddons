@@ -58,7 +58,7 @@ public class Enhancer {
         COLORS.put("orchid", 0xAF69EF);
         COLORS.put("lavender", 0xE39FF6);
         COLORS.put("magenta", 0xE11584);
-        COLORS.put("fuscia", 0xFC46AA);
+        COLORS.put("fuchsia", 0xFC46AA);
         COLORS.put("blush", 0xFEC5E5);
         COLORS.put("heliotrope", 0xDF73FF);
         COLORS.put("dark_gray", 0x555555);
@@ -78,7 +78,7 @@ public class Enhancer {
         COLORS.put("seafoam", 0x3DED97);
         COLORS.put("dark_green", 0x228B22);
         COLORS.put("pine", 0x234F1E);
-        COLORS.put("sunset_orange", 0xFF4500);
+        COLORS.put("fire", 0xFF4500);
         COLORS.put("violet", 0x483D8B);
     }
     
@@ -348,8 +348,11 @@ public class Enhancer {
         java.util.List<String> result = new java.util.ArrayList<>();
         
         Arrays.stream(availableGradients)
+            .sorted((g1, g2) -> compareByColorOrder(
+                GradientRenderer.getGradientStartColor(g1), 
+                GradientRenderer.getGradientStartColor(g2)
+            ))
             .map(name -> "§[" + name + "]")
-            .sorted()
             .forEach(result::add);
         
         COLORS.entrySet().stream()

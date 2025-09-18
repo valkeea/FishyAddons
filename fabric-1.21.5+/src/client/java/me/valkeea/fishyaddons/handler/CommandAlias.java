@@ -11,7 +11,7 @@ public class CommandAlias {
     private static final Map<String, String> cachedCommandAliases = new HashMap<>();
 
     public static void refresh() {
-        enabled = FishyConfig.getState(me.valkeea.fishyaddons.config.Key.ALIASES_ENABLED, true);
+        enabled = FishyConfig.getState(me.valkeea.fishyaddons.config.Key.ALIASES_ENABLED, false);
         cachedCommandAliases.clear();
         cachedCommandAliases.putAll(FishyConfig.getCommandAliases());
     }

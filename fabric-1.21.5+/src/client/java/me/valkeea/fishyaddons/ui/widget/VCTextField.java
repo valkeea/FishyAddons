@@ -132,8 +132,13 @@ public class VCTextField extends TextFieldWidget {
                                         MinecraftClient.getInstance().textRenderer.fontHeight / 4.0;
                 
                 double adjustedMouseX = (mouseX - this.getX() - horizontalOffset) / uiScale + this.getX() + horizontalOffset;
+                int originalWidth = this.width;
+
+                this.width = (int)(this.width / uiScale) + (int)horizontalOffset;
+                boolean result = super.mouseClicked(adjustedMouseX, adjustedMouseY, button);
+                this.width = originalWidth;
                 
-                return super.mouseClicked(adjustedMouseX, adjustedMouseY, button);
+                return result;
             } else {
                 return super.mouseClicked(mouseX, mouseY, button);
             }

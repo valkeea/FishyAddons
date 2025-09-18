@@ -56,6 +56,11 @@ public class FishyNotis {
         chat(Text.literal(message).styled(style -> style.withColor(0xFF8080).withItalic(true)));
     }
 
+    public static void warn2(String message) {
+        Text styledMsg = Text.literal(message).styled(style -> style.withColor(0xA10303).withBold(true));
+        chat(prefix().copy().append(styledMsg));
+    }
+
     public static void notice(String message) {
         chat(Text.literal(message).styled(style -> style.withColor(Formatting.DARK_GRAY).withItalic(true)));
     }

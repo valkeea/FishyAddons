@@ -85,9 +85,7 @@ public class WeatherTracker {
             return;
         }
         
-        Text message = Text.literal("§b[α] §cRain has stopped! §b[α]")
-            .formatted(Formatting.RED);
-        FishyNotis.alert(message);
+        FishyNotis.warn2("Rain has stopped!");
         PlaySound.rainAlarm();
     }
     

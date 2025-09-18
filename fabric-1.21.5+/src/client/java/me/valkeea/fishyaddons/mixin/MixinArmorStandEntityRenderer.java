@@ -5,13 +5,13 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import me.valkeea.fishyaddons.handler.FishingHotspot;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.entity.EntityRenderer;
-import net.minecraft.client.render.entity.state.EntityRenderState;
 import net.minecraft.client.render.entity.state.ArmorStandEntityRenderState;
+import net.minecraft.client.render.entity.state.EntityRenderState;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.text.Text;
-import me.valkeea.fishyaddons.util.ArmorStandTweaks;
 
 @Mixin(EntityRenderer.class)
 public class MixinArmorStandEntityRenderer {
@@ -26,7 +26,7 @@ public class MixinArmorStandEntityRenderer {
         if (!(renderState instanceof ArmorStandEntityRenderState)) return;
         
         String labelText = text.getString();
-        if (ArmorStandTweaks.shouldHideArmorStand(labelText)) {
+        if (FishingHotspot.shouldHide(labelText)) {
             ci.cancel();
         }
     }

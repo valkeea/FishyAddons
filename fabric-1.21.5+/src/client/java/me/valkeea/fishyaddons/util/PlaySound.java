@@ -43,6 +43,12 @@ public class PlaySound {
         }
     }
 
+    public static void hotspotAlarm() {
+        if (mc.player != null) {
+            mc.player.playSound(SoundEvents.BLOCK_CONDUIT_DEACTIVATE, 1.0F, 1.0F);
+        }
+    }
+
     private static void amethyst(float pitch) {
         if (mc.player != null) {
             mc.player.playSound(PROTECT_TRIGGER_EVENT, 1.0F, pitch);

@@ -8,6 +8,7 @@ import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.config.FishyPresets;
 import me.valkeea.fishyaddons.config.ItemConfig;
 import me.valkeea.fishyaddons.event.FishyKeys;
+import me.valkeea.fishyaddons.handler.ActiveBeacons;
 import me.valkeea.fishyaddons.handler.CakeTimer;
 import me.valkeea.fishyaddons.handler.ChatAlert;
 import me.valkeea.fishyaddons.handler.ChatReplacement;
@@ -15,6 +16,8 @@ import me.valkeea.fishyaddons.handler.ChatTimers;
 import me.valkeea.fishyaddons.handler.ClientPing;
 import me.valkeea.fishyaddons.handler.CommandAlias;
 import me.valkeea.fishyaddons.handler.CopyChat;
+import me.valkeea.fishyaddons.handler.FaColors;
+import me.valkeea.fishyaddons.handler.FishingHotspot;
 import me.valkeea.fishyaddons.handler.GuiIcons;
 import me.valkeea.fishyaddons.handler.KeyShortcut;
 import me.valkeea.fishyaddons.handler.MobAnimations;
@@ -32,7 +35,6 @@ import me.valkeea.fishyaddons.listener.ClientDisconnected;
 import me.valkeea.fishyaddons.listener.ClientTick;
 import me.valkeea.fishyaddons.listener.ModifyChat;
 import me.valkeea.fishyaddons.listener.WorldEvent;
-import me.valkeea.fishyaddons.render.BeaconRenderer;
 import me.valkeea.fishyaddons.tool.FishyMode;
 import me.valkeea.fishyaddons.tool.GuiScheduler;
 import me.valkeea.fishyaddons.tool.ModCheck;
@@ -76,17 +78,20 @@ public class FishyAddons implements ClientModInitializer {
         TrackerUtils.refresh();
         SackDropParser.refresh();
         ClientPing.refresh();
+        ActiveBeacons.refresh();
+        FishingHotspot.refresh();
         ChatTimers.getInstance().refresh();
-        
-        CustomSounds.init();        
-        FishyMode.init();        
+
+        CustomSounds.init();
+        FaColors.init();
+        FishyMode.init();
         ClientTick.init();
         ModifyChat.init();
         WorldEvent.init();
         ClientConnected.init();
         ClientDisconnected.init();
         CakeTimer.getInstance().init();
-        BeaconRenderer.init();
+        ActiveBeacons.init();
         ClientChat.init();
         FishyToast.init();
         ModCheck.init();
@@ -98,7 +103,7 @@ public class FishyAddons implements ClientModInitializer {
         FishyKeys.register();        
         GuiScheduler.register();
         CmdManager.register();  
-        ResourceHandler.register();        
+        ResourceHandler.register();
         Registry.register(Registries.SOUND_EVENT, PlaySound.PROTECT_TRIGGER_ID, PlaySound.PROTECT_TRIGGER_EVENT);
 
         KeyBinding mainKey = KeyBindingHelper.registerKeyBinding(
@@ -108,7 +113,7 @@ public class FishyAddons implements ClientModInitializer {
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             while (mainKey.wasPressed()) {
                 MinecraftClient.getInstance().setScreen(
-                    new me.valkeea.fishyaddons.gui.VCScreen()
+                    new me.valkeea.fishyaddons.ui.VCScreen()
                 );
             }
         });

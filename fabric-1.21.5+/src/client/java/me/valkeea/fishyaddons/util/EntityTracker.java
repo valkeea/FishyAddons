@@ -10,6 +10,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import me.valkeea.fishyaddons.tracker.TrackerUtils;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.decoration.ArmorStandEntity;
@@ -83,7 +84,8 @@ public class EntityTracker {
     
     public static void onEntityAdded(Entity entity) {
         if (entity == null) return;
-        
+        if (!TrackerUtils.isEnabled() || TrackerUtils.isOn()) return;
+
         MinecraftClient client = MinecraftClient.getInstance();
         if (client.player == null) return;
         
@@ -96,6 +98,7 @@ public class EntityTracker {
     
     public static void onEntityRemoved(Entity entity) {
         if (entity == null) return;
+        if (!TrackerUtils.isEnabled() || TrackerUtils.isOn()) return;
 
         trackedEntities.remove(entity);
         TrackedMob trackedMob = mobData.remove(entity);

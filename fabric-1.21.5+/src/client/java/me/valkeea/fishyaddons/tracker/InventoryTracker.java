@@ -8,7 +8,6 @@ import net.minecraft.component.type.LoreComponent;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 
-
 public class InventoryTracker {
     // Constants
     private static final int STACK_INCREASE_THRESHOLD = 32;
@@ -31,16 +30,11 @@ public class InventoryTracker {
 
     private static final String CLEAN_REGEX = "§[0-9a-fk-or]";
 
-    /**
-     * Data class to store enchanted book drop information
-     */
     private static class EnchantedBookDrop {
         final int quantity;
-        final String magicFind;
-        
-        EnchantedBookDrop(int quantity, String magicFind) {
+
+        EnchantedBookDrop(int quantity) {
             this.quantity = quantity;
-            this.magicFind = magicFind;
         }
     }
     
@@ -70,10 +64,10 @@ public class InventoryTracker {
     /**
      * Called when an "Enchanted Book" is detected in chat
      */
-    public static void onEnchantedBookDropDetected(int quantity, String magicFind) {
+    public static void onEnchantedBookDropDetected(int quantity) {
 
         long currentTime = System.currentTimeMillis();
-        recentEnchantedBookDrops.put(currentTime, new EnchantedBookDrop(quantity, magicFind));
+        recentEnchantedBookDrops.put(currentTime, new EnchantedBookDrop(quantity));
         // Clean up old entries
         recentEnchantedBookDrops.entrySet().removeIf(entry -> 
             (currentTime - entry.getKey()) > DROP_CORRELATION_WINDOW * 2);
@@ -143,7 +137,7 @@ public class InventoryTracker {
                 // Found correlation - extract enchantment info from lore
                 LoreComponent lore = stack.get(DataComponentTypes.LORE);
                 String tooltipContent = lore != null ? lore.toString() : null;
-                ItemTrackerData.addEnchantedBookDrop("enchanted book", stack.getCount(), tooltipContent, drop.magicFind);
+                ItemTrackerData.addEnchantedBookDrop("enchanted book", stack.getCount(), tooltipContent);
                 
                 // Remove the processed drop from tracking
                 recentEnchantedBookDrops.remove(dropTime);

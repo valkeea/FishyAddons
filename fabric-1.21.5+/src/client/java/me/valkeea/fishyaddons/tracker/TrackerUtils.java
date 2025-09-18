@@ -1,9 +1,10 @@
 package me.valkeea.fishyaddons.tracker;
 
+import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.config.Key;
 import me.valkeea.fishyaddons.config.TrackerProfiles;
-import me.valkeea.fishyaddons.gui.VCOverlay;
-import me.valkeea.fishyaddons.gui.VCPopup;
+import me.valkeea.fishyaddons.ui.VCOverlay;
+import me.valkeea.fishyaddons.ui.VCPopup;
 import me.valkeea.fishyaddons.util.FishyNotis;
 import me.valkeea.fishyaddons.util.HelpUtil;
 import net.minecraft.client.MinecraftClient;
@@ -12,84 +13,70 @@ import net.minecraft.text.Text;
 
 public class TrackerUtils {
     private static boolean pricePerItem = false;
-    private static boolean bookEnabled = false;
     private static boolean enabled = false;
 
     public static boolean isOn() {  return pricePerItem; }
-    public static boolean bookEnabled() { return bookEnabled; }
     public static boolean isEnabled() { return enabled; }
 
     public static void refresh() {
-        pricePerItem = me.valkeea.fishyaddons.config.FishyConfig.getState(Key.PER_ITEM, false);
-        bookEnabled = me.valkeea.fishyaddons.config.FishyConfig.getState(Key.BOOK_DROP_ALERT, false);
-        enabled = me.valkeea.fishyaddons.config.FishyConfig.getState(Key.HUD_TRACKER_ENABLED, false);
+        pricePerItem = FishyConfig.getState(Key.PER_ITEM, false);
+        enabled = FishyConfig.getState(Key.HUD_TRACKER_ENABLED, false);
     }
 
     public static void setPricePerItem(boolean state) {
         pricePerItem = state;
-        me.valkeea.fishyaddons.config.FishyConfig.toggle(Key.PER_ITEM, state);
+        FishyConfig.toggle(Key.PER_ITEM, state);
     }
 
-    public static void handleChat(String message) {
-        if (!me.valkeea.fishyaddons.util.SkyblockCheck.getInstance().rules()) return;
-        
+    public static boolean handleChat(String message) {  
         String s = HelpUtil.stripColor(message);
-        if (s.startsWith("[") || s.startsWith("Guild") || 
-            s.startsWith("Party")) {
-            return;
-        }
-                
         ChatDropParser.ParseResult result = ChatDropParser.parseMessage(message);
-        if (!enabled && bookEnabled) {
-            if (result != null && !result.isCoinDrop && 
-                result.itemName.toLowerCase().contains("enchanted book")) {
-                InventoryTracker.onEnchantedBookDropDetected(result.quantity, result.magicFind);
-            }
-            return;
-        }
-        
+
         if (s.toLowerCase().contains("loot share")) {
             InventoryTracker.onLsDetected();
-            return;
+            return true;
         }
         
         if (result != null) {
             SackDropParser.registerChatDrop(result.itemName, result.quantity);
-            
+
             if (result.isCoinDrop) {
                 ItemTrackerData.addCoins(result.quantity);
             } else {
                 if (result.itemName.toLowerCase().contains("enchanted book")) {
-                    InventoryTracker.onEnchantedBookDropDetected(result.quantity, result.magicFind);
+                    InventoryTracker.onEnchantedBookDropDetected(result.quantity);
                 } else {
                     ItemTrackerData.addDrop(result.itemName, result.quantity);
                 }
             }
+            return true;
         }
+        return false;
     }    
     
-    public static void handleSackDrop(ChatDropParser.ParseResult drop) {
+    private static void handleSackDrop(ChatDropParser.ParseResult drop) {
         if (drop != null) {
             ItemTrackerData.addDrop(drop.itemName, drop.quantity);
         }
     }
 
-    public static void checkForHoverEvents(Text message) {
-        if (!me.valkeea.fishyaddons.util.SkyblockCheck.getInstance().rules() ||
-            !enabled) return;
+    public static boolean checkForHoverEvents(Text message) {
 
             boolean sackTrackingEnabled = SackDropParser.isOn();
             if (sackTrackingEnabled) {
                 String fullMessageText = reconstruct(message);
                 if (SackDropParser.isSackNotification(fullMessageText)) {
                     handleSackNotification(message);
-                    return;
+                    return true;
                 }
             }
 
             for (Text sibling : message.getSiblings()) {
-                checkForHoverEvents(sibling);
+                if (checkForHoverEvents(sibling)) {
+                    return true;
+                }
             }
+            return false;
     }
     
     private static String reconstruct(Text message) {
@@ -119,7 +106,7 @@ public class TrackerUtils {
             var sackDrops = SackDropParser.parseSackHoverEvent(style.getHoverEvent());
 
             for (var drop : sackDrops) {
-                TrackerUtils.handleSackDrop(drop);
+                handleSackDrop(drop);
             }
             return true;
         }

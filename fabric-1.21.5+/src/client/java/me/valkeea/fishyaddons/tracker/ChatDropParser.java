@@ -97,7 +97,13 @@ public class ChatDropParser {
             Pattern.compile(RARE_DROP + "!\\s*You dug out an? ([^!]+)!", Pattern.CASE_INSENSITIVE),
             -1, 1
         ));
-        
+
+        // Pattern 5a: X DROP! Enchanted Book ItemName (+x ✯ Magic Find)
+        DROP_PATTERNS.add(new DropPattern(
+            Pattern.compile("(?:rare drop|very rare drop|crazy rare drop|extremely rare drop|insane drop)!\\s*Enchanted Book ([^!]+)\\s*\\(\\+\\d+ ✯ Magic Find\\)", Pattern.CASE_INSENSITIVE),
+            -1, 1
+        ));
+
         // Pattern 5b: "X DROP! (31x ItemName) (+Magic Find)"
         DROP_PATTERNS.add(new DropPattern(
             Pattern.compile(
@@ -331,13 +337,7 @@ public class ChatDropParser {
             itemName = ensureShardSuffix(itemName, cleanMessage);
             String displayName = toSingular(itemName);
 
-            // Extract magic find for enchanted book drops
-            String magicFind = null;
-            if (displayName.toLowerCase().contains("enchanted book")) {
-                magicFind = extractMagicFind(cleanMessage);
-            }
-
-            return new ParseResult(displayName, quantity, false, null, magicFind);
+            return new ParseResult(displayName, quantity, false, null);
         } catch (Exception e) {
             return null;
         }
@@ -531,19 +531,6 @@ public class ChatDropParser {
         }
         return false;
     }
-    
-    private static String extractMagicFind(String message) {
-        if (message == null) return null;
-        
-        Pattern magicFindPattern = Pattern.compile("\\(\\+(\\d+) ✯ Magic Find\\)");
-        Matcher matcher = magicFindPattern.matcher(message);
-        
-        if (matcher.find()) {
-            return matcher.group(1);
-        }
-        
-        return null;
-    }
 
     /**
      * Data class for drop patterns
@@ -568,26 +555,20 @@ public class ChatDropParser {
         public final int quantity;
         public final boolean isCoinDrop;
         public final String tooltipContent;
-        public final String magicFind;
         
         public ParseResult(String itemName, int quantity) {
-            this(itemName, quantity, false, null, null);
+            this(itemName, quantity, false, null);
         }
         
         public ParseResult(String itemName, int quantity, boolean isCoinDrop) {
-            this(itemName, quantity, isCoinDrop, null, null);
+            this(itemName, quantity, isCoinDrop, null);
         }
         
         public ParseResult(String itemName, int quantity, boolean isCoinDrop, String tooltipContent) {
-            this(itemName, quantity, isCoinDrop, tooltipContent, null);
-        }
-        
-        public ParseResult(String itemName, int quantity, boolean isCoinDrop, String tooltipContent, String magicFind) {
             this.itemName = itemName;
             this.quantity = quantity;
             this.isCoinDrop = isCoinDrop;
             this.tooltipContent = tooltipContent;
-            this.magicFind = magicFind;
         }
         
         @Override

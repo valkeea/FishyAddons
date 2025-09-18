@@ -6,16 +6,12 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import me.valkeea.fishyaddons.api.HypixelPriceClient;
 import me.valkeea.fishyaddons.cache.ApiCache;
-import me.valkeea.fishyaddons.config.FishyConfig;
-import me.valkeea.fishyaddons.config.Key;
 import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
 
 public class ItemTrackerData {
     private static final Map<String, Integer> itemCounts = new ConcurrentHashMap<>();
     private static final Map<String, Double> itemValues = new ConcurrentHashMap<>();
 
-    private static final String BOOK_DROP_MESSAGE = "BOOK DROP!";
     private static final String ENCHANTED_BOOK = "enchanted book";
     private static final String REGEX = "[^a-zA-Z0-9]";
 
@@ -453,18 +449,14 @@ public class ItemTrackerData {
         return rawItemName;
     }
     
-    /**
-     * Add an enchanted book with automatic enhancement and proper tracking, including magic find for alerts
-     */
-    public static void addEnchantedBookDrop(String rawItemName, int quantity, String tooltipContent, String magicFind) {
+    public static void addEnchantedBookDrop(String rawItemName, int quantity, String tooltipContent) {
         String enhancedName = enhanceItemName(rawItemName, tooltipContent);
         
         if (enhancedName != null && !enhancedName.equals(ENCHANTED_BOOK) && tooltipContent != null) {
             // Check if it's an ultimate enchantment based on color
             boolean isUltimate = tooltipContent.contains("color=light_purple") || tooltipContent.contains("color=magenta");
 
-            // Add the specific enchantment with magic find for alert
-            addEnchantedBook(enhancedName, quantity, isUltimate, magicFind);
+            addEnchantedBook(enhancedName, quantity, isUltimate);
         } else {
             // Fallback to generic enchanted book
             addDrop(ENCHANTED_BOOK, quantity);
@@ -499,41 +491,8 @@ public class ItemTrackerData {
         return null;
     }
     
-    /**
-     * Show book drop alert notification with optional magic find
-     */
-    private static void showBookDropAlert(String enchantmentName, String magicFind) {
-
-        if (FishyConfig.getState(Key.BOOK_DROP_ALERT, true)) {
-            // Create the base message
-            net.minecraft.text.MutableText message = Text.literal(BOOK_DROP_MESSAGE).formatted(Formatting.GOLD, Formatting.BOLD);
-            message = message.append(Text.literal(" " + enchantmentName).formatted(Formatting.WHITE, Formatting.RESET));
-
-            // Add magic find if available
-            if (magicFind != null && !magicFind.trim().isEmpty()) {
-                message = message.append(Text.literal(" (+" + magicFind + " ✯ Magic Find)").formatted(Formatting.AQUA));
-            }
-
-            message = message.append(Text.literal(" α").formatted(Formatting.AQUA, Formatting.ITALIC));
-            me.valkeea.fishyaddons.util.FishyNotis.alert(message);
-        }
-    }
-    
-    /**
-     * Add an enchanted book with metadata for proper price lookups
-     */
     public static void addEnchantedBook(String enchantmentName, int quantity, boolean isUltimate) {
-        addEnchantedBook(enchantmentName, quantity, isUltimate, null);
-    }
-    
-    /**
-     * Add an enchanted book with metadata for proper price lookups and magic find for alert
-     */
-    public static void addEnchantedBook(String enchantmentName, int quantity, boolean isUltimate, String magicFind) {
         if (enchantmentName == null || enchantmentName.trim().isEmpty()) return;
-        
-        // Show book drop alert with magic find if available
-        showBookDropAlert(enchantmentName, magicFind);
 
         if (!TrackerUtils.isEnabled()) return;
 

@@ -20,14 +20,11 @@ public class SackDropParser {
     private static final String SACK_CACHE_PREFIX = "SACK:";
     private static boolean shouldTrackSack = false;
     
-    // Deduplication mechanism to prevent processing same tooltip multiple times
     private static final java.util.Map<String, Long> recentlyProcessedTooltips = new java.util.concurrent.ConcurrentHashMap<>();
-    private static final long DEDUP_WINDOW_MS = 1000; // 1 second window
+    private static final java.util.Map<String, ChatDropEntry> recentChatDrops = new java.util.concurrent.ConcurrentHashMap<>();   
 
-    // Chat drop deduplication mechanism with quantity tracking
-    private static final java.util.Map<String, ChatDropEntry> recentChatDrops = new java.util.concurrent.ConcurrentHashMap<>();
+    private static final long DEDUP_WINDOW_MS = 1000;
     
-    // Inner class to store chat drop information
     private static class ChatDropEntry {
         final int quantity;
         final long timestamp;
@@ -52,23 +49,17 @@ public class SackDropParser {
         refresh();
     }
     
-    // Pattern to match sack notification messages
     private static final Pattern SACK_MESSAGE_PATTERN = Pattern.compile(
-        "\\[Sacks\\]\\s*\\+\\d+\\s*items?\\.\\s*\\(Last\\s+\\d+[smh]\\.\\)",
+        "\\[Sacks\\]\\s*\\+\\d{1,3}(?:,\\d{3})*\\s*items?\\.\\s*\\(Last\\s+\\d+[smh]\\.\\)",
         Pattern.CASE_INSENSITIVE
     );
     
-    // Pattern to extract item drops from hover text
     private static final Pattern HOVER_DROP_PATTERN = Pattern.compile(
-        "\\+\\s*(\\d+)\\s+(.+?)(?:\\s*\\([^)]*\\ssack\\))?$",
+        "\\+\\s*(\\d{1,3}(?:,\\d{3})*)\\s+(.+?)(?:\\s*\\([^)]*\\ssack\\))?$",
         Pattern.CASE_INSENSITIVE
     );
     
     public static boolean isSackNotification(String message) {
-        if (!shouldTrackSack) {
-            return false;
-        }
-        
         if (message == null || message.trim().isEmpty()) {
             return false;
         }
@@ -79,10 +70,6 @@ public class SackDropParser {
     
     public static List<ChatDropParser.ParseResult> parseSackHoverEvent(HoverEvent hoverEvent) {
         List<ChatDropParser.ParseResult> results = new ArrayList<>();
-        if (!shouldTrackSack) {
-            return results;
-        }
-        
         if (hoverEvent == null || hoverEvent.getAction() != HoverEvent.Action.SHOW_TEXT) {
             return results;
         }
@@ -92,7 +79,6 @@ public class SackDropParser {
             return results;
         }
         
-        // Deduplication check
         String tooltipHash = String.valueOf(tooltipContent.hashCode());
         long currentTime = System.currentTimeMillis();
         Long lastProcessed = recentlyProcessedTooltips.get(tooltipHash);
@@ -105,7 +91,7 @@ public class SackDropParser {
         Object cachedResult = ApiCache.getCachedMessageParse(SACK_HOVER_PREFIX + tooltipContent);
         if (cachedResult != null) {
             if (ApiCache.isNullParseResult(cachedResult)) {
-                return results; // Cache hit: no items found
+                return results;
             }
             @SuppressWarnings("unchecked")
             List<ChatDropParser.ParseResult> cachedResults = (List<ChatDropParser.ParseResult>) cachedResult;
@@ -117,7 +103,6 @@ public class SackDropParser {
             clearChatDrops();
         }
         
-        // Cache the results
         if (results.isEmpty()) {
             ApiCache.cacheMessageParse(SACK_HOVER_PREFIX + tooltipContent, null);
         } else {
@@ -129,17 +114,11 @@ public class SackDropParser {
         return results;
     }
     
-    /**
-     * Clean up old tooltip entries
-     */
     private static void cleanupOldTooltipEntries(long currentTime) {
         recentlyProcessedTooltips.entrySet().removeIf(entry -> 
             (currentTime - entry.getValue()) > DEDUP_WINDOW_MS * 2);
     }
     
-    /**
-     * Extract tooltip content from hover event
-     */
     private static String extractTooltipContent(HoverEvent hoverEvent) {
         try {
             if (hoverEvent instanceof HoverEvent.ShowText showText) {
@@ -164,9 +143,6 @@ public class SackDropParser {
         return null;
     }
     
-    /**
-     * Parse tooltip content to extract individual item drops
-     */
     private static List<ChatDropParser.ParseResult> parseTooltipContent(String tooltipContent) {
         List<ChatDropParser.ParseResult> results = new ArrayList<>();
         String[] lines = tooltipContent.split("\\n");
@@ -195,7 +171,8 @@ public class SackDropParser {
         }
         
         try {
-            int sackQuantity = Integer.parseInt(matcher.group(1));
+            String quantityStr = matcher.group(1).replace(",", "");
+            int sackQuantity = Integer.parseInt(quantityStr);
             String itemName = matcher.group(2).trim();
 
             itemName = cleanSackItemName(itemName);
@@ -221,9 +198,6 @@ public class SackDropParser {
         return null;
     }
     
-    /**
-     * Clean sack item names
-     */
     private static String cleanSackItemName(String itemName) {
         if (itemName == null) {
             return "";
@@ -246,9 +220,6 @@ public class SackDropParser {
         return cleaned;
     }
     
-    /**
-     * Check if a sack item should be tracked
-     */
     private static boolean isTrackableSackItem(String itemName) {
         return itemName != null && !itemName.trim().isEmpty();
     }
@@ -278,7 +249,7 @@ public class SackDropParser {
      */
     public static void registerChatDrop(String itemName, int quantity) {
         if (!shouldTrackSack) {
-            return; // No need to track if sack parsing is disabled
+            return;
         }
 
         String normalizedItemName = cleanSackItemName(itemName);

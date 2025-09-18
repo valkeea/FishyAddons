@@ -38,7 +38,6 @@ public class PetInfo {
 
         long now = System.currentTimeMillis();
 
-        // During summon scan, allow faster detection
         if (TabScanner.isPending()) {
             if (now - lastScanTime >= 200) {
                 lastScanTime = now;
@@ -47,7 +46,6 @@ public class PetInfo {
             return false;
         }
         
-        // Dynamic enabled: scan at rate limit + any needed scans
         if (dynamicMode) {
             if (now - lastScanTime >= 1000) {
                 lastScanTime = now;
@@ -56,7 +54,6 @@ public class PetInfo {
             return false;
         }
         
-        // Dynamic disabled: only scan when needed
         if (needsScan && now - lastScanTime >= 1000) {
             lastScanTime = now;
             needsScan = false;
@@ -66,10 +63,9 @@ public class PetInfo {
         return false;
     }
 
-    public static void handleChat(String message) {
-        if (!isOn || !SkyblockCheck.getInstance().rules()) return;
-        
-        // Autopet: set direct override
+    public static boolean handleChat(String message) {
+        if (!isOn || !SkyblockCheck.getInstance().rules()) return false;
+
         Pattern directPattern = Pattern.compile("§cAutopet §eequipped your (?:§.)+\\[Lvl \\d+\\] (.+?)(?=§a§lVIEW RULE|$)");
         Matcher directMatcher = directPattern.matcher(message);
         if (directMatcher.find()) {
@@ -82,23 +78,25 @@ public class PetInfo {
             TabScanner.setOverride(petInfo);
             Text petOutline = Text.literal(stripped).styled(style -> style.withColor(Formatting.BLACK));
             TabScanner.setOutline(petOutline);
-            return;
+            return true;
         }
 
-        // Summon: clear current and schedule scan for new pet confirmation
         Pattern summonPattern = Pattern.compile("You summoned your (.+) ?[!¡]?");
         Matcher summonMatcher = summonPattern.matcher(message);
         if (summonMatcher.find() || message.matches("\\[Lvl \\d+\\] .+")) {
             TabScanner.clearOverride();
             TabScanner.startSummonScan();
             needsScan = true;
+            return true;
         }
 
         if (message.contains("You despawned your")) {
             Text msg = Text.literal("Despawned")
                 .setStyle(Style.EMPTY.withColor(0xFF808080));
             TabScanner.setOverride(msg);
+            return true;
         }
+        return false;
     }
 
     public static void setTablistReady(boolean ready) { tablistReady = ready; }

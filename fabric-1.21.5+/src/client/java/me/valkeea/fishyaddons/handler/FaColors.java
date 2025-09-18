@@ -32,13 +32,24 @@ public class FaColors {
 
     private static boolean useGlobal = false;
     private static boolean useCustom = false;
+    private static long lastFetchTime = 0;
 
-    static {
-        fetchGlobal();
+    public static void init() {
+        if (me.valkeea.fishyaddons.config.FishyConfig.getState(
+                me.valkeea.fishyaddons.config.Key.GLOBAL_FA_COLORS, false
+        )) {
+            fetchGlobal();
+            refresh();
+        }
     }
 
     private static void fetchGlobal() {
+        if (System.currentTimeMillis() - lastFetchTime < 5 * 60 * 1000) {
+            return;
+        }
+
         try {
+            lastFetchTime = System.currentTimeMillis();
             String url = "https://gist.githubusercontent.com/valkeea/de655343d713bf3378555fe6775f8e3b/raw/facolors.json";
             java.net.URLConnection conn = java.net.URI.create(url).toURL().openConnection();
             conn.setConnectTimeout(3000);
@@ -48,8 +59,8 @@ public class FaColors {
             try (java.io.InputStream in = conn.getInputStream();
                  java.io.InputStreamReader reader = new java.io.InputStreamReader(in)) {
                 com.google.gson.Gson gson = new com.google.gson.Gson();
-                java.lang.reflect.Type type = new com.google.gson.reflect.TypeToken<java.util.Map<String, String>>(){}.getType();
-                java.util.Map<String, String> map = gson.fromJson(reader, type);
+                java.lang.reflect.Type type = new com.google.gson.reflect.TypeToken<Map<String, String>>(){}.getType();
+                Map<String, String> map = gson.fromJson(reader, type);
 
                 if (map == null || map.isEmpty() || map.size() > 100) {
                     throw new IllegalStateException("Invalid gist data");
@@ -61,13 +72,17 @@ public class FaColors {
                     int color = Integer.parseInt(hex, 16);
                     global.put(entry.getKey(), TextColor.fromRgb(color));
                 }
-                refresh();
             }
         } catch (Exception e) {
             e.printStackTrace();
             useFallbackColors();
         }
-    }    
+    }
+
+    public static void refreshGlobal() {
+        fetchGlobal();
+        refresh();
+    }
 
     public static void refresh() {
         useGlobal = me.valkeea.fishyaddons.config.FishyConfig.getState(

@@ -1,7 +1,5 @@
 package me.valkeea.fishyaddons.config;
 
-import net.minecraft.text.Text;
-
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -14,10 +12,9 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 
-import me.valkeea.fishyaddons.gui.TabbedListScreen;
-
 public class FishyPresets {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    private static final String JSON = ".json";
 
     public enum PresetType { COMMANDS, KEYBINDS, CHAT, ALERT }
 
@@ -28,7 +25,7 @@ public class FishyPresets {
             case CHAT -> "chat";
             case ALERT -> "alert";
         };
-        return Paths.get("config", "fishyaddons", "preset", name + ".json");
+        return Paths.get("config", "fishyaddons", "preset", name + JSON);
     }
 
     public static Path getPresetDir() {
@@ -119,42 +116,41 @@ public class FishyPresets {
     }
 
     public static Map<String, String> loadStringPreset(PresetType type, String suffix) {
-        Path path = getPresetDir().resolve("preset." + getTypeName(type) + "." + suffix + ".json");
-        if (!Files.exists(path)) return null;
+        Path path = getPresetDir().resolve("preset." + getTypeName(type) + "." + suffix + JSON);
+        if (!Files.exists(path)) return Map.of();
         try {
             String json = Files.readString(path);
             return GSON.fromJson(json, new TypeToken<Map<String, String>>(){}.getType());
         } catch (Exception e) {
             e.printStackTrace();
-            return null;
+            return Map.of();
         }
     }
 
     public static Map<String, FishyConfig.AlertData> loadAlertPreset(String suffix) {
-        Path path = getPresetDir().resolve("preset.alert." + suffix + ".json");
-        if (!Files.exists(path)) return null;
+        Path path = getPresetDir().resolve("preset.alert." + suffix + JSON);
+        if (!Files.exists(path)) return Map.of();
         try {
             String json = Files.readString(path);
             return GSON.fromJson(json, new TypeToken<Map<String, FishyConfig.AlertData>>(){}.getType());
         } catch (Exception e) {
             e.printStackTrace();
-            return null;
+            return Map.of();
         }
     }
 
     public static void saveStringPreset(PresetType type, String suffix, Map<String, String> data) {
-        Path path = getPresetDir().resolve("preset." + getTypeName(type) + "." + suffix + ".json");
+        Path path = getPresetDir().resolve("preset." + getTypeName(type) + "." + suffix + JSON);
         try {
             Files.createDirectories(path.getParent());
             Files.writeString(path, GSON.toJson(data));
         } catch (Exception e) {
             e.printStackTrace();
-            return;
         }
     }
 
     public static void saveAlertPreset(String suffix, Map<String, FishyConfig.AlertData> data) {
-        Path path = getPresetDir().resolve("preset.alert." + suffix + ".json");
+        Path path = getPresetDir().resolve("preset.alert." + suffix + JSON);
         try {
             Files.createDirectories(path.getParent());
             Files.writeString(path, GSON.toJson(data));

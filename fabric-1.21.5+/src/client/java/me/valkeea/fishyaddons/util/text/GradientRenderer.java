@@ -13,7 +13,7 @@ import net.minecraft.text.TextColor;
 
 public class GradientRenderer {
     private GradientRenderer() {}
-    
+
     private static final Map<String, int[]> PRESET_CACHE = new ConcurrentHashMap<>();
     private static final Map<String, String> PRESETS = new HashMap<>();
     
@@ -22,7 +22,7 @@ public class GradientRenderer {
         PRESETS.put("fire", "FF0000>FF4500>FF8C00");
         PRESETS.put("shore", "00FFCC>66FFFF>CCFFFF");
         PRESETS.put("leg", "FF8000>FFD700>FF8000");
-        PRESETS.put("myth", "FF00FF>8000FF>FF00FF");
+        PRESETS.put("epic", "FF00FF>8000FF>FF00FF");
         PRESETS.put("meow", "FFB6C1>FF69B4>FFB6C1");
         PRESETS.put("sunset", "FF0084>FF4500>FF8C00>FFD700");
         PRESETS.put("depths", "000080>1E90FF>87CEEB");
@@ -78,16 +78,19 @@ public class GradientRenderer {
             return Text.literal(text).setStyle(baseStyle.withColor(TextColor.fromRgb(fallbackColor)));
         }
         
-        if (text.length() == 1) {
+        // Use code point length for proper Unicode handling
+        int codePointLength = text.codePointCount(0, text.length());
+        
+        if (codePointLength == 1) {
             int color = getStartColor(gradientName);
             return Text.literal(text).setStyle(baseStyle.withColor(TextColor.fromRgb(color)));
         }
         
-        String cacheKey = gradientName.toLowerCase() + ":" + text.length();
+        String cacheKey = gradientName.toLowerCase() + ":" + codePointLength;
         int[] colors = PRESET_CACHE.get(cacheKey);
         
         if (colors == null) {
-            colors = calcGradient(gradientName, text.length());
+            colors = calcGradient(gradientName, codePointLength);
         }
         
         return buildText(text, colors, baseStyle);
@@ -124,14 +127,26 @@ public class GradientRenderer {
     
     private static Text buildText(String text, int[] colors, Style baseStyle) {
         MutableText result = Text.literal("");
+        int[] codePoints = text.codePoints().toArray();
+        
+        if (codePoints.length == 0) {
+            return result;
+        }
+        
+        int[] adjustedColors = colors;
+        if (colors.length != codePoints.length) {
+            adjustedColors = new int[codePoints.length];
+            for (int i = 0; i < codePoints.length; i++) {
+                adjustedColors[i] = colors[Math.min(i, colors.length - 1)];
+            }
+        }
 
-        // Batch consecutive characters of same color
-        int currentColor = colors[0];
+        int currentColor = adjustedColors[0];
         StringBuilder currentSegment = new StringBuilder();
         
-        for (int i = 0; i < text.length(); i++) {
-            if (colors[i] == currentColor) {
-                currentSegment.append(text.charAt(i));
+        for (int i = 0; i < codePoints.length; i++) {
+            if (adjustedColors[i] == currentColor) {
+                currentSegment.appendCodePoint(codePoints[i]);
             } else {
                 if (!currentSegment.isEmpty()) {
                     result.append(Text.literal(currentSegment.toString())
@@ -139,9 +154,9 @@ public class GradientRenderer {
                 }
                 
                 // Start new segment
-                currentColor = colors[i];
+                currentColor = adjustedColors[i];
                 currentSegment = new StringBuilder();
-                currentSegment.append(text.charAt(i));
+                currentSegment.appendCodePoint(codePoints[i]);
             }
         }
         
@@ -181,22 +196,25 @@ public class GradientRenderer {
             }
         }
         
-        if (text.length() == 1) {
+        // Handle Unicode properly by using code points
+        int[] codePoints = text.codePoints().toArray();
+        
+        if (codePoints.length == 1) {
             return Text.literal(text).setStyle(baseStyle.withColor(TextColor.fromRgb(colors[0])));
         }
         
         MutableText result = Text.literal("");
-        int textLength = text.length();
+        int codePointLength = codePoints.length;
         
-        for (int i = 0; i < textLength; i++) {
+        for (int i = 0; i < codePointLength; i++) {
             // Calculate position in gradient (0.0 to 1.0)
-            float position = (float) i / (textLength - 1);
+            float position = (float) i / (codePointLength - 1);
             
             // Interpolate between colors
             int interpolatedColor = interpolate(colors, position);
             
-            // Add character with interpolated color
-            String character = String.valueOf(text.charAt(i));
+            // Add character with interpolated color - properly handle Unicode
+            String character = new String(new int[]{codePoints[i]}, 0, 1);
             Style charStyle = baseStyle.withColor(TextColor.fromRgb(interpolatedColor));
             result.append(Text.literal(character).setStyle(charStyle));
         }

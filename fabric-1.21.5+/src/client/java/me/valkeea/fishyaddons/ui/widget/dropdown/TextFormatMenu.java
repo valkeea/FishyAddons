@@ -395,7 +395,7 @@ public class TextFormatMenu {
             case "ocean": return new int[]{0x1E90FF, 0x00BFFF, 0x87CEEB};
             case "fire": return new int[]{0xFF0000, 0xFF4500, 0xFF8C00};
             case "leg": return new int[]{0xFF8000, 0xFFD700, 0xFF8000};
-            case "myth": return new int[]{0xFF00FF, 0x8000FF, 0xFF00FF};
+            case "epic": return new int[]{0xFF00FF, 0x8000FF, 0xFF00FF};
             case "sunset": return new int[]{0xFF0084, 0xFF4500, 0xFF8C00, 0xFFD700};
             case "depths": return new int[]{0x000080, 0x1E90FF, 0x87CEEB};
             case "emerald": return new int[]{0x228B22, 0x32CD32, 0x90EE90};

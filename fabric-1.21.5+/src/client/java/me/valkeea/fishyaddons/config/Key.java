@@ -45,12 +45,11 @@ public class Key {
     public static final String PER_ITEM = "pricePerItem";
 
     // --- Settings ---
-    public static final String RENDER_COORD_COLOR = "renderCoordsColor";
     public static final String XP_COLOR = "xpColor";
     public static final String XP_COLOR_ON = "xpColorEnabled";
     public static final String FISHY_TRANS_LAVA = "fishyTransLava";
     public static final String FISHY_TRANS_LAVA_COLOR = "fishyTransLavaColor";
-    public static final String FISHY_FIRE_OVERLAY = "fishyFireOverlay";       
+    public static final String FISHY_FIRE_OVERLAY = "fishyFireOverlay";        
     public static final String FISHY_LAVA = "fishyLava";
     public static final String FISHY_WATER = "fishyWater";
     public static final String XP_OUTLINE = "xpOutline";
@@ -67,15 +66,19 @@ public class Key {
     public static final String MUTE_PHANTOM = "mutePhantom";
     public static final String MUTE_RUNE = "muteRune";
     public static final String RENDER_COORDS = "renderCoords";
+    public static final String RENDER_COORD_COLOR = "renderCoordsColor";
+    public static final String RENDER_COORD_MS = "renderCoordsMs";
+    public static final String RENDER_COORD_HIDE_CLOSE = "renderCoordsHideClose";
     public static final String BEACON_ALARM = "beaconAlarm";
     public static final String COPY_CHAT = "copyChat";
     public static final String COPY_NOTI = "ccNoti";
     public static final String INV_SEARCH = "invSearch";
     public static final String INV_SEARCH_OPACITY = "searchOverlayOpacity";
+    public static final String TRACK_HOTSPOT = "trackHotspot";
+    public static final String ANNOUNCE_HOTSPOT = "announceHotspot";
     public static final String PRICE_TYPE = "priceType";
     public static final String HIDE_HOTSPOT = "hideHotspot";
     public static final String HOTSPOT_DISTANCE = "hotspotDistance";
-    public static final String BOOK_DROP_ALERT = "bookDropAlert";
     public static final String TRACKER_NOTIS = "trackerNotis";
     public static final String CAKE_NOTI = "centuryCakeChatReminder";
     public static final String RAIN_NOTI = "rainNoti";
@@ -89,6 +92,12 @@ public class Key {
     public static final String CHAT_ALERTS_ENABLED = "chatAlertsOn";
     public static final String ALIASES_ENABLED = "aliasesOn";
     public static final String CHAT_REPLACEMENTS_ENABLED = "chatReplacementsOn";
+    public static final String CHAT_FILTER_ENABLED = "chatFilterOn";
+    public static final String CHAT_FILTER_SC_ENABLED = "chatFilterSCOn";
+    public static final String CHAT_FILTER_COORDS_ENABLED = "chatFilterCoordsOn";
+    public static final String CHAT_FILTER_HIDE_SACK_MESSAGES = "chatFilterSackOn";
+    public static final String CHAT_FILTER_HIDE_AUTOPET_MESSAGES = "chatFilterAutopetOn";
+    public static final String CHAT_FILTER_HIDE_HYPE = "chatFilterHypeOn";
     public static final String KEY_SHORTCUTS_ENABLED = "keyShortcutsOn";
     public static final String THEME_MODE = "themeMode";
     public static final String INFO_ID = "infoId";
@@ -126,7 +135,7 @@ public class Key {
         settings.set(FISHY_LAVA, false);
         settings.set(FISHY_WATER, false);
         settings.set(FISHY_TRANS_LAVA, false);
-        settings.set(FISHY_TRANS_LAVA_COLOR, 0x3F76E4);        
+        settings.set(FISHY_TRANS_LAVA_COLOR, -13700380);        
         settings.set(FISHY_FIRE_OVERLAY, false);
         settings.set(RENDER_COORD_COLOR, -5653771);
         settings.set(CUSTOM_PARTICLE_COLOR_INDEX, Integer.valueOf(1));
@@ -153,11 +162,11 @@ public class Key {
         settings.set(DMG_SCALE, 0.15f);
         settings.set(SCALE_CRIT, false);
         settings.set(INV_SEARCH, false);
-        settings.set(RENDER_COORDS, true);
+        settings.set(TRACK_HOTSPOT, false);
+        settings.set(ANNOUNCE_HOTSPOT, false);
         settings.set(HIDE_HOTSPOT, false);
         settings.set(HOTSPOT_DISTANCE, 7.0f);
         settings.set(PRICE_TYPE, "sellPrice");
-        settings.set(BOOK_DROP_ALERT, true);
         settings.set(TRACKER_NOTIS, false);
         settings.set(RAIN_NOTI, false);
         settings.set(EQ_DISPLAY, false);
@@ -168,6 +177,12 @@ public class Key {
         settings.set(ALIASES_ENABLED, false);
         settings.set(CHAT_REPLACEMENTS_ENABLED, false);
         settings.set(KEY_SHORTCUTS_ENABLED, false);
+        settings.set(CHAT_FILTER_ENABLED, false);
+        settings.set(CHAT_FILTER_SC_ENABLED, false);
+        settings.set(CHAT_FILTER_COORDS_ENABLED, true);
+        settings.set(CHAT_FILTER_HIDE_SACK_MESSAGES, false);
+        settings.set(CHAT_FILTER_HIDE_AUTOPET_MESSAGES, false);
+        settings.set(CHAT_FILTER_HIDE_HYPE, false);
         hud.set(HUD_PING_X, 5);
         hud.set(HUD_PING_Y, 12);
         hud.set(HUD_PING_SIZE, 12);

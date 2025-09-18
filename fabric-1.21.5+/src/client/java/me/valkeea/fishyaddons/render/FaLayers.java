@@ -7,7 +7,7 @@ public class FaLayers {
     
     // Reasonable Z-levels that still work with Minecraft's depth buffer
     private static final float GUI_TOP_Z = 4200.0f;
-    private static final float GUI_OVERLAY_Z = 4000.0f;    
+    private static final float GUI_OVERLAY_Z = 600.0f;    
     
 
     // --- Z-levels for rendering above mod overlays and backgrounds ---

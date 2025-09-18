@@ -17,7 +17,7 @@ import net.minecraft.util.Formatting;
  */
 public class Enhancer {
     private Enhancer() {}
-    
+
     private static class ParseResult {
         final Text text;
         final Style finalStyle;
@@ -31,7 +31,8 @@ public class Enhancer {
     private static final Pattern ALL_FORMATTING_PATTERN = Pattern.compile(
         "([§&]([0-9a-fk-or]))|" +
         "([§&](#[0-9A-F]{6}))|" +
-        "([§&]\\{([^}]+)\\})|",
+        "([§&]\\{([^}]+)\\})|" +
+        "([§&]\\[([^\\]]+)\\])",
         Pattern.CASE_INSENSITIVE
     );
     
@@ -44,7 +45,7 @@ public class Enhancer {
         COLORS.put("common", 0xB0B0B0);
         COLORS.put("unc", 0x55FF55);
         COLORS.put("rare", 0x5555FF);
-        COLORS.put("epic", 0xAA00AA);
+        COLORS.put("purple", 0xAA00AA);
         COLORS.put("leg", 0xFFAA00);
         COLORS.put("mythic", 0xFF55FF);
         COLORS.put("lapis", 0x2832C2);
@@ -78,7 +79,7 @@ public class Enhancer {
         COLORS.put("dark_green", 0x228B22);
         COLORS.put("pine", 0x234F1E);
         COLORS.put("sunset_orange", 0xFF4500);
-        COLORS.put("deep_purple", 0x483D8B);
+        COLORS.put("violet", 0x483D8B);
     }
     
     private static ParseResult parseAndTrackStyle(String input, Style initialStyle) {

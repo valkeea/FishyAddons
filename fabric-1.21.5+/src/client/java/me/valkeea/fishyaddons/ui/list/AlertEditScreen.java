@@ -260,7 +260,7 @@ public class AlertEditScreen extends Screen {
             "- Detected String -",
             " • §7Matched anywhere in the message",
             " • §8Example: alert set to 'hel', the alert will also trigger on 'hello'",
-            " • §7With Chat Filter enabled, you can still use the original message",
+            " • §7With Chat Filter enabled, use the original message",
             "   as a trigger to not have to update alerts if you change your config",
             "",
             "- Auto Chat -",

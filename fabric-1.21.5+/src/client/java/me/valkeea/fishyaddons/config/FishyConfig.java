@@ -514,10 +514,20 @@ public class FishyConfig {
         enable(key, !current);
     }
 
-    //get Integer value
+    // get Integer value
     public static int getInt(String key) {
         Object v = settings.getValues().get(key);
         return v instanceof Number n ? n.intValue() : 0;
+    }
+
+    public static int getInt(String key, int def) {
+        Object v = settings.getValues().getOrDefault(key, def);
+        if (!(v instanceof Number)) {
+            settings.set(key, def);
+            save();
+            return def;
+        }
+        return ((Number) v).intValue();
     }
 
     public static void setInt(String key, int value) {

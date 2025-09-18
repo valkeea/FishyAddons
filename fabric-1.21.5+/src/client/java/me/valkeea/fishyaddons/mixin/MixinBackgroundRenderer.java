@@ -69,7 +69,7 @@ public abstract class MixinBackgroundRenderer {
                 
                 cir.setReturnValue(new Fog(
                     0.0f,
-                    25.0f,
+                    20.0f,
                     FogShape.SPHERE,
                     red,
                     green,

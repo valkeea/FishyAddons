@@ -45,10 +45,11 @@ public class SbGui {
 
     public void onInvUpdate() {
         if (inGui) {
-            HandledScreen<?> screen = (HandledScreen<?>) MinecraftClient.getInstance().currentScreen;
-            if (screen != null) {
-                current = screen.getTitle().getString();
-            } else {
+            var screen = MinecraftClient.getInstance().currentScreen;
+            if (screen instanceof HandledScreen<?> handledScreen) {
+                current = handledScreen.getTitle().getString();
+            }
+            else {
                 current = null;
                 inGui = false;
             }

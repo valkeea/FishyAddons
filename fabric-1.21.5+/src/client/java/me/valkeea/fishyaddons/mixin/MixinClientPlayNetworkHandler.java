@@ -8,8 +8,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import me.valkeea.fishyaddons.handler.ClientPing;
 import me.valkeea.fishyaddons.handler.PetInfo;
 import me.valkeea.fishyaddons.handler.TabScanner;
+import me.valkeea.fishyaddons.processor.ChatProcessor;
 import me.valkeea.fishyaddons.tracker.InventoryTracker;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
+import net.minecraft.network.packet.s2c.play.GameMessageS2CPacket;
 import net.minecraft.network.packet.s2c.play.InventoryS2CPacket;
 import net.minecraft.network.packet.s2c.play.PlayerListS2CPacket;
 import net.minecraft.network.packet.s2c.play.ScreenHandlerSlotUpdateS2CPacket;
@@ -19,7 +21,10 @@ import net.minecraft.network.packet.s2c.query.PingResultS2CPacket;
 @Mixin(ClientPlayNetworkHandler.class)
 public class MixinClientPlayNetworkHandler {
 
-    @Inject(method = "onPingResult", at = @At("HEAD"))
+    @Inject(
+        method = "onPingResult",
+        at = @At("HEAD")
+    )
     private void onPingResult(PingResultS2CPacket packet, CallbackInfo ci) {
         ClientPing.onPingResponse(packet);
     }
@@ -40,11 +45,11 @@ public class MixinClientPlayNetworkHandler {
         at = @At("TAIL")
     )
     private void onSlotUpdate(ScreenHandlerSlotUpdateS2CPacket packet, CallbackInfo ci) {
-        // Check if this is the player's inventory (syncId 0) and != slot 5 (helmet)
         if (packet.getSyncId() == 0) {
             int slotId = packet.getSlot();
-            net.minecraft.item.ItemStack stack = packet.getStack();
-            if (!stack.isEmpty() && slotId != 5) {
+            var stack = packet.getStack();
+
+            if (!stack.isEmpty() && (slotId < 5 || slotId > 8)) {
                 InventoryTracker.onItemAdded(stack);
             }
         }
@@ -56,5 +61,16 @@ public class MixinClientPlayNetworkHandler {
     )
     private void inventory(InventoryS2CPacket packet, CallbackInfo ci) {
         me.valkeea.fishyaddons.util.SbGui.getInstance().onInvUpdate();
+    }
+
+    @Inject(method = "onGameMessage",
+    at = @At("HEAD")
+    )
+    private void passGuildRaw(GameMessageS2CPacket packet, CallbackInfo ci) {
+        if (packet == null) return;
+        if (packet.overlay()) return;
+
+        var pristine = packet.content();
+        ChatProcessor.onRaw(pristine);
     }
 }

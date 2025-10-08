@@ -19,15 +19,17 @@ public class TrackerHandler implements ChatHandler {
     
     @Override
     public boolean shouldHandle(ChatMessageContext context) {
-        return !context.isOverlay() && context.isSystemMessage();
+        return context.isSystemMessage();
     }
     
     @Override
     public ChatHandlerResult handle(ChatMessageContext context) {
         try {
-            String unfilteredText = context.getUnfilteredCleanText();
-            if (TrackerUtils.handleChat(unfilteredText)) return ChatHandlerResult.STOP;
+            String unfilteredText = context.getUnfilteredCleanLowercaseText();
+            var originalText = context.getOriginalMessage();
+            if (TrackerUtils.handleChat(unfilteredText, originalText)) return ChatHandlerResult.STOP;
             return ChatHandlerResult.CONTINUE;
+
         } catch (Exception e) {
             System.err.println("[FishyAddons] Error in Tracker handler: " + e.getMessage());
             e.printStackTrace();

@@ -20,7 +20,7 @@ public class HoverEventHandler implements ChatHandler {
     
     @Override
     public boolean shouldHandle(ChatMessageContext context) {
-        if (!context.isSkyblockMessage() || context.isOverlay()) {
+        if (!context.isSkyblockMessage()) {
             return false;
         }
 

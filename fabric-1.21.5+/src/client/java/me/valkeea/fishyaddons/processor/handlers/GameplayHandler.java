@@ -58,7 +58,7 @@ public class GameplayHandler implements ChatHandler {
             return true;
         }
         
-        if (message.contains("Glacite Mineshafts")) {
+        if (message.contains("Glacite Mineshafts") && message.contains("entered")) {
             WorldEvent.getInstance().bypass();
             AreaUtils.setIsland("mineshaft");
             return true;

@@ -19,7 +19,7 @@ public class ChatAlertHandler implements ChatHandler {
     
     @Override
     public boolean shouldHandle(ChatMessageContext context) {
-        return !context.isOverlay() && context.isSkyblockMessage();
+        return context.isSkyblockMessage();
     }
     
     @Override

@@ -5,6 +5,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
 import net.minecraft.text.Text;
 
@@ -24,7 +25,7 @@ public class ChatProcessor {
     
     private volatile boolean enabled = true;
     private volatile boolean debugMode = false;
-    private volatile int maxProcessingTimeWarningMs = 5;
+    private volatile int maxProcessingTimeWarningMs = 10;
 
     public void registerHandler(ChatHandler handler) {
         if (handler == null) {
@@ -64,7 +65,14 @@ public class ChatProcessor {
             recordProcessingTime(startTime, message);
         }
     }
-    
+
+    private static final AtomicReference<Text> lastPacket = new AtomicReference<>(null);
+
+    public static void onRaw(Text packetInfo) {
+        if (!INSTANCE.enabled || packetInfo == null) return;
+        lastPacket.set(packetInfo);
+    }
+
     public Text applyDisplayFilters(Text message) {
         if (!enabled || message == null) {
             return message;
@@ -82,8 +90,11 @@ public class ChatProcessor {
         }
         
         ensureHandlersSorted();
-        ChatMessageContext context = new ChatMessageContext(currentMessage, false);
-        
+
+        var packetInfo = lastPacket.get() != null ? lastPacket.get() : currentMessage;
+        var context = new ChatMessageContext(currentMessage, false, packetInfo);
+        lastPacket.set(null);
+
         for (ChatHandler handler : handlers) {
             String handlerName = handler.getHandlerName();
             boolean isDisplayHandler = isDisplayOnlyHandler(handlerName);
@@ -107,7 +118,8 @@ public class ChatProcessor {
     }
     
     private boolean isDisplayOnlyHandler(String handlerName) {
-        return handlerName.equals("Coordinates");
+        return handlerName.equals("Coordinates") ||
+                handlerName.equals("ChatButton");
     }
     
     /**

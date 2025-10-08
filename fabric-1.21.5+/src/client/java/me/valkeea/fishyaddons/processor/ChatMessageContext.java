@@ -1,5 +1,8 @@
 package me.valkeea.fishyaddons.processor;
 
+import org.jetbrains.annotations.Nullable;
+
+import me.valkeea.fishyaddons.util.text.TextUtils;
 import net.minecraft.text.Text;
 
 /**
@@ -10,6 +13,7 @@ public class ChatMessageContext {
     private final Text unfilteredMessage;
     private final String rawText;
     private final String cleanText;
+    private final String packetInfo;
     private final String lowercaseText;
     private final boolean overlay;
     private final long timestamp;
@@ -17,52 +21,67 @@ public class ChatMessageContext {
     private Boolean isSkyblockMessage;
     private Boolean isSystemMessage;
     private Boolean isPlayerMessage;
-    
-    public ChatMessageContext(Text originalMessage, boolean overlay) {
-        this(originalMessage, originalMessage, overlay);
+    private Boolean isGuildMessage;
+
+    public ChatMessageContext(Text originalMessage, boolean overlay, @Nullable Text packetInfo) {
+        this(originalMessage, originalMessage, overlay, packetInfo);
     }
+
+    public ChatMessageContext(Text originalMessage, boolean overlay) {
+        this(originalMessage, originalMessage, overlay, null);
+    }    
     
-    public ChatMessageContext(Text originalMessage, Text unfilteredMessage, boolean overlay) {
+    public ChatMessageContext(Text originalMessage, Text unfilteredMessage, boolean overlay, @Nullable Text packetInfo) {
         this.originalMessage = originalMessage;
         this.unfilteredMessage = unfilteredMessage;
         this.overlay = overlay;
         this.timestamp = System.currentTimeMillis();
         this.rawText = originalMessage.getString();
-        this.cleanText = me.valkeea.fishyaddons.util.HelpUtil.stripColor(rawText);
+        this.cleanText = TextUtils.stripColor(rawText);
+        this.packetInfo = packetInfo != null ? TextUtils.stripColor(packetInfo.getString()) : "";
         this.lowercaseText = cleanText.toLowerCase();
     }
     
     public Text getOriginalMessage() { return originalMessage; }
     public Text getUnfilteredMessage() { return unfilteredMessage; }
     public String getUnfilteredText() { return unfilteredMessage.getString(); }
-    public String getUnfilteredCleanText() { return me.valkeea.fishyaddons.util.HelpUtil.stripColor(unfilteredMessage.getString()); }
+    public String getUnfilteredCleanText() { return TextUtils.stripColor(unfilteredMessage.getString()); }
+    public String getUnfilteredCleanLowercaseText() { return TextUtils.stripColor(unfilteredMessage.getString()).toLowerCase(); }
     public String getRawText() { return rawText; }
     public String getCleanText() { return cleanText; }
+    public String getPacketInfo() { return packetInfo; }
     public String getLowercaseText() { return lowercaseText; }
     public boolean isOverlay() { return overlay; }
     public long getTimestamp() { return timestamp; }
     
     public boolean isSkyblockMessage() {
         if (isSkyblockMessage == null) {
-            isSkyblockMessage = computeIsSkyblockMessage();
+            isSkyblockMessage = skyblockMessage();
         }
         return isSkyblockMessage;
     }
     
     public boolean isSystemMessage() {
         if (isSystemMessage == null) {
-            isSystemMessage = computeIsSystemMessage();
+            isSystemMessage = systemMessage();
         }
         return isSystemMessage;
     }
     
     public boolean isPlayerMessage() {
         if (isPlayerMessage == null) {
-            isPlayerMessage = computeIsPlayerMessage();
+            isPlayerMessage = playerMessage();
         }
         return isPlayerMessage;
     }
-    
+
+    public boolean isGuildMessage() {
+        if (isGuildMessage == null) {
+            isGuildMessage = guildMessage();
+        }
+        return isGuildMessage;
+    }
+
     public boolean contains(String... keywords) {
         for (String keyword : keywords) {
             if (lowercaseText.contains(keyword.toLowerCase())) {
@@ -82,27 +101,19 @@ public class ChatMessageContext {
     }
     
     public boolean playerMessage() {
-        return startsWith("[", "Guild", "Party");
+        return !isOverlay() && startsWith("[", "Guild", "Party");
     }
 
-    public boolean statusBar() {
-        return contains("❤", "❈", "✎");
+    public boolean guildMessage() {
+        return !isOverlay() && packetInfo.startsWith("Guild >");
     }
     
-    private boolean computeIsSkyblockMessage() {
-        if (!me.valkeea.fishyaddons.util.SkyblockCheck.getInstance().rules()) {
-            return false;
-        }
+    private boolean skyblockMessage() {
+        return !isOverlay() && me.valkeea.fishyaddons.util.SkyblockCheck.getInstance().rules();
+    }
 
-        return !statusBar();
-    }
-    
-    private boolean computeIsSystemMessage() {
-        return !playerMessage() && !statusBar();
-    }
-    
-    private boolean computeIsPlayerMessage() {
-        return playerMessage() && !statusBar();
+    private boolean systemMessage() {
+        return !isOverlay() && !playerMessage();
     }
     
     @Override

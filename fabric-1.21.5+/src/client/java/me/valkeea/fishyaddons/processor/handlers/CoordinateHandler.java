@@ -1,6 +1,5 @@
 package me.valkeea.fishyaddons.processor.handlers;
 
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import me.valkeea.fishyaddons.config.FishyConfig;
@@ -9,9 +8,8 @@ import me.valkeea.fishyaddons.handler.ActiveBeacons;
 import me.valkeea.fishyaddons.processor.ChatHandler;
 import me.valkeea.fishyaddons.processor.ChatHandlerResult;
 import me.valkeea.fishyaddons.processor.ChatMessageContext;
-import me.valkeea.fishyaddons.tool.FishyMode;
-import me.valkeea.fishyaddons.util.HelpUtil;
-import net.minecraft.text.MutableText;
+import me.valkeea.fishyaddons.util.text.ChatButton;
+import me.valkeea.fishyaddons.util.text.TextUtils;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
 
@@ -35,12 +33,7 @@ public class CoordinateHandler implements ChatHandler {
     @Override
     public boolean shouldHandle(ChatMessageContext context) {
         String rawText = context.getRawText();
-        return !context.isOverlay() && 
-            (FishyConfig.getState(Key.RENDER_COORDS, true) || 
-                FishyConfig.getState(Key.CHAT_FILTER_COORDS_ENABLED, true)) && 
-            containsCoordinates(rawText) &&
-            !rawText.contains("[Hide]") &&
-            !rawText.contains("[Redraw]");
+        return containsCoordinates(rawText);
     }
     
     @Override
@@ -74,7 +67,7 @@ public class CoordinateHandler implements ChatHandler {
     }
     
     private void initBeaconFor(String rawMessage) {
-        Matcher matcher = COORD_PATTERN.matcher(rawMessage);
+        var matcher = COORD_PATTERN.matcher(rawMessage);
         if (!matcher.find()) {
             return;
         }
@@ -88,7 +81,7 @@ public class CoordinateHandler implements ChatHandler {
             String label = "";
             int endOfCoords = matcher.end();
             if (endOfCoords < rawMessage.length()) {
-                label = HelpUtil.stripColor(rawMessage.substring(endOfCoords).trim());
+                label = TextUtils.stripColor(rawMessage.substring(endOfCoords).trim());
             }
             
             ActiveBeacons.setBeacon(
@@ -104,13 +97,15 @@ public class CoordinateHandler implements ChatHandler {
     private boolean containsCoordinates(String message) {
         return message.toLowerCase().contains("x:") && 
                message.toLowerCase().contains("y:") && 
-               message.toLowerCase().contains("z:");
+               message.toLowerCase().contains("z:") &&
+               !message.contains("[Hide]") &&
+               !message.contains("[Redraw]");
     }
     
     private String extractCoordinates(String message) {
-        java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("x:\\s*(-?\\d+),?\\s*y:\\s*(-?\\d+),?\\s*z:\\s*(-?\\d+)");
-        java.util.regex.Matcher matcher = pattern.matcher(message);
-        
+        var pattern = Pattern.compile("x:\\s*(-?\\d+),?\\s*y:\\s*(-?\\d+),?\\s*z:\\s*(-?\\d+)");
+        var matcher = pattern.matcher(message);
+
         if (matcher.find()) {
             return matcher.group(1) + " " + matcher.group(2) + " " + matcher.group(3);
         }
@@ -118,9 +113,9 @@ public class CoordinateHandler implements ChatHandler {
     }
 
     private String extractTitle(String message) {
-        java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("x:\\s*(-?\\d+),?\\s*y:\\s*(-?\\d+),?\\s*z:\\s*(-?\\d+)(.*)");
-        java.util.regex.Matcher matcher = pattern.matcher(message);
-        
+        var pattern = Pattern.compile("x:\\s*(-?\\d+),?\\s*y:\\s*(-?\\d+),?\\s*z:\\s*(-?\\d+)(.*)");
+        var matcher = pattern.matcher(message);
+
         if (matcher.find() && matcher.groupCount() >= 4) {
             return matcher.group(4).trim();
         }
@@ -131,23 +126,10 @@ public class CoordinateHandler implements ChatHandler {
         String messageText = originalMessage.getString();
         String coords = extractCoordinates(messageText);
         String title = extractTitle(messageText);
-        
-        MutableText hideButton = Text.literal(" [")
-            .styled(style -> style.withColor(0xFF808080))
-            .append((Text.literal("Hide"))
-            .styled(style -> style.withClickEvent(
-                new net.minecraft.text.ClickEvent.RunCommand("/fa coords hide " + coords)
-            ).withColor(FishyMode.getCmdColor())))
-            .append(Text.literal("]").styled(style -> style.withColor(0xFF808080)));
 
-        MutableText reDrawButton = Text.literal(" [")
-            .styled(style -> style.withColor(0xFF808080))
-            .append((Text.literal("Redraw"))
-            .styled(style -> style.withClickEvent(
-                new net.minecraft.text.ClickEvent.RunCommand("/fa coords redraw " + coords + (title.isEmpty() ? "" : " " + title))
-            ).withColor(FishyMode.getCmdColor())))
-            .append(Text.literal("]").styled(style -> style.withColor(0xFF808080)));
+        var hideBtn = ChatButton.create("/fa coords hide ", "Hide");
+        var reDrawBtn = ChatButton.create("/fa coords redraw " + coords + (title.isEmpty() ? "" : " " + title), "Redraw");
 
-        return originalMessage.copy().append(hideButton).append(reDrawButton);
+        return originalMessage.copy().append(hideBtn).append(reDrawBtn);
     }
 }

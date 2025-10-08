@@ -13,7 +13,7 @@ import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.config.FishyConfig.AlertData;
 import me.valkeea.fishyaddons.processor.MessageAnalysis.AlertMatch;
 import me.valkeea.fishyaddons.processor.MessageAnalysis.FilterMatch;
-import me.valkeea.fishyaddons.util.HelpUtil;
+import me.valkeea.fishyaddons.util.text.TextUtils;
 
 /**
  * Single-pass message analysis for chat filter and alerts
@@ -45,7 +45,7 @@ public class SharedMessageDetector {
         
         refreshConfigurationCache();
         
-        String strippedMessage = HelpUtil.stripColor(originalMessage);
+        String strippedMessage = TextUtils.stripColor(originalMessage);
         List<FilterMatch> filterMatches = analyzeFilterPatterns(originalMessage);
         List<AlertMatch> alertMatches = analyzeAlertPatterns(strippedMessage);
 

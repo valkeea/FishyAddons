@@ -169,7 +169,7 @@ public class TrackerDisplay implements HudElement {
 
     // Format item line for display
     private String getItemLine(ItemValueData data) {
-        String itemName = capitalizeItemName(data.itemName);
+        String itemName = enhance(data.itemName);
         int quantity = data.quantity;
         StringBuilder lineBuilder = new StringBuilder();
         lineBuilder.append(String.format("§3+%d §7%s", quantity, itemName));
@@ -291,8 +291,8 @@ public class TrackerDisplay implements HudElement {
                 
                 ItemValueData clickedItem = lastDisplayedItems.get(i);
                 addExcludedItem(clickedItem.itemName);
-                
-                String displayName = capitalizeItemName(clickedItem.itemName);
+
+                String displayName = enhance(clickedItem.itemName);
                 FishyNotis.send(Text.literal("§bFishyAddons §dwill no longer track: §f" + displayName));
                 FishyNotis.alert(Text.literal("§       §7Use §3/fp ignored §7to see or restore ignored items"));
                 
@@ -305,7 +305,7 @@ public class TrackerDisplay implements HudElement {
     
     public void restoreExcludedItem(String itemName) {
         removeExcludedItem(itemName);
-        String displayName = capitalizeItemName(itemName);
+        String displayName = enhance(itemName);
         FishyNotis.send(Text.literal("§aRestored item: §f" + displayName));
     }
     
@@ -378,11 +378,15 @@ public class TrackerDisplay implements HudElement {
     
     private void showProfileMenu() {
         FishyNotis.alert(Text.literal("§bYou can also left-click to cycle profiles!"));        
-        me.valkeea.fishyaddons.command.ProfitTrackerCommand.sendProfileClickable();
+        me.valkeea.fishyaddons.command.TrackerCmd.sendProfileClickable();
     }
     
-    private String capitalizeItemName(String itemName) {
+    private String enhance(String itemName) {
         if (itemName == null || itemName.isEmpty()) return itemName;
+
+        if (itemName.startsWith("ultimate_")) {
+            itemName = itemName.replaceFirst("ultimate_", "");
+        }
         
         String[] words = itemName.split(" ");
         StringBuilder result = new StringBuilder();

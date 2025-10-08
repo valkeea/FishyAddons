@@ -55,4 +55,10 @@ public class SbGui {
             }
         }
     }
+
+    public static boolean isPlayerInventory() {
+        return MinecraftClient.getInstance().currentScreen != null &&
+               (MinecraftClient.getInstance().currentScreen instanceof net.minecraft.client.gui.screen.ingame.InventoryScreen ||
+                MinecraftClient.getInstance().currentScreen instanceof net.minecraft.client.gui.screen.ingame.GenericContainerScreen);
+    }    
 }

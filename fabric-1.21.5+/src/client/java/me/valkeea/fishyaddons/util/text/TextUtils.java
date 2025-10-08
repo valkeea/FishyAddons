@@ -2,11 +2,9 @@ package me.valkeea.fishyaddons.util.text;
 
 import java.util.List;
 
-import org.joml.Matrix4f;
-
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
@@ -20,12 +18,11 @@ public class TextUtils {
         Text text,
         float x, float y,
         int textColor,
-        int outlineColor,
-        Matrix4f matrix,
-        VertexConsumerProvider vertexConsumers,
-        TextRenderer.TextLayerType layerType,
-        int light
+        int outlineColor
     ) {
+        var matrix = context.getMatrices().peek().getPositionMatrix();
+        var vertices = MinecraftClient.getInstance().getBufferBuilders().getEntityVertexConsumers();
+        var layer = net.minecraft.client.font.TextRenderer.TextLayerType.NORMAL;
         for (int dx = -1; dx <= 1; dx++) {
             for (int dy = -1; dy <= 1; dy++) {
                 if (dx != 0 || dy != 0) {
@@ -36,10 +33,10 @@ public class TextUtils {
                         outlineColor,
                         false,
                         matrix,
-                        vertexConsumers,
-                        layerType,
+                        vertices,
+                        layer,
                         0,
-                        light
+                        0xF000F0
                     );
                 }
             }
@@ -52,10 +49,10 @@ public class TextUtils {
             textColor,
             false,
             matrix,
-            vertexConsumers,
-            layerType,
+            vertices,
+            layer,
             0,
-            light
+            0xF000F0
         );
     }
 
@@ -65,7 +62,11 @@ public class TextUtils {
             base.append(stripColor(sibling));
         }
         return base;
-    }  
+    }
+
+    public static String stripColor(String text) {
+        return text == null ? "" : text.replaceAll("(?i)§[0-9a-fk-or]", "");
+    }
 
     public static Text recolor(Text original) {
         Text copied = original.copy();

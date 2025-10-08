@@ -19,9 +19,10 @@ import com.google.gson.reflect.TypeToken;
 import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.config.Key;
 import me.valkeea.fishyaddons.util.FishyNotis;
-import me.valkeea.fishyaddons.util.HelpUtil;
+import me.valkeea.fishyaddons.util.text.TextUtils;
 import net.minecraft.client.MinecraftClient;
 
+@SuppressWarnings("squid:S6548")
 public class CakeTimer {
     private static final CakeTimer INSTANCE = new CakeTimer();
     private static final File TIMER_FILE = new File(MinecraftClient.getInstance().runDirectory, "config/fishyaddons/display.json");
@@ -47,7 +48,7 @@ public class CakeTimer {
     }
 
     public boolean handleChat(String message) {
-        String cleanMessage = HelpUtil.stripColor(message);
+        String cleanMessage = TextUtils.stripColor(message);
         Matcher matcher = CAKE_PATTERN.matcher(cleanMessage);
 
         if (matcher.find()) {

@@ -202,12 +202,13 @@ public class TabbedListScreen extends Screen {
             return true;
         }
         if (presetDropdown != null && presetDropdown.isVisible()) {
-            if (presetDropdown.mouseClicked(mouseX, mouseY, button)) return true;
-            // If click was outside dropdown, close it
+            if (presetDropdown.mouseClicked(mouseX, mouseY)) return true;
+            
             int x = presetDropdown.getX(); 
             int y = presetDropdown.getY(); 
             int w = presetDropdown.getWidth();
             int h = presetDropdown.getEntryHeight() * presetDropdown.getEntries().size();
+
             if (!(mouseX >= x && mouseX <= x + w && mouseY >= y && mouseY <= y + h)) {
                 presetDropdown.setVisible(false);
                 return true;

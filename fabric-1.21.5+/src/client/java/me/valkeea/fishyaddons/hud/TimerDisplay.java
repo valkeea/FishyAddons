@@ -69,11 +69,7 @@ public class TimerDisplay implements HudElement {
                 timerLabel,
                 0, 0,
                 color,
-                0xFF000000,
-                context.getMatrices().peek().getPositionMatrix(),
-                MinecraftClient.getInstance().getBufferBuilders().getEntityVertexConsumers(),
-                net.minecraft.client.font.TextRenderer.TextLayerType.NORMAL,
-                0xF000F0
+                0xFF000000
             );
             me.valkeea.fishyaddons.util.text.TextUtils.drawOutlinedText(
                 context,
@@ -81,11 +77,7 @@ public class TimerDisplay implements HudElement {
                 timerValue,
                 labelWidth, 0,
                 0xFFFFFF,
-                0xFF000000,
-                context.getMatrices().peek().getPositionMatrix(),
-                MinecraftClient.getInstance().getBufferBuilders().getEntityVertexConsumers(),
-                net.minecraft.client.font.TextRenderer.TextLayerType.NORMAL,
-                0xF000F0
+                0xFF000000
             );
         } else {
             context.drawText(mc.textRenderer, timerLabel, 0, 0, color, true);

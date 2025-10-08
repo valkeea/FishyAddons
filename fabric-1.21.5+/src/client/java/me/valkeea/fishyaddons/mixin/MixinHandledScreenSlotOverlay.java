@@ -8,7 +8,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import me.valkeea.fishyaddons.safeguard.SlotProtectionManager;
 import me.valkeea.fishyaddons.tool.FishyMode;
-import me.valkeea.fishyaddons.util.HelpUtil;
+import me.valkeea.fishyaddons.util.SbGui;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.render.RenderLayer;
@@ -29,7 +29,7 @@ public abstract class MixinHandledScreenSlotOverlay {
     @Inject(method = "drawSlot", at = @At("TAIL"))
     private void drawSlotOverlay(DrawContext context, Slot slot, CallbackInfo ci) {
 
-        if (!HelpUtil.isPlayerInventory()) return;
+        if (!SbGui.isPlayerInventory()) return;
         HandledScreen<?> screen = (HandledScreen<?>) (Object) this;
         int invIndex = SlotProtectionManager.remap(screen, slot.id);
 

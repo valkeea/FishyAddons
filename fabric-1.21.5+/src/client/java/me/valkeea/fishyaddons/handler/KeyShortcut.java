@@ -14,7 +14,7 @@ import net.minecraft.client.util.InputUtil;
 public class KeyShortcut {
     private KeyShortcut() {}
 
-    private static final long COOLDOWN_MS = 1000;
+    private static final long COOLDOWN_MS = 750;
     private static final Set<String> keysHeld = new HashSet<>();
     private static final Map<String, Long> lastExecutionTime = new HashMap<>();  
 

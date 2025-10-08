@@ -73,7 +73,7 @@
     },
     {
       "id": "titanoboa",
-      "triggerText": "A massive Titanoboa surfaces. It's body stretches as far as the eye can see.",
+      "triggerText": "A massive Titanoboa surfaces. Its body stretches as far as the eye can see.",
       "displayName": "Titanoboa",
       "displayNamePlural": "two Titanoboas",
       "category": "mythic",
@@ -133,15 +133,6 @@
       "category": "legendary",
       "emoji": "♚",
       "customMessage": "{emoji} {name} awakened! {emoji}"
-    },  
-    {
-      "id": "carrot_king",
-      "triggerText": "Is this even a fish? It's the Carrot King!",
-      "displayName": "Carrot King",
-      "displayNamePlural": "two Carrot Kings",
-      "category": "legendary",
-      "emoji": "🥕",
-      "customMessage": "{name}! {emoji}"
     },
     {
       "id": "blue_ringed_octopus",
@@ -512,6 +503,15 @@
       "emoji": "🌙",
       "customMessage": "{name}! {emoji}"
     },
+    {
+      "id": "carrot_king",
+      "triggerText": "Is this even a fish? It's the Carrot King!",
+      "displayName": "Carrot King",
+      "displayNamePlural": "two Carrot Kings",
+      "category": "water",
+      "emoji": "🥕",
+      "customMessage": "{name}! {emoji}"
+    },    
     {
       "id": "agarimoo",
       "triggerText": "Your Chumcap Bucket trembles, it's an Agarimoo.",

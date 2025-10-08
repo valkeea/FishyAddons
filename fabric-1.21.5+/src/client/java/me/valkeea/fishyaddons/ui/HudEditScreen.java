@@ -257,12 +257,16 @@ public class HudEditScreen extends Screen {
             int currentSize = selectedElement.getHudSize();
             int newSize = currentSize + (int) amount;
 
-            if (newSize < 8) newSize = 8;
-            if (newSize > 80) newSize = 80;
+            newSize = Math.clamp(newSize, 8, 140);
             selectedElement.setHudSize(newSize);
             selectedElement.invalidateCache();
             return true;
         }
         return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
     }
+
+    @Override
+    public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) {
+        // force no blur
+    }    
 }

@@ -17,8 +17,8 @@ import net.minecraft.util.math.Vec3d;
 public class ActiveBeacons {
     private ActiveBeacons() {}
     private static final List<BeaconData> beacons = new ArrayList<>();
-    private static final double HIDE_DISTANCE = 5.0;
-    private static final long GRACE_PERIOD_MS = 5000; 
+    private static final double HIDE_DISTANCE = 8.0;
+    private static final long GRACE_PERIOD_MS = 3000; 
 
     private static BeaconData lastBeacon = null;
     private static boolean hideNear = false;

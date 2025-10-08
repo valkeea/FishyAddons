@@ -51,6 +51,11 @@ public class RuleFactory {
             public String getCustomMessage() { return customMessage; }
         }
     }
+
+    private static final String[] DH_TRIGGERS = new String[] {
+        "It's a Double Hook!",
+        "It's a Double Hook! Woot woot!"
+    };    
     
     public static SeaCreatureData loadSeaCreatureData() {
         if (cachedData != null) {
@@ -60,7 +65,7 @@ public class RuleFactory {
         try {
             MinecraftClient client = MinecraftClient.getInstance();
             if (client != null && client.getResourceManager() != null) {
-                Identifier resourceId = Identifier.of("fishyaddons", "sea_creatures.json");
+                Identifier resourceId = Identifier.of("fishyaddons", "data/sea_creatures.json");
                 InputStream inputStream = client.getResourceManager()
                     .getResource(resourceId)
                     .orElseThrow()
@@ -73,7 +78,7 @@ public class RuleFactory {
             } else {
 
                 InputStream inputStream = RuleFactory.class.getClassLoader()
-                    .getResourceAsStream("assets/fishyaddons/sea_creatures.json");
+                    .getResourceAsStream("assets/fishyaddons/data/sea_creatures.json");
                 
                 if (inputStream != null) {
                     try (InputStreamReader reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8)) {
@@ -100,21 +105,15 @@ public class RuleFactory {
             return rules;
         }
 
-        rules.put("double_hook_trigger", new FilterConfig.Rule(
-            "It's a Double Hook!",
-            "",
-            40,
-            true,
-            true
-        ));
-
-        rules.put("double_hook_trigger_variant", new FilterConfig.Rule(
-            "It's a Double Hook! Woot woot!",
-            "",
-            40,
-            true,
-            true
-        ));
+        for (String trigger : DH_TRIGGERS) {
+            rules.put("dh_trigger_" + trigger.toLowerCase().replaceAll("\\W+", "_"), new FilterConfig.Rule(
+                trigger,
+                "",
+                40,
+                true,
+                true
+            ));
+        }
 
         for (SeaCreatureData.CreatureConfig creature : data.creatures) {
             SeaCreatureData.CategoryConfig category = data.categories.get(creature.category);
@@ -172,5 +171,9 @@ public class RuleFactory {
     public static List<SeaCreatureData.CreatureConfig> getCreatures() {
         SeaCreatureData data = loadSeaCreatureData();
         return data != null ? data.creatures : new ArrayList<>();
+    }
+
+    public static String[] getDhTriggers() {
+        return DH_TRIGGERS;
     }
 }

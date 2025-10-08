@@ -1,6 +1,5 @@
 package me.valkeea.fishyaddons.mixin;
 
-import org.joml.Matrix4f;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -13,7 +12,6 @@ import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.hud.InGameHud;
 import net.minecraft.client.render.RenderTickCounter;
-import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.text.Text;
 
@@ -35,20 +33,13 @@ public class MixinInGameHudOutline {
         int x = (context.getScaledWindowWidth() - textWidth) / 2;
         int y = context.getScaledWindowHeight() - 31 - 4;
 
-        Matrix4f matrix = context.getMatrices().peek().getPositionMatrix();
-        VertexConsumerProvider vertices = MinecraftClient.getInstance().getBufferBuilders().getEntityVertexConsumers();
-
         TextUtils.drawOutlinedText(
             context,
             tr,
             Text.literal(levelText),
             x, y,
             XpColor.get(),
-            0x000000,
-            matrix,
-            vertices,
-            TextRenderer.TextLayerType.NORMAL,
-            0xF000F0 
+            0x000000 
         );
 
         ci.cancel();

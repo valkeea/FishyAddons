@@ -75,11 +75,7 @@ public class PetDisplay implements HudElement {
                 outline,
                 0, 0,
                 0xFFFFFF,
-                0xFF000000,
-                context.getMatrices().peek().getPositionMatrix(),
-                MinecraftClient.getInstance().getBufferBuilders().getEntityVertexConsumers(),
-                net.minecraft.client.font.TextRenderer.TextLayerType.NORMAL,
-                0xF000F0
+                0xFF000000
             );
             context.drawText(mc.textRenderer, saved, 0, 0, 0xFFFFFF, false);
         } else {

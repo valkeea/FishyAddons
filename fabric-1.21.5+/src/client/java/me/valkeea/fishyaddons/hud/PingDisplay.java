@@ -77,11 +77,7 @@ public class PingDisplay implements HudElement {
                 cachedPingLabel,
                 0, 0,
                 color,
-                0xFF000000,
-                context.getMatrices().peek().getPositionMatrix(),
-                MinecraftClient.getInstance().getBufferBuilders().getEntityVertexConsumers(),
-                net.minecraft.client.font.TextRenderer.TextLayerType.NORMAL,
-                0xF000F0
+                0xFF000000
             );
             TextUtils.drawOutlinedText(
                 context,
@@ -89,11 +85,7 @@ public class PingDisplay implements HudElement {
                 cachedPingValue,
                 cachedLabelWidth, 0,
                 0xFFFFFF,
-                0xFF000000,
-                context.getMatrices().peek().getPositionMatrix(),
-                MinecraftClient.getInstance().getBufferBuilders().getEntityVertexConsumers(),
-                net.minecraft.client.font.TextRenderer.TextLayerType.NORMAL,
-                0xF000F0
+                0xFF000000
             );
         } else {
             context.drawText(mc.textRenderer, cachedPingLabel, 0, 0, color, true);

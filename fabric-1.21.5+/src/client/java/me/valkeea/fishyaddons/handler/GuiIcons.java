@@ -28,6 +28,10 @@ public class GuiIcons {
         enabled = !screenNames.isEmpty() && !screenSlotMap.isEmpty() && keyCode != null && !keyCode.equals("NONE");
     }
 
+    public static boolean isEnabled() {
+        return enabled;
+    }
+
     public static boolean hasConfig(Text title) {
         if (!enabled) return false;
         String screenName = title.getString();
@@ -44,6 +48,7 @@ public class GuiIcons {
     }    
 
     public static boolean isBlocked(int slotIndex) {
+        if (!enabled) return false;
         return SbGui.getInstance().inGui() && getSlotsForScreen(SbGui.getInstance().current()).contains(slotIndex)
                && !isShiftDown(MinecraftClient.getInstance());
     }

@@ -100,11 +100,7 @@ public class CakeDisplay implements HudElement {
                     symbolTextComponent,
                     textX, 0,
                     0x808080,
-                    0xFF000000,
-                    context.getMatrices().peek().getPositionMatrix(),
-                    MinecraftClient.getInstance().getBufferBuilders().getEntityVertexConsumers(),
-                    net.minecraft.client.font.TextRenderer.TextLayerType.NORMAL,
-                    0xF000F0
+                    0xFF000000
                 );
             } else {
                 context.drawText(mc.textRenderer, symbolTextComponent, textX, 0, 0x808080, true);
@@ -119,11 +115,7 @@ public class CakeDisplay implements HudElement {
                 timerText,
                 textX, 0,
                 color,
-                0xFF000000,
-                context.getMatrices().peek().getPositionMatrix(),
-                MinecraftClient.getInstance().getBufferBuilders().getEntityVertexConsumers(),
-                net.minecraft.client.font.TextRenderer.TextLayerType.NORMAL,
-                0xF000F0
+                0xFF000000
             );
         } else {
             context.drawText(mc.textRenderer, timerText, textX, 0, color, true);

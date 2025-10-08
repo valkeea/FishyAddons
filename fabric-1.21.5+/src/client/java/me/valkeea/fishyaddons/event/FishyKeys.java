@@ -5,8 +5,8 @@ import me.valkeea.fishyaddons.config.Key;
 import me.valkeea.fishyaddons.handler.KeyShortcut;
 import me.valkeea.fishyaddons.mixin.HandledScreenAccessor;
 import me.valkeea.fishyaddons.safeguard.SlotProtectionManager;
-import me.valkeea.fishyaddons.util.HelpUtil;
 import me.valkeea.fishyaddons.util.Keyboard;
+import me.valkeea.fishyaddons.util.SbGui;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
@@ -115,7 +115,7 @@ public class FishyKeys {
     // Bind/Lock based on start/end slot
     private static void lockKeyRelease(HandledScreen<?> screen, Slot hovered, boolean isPressed) {
         if (!isPressed && wasPressed && dragging && 
-            bindStart != null && HelpUtil.isPlayerInventory() && hovered != null) {
+            bindStart != null && SbGui.isPlayerInventory() && hovered != null) {
             if (hovered == bindStart) {
                 singleSlotAction(screen, hovered);
             } else {

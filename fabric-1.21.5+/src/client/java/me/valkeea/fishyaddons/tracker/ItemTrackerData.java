@@ -4,6 +4,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.jetbrains.annotations.Nullable;
+
 import me.valkeea.fishyaddons.api.HypixelPriceClient;
 import me.valkeea.fishyaddons.cache.ApiCache;
 import net.minecraft.text.Text;
@@ -37,6 +39,10 @@ public class ItemTrackerData {
     }
 
     public static void addDrop(String itemName, int quantity) {
+        addDrop(itemName, quantity, null);
+    }
+
+    public static void addDrop(String itemName, int quantity, @Nullable Text originalMessage) {
         if (itemName == null || itemName.trim().isEmpty()) return;
 
         // Check if pause threshold has been exceeded
@@ -45,10 +51,18 @@ public class ItemTrackerData {
         if (timeSinceLastActivity > INACTIVITY_THRESHOLD) {
             totalPausedTime += timeSinceLastActivity;
         }
-        
+
         lastActivityTime = currentTime;
-        
-        String normalizedName = normalizeItemName(itemName);
+
+        String normalizedName;
+
+        if (originalMessage != null) {
+            boolean isUltimate = extractBookRarity(itemName, originalMessage);
+            normalizedName = isUltimate ? "ultimate_" + itemName : itemName;
+        } else {
+            normalizedName = normalizeItemName(itemName);
+        }
+
         itemCounts.merge(normalizedName, quantity, Integer::sum);
 
         if (priceClient != null && !itemValues.containsKey(normalizedName)) {
@@ -63,6 +77,23 @@ public class ItemTrackerData {
                 }
             }, "AutoPriceLookup-" + normalizedName.replaceAll(REGEX, "")).start();
         }
+    }
+
+    public static boolean extractBookRarity(String itemName, Text originalMessage) {
+        if (originalMessage == null || itemName == null || itemName.trim().isEmpty()) {
+            return false;
+        }
+
+        for (Text sibling : originalMessage.getSiblings()) {
+            String siblingText = sibling.getString().toLowerCase().trim();
+            if (siblingText.contains(itemName.toLowerCase().trim())) {
+                String style = sibling.getStyle().toString();
+                if (style.contains("light_purple") || style.contains("magenta")) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     public static boolean isItemTracked(String itemName) {
@@ -244,11 +275,13 @@ public class ItemTrackerData {
         // Npc prices/ah stack estimates
         switch (itemName.toLowerCase()) {
             case ENCHANTED_BOOK:
-                return 5.0;
+                return 1.0;
             case "ender chestplate", "ender leggings", "ender boots", "ender helmet":
                 return 10000.0;
             case "lushlilac":
                 return 15000.0;
+            case "crown of greed":
+                return 1000000.0;
             default:
                 return 2.0;
         }
@@ -424,111 +457,6 @@ public class ItemTrackerData {
         } catch (Exception e) {
             System.err.println("Error refreshing " + itemName + ": " + e.getMessage());
             return true;
-        }
-    }
-    
-    /**
-     * Enhance item name extraction for better display, especially for enchanted books
-     * This version is for when we want to extract the name without modifying the tracker
-     */
-    public static String enhanceItemName(String rawItemName, String tooltipContent) {
-        if (rawItemName == null || rawItemName.trim().isEmpty()) {
-            return rawItemName;
-        }
-        
-        String cleanItemName = normalizeItemName(rawItemName);
-        
-        // Special handling for enchanted books
-        if (cleanItemName.equals(ENCHANTED_BOOK) && tooltipContent != null) {
-            String enhancedName = extractEnchantedBookName(tooltipContent);
-            if (enhancedName != null && !enhancedName.trim().isEmpty() && !enhancedName.equals(ENCHANTED_BOOK)) {
-                return enhancedName;
-            }
-        }
-        
-        return rawItemName;
-    }
-    
-    public static void addEnchantedBookDrop(String rawItemName, int quantity, String tooltipContent) {
-        String enhancedName = enhanceItemName(rawItemName, tooltipContent);
-        
-        if (enhancedName != null && !enhancedName.equals(ENCHANTED_BOOK) && tooltipContent != null) {
-            // Check if it's an ultimate enchantment based on color
-            boolean isUltimate = tooltipContent.contains("color=light_purple") || tooltipContent.contains("color=magenta");
-
-            addEnchantedBook(enhancedName, quantity, isUltimate);
-        } else {
-            // Fallback to generic enchanted book
-            addDrop(ENCHANTED_BOOK, quantity);
-        }
-    }
-    
-    /**
-     * Extract the specific enchantment name from enchanted book tooltip content
-     */
-    protected static String extractEnchantedBookName(String tooltipContent) {
-        if (tooltipContent == null || tooltipContent.trim().isEmpty()) {
-            return null;
-        }
-        return extractFromMinecraftTextFormat(tooltipContent);
-    }
-    
-    private static String extractFromMinecraftTextFormat(String tooltipContent) {
-        java.util.regex.Pattern literalPattern = java.util.regex.Pattern.compile("literal\\{([^}]+)\\}\\[style=\\{([^}]*)\\}\\]", java.util.regex.Pattern.DOTALL);
-        java.util.regex.Matcher literalMatcher = literalPattern.matcher(tooltipContent);
-        String firstLiteral = null;
-        while (literalMatcher.find()) {
-            String name = literalMatcher.group(1);
-            String style = literalMatcher.group(2);
-            if (firstLiteral == null) firstLiteral = name;
-            if (style.contains("light_purple")) {
-                return name;
-            }
-        }
-        if (firstLiteral != null) {
-            return firstLiteral;
-        }
-        return null;
-    }
-    
-    public static void addEnchantedBook(String enchantmentName, int quantity, boolean isUltimate) {
-        if (enchantmentName == null || enchantmentName.trim().isEmpty()) return;
-
-        if (!TrackerUtils.isEnabled()) return;
-
-        // Store the enchantment with metadata
-        String normalizedName = normalizeItemName(enchantmentName);
-        itemCounts.merge(normalizedName, quantity, Integer::sum);
-        
-        // Async price lookup with enchantment context
-        if (priceClient != null && !itemValues.containsKey(normalizedName)) {
-            new Thread(() -> {
-                try {
-                    // Pass enchantment info to price client for proper API ID conversion
-                    double price = priceClient.getEnchantmentPrice(enchantmentName, isUltimate);
-                    if (price > 0) {
-                        itemValues.put(normalizedName, price);
-                    }
-                } catch (Exception e) {
-                    System.err.println("Error fetching enchantment price for " + enchantmentName + ": " + e.getMessage());
-                }
-            }, "EnchantmentPriceLookup-" + normalizedName.replaceAll(REGEX, "")).start();
-        }
-    }
-    
-    /**
-     * Remove generic enchanted book entries
-     */
-    public static void removeGenericEnchantedBook(int quantity) {
-        String genericName = normalizeItemName(ENCHANTED_BOOK);
-        Integer genericCount = itemCounts.get(genericName);
-        
-        if (genericCount != null && genericCount >= quantity) {
-            if (genericCount == quantity) {
-                itemCounts.remove(genericName);
-            } else {
-                itemCounts.put(genericName, genericCount - quantity);
-            }
         }
     }
     

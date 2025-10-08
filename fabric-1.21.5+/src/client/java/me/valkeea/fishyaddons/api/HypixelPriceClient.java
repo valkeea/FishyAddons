@@ -127,7 +127,6 @@ public class HypixelPriceClient {
     // On-demand lookup for auction BIN prices
     public double getLowestBinPrice(String itemName) {
         String apiId = convertToApiId(itemName);
-        
         Double cachedPrice = ApiCache.getCachedPrice(apiId, ApiCache.PriceType.AH_BIN);
         if (cachedPrice != null) {
             return cachedPrice;
@@ -464,14 +463,13 @@ public class HypixelPriceClient {
                 apiId = directMapping;
             }
             else if (isEnchantment(normalized)) {
-                apiId = convertEnchantmentToApiId(normalized, false);
+                apiId = convertEnchantmentToApiId(normalized);
             }
             else {
                 // Generic ids
                 apiId = normalized.replaceAll("\\s+", "_").toUpperCase();
             }
         }
-        
         ApiCache.cacheApiId(itemName, apiId);
         return apiId;
     }
@@ -495,14 +493,12 @@ public class HypixelPriceClient {
     
     private boolean isEnchantment(String itemName) {
         String lower = itemName.toLowerCase();
-        if (lower.matches(".*\\b([1-9]|10)\\b.*") ||
-            lower.matches(".*\\b(i{1,3}|iv|v|vi{0,3}|ix|x)\\b.*")) {
+        if (lower.matches(".*\\b([1-9]|10)\\b.*")) {
             return true;
         }
         
         // Support 1-10 and Roman numerals
-        boolean hasValidLevel = lower.matches(".*\\b([1-9]|10)\\b.*") ||
-                               lower.matches(".*\\b(i{1,3}|iv|v|vi{0,3}|ix|x)\\b.*");
+        boolean hasValidLevel = lower.matches(".*\\b([1-9]|10)\\b.*");
         boolean hasEnchantWords = lower.contains("book") || lower.contains("ultimate");
         
         return hasValidLevel && hasEnchantWords;
@@ -511,62 +507,12 @@ public class HypixelPriceClient {
     /**
      * Convert enchantment name to API ID utilizing passed color information for type
      */
-    private String convertEnchantmentToApiId(String enchantName, boolean isUltimate) {
-        String normalized = enchantName.toLowerCase().trim();
-        String level = "";
-        
-        // Extract level (Roman numerals or numbers)
-        java.util.regex.Pattern levelPattern = java.util.regex.Pattern.compile("\\b(\\d+)\\b");
-        java.util.regex.Matcher matcher = levelPattern.matcher(normalized);
-        if (matcher.find()) {
-            level = "_" + matcher.group(1);
-            normalized = normalized.replaceAll("\\b\\d+\\b", "").trim();
-        } else {
-            // Check for Roman numerals
-            java.util.regex.Pattern romanPattern = java.util.regex.Pattern.compile("\\b(I{1,3}|IV|V|VI{0,3}|IX|X)\\b");
-            java.util.regex.Matcher romanMatcher = romanPattern.matcher(normalized.toUpperCase());
-            if (romanMatcher.find()) {
-                String roman = romanMatcher.group(1);
-                level = "_" + convertRomanToNumber(roman);
-                normalized = normalized.replaceAll("\\b(?i)" + roman + "\\b", "").trim();
-            }
-        }
-        
-        // Clean up the name
-        normalized = normalized.replace("enchanted book", "")
-                              .replace("enchantment", "")
-                              .replace(" book", "")
-                              .replace("ultimate ", "")
-                              .trim();
-        
-        String enchantBase = normalized.replaceAll("\\s+", "_").toUpperCase();
-        
-        // Use color information to determine if ultimate
-        if (isUltimate) {
-            return "ENCHANTMENT_ULTIMATE_" + enchantBase + level;
-        } else {
-            return "ENCHANTMENT_" + enchantBase + level;
-        }
-    }
-    
-    private int convertRomanToNumber(String roman) {
-        switch (roman.toUpperCase()) {
-            case "I": return 1;
-            case "II": return 2;
-            case "III": return 3;
-            case "IV": return 4;
-            case "V": return 5;
-            case "VI": return 6;
-            case "VII": return 7;
-            case "VIII": return 8;
-            case "IX": return 9;
-            case "X": return 10;
-            default: return 1;
-        }
+    private String convertEnchantmentToApiId(String enchantName) {
+        return "ENCHANTMENT_" + enchantName.toUpperCase().replaceAll("\\s+", "_");
     }
 
-    public double getEnchantmentPrice(String enchantmentName, boolean isUltimate) {
-        String apiId = convertEnchantmentToApiId(enchantmentName, isUltimate);
+    public double getEnchantmentPrice(String enchantmentName) {
+        String apiId = convertEnchantmentToApiId(enchantmentName);
         Double cachedPrice = ApiCache.getCachedPrice(apiId, ApiCache.PriceType.BZ_BUY);
         if (cachedPrice != null) {
             return cachedPrice;
@@ -577,6 +523,11 @@ public class HypixelPriceClient {
         
         if (priceData != null && !priceData.isExpired(BZ_CACHE_EXPIRY_MINUTES)) {
             price = priceData.buyPrice;
+            if (price < 2) {
+                price = bazaarCache.getOrDefault(
+                    "ENCHANTMENT_ULTIMATE_" + enchantmentName.toUpperCase().replaceAll("\\s+", "_") + "_I",
+                    new PriceData(0,0,0)).buyPrice;
+            }
         }
         
         ApiCache.cachePrice(apiId, ApiCache.PriceType.BZ_BUY, price);

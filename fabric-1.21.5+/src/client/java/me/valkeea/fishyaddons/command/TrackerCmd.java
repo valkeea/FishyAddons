@@ -6,12 +6,13 @@ import me.valkeea.fishyaddons.api.HypixelPriceClient;
 import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.config.TrackerProfiles;
 import me.valkeea.fishyaddons.tracker.ItemTrackerData;
+import me.valkeea.fishyaddons.tracker.TrackerUtils;
 import me.valkeea.fishyaddons.util.FishyNotis;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.text.Text;
 
-public class ProfitTrackerCommand {
-    private ProfitTrackerCommand() {}
+public class TrackerCmd {
+    private TrackerCmd() {}
     private static final String KEY = me.valkeea.fishyaddons.config.Key.HUD_TRACKER_ENABLED;
 
     public static boolean handle(String[] args) {
@@ -130,10 +131,12 @@ public class ProfitTrackerCommand {
         
         if (totalValue > 0) {
             String valueStr = formatCoins(totalValue);
+            long fullDuration = ItemTrackerData.getTotalDurationMinutes();
             long lastApiUpdate = ItemTrackerData.getLastApiUpdateTime();
             boolean hasRecentData = lastApiUpdate > 0 && (System.currentTimeMillis() - lastApiUpdate) < 300000;
             String apiStatus = hasRecentData ? " §a(live prices)" : " §c(estimated)";
             FishyNotis.alert(Text.literal(String.format("§7Value: §e%s%s", valueStr, apiStatus)));
+            FishyNotis.alert(Text.literal(String.format("§7Per hour: §e%s", formatCoins(totalValue / Math.max(1, fullDuration) * 60))));
         }
         
         FishyNotis.alert(Text.literal("§7Top items (by value):"));
@@ -504,6 +507,13 @@ public class ProfitTrackerCommand {
         }
         
         return result.toString();
+    }
+
+    public static void profitPerHour() {
+        if (TrackerUtils.isEnabled()) {
+            double profitPerHour = ItemTrackerData.getTotalSessionValue() / Math.max(1, ItemTrackerData.getTotalDurationMinutes()) * 60.0;
+            FishyNotis.alert(Text.literal(String.format("§7Per hour: §e%s", formatCoins(profitPerHour))));
+        }
     }
     
     /**

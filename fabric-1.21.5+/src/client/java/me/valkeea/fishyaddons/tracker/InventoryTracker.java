@@ -3,17 +3,12 @@ package me.valkeea.fishyaddons.tracker;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.LoreComponent;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 
 public class InventoryTracker {
     // Constants
     private static final int STACK_INCREASE_THRESHOLD = 32;
-    
-    // Track recently detected "Enchanted Book" drops from chat
-    private static final Map<Long, EnchantedBookDrop> recentEnchantedBookDrops = new ConcurrentHashMap<>();
     private static final long DROP_CORRELATION_WINDOW = 5000; // 5 seconds to correlate drops
     
     // Max monitoring window in case quick disable is missed
@@ -29,14 +24,6 @@ public class InventoryTracker {
     private static final Map<String, String> TRACKED_AXES = new ConcurrentHashMap<>();
 
     private static final String CLEAN_REGEX = "§[0-9a-fk-or]";
-
-    private static class EnchantedBookDrop {
-        final int quantity;
-
-        EnchantedBookDrop(int quantity) {
-            this.quantity = quantity;
-        }
-    }
     
     static {
         TRACKED_PLAYER_HEADS.put("emperor's skull", "DIVER_FRAGMENT");
@@ -61,27 +48,8 @@ public class InventoryTracker {
 
     private InventoryTracker() {}
     
-    /**
-     * Called when an "Enchanted Book" is detected in chat
-     */
-    public static void onEnchantedBookDropDetected(int quantity) {
-
-        long currentTime = System.currentTimeMillis();
-        recentEnchantedBookDrops.put(currentTime, new EnchantedBookDrop(quantity));
-        // Clean up old entries
-        recentEnchantedBookDrops.entrySet().removeIf(entry -> 
-            (currentTime - entry.getKey()) > DROP_CORRELATION_WINDOW * 2);
-        
-    }
-    
     public static void onItemAdded(ItemStack stack) {
         if (stack.isEmpty()) return;
-
-        // Process enchanted books if we have recent drops to correlate
-        if (!recentEnchantedBookDrops.isEmpty() && stack.getItem() == Items.ENCHANTED_BOOK) {
-            handleEnchantedBookAdded(stack);
-            return; // Exit early to prevent double processing
-        }
         
         // Only process items if we're in a monitoring window (after entity death)
         if (!isMonitoringActive()) {
@@ -124,27 +92,6 @@ public class InventoryTracker {
         }
         return true;
     }
-    
-    private static void handleEnchantedBookAdded(ItemStack stack) {
-        long currentTime = System.currentTimeMillis();
-        
-        // Check if this correlates with a recent chat drop
-        for (Map.Entry<Long, EnchantedBookDrop> entry : recentEnchantedBookDrops.entrySet()) {
-            long dropTime = entry.getKey();
-            EnchantedBookDrop drop = entry.getValue();
-            
-            if (currentTime - dropTime <= 5000L && drop.quantity >= stack.getCount()) {
-                // Found correlation - extract enchantment info from lore
-                LoreComponent lore = stack.get(DataComponentTypes.LORE);
-                String tooltipContent = lore != null ? lore.toString() : null;
-                ItemTrackerData.addEnchantedBookDrop("enchanted book", stack.getCount(), tooltipContent);
-                
-                // Remove the processed drop from tracking
-                recentEnchantedBookDrops.remove(dropTime);
-                return;
-            }
-        }
-    } 
     
     private static void handlePlayerHeadAdded(ItemStack stack) {
         String displayName = stack.getName().getString().toLowerCase().trim();
@@ -218,17 +165,7 @@ public class InventoryTracker {
      */
     public static void cleanup() {
         long currentTime = System.currentTimeMillis();
-        for (Map.Entry<Long, EnchantedBookDrop> entry : recentEnchantedBookDrops.entrySet()) {
-            long dropTime = entry.getKey();
-            EnchantedBookDrop drop = entry.getValue();
-            if (currentTime - dropTime > DROP_CORRELATION_WINDOW) {
-                ItemTrackerData.addDrop("enchanted book", drop.quantity);
-            }
-        }
-        
-        recentEnchantedBookDrops.entrySet().removeIf(entry -> 
-            (currentTime - entry.getKey()) > DROP_CORRELATION_WINDOW * 3);
-        
+
         recentTrackedItemDrops.entrySet().removeIf(entry -> 
             (currentTime - entry.getKey()) > DROP_CORRELATION_WINDOW * 3);
 
@@ -249,7 +186,9 @@ public class InventoryTracker {
      * Called when any entity enters death animation - enables packet monitoring window
      */
     public static void onValuableEntityDamaged() {
-        monitoringEnabled = true;
+        if (!monitoringEnabled) {
+            monitoringEnabled = true;
+        }
         monitoringStartTime = System.currentTimeMillis();
     }
     
@@ -264,8 +203,8 @@ public class InventoryTracker {
         // Schedule a quick disable after 1 second (drops should be immediate)
         Thread.startVirtualThread(() -> {
             try {
-                Thread.sleep(1000); // 1 second delay
-                if (System.currentTimeMillis() - monitoringStartTime >= 1000) {
+                Thread.sleep(200);
+                if (System.currentTimeMillis() - monitoringStartTime >= 200) {
                     monitoringEnabled = false;
                 }
             } catch (InterruptedException e) {

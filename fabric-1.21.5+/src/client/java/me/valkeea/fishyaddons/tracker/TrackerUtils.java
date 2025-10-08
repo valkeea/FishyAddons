@@ -3,10 +3,10 @@ package me.valkeea.fishyaddons.tracker;
 import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.config.Key;
 import me.valkeea.fishyaddons.config.TrackerProfiles;
+import me.valkeea.fishyaddons.tracker.fishing.ScStats;
 import me.valkeea.fishyaddons.ui.VCOverlay;
 import me.valkeea.fishyaddons.ui.VCPopup;
 import me.valkeea.fishyaddons.util.FishyNotis;
-import me.valkeea.fishyaddons.util.HelpUtil;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
@@ -28,11 +28,12 @@ public class TrackerUtils {
         FishyConfig.toggle(Key.PER_ITEM, state);
     }
 
-    public static boolean handleChat(String message) {  
-        String s = HelpUtil.stripColor(message);
-        ChatDropParser.ParseResult result = ChatDropParser.parseMessage(message);
+    public static boolean handleChat(String s, Text originalMessage) { 
+        ChatDropParser.ParseResult result = ChatDropParser.parseMessage(s);
 
-        if (s.toLowerCase().contains("loot share")) {
+        ScStats.getInstance().checkForVial(s);
+
+        if (s.contains("loot share")) {
             InventoryTracker.onLsDetected();
             return true;
         }
@@ -43,8 +44,8 @@ public class TrackerUtils {
             if (result.isCoinDrop) {
                 ItemTrackerData.addCoins(result.quantity);
             } else {
-                if (result.itemName.toLowerCase().contains("enchanted book")) {
-                    InventoryTracker.onEnchantedBookDropDetected(result.quantity);
+                if (s.contains("enchanted book")) {
+                    ItemTrackerData.addDrop(result.itemName, result.quantity, originalMessage);
                 } else {
                     ItemTrackerData.addDrop(result.itemName, result.quantity);
                 }

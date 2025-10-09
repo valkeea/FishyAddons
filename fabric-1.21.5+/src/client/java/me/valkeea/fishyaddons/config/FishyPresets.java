@@ -15,6 +15,9 @@ import com.google.gson.reflect.TypeToken;
 public class FishyPresets {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final String JSON = ".json";
+    private static final String CFG = "config";
+    private static final String FISHY = "fishyaddons";
+    private static final String ALERT_PRESET = "preset.alert.";
 
     public enum PresetType { COMMANDS, KEYBINDS, CHAT, ALERT }
 
@@ -25,11 +28,11 @@ public class FishyPresets {
             case CHAT -> "chat";
             case ALERT -> "alert";
         };
-        return Paths.get("config", "fishyaddons", "preset", name + JSON);
+        return Paths.get(CFG, FISHY, "preset", name + JSON);
     }
 
     public static Path getPresetDir() {
-        return Paths.get("config", "fishyaddons", "preset");
+        return Paths.get(CFG, FISHY, "preset");
     }
 
     public static java.util.List<String> listPresetSuffixes(PresetType type) {
@@ -101,16 +104,13 @@ public class FishyPresets {
     );
 
     public static void ensureDefaultPresets() {
-        ensureDefaultCommandsPreset();
-    }
-
-    private static void ensureDefaultCommandsPreset() {
         Path path = getPresetDir().resolve("preset.commands.default.json");
         if (!Files.exists(path)) {
             saveStringPreset(PresetType.COMMANDS, "mastermode", EXAMPLE_COMMANDS_PRESET);
             saveStringPreset(PresetType.KEYBINDS, "example", EXAMPLE_KEYBINDS_PRESET);
             saveStringPreset(PresetType.CHAT, "hypixel", EXAMPLE_CHAT_PRESET);
             saveAlertPreset("example", EXAMPLE_ALERT_PRESET);
+            addJsonPreset("fishing");
             System.out.println("Default presets created in " + path.getParent());
         }
     }
@@ -128,7 +128,7 @@ public class FishyPresets {
     }
 
     public static Map<String, FishyConfig.AlertData> loadAlertPreset(String suffix) {
-        Path path = getPresetDir().resolve("preset.alert." + suffix + JSON);
+        Path path = getPresetDir().resolve(ALERT_PRESET + suffix + JSON);
         if (!Files.exists(path)) return Map.of();
         try {
             String json = Files.readString(path);
@@ -143,18 +143,43 @@ public class FishyPresets {
         Path path = getPresetDir().resolve("preset." + getTypeName(type) + "." + suffix + JSON);
         try {
             Files.createDirectories(path.getParent());
-            Files.writeString(path, GSON.toJson(data));
+            if (!Files.exists(path)) {
+                Files.writeString(path, GSON.toJson(data));
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
     public static void saveAlertPreset(String suffix, Map<String, FishyConfig.AlertData> data) {
-        Path path = getPresetDir().resolve("preset.alert." + suffix + JSON);
+        Path path = getPresetDir().resolve(ALERT_PRESET + suffix + JSON);
         try {
             Files.createDirectories(path.getParent());
-            Files.writeString(path, GSON.toJson(data));
+            if (!Files.exists(path)) {
+                Files.writeString(path, GSON.toJson(data));
+            }
         } catch (Exception e) {          
+            e.printStackTrace();
+        }
+    }
+
+    public static void addJsonPreset(String suffix) {
+
+        String resourcePath = "/assets/" + FISHY + "/data/" + ALERT_PRESET + suffix + JSON;
+        Path target = getPresetDir().resolve(ALERT_PRESET + suffix + JSON);
+
+        try (var inputStream = FishyPresets.class.getResourceAsStream(resourcePath)) {
+            if (inputStream == null) {
+                System.err.println("Resource not found: " + resourcePath);
+                return;
+            }
+            
+            if (!Files.exists(target)) {
+                System.out.println("Copying resource " + resourcePath + " to " + target);
+                Files.createDirectories(target.getParent());
+                Files.copy(inputStream, target);
+            }
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }

@@ -193,8 +193,7 @@ public class ChatAlerts extends Screen {
 
         if (popup != null && presetNameField != null) {
             context.getMatrices().push();
-            context.getMatrices().translate(0, 0, 500);
-            presetNameField.setX(popup.getX() + (popup.getWidth() - presetNameField.getWidth()) / 2);
+            context.getMatrices().translate(0, 0, 700);
             presetNameField.setY(popup.getY() + 30);
             presetNameField.render(context, mouseX, mouseY, delta);
             context.getMatrices().pop();
@@ -369,9 +368,8 @@ public class ChatAlerts extends Screen {
                 0, offScreenY, btnW, fieldH,
                 Text.literal("Edit").styled(s -> s.withColor(0xE2CAE9)),
                 btn -> {
-                    String currentKey = this.keyField.getText().trim();
-                    AlertData data = FishyConfig.getChatAlerts().get(currentKey);
-                    MinecraftClient.getInstance().setScreen(new AlertEditScreen(currentKey, data, ChatAlerts.this));
+                    AlertData data = FishyConfig.getChatAlerts().get(key);
+                    MinecraftClient.getInstance().setScreen(new AlertEditScreen(key, data, ChatAlerts.this));
                 },
                 uiScale - 0.1f
             );
@@ -380,8 +378,7 @@ public class ChatAlerts extends Screen {
                 0, offScreenY, delBtnW, fieldH,
                 Text.literal("🗑").setStyle(Style.EMPTY.withColor(0xFF808080)),
                 btn -> {
-                    String currentKey = this.keyField.getText().trim();
-                    FishyConfig.removeChatAlert(currentKey);
+                    FishyConfig.removeChatAlert(key);
                     ChatAlert.refresh();
                     entries.remove(this);
                     ChatAlerts.this.remove(this.keyField);
@@ -397,8 +394,7 @@ public class ChatAlerts extends Screen {
                 0, offScreenY, btnW, fieldH,
                 state,
                 btn -> {
-                    String currentKey = this.keyField.getText().trim();
-                    FishyConfig.toggleChatAlert(currentKey, !state);
+                    FishyConfig.toggleChatAlert(key, !state);
                     ChatAlert.refresh();
                     ChatAlerts.this.init();
                 },
@@ -459,7 +455,7 @@ public class ChatAlerts extends Screen {
             return true;
         }
         if (presetDropdown != null && presetDropdown.isVisible()) {
-            if (presetDropdown.mouseClicked(mouseX, mouseY, button)) return true;
+            if (presetDropdown.mouseClicked(mouseX, mouseY)) return true;
             int x = presetDropdown.getX(); 
             int y = presetDropdown.getY(); 
             int w = presetDropdown.getWidth();
@@ -555,11 +551,12 @@ public class ChatAlerts extends Screen {
             popup(Text.literal("No presets found for this tab."), "OK", () -> popup = null, "", () -> {});
             return;
         }
-
+        
+        int entryHeight = (int)(uiScale * 18);
         int dropdownX = btnX;
-        int dropdownY = btnY - btnH - (suffixes.size() * 14) / 2;
+        int dropdownY = btnY - btnH - (suffixes.size() * entryHeight) / 2;
         presetDropdown = new DropdownMenu(
-            suffixes, dropdownX, dropdownY, 100, 14,
+            suffixes, dropdownX, dropdownY, 100, entryHeight,
             suffix -> {
                 loadPreset(suffix);
                 init();

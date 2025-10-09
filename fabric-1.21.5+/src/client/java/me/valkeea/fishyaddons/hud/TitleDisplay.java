@@ -4,10 +4,12 @@ import java.awt.Rectangle;
 
 import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.ui.GuiUtil;
+import me.valkeea.fishyaddons.util.text.Enhancer;
 import net.fabricmc.fabric.api.client.rendering.v1.HudLayerRegistrationCallback;
 import net.fabricmc.fabric.api.client.rendering.v1.IdentifiedLayer;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
+import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 
 public class TitleDisplay implements HudElement {
@@ -50,12 +52,13 @@ public class TitleDisplay implements HudElement {
         int size = FishyConfig.getHudSize(HUD_KEY, 40);
 
         float scale = size / 12.0F;
-        int textWidth = mc.textRenderer.getWidth(title == null ? "" : title);
+        var formatted = title == null ? Text.empty() : Enhancer.parseFormattedText(title);
+        int textWidth = mc.textRenderer.getWidth(formatted.getString());
 
         context.getMatrices().push();
         context.getMatrices().translate(hudX, hudY, 0);
         context.getMatrices().scale(scale, scale, 1.0F);
-        context.drawText(mc.textRenderer, title, -textWidth / 2, 0, titlecolor, true);
+        context.drawText(mc.textRenderer, formatted, -textWidth / 2, 0, titlecolor, true);
         context.getMatrices().pop();
 
         if (editingMode) {

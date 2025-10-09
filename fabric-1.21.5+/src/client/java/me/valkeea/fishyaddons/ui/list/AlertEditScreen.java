@@ -9,13 +9,13 @@ import me.valkeea.fishyaddons.ui.HudEditScreen;
 import me.valkeea.fishyaddons.ui.VCOverlay;
 import me.valkeea.fishyaddons.ui.VCPopup;
 import me.valkeea.fishyaddons.ui.widget.FaButton;
-import me.valkeea.fishyaddons.ui.widget.FaTextField;
+import me.valkeea.fishyaddons.ui.widget.VCTextField;
 import me.valkeea.fishyaddons.ui.widget.dropdown.SoundSearchMenu;
 import me.valkeea.fishyaddons.util.SoundUtil;
+import me.valkeea.fishyaddons.util.text.Enhancer;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.registry.Registries;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
@@ -27,12 +27,12 @@ public class AlertEditScreen extends Screen {
     private static final String COLOR = "Color";
     private String alertKey;
 
-    private SoundSearchMenu searchMenu;
-    private TextFieldWidget msgField;
-    private TextFieldWidget alertTextField;
-    private TextFieldWidget soundIdField;
-    private TextFieldWidget volumeField;
-    private TextFieldWidget keyField;
+    private SoundSearchMenu searchMenu; 
+    private VCTextField msgField;
+    private VCTextField alertTextField;
+    private VCTextField soundIdField;
+    private VCTextField volumeField;
+    private VCTextField keyField;
     private int alertColor = 0x6DE6B5;
 
     private String stateKey = null;
@@ -74,16 +74,16 @@ public class AlertEditScreen extends Screen {
         int w = 300;
         int h = 20;
 
-        keyField = new FaTextField(this.textRenderer, x, y, w, h, Text.literal("Key"));
+        keyField = new VCTextField(this.textRenderer, x, y, w, h, Text.literal("Key"));
         keyField.setMaxLength(100);
         keyField.setText(prefer(stateKey, alertKey));
         this.addDrawableChild(keyField);
 
-        msgField = new FaTextField(this.textRenderer, x, y + 40, w, h, Text.literal("Chat message"));
+        msgField = new VCTextField(this.textRenderer, x, y + 40, w, h, Text.literal("Chat message"));
         msgField.setText(prefer(stateMsg, initialData.getMsg()));
         this.addDrawableChild(msgField);
 
-        alertTextField = new FaTextField(this.textRenderer, x, y + 80, w, h, Text.literal("On-screen Alert"));
+        alertTextField = new VCTextField(this.textRenderer, x, y + 80, w, h, Text.literal("On-screen Alert"));
         alertTextField.setText(prefer(stateOnscreen, initialData.getOnscreen()));
         this.addDrawableChild(alertTextField);
 
@@ -101,7 +101,7 @@ public class AlertEditScreen extends Screen {
             }
         ));
 
-        soundIdField = new FaTextField(this.textRenderer, x, y + 120, w, h, Text.literal("SoundEvent ID"));
+        soundIdField = new VCTextField(this.textRenderer, x, y + 120, w, h, Text.literal("SoundEvent ID"));
         soundIdField.setText(prefer(stateSoundId, initialData.getSoundId()));
         this.addDrawableChild(soundIdField);
 
@@ -135,7 +135,7 @@ public class AlertEditScreen extends Screen {
 
         searchMenu.setVisible(!soundIdField.getText().isEmpty());
 
-        volumeField = new FaTextField(this.textRenderer, x + width, sy, 50, 20, Text.literal("Volume"));
+        volumeField = new VCTextField(this.textRenderer, x + width, sy, 50, 20, Text.literal("Volume"));
         if (stateVolume != null) {
             volumeField.setText(stateVolume);
         } else if (initialData.getVolume() != 1.0F) {
@@ -229,7 +229,9 @@ public class AlertEditScreen extends Screen {
         int centerY = this.height / 2 - 10;
         int x = centerX - 350;
         int y = centerY - 90; 
-        int w = 300;       
+        int w = 300;
+        
+        checkTooltip(context, mouseX, mouseY);
 
         context.drawText(this.textRenderer, "Detected String", x, y, 0xFF808080, false);
         context.drawText(this.textRenderer, "Auto Chat", x, y + 40, 0xFF808080, false);
@@ -238,6 +240,68 @@ public class AlertEditScreen extends Screen {
         context.drawText(this.textRenderer, "SoundEvent ID", x, y + 120, 0xFF808080, false);
         context.drawText(this.textRenderer, "Volume", x + w + 10, y + 120, 0xFF808080, false);
     }
+
+    private void checkTooltip(DrawContext context, int mouseX, int mouseY) {
+        if (alertTextField != null && alertTextField.isMouseOver(mouseX, mouseY)) {
+
+            String previewText = alertTextField.getText().trim();
+            if (!previewText.isEmpty()) {
+
+                try {
+                    Text formattedPreview = Enhancer.parseFormattedText(previewText);
+                    int tooltipWidth = Math.min(400, this.textRenderer.getWidth(formattedPreview) + 20);
+                    int tooltipHeight = alertTextField.getHeight();
+                    int tooltipX = alertTextField.getX();
+                    int tooltipY = alertTextField.getY() + tooltipHeight + 5;
+
+                    if (tooltipX + tooltipWidth > this.width) {
+                        tooltipX = mouseX - tooltipWidth - 10;
+                    }
+                    if (tooltipY < 0) {
+                        tooltipY = mouseY + 20;
+                    }
+
+                    context.getMatrices().push();
+                    context.getMatrices().translate(0, 0, 300);
+                    context.fill(tooltipX, tooltipY, 
+                               tooltipX + tooltipWidth + 6, tooltipY + tooltipHeight + 4, 
+                               0xFF171717);
+                    
+                    context.drawText(this.textRenderer, formattedPreview, 
+                                   tooltipX + 3, tooltipY + tooltipHeight / 3, 0xFFFFFFFF, true);
+                    context.getMatrices().pop();
+                                   
+                } catch (Exception e) {
+                    System.err.println("[FishyAddons] Error rendering tooltip: " + e.getMessage());
+                    e.printStackTrace();
+                    renderFallback(mouseX, mouseY, context);
+                }
+            }
+        }
+    }
+
+    private void renderFallback(int mouseX, int mouseY, DrawContext context) {
+        String errorText = "Error rendering preview";
+        int tooltipWidth = Math.min(400, this.textRenderer.getWidth(errorText) + 20);
+        int tooltipHeight = 20;
+        int tooltipX = mouseX + 10;
+        int tooltipY = mouseY - tooltipHeight - 10;
+        if (tooltipX + tooltipWidth > this.width) {
+            tooltipX = mouseX - tooltipWidth - 10;
+        }
+        if (tooltipY < 0) {
+            tooltipY = mouseY + 20;
+        }
+                    
+        context.getMatrices().push();
+        context.getMatrices().translate(0, 0, 300);
+        context.fill(tooltipX - 5, tooltipY - 5, 
+                    tooltipX + tooltipWidth + 5, tooltipY + tooltipHeight + 5, 
+                    0xFF171717);
+        context.drawText(this.textRenderer, Text.literal(errorText), 
+                    tooltipX + 5, tooltipY + 10, 0xFF8080, true);
+        context.getMatrices().pop();
+    }    
 
     public void renderGuideText(DrawContext context) {       
         int x = this.width / 2 + 50;
@@ -267,8 +331,8 @@ public class AlertEditScreen extends Screen {
             " • §7Optional chat message sent with the alert",
             "",
             "- On-screen Title -",
-            " • §7Text appears for 2 seconds",
-            " • §7Position, color and size can be customized in /fa hud",
+            " • §7Appears for 2 seconds, position and size can be customized in /fa hud",
+            " • §7You can choose a color or use mod / legacy formatting codes",
             "",
             "- SoundEvent -",
             " • §7Plays a Minecraft SoundEvent when",
@@ -331,7 +395,7 @@ public class AlertEditScreen extends Screen {
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
-        if (searchMenu != null && searchMenu.mouseScrolled(mouseX, mouseY, verticalAmount)) {
+        if (searchMenu != null && searchMenu.mouseScrolled(verticalAmount)) {
             return true;
         }
         return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);

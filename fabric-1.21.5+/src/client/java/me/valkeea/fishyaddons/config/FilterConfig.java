@@ -166,6 +166,7 @@ public class FilterConfig {
                     if (creature.displayName != null && creature.displayNamePlural != null) {
                         String quotedName = java.util.regex.Pattern.quote(creature.displayName);
                         String pluralName = creature.displayNamePlural;
+                        String beforeReplacement = result;
                         
                         result = result.replaceAll("\\ba " + quotedName + "\\b", pluralName);
                         result = result.replaceAll("\\ban " + quotedName + "\\b", pluralName);
@@ -180,7 +181,9 @@ public class FilterConfig {
                             result = result.replaceAll("\\bThe " + quotedName + "\\b", "The " + pluralName);
                         }
                         
-                        result = result.replaceAll("\\b" + quotedName + "\\b", pluralName);
+                        if (result.equals(beforeReplacement)) {
+                            result = result.replaceAll("\\b" + quotedName + "\\b", pluralName);
+                        }
                     }
                 }
             } catch (Exception e) {

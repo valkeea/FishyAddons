@@ -15,17 +15,21 @@ public class VCTextField extends TextFieldWidget {
     private boolean useCustomCharacterHandling = false;
     private boolean drawsBg = true;
     private float uiScale = 1.0f;
+    private int maxLength = 256;
+    private int selectionStart = 0;
+    private boolean isDragging = false;
 
     public VCTextField(TextRenderer textRenderer, int x, int y, int width, int height, Text message) {
         super(textRenderer, x, y, width, height, message);
-        this.setMaxLength(256);
+        this.setMaxLength(maxLength);
     }
     
     public VCTextField(TextRenderer textRenderer, int x, int y, int width, int height, Text message, boolean useCustomCharacterHandling) {
         super(textRenderer, x, y, width, height, message);
-        this.setMaxLength(256);
+        this.setMaxLength(maxLength);
         this.useCustomCharacterHandling = useCustomCharacterHandling;
     }
+    
     
     public void setUseCustomCharacterHandling(boolean useCustomCharacterHandling) {
         this.useCustomCharacterHandling = useCustomCharacterHandling;
@@ -118,6 +122,12 @@ public class VCTextField extends TextFieldWidget {
     }
 
     @Override
+    public boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
+        isDragging = true;
+        return super.mouseDragged(mouseX, mouseY, button, deltaX, deltaY);
+    }
+
+    @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         boolean inside = mouseX >= this.getX() && mouseX < this.getX() + this.width &&
                          mouseY >= this.getY() && mouseY < this.getY() + this.height;
@@ -129,17 +139,18 @@ public class VCTextField extends TextFieldWidget {
             if (uiScale != 1.0f) {
                 double adjustedMouseY = mouseY;
                 double horizontalOffset = Math.max(2, (int)(4 * uiScale)) +
-                                        MinecraftClient.getInstance().textRenderer.fontHeight / 4.0;
+                                        MinecraftClient.getInstance().textRenderer.fontHeight / 3.0;
                 
-                double adjustedMouseX = (mouseX - this.getX() - horizontalOffset) / uiScale + this.getX() + horizontalOffset;
+                double adjustedMouseX = (mouseX - this.getX() - horizontalOffset) / uiScale + this.getX() - horizontalOffset;
                 int originalWidth = this.width;
 
                 this.width = (int)(this.width / uiScale) + (int)horizontalOffset;
                 boolean result = super.mouseClicked(adjustedMouseX, adjustedMouseY, button);
                 this.width = originalWidth;
-                
+                selectionStart = (int)adjustedMouseX;
                 return result;
             } else {
+                selectionStart = (int)mouseX;
                 return super.mouseClicked(mouseX, mouseY, button);
             }
         } else if (this.isFocused()) {
@@ -148,8 +159,34 @@ public class VCTextField extends TextFieldWidget {
         return inside;
     }
 
+
+    @Override
+    public boolean mouseReleased(double mouseX, double mouseY, int button) {
+        if (isDragging) {
+            int selectionEnd;
+            if (uiScale != 1.0f) {
+                double horizontalOffset = Math.max(2, (int)(4 * uiScale)) +
+                                        MinecraftClient.getInstance().textRenderer.fontHeight / 3.0;
+                selectionEnd = (int)((mouseX - this.getX() - horizontalOffset) / uiScale + this.getX() - horizontalOffset);
+            } else {
+                selectionEnd = (int)mouseX;
+            }
+            isDragging = false;
+            if (selectionStart != selectionEnd) {
+                this.setSelectionStart(this.getCharacterIndex(selectionStart));
+                this.setSelectionEnd(this.getCharacterIndex(selectionEnd));
+            }
+        }
+        return super.mouseReleased(mouseX, mouseY, button);
+    }
+
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if ((modifiers & 2) != 0 && keyCode == 86) {
+            String clipboard = MinecraftClient.getInstance().keyboard.getClipboard();
+            return writeText(clipboard);
+        }
+
         if (this.isFocused() && isStandardTextInputKey(keyCode)) {
             boolean handled = super.keyPressed(keyCode, scanCode, modifiers);
             if (handled) {
@@ -177,7 +214,24 @@ public class VCTextField extends TextFieldWidget {
     @Override
     public boolean charTyped(char chr, int modifiers) {
         if (this.isFocused() && this.isActive()) {
+            if (chr == '§') {
+                return writeText(String.valueOf(chr));
+            }
             return super.charTyped(chr, modifiers);
+        }
+        return false;
+    }
+
+    private boolean writeText(String text) {
+        String currentText = this.getText();
+        int cursorPos = this.getCursor();
+        String newText = currentText.substring(
+                        0, cursorPos) + text + currentText.substring(cursorPos);
+        
+        if (newText.length() <= this.maxLength) {
+            this.setText(newText);
+            this.setCursor(cursorPos + text.length(), false);
+            return true;
         }
         return false;
     }
@@ -225,5 +279,27 @@ public class VCTextField extends TextFieldWidget {
             case '¨': return '^';
             default: return c;
         }
+    }
+
+    /**
+     * Converts a pixel X position to a character index in the text.
+     */
+    private int getCharacterIndex(int pixelX) {
+        TextRenderer textRenderer = MinecraftClient.getInstance().textRenderer;
+        String text = this.getText();
+        int x = this.getX();
+        int relativeX = pixelX - x;
+        int width = 0;
+        for (int i = 0; i < text.length(); i++) {
+            int charWidth = textRenderer.getWidth(String.valueOf(text.charAt(i)));
+            if (uiScale != 1.0f) {
+                charWidth = (int)(charWidth * uiScale);
+            }
+            width += charWidth;
+            if (relativeX < width) {
+                return i;
+            }
+        }
+        return text.length();
     }
 }

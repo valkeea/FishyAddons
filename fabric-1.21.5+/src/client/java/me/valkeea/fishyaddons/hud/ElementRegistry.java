@@ -24,6 +24,7 @@ public class ElementRegistry {
         SearchHudElement searchHudElement = new SearchHudElement();
         CakeDisplay centuryCakeDisplay = new CakeDisplay();
         InfoDisplay infoDisplay = InfoDisplay.getInstance();
+        ScDisplay scDisplay = ScDisplay.getInstance();
 
         register(pingDisplay);
         register(timerDisplay);
@@ -33,6 +34,7 @@ public class ElementRegistry {
         register(searchHudElement);
         register(centuryCakeDisplay);
         register(infoDisplay);
+        register(scDisplay);
 
         pingDisplay.register();
         timerDisplay.register();
@@ -42,6 +44,7 @@ public class ElementRegistry {
         searchHudElement.register();
         centuryCakeDisplay.register();
         infoDisplay.register();
+        scDisplay.register();
 
         me.valkeea.fishyaddons.handler.ItemSearchOverlay searchOverlay = me.valkeea.fishyaddons.handler.ItemSearchOverlay.getInstance();
         searchOverlay.setSearchHudElement(searchHudElement);        

@@ -1,8 +1,8 @@
 # FishyAddons
 
-Note: Development is mainly focused on 1.21.5+ but Forge-1.8.9 will be maintained.
+Note: Development is focused on 1.21.5+ but Forge-1.8.9 will be maintained.
 
-## **Version 2.0.7:**
+## **Version 2.0.8:**
 
 ### Currently in both versions:
 - Custom Redstone particle color; mainly to enhance Jawbus laser and Flay ability

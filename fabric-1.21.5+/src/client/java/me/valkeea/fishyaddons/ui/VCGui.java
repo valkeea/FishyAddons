@@ -7,6 +7,8 @@ import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.config.Key;
 import me.valkeea.fishyaddons.ui.widget.VCButton;
 import me.valkeea.fishyaddons.ui.widget.VCSlider;
+import me.valkeea.fishyaddons.util.text.Color;
+import me.valkeea.fishyaddons.util.text.Enhancer;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 
@@ -29,10 +31,14 @@ public class VCGui {
         this.sliderRegistrySupplier = sliderRegistrySupplier;
     }
     
+    protected VCScaling getScaling() {
+        return new VCScaling(uiScaleSupplier.get());
+    }
+    
     public int renderConfigEntry(VCContext renderCtx, VCEntry entry, int x, int y, boolean isSubEntry) {
 
-        // Calculate dimensions based on UI scale using UIConstants
         float uiScale = uiScaleSupplier.get();
+        VCScaling scaling = getScaling();
         int entryHeight = VCConstants.getEntryHeight(uiScale);
         int subEntryHeight = VCConstants.getSubEntryHeight(uiScale);
         int headerHeight = VCConstants.getHeaderHeight(uiScale);
@@ -44,20 +50,17 @@ public class VCGui {
         int baseCurrentHeight = isSubEntry ? subEntryHeight : entryHeight;
         int currentEntryHeight = calculateCurrentEntryHeight(baseCurrentHeight, uiScale);
         
-        // Separate bg: 95% width of entry, offset start x to the right
         if (isSubEntry) {
-            int subBgWidth = (int)(renderCtx.entryWidth * 0.95f);
-            renderCtx.context.fill(x + (int)(5 * uiScale), y, x + subBgWidth, y + currentEntryHeight, 0x30000000);
+            VCScaling.Bounds bgBounds = scaling.getSubEntryBgBounds(x, y, renderCtx.entryWidth, currentEntryHeight);
+            renderCtx.context.fill(bgBounds.x, bgBounds.y, bgBounds.x + bgBounds.width, bgBounds.y + bgBounds.height, 0x30000000);
         }
         
         // Entry content
-        int contentX = x + (int)(15 * uiScale);
-        int indentOffset = isSubEntry ? (int)(30 * uiScale) : 0;
-        contentX += indentOffset;
-        int contentY = y + (int)(12 * uiScale);
+        int contentX = scaling.getContentX(x, isSubEntry);
+        int contentY = scaling.getContentY(y);
 
         // Name
-        int nameColor = isSubEntry ? darkenColor(themeColorSupplier.get()) : themeColorSupplier.get();
+        int nameColor = isSubEntry ? Color.darkenRGB(themeColorSupplier.get()) : themeColorSupplier.get();
         String displayName = entry.name;
         VCText.drawScaledText(renderCtx.context, screen.getTextRenderer(), displayName, contentX, contentY, nameColor, uiScale);
 
@@ -65,9 +68,9 @@ public class VCGui {
         desc(renderCtx, screen, entry, contentX, contentY, uiScale, isSubEntry);
 
         // Control area
-        int controlAreaWidth = getCompactControlAreaWidth(uiScale);
+        int controlAreaWidth = scaling.getControlAreaWidth();
         int controlX = x + renderCtx.entryWidth - controlAreaWidth;
-        int controlY = y + (int)(14 * uiScale);
+        int controlY = scaling.getControlY(y);
         
         // Controls
         if (entry.type == VCEntry.EntryType.EXPANDABLE) {
@@ -90,18 +93,21 @@ public class VCGui {
     private void desc(VCContext renderCtx, VCScreen screen, VCEntry entry, int contentX, int contentY, float uiScale, boolean isSubEntry) {
         // Description only for main entries, or for sub-entries if not null and parent is expanded
         if (!isSubEntry && entry.description != null) {
+
             String[] descLines = entry.description.split("\n");
             int lineSpacing = (int)(12 * uiScale);
-            int descStartY = contentY + (int)(16 * uiScale);
+            int descOffset = uiScale <= 0.8f ? (int)(16 * uiScale) : (int)(16 * 0.8f + 2 * (uiScale - 0.8f));
+            int descStartY = contentY + descOffset;
                 
-            for (int i = 0; i < Math.min(descLines.length, 2); i++) { // Max 2 lines to prevent overlap
+            for (int i = 0; i < Math.min(descLines.length, 2); i++) {
                 VCText.drawScaledText(renderCtx.context, screen.getTextRenderer(), descLines[i], contentX, descStartY + i * lineSpacing, 0xFFCCCCCC, uiScale);
             }
         } else if (isSubEntry && entry.description != null) {
-            // For sub-entries, show only one line
+
             String[] descLines = entry.description.split("\n");
             if (descLines.length > 0) {
-                int descY = contentY + (int)(16 * uiScale);
+                int descOffset = uiScale <= 0.8f ? (int)(16 * uiScale) : (int)(16 * 0.8f + 2 * (uiScale - 0.8f));
+                int descY = contentY + descOffset;
                 VCText.drawScaledText(renderCtx.context, screen.getTextRenderer(), descLines[0], contentX, descY, 0xFFC4C4C4, uiScale);
             }
         }
@@ -121,17 +127,6 @@ public class VCGui {
         }
     }
     
-    private int getCompactControlAreaWidth(float uiScale) {
-        int baseControlAreaWidth = 140;
-        if (uiScale < 0.5f) {
-            return Math.max(60, (int)(baseControlAreaWidth * uiScale * 0.5f));
-        } else if (uiScale < 0.7f) {
-            return Math.max(70, (int)(baseControlAreaWidth * uiScale * 0.6f));
-        } else {
-            return (int)(baseControlAreaWidth * uiScale);
-        }
-    }
-    
     public int renderHeaderEntry(DrawContext context, VCEntry entry, int x, int y, int entryWidth, int headerHeight, boolean isSubHeader) {
         float uiScale = uiScaleSupplier.get();
         
@@ -141,14 +136,14 @@ public class VCGui {
             int textY = y + (int)(15 * uiScale);
 
             VCText.drawScaledText(context, screen.getTextRenderer(), entry.name, textX, textY, 0xFF888888, uiScale);
-            int subBgWidth = (int)(entryWidth * 0.95f); // 95% width of entry, offset start x to the right
-            context.fill(x + (int)(5 * uiScale), y, x + subBgWidth, y + headerHeight, 0x30000000);
+            VCScaling.Bounds bgBounds = getScaling().getSubEntryBgBounds(x, y, entryWidth, headerHeight);
+            context.fill(bgBounds.x, bgBounds.y, bgBounds.x + bgBounds.width, bgBounds.y + bgBounds.height, 0x30000000);
 
             return headerHeight;
         }
         
-        // Main header with separator lines
-        int unscaledTextWidth = screen.getTextRenderer().getWidth(entry.name);
+        var title = Enhancer.parseFormattedText(entry.name);        
+        int unscaledTextWidth = screen.getTextRenderer().getWidth(title.getString());
         int effectiveTextWidth;
 
         if (uiScale < 1.0f) {
@@ -182,15 +177,15 @@ public class VCGui {
         int gapEnd = textCenterX + effectiveTextWidth / 2 + gapPadding;
         
         if (gapStart > x) {
-            context.fill(x, lineY, gapStart, lineY + lineHeight, 0xFF55FFFF);
+            context.fill(x, lineY, gapStart, lineY + lineHeight, 0xFF7FFFD4);
         }
         
         if (gapEnd < x + entryWidth) {
-            context.fill(gapEnd, lineY, x + entryWidth, lineY + lineHeight, 0xFF55FFFF);
+            context.fill(gapEnd, lineY, x + entryWidth, lineY + lineHeight, 0xFF7FFFD4);
         }
         
-        VCText.drawScaledText(context, screen.getTextRenderer(), entry.name, textX, textY, 0xFF55FFFF, uiScale);
-        
+        VCText.drawScaledText(context, screen.getTextRenderer(), title, textX, textY, 0xFF7FFFD4, uiScale);
+
         return headerHeight;
     }
     
@@ -217,7 +212,7 @@ public class VCGui {
         }
 
         boolean expandButtonHovered = VCButton.isHovered(expandButtonX, y, expandButtonWidth, buttonHeight, renderCtx.mouseX, renderCtx.mouseY);
-        int triangleColor = expandButtonHovered ? 0xFFA3FFFF : 0xFF55FFFF;
+        int triangleColor = expandButtonHovered ? 0xFFA3FFFF : 0xFF7FFFD4;
         VCRenderUtils.gradientTriangle(renderCtx.context, expandButtonX, y + buttonHeight / 2, expandButtonWidth, buttonHeight / 2, triangleColor, isExpanded);
 
         String text = isExpanded ? "Collapse" : "Expand";
@@ -254,15 +249,16 @@ public class VCGui {
             case SLIDER:
                 renderSliderControl(context, entry, x, y, mouseX, mouseY);
                 break;
-            case HEADER:
+            case TOGGLE_WITH_DROPDOWN:
+                renderToggleWithDropdownControl(context, entry, x, y, mouseX, mouseY);
+                break;    
+            case HEADER, EXPANDABLE:
                 // Rendered separately
                 break;
-            case EXPANDABLE:
-                // Same for expandable
-                break;
+            default:
+                throw new IllegalArgumentException("Unknown entry type: " + entry.type);
         }
     }
-
     private void renderToggleControl(DrawContext context, VCEntry entry, int x, int y, int mouseX, int mouseY) {
         float uiScale = uiScaleSupplier.get();
         int currentX = x;
@@ -492,6 +488,36 @@ public class VCGui {
         }
     }
 
+    private void renderToggleWithDropdownControl(DrawContext context, VCEntry entry, int x, int y, int mouseX, int mouseY) {
+        int currentX = x;
+        float uiScale = uiScaleSupplier.get();
+        int buttonHeight = (int)(18 * uiScale);
+        boolean enabled = entry.getToggleState();
+        int toggleWidth = (int)(30 * uiScale);
+        boolean toggleHovered = VCButton.isHovered(currentX, y, toggleWidth, buttonHeight, mouseX, mouseY);
+        
+        VCButton.render(context, screen.getTextRenderer(),
+            VCButton.toggle(x, y, toggleWidth, buttonHeight, enabled)
+                .withHovered(toggleHovered)
+                .withScale(uiScale)
+        );
+
+        int toggleDropdownGap = uiScale < 0.7f ? Math.max(2, (int)(4 * uiScale)) : (int)(6 * uiScale);
+        currentX += toggleWidth + toggleDropdownGap;
+
+        String buttonText = entry.dropdownButtonText != null ? entry.dropdownButtonText : "CONF";
+        int textWidth = screen.getTextRenderer().getWidth(buttonText);
+        int dropdownButtonWidth = Math.max((int)(40 * uiScale), (int)(textWidth * uiScale) + (int)(10 * uiScale));
+        
+        boolean dropdownHovered = VCButton.isHovered(currentX, y, dropdownButtonWidth, buttonHeight, mouseX, mouseY);
+        
+        VCButton.render(context, screen.getTextRenderer(),
+            VCButton.standard(currentX, y, dropdownButtonWidth, buttonHeight, buttonText)
+                .withHovered(dropdownHovered)
+                .withScale(uiScale)
+        );
+    }
+
     private VCSlider getOrCreateSlider(VCEntry entry) {
         Map<String, VCSlider> sliderRegistry = sliderRegistrySupplier.get();
         if (entry.configKey == null) return null;
@@ -543,17 +569,5 @@ public class VCGui {
             return getCurrentColor(entry);
         }
         return themeColorSupplier.get();
-    }
-
-    private int darkenColor(int color) {
-        int r = (color >> 16) & 0xFF;
-        int g = (color >> 8) & 0xFF;
-        int b = color & 0xFF;
-
-        r = (int)(r * 0.8);
-        g = (int)(g * 0.8);
-        b = (int)(b * 0.8);
-
-        return (color & 0xFF000000) | (r << 16) | (g << 8) | b;
     }
 }

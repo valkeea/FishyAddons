@@ -2,16 +2,28 @@ package me.valkeea.fishyaddons.ui;
 
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
+import net.minecraft.text.Text;
 
 /**
  * Text with scaling support
  */
 public class VCText {
     
-    /**
-     * Render text with scaling for smaller GUI scales
-     */
     public static void drawScaledText(DrawContext context, TextRenderer textRenderer, String text, 
+                                    int x, int y, int color, float uiScale) {
+        if (uiScale < 0.7f) {
+            context.getMatrices().push();
+            context.getMatrices().scale(uiScale, uiScale, 1.0f);
+            int scaledX = (int)(x / uiScale);
+            int scaledY = (int)(y / uiScale);
+            context.drawText(textRenderer, text, scaledX, scaledY, color, false);
+            context.getMatrices().pop();
+        } else {
+            context.drawText(textRenderer, text, x, y, color, false);
+        }
+    }
+
+    public static void drawScaledText(DrawContext context, TextRenderer textRenderer, Text text, 
                                     int x, int y, int color, float uiScale) {
         if (uiScale < 0.7f) {
             context.getMatrices().push();
@@ -54,6 +66,20 @@ public class VCText {
     }
 
     public static void drawScaledCenteredText(DrawContext context, TextRenderer textRenderer, String text, 
+                                            int centerX, int y, int color, float uiScale) {
+        if (uiScale < 0.7f) {
+            context.getMatrices().push();
+            context.getMatrices().scale(uiScale, uiScale, 1.0f);
+            int scaledCenterX = (int)(centerX / uiScale);
+            int scaledY = (int)(y / uiScale);
+            context.drawCenteredTextWithShadow(textRenderer, text, scaledCenterX, scaledY, color);
+            context.getMatrices().pop();
+        } else {
+            context.drawCenteredTextWithShadow(textRenderer, text, centerX, y, color);
+        }
+    }
+
+    public static void drawScaledCenteredText(DrawContext context, TextRenderer textRenderer, net.minecraft.text.Text text, 
                                             int centerX, int y, int color, float uiScale) {
         if (uiScale < 0.7f) {
             context.getMatrices().push();

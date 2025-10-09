@@ -8,7 +8,10 @@ public final class VCConstants {
     // Screen dimensions for scaling calculations based on original design
     public static final int BASE_WIDTH = 1920;
     public static final int BASE_HEIGHT = 1080;
-    
+
+    // Known UI Position Constants
+    public static final int SEARCH_Y = 40;
+
     // Base entry dimensions
     public static final int BASE_ENTRY_HEIGHT = 65;
     public static final int BASE_SUB_ENTRY_HEIGHT = 40;

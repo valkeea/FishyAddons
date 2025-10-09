@@ -15,8 +15,8 @@ import me.valkeea.fishyaddons.handler.ClientPing;
 import me.valkeea.fishyaddons.handler.CommandAlias;
 import me.valkeea.fishyaddons.handler.CopyChat;
 import me.valkeea.fishyaddons.handler.FaColors;
-import me.valkeea.fishyaddons.handler.GuiIcons;
 import me.valkeea.fishyaddons.handler.FishingHotspot;
+import me.valkeea.fishyaddons.handler.GuiIcons;
 import me.valkeea.fishyaddons.handler.ItemSearchOverlay;
 import me.valkeea.fishyaddons.handler.KeyShortcut;
 import me.valkeea.fishyaddons.handler.MobAnimations;
@@ -31,8 +31,10 @@ import me.valkeea.fishyaddons.handler.XpColor;
 import me.valkeea.fishyaddons.hud.EqDisplay;
 import me.valkeea.fishyaddons.hud.TrackerDisplay;
 import me.valkeea.fishyaddons.tool.FishyMode;
+import me.valkeea.fishyaddons.tracker.ActivityMonitor;
 import me.valkeea.fishyaddons.tracker.SackDropParser;
 import me.valkeea.fishyaddons.tracker.TrackerUtils;
+import me.valkeea.fishyaddons.tracker.fishing.ScData;
 import me.valkeea.fishyaddons.ui.VCScreen.ExtraControl;
 import me.valkeea.fishyaddons.util.text.GradientRenderer;
 import net.minecraft.client.MinecraftClient;
@@ -50,12 +52,13 @@ public class VCManager {
         List<VCEntry> entries = new ArrayList<>();
         
         addUi(entries);
-        addQol(entries);
         addRender(entries);
+        addQol(entries);        
         addSb(entries);
-        addFg(entries);
+        addFish(entries);
         addFilter(entries);
-        
+        addFg(entries);
+
         return entries;
     }
     
@@ -63,7 +66,7 @@ public class VCManager {
      * Interface and Mod visuals
      */
     private static void addUi(List<VCEntry> entries) {
-        entries.add(VCEntry.header("── Interface ──", ""));
+        entries.add(VCEntry.header("§[aquamarine]── Interface ──", ""));
 
         entries.add(VCEntry.slider(
             "Custom UI Scale",
@@ -104,7 +107,7 @@ public class VCManager {
         ));
 
         entries.add(VCEntry.toggle(
-            "Transparent Minecraft GUI",
+            "Transparent Minecraft UI",
             "Uses textures from ValksfullSbPack (WIP), currently being ported from 1.8.9.",
             Key.FISHY_GUI,
             false,
@@ -141,167 +144,19 @@ public class VCManager {
             }
         ));
     }
-
-    // General QoL Features
-    private static void addQol(List<VCEntry> entries) {
-        entries.add(VCEntry.header("── General QoL ──", ""));
-
-        List<VCEntry> invSearchSubEntries = new ArrayList<>();
-        List<VCEntry> beaconSubEntries = new ArrayList<>();
-
-        invSearchSubEntries.add(VCEntry.toggleColorOrHud(
-            "Main Toggle",
-            "Enables a HUD textfield for inventory search.",
-            Key.INV_SEARCH,
-            false,
-            null,
-            new ExtraControl("Item Search", false, false)
-        ));
-
-        invSearchSubEntries.add(VCEntry.slider(
-            "Overlay Opacity",
-            "Adjust the darkness of the search overlay when highlighting items.",
-            Key.INV_SEARCH_OPACITY,
-            0.0f,
-            1.0f,
-            "%.0f%%",
-            opacity -> ItemSearchOverlay.getInstance().setOpacity(opacity)
-        ));
-
-        entries.add(VCEntry.expandable(
-            "Inventory Search",
-            "Scan your inventory items by name or lore.\nRight-click the search field to toggle search mode.",
-            invSearchSubEntries,
-            Arrays.asList(
-                Text.literal("Inventory Search:"),
-                Text.literal("- §8Toggle setting"),
-                Text.literal("- §8Configure overlay opacity"),
-                Text.literal("- §8Shortcut to HUD editor")
-            )
-        ));
-
-        beaconSubEntries.add(VCEntry.sliderColor(
-            "Duration and Color",
-            "Beacons will be rendered for this duration with the configured color.",
-            Key.RENDER_COORD_MS,
-            10.0f,
-            120.0f,
-            "%.0fs",
-            value -> {
-                FishyConfig.setInt(Key.RENDER_COORD_MS, Math.round(value));
-                ActiveBeacons.refresh();
-            }
-        ));
-
-        beaconSubEntries.add(VCEntry.toggle(
-            "Hide when close",
-            "Hides the beacon when you are within 5 blocks of it.",
-            Key.RENDER_COORD_HIDE_CLOSE,
-            true,
-            ActiveBeacons::refresh
-        ));
-
-        beaconSubEntries.add(VCEntry.toggle(
-            "Enhanced Message",
-            "Adds a clickable [Hide] and [Redraw] buttons to coordinate messages.",
-            Key.CHAT_FILTER_COORDS_ENABLED,
-            true,
-            null
-        ));
-
-        entries.add(VCEntry.toggleExpandable(
-            "Highlight Coordinates",
-            "Render a beacon-style highlight at coordinates shared in chat.\nUse /fa coords <title> to render/send additional text.\nSupports any coordinates in the format: x:<x>, y:<y>, z:<z>",
-            beaconSubEntries,
-            Arrays.asList(
-                Text.literal("Coordinate Beacons:"),
-                Text.literal("- §8Set beacon duration and color"),
-                Text.literal("- §8Toggle redraw and hide options"),
-                Text.literal("- §8Hide when close")
-            ),
-            Key.RENDER_COORDS,
-            true,
-            null
-        ));
-        
-        entries.add(VCEntry.toggleColorOrHud(
-            "Ping Display",
-            "Shows your current ping in the HUD.\nUse the HUD editor to customize position and appearance.\nUse /fa ping to send this value in chat.",
-            Key.HUD_PING_ENABLED,
-            false,
-            ClientPing::refresh,
-            new ExtraControl("Ping Display", false, false)
-        ));
-        
-        entries.add(VCEntry.toggle2(
-            "Copy Chat",
-            "Right-click chat messages to copy them to clipboard.\nHold shift to copy just the hovered line.",
-            Key.COPY_CHAT,
-            false,
-            "NOTI",
-            Key.COPY_NOTI,
-            false,
-            CopyChat::refresh
-        ));
-        
-        entries.add(VCEntry.toggle(
-            "Skip Front Perspective",
-            "Skip the front-facing perspective when cycling camera views (F5).\nGoes directly from first person to back view.",
-            Key.SKIP_F5,
-            false,
-            null
-        ));
-
-        entries.add(VCEntry.toggleColorOrHud(
-            "Custom Keybinds",
-            "Configure custom keybinds for commands.",
-            Key.KEY_SHORTCUTS_ENABLED,
-            false,
-            KeyShortcut::refresh,
-            new ExtraControl(null, false, true)
-        ));
-
-        entries.add(VCEntry.toggleColorOrHud(
-            "Custom Commands",
-            "Configure custom commands.",
-            Key.ALIASES_ENABLED,
-            false,
-            CommandAlias::refresh,
-            new ExtraControl(null, false, true)
-        ));
-
-        entries.add(VCEntry.toggleColorOrHud(
-            "Chat Replacement",
-            "Configure chat message replacements.",
-            Key.CHAT_REPLACEMENTS_ENABLED,
-            false,
-            ChatReplacement::refresh,
-            new ExtraControl(null, false, true)
-        ));
-
-        entries.add(VCEntry.toggleColorOrHud(
-            "Chat Alerts",
-            "Custom alerts with optional title, sound and autochat on\nchat events. Be specific to prevent undesired matches.",
-            Key.CHAT_ALERTS_ENABLED,
-            false,
-            ChatAlert::refresh,
-            new ExtraControl(null, false, true)
-        ));            
-
-    }
     
     /**
      * Rendering Tweaks
      */
     private static void addRender(List<VCEntry> entries) {
-        entries.add(VCEntry.header("── Rendering Tweaks ──", ""));
+        entries.add(VCEntry.header("§[aquamarine]── Rendering Tweaks ──", ""));
 
         List<VCEntry> colorSubEntries = new ArrayList<>();
         List<VCEntry> xpSubEntries = new ArrayList<>();
         List<VCEntry> lavaSubEntries = new ArrayList<>();
 
         entries.add(VCEntry.toggle(
-            "Skip Death Animation",
+            "Skip Entity Death Animation",
             "Prevent death animation from rendering on entities.\nUseful for reducing visual clutter caused by already-dead entities.",
             Key.DEATH_ANI,
             false,
@@ -309,7 +164,7 @@ public class VCManager {
         ));
         
         entries.add(VCEntry.toggle(
-            "Skip Fire Animation",
+            "Skip Entity Fire Animation",
             "Prevent fire from rendering on entities.\nThis will not remove the FOV effect.",
             Key.FIRE_ANI,
             false,
@@ -317,12 +172,12 @@ public class VCManager {
         ));
 
         lavaSubEntries.add(VCEntry.toggleColorOrHud(
-                "Translucent Lava",
-                "Makes lava look translucent like water, with a custom tint (Crimson Isles only).",
-                Key.FISHY_TRANS_LAVA,
-                false,
-                TransLava::update,
-                new ExtraControl(null, true, false)
+            "Translucent Lava (Crimson Isles only)",
+            "Makes lava look translucent like water, with a custom tint.\nAdds subtle underwater fog if Clear Lava is disabled.",
+            Key.FISHY_TRANS_LAVA,
+            false,
+            TransLava::update,
+            new ExtraControl(null, true, false)
         ));        
 
         lavaSubEntries.add(VCEntry.toggle(
@@ -442,12 +297,160 @@ public class VCManager {
             FaColors::refreshGlobal
         ));
     }
+
+    // General QoL Features
+    private static void addQol(List<VCEntry> entries) {
+        entries.add(VCEntry.header("§[aquamarine]── General QoL ──", ""));
+
+        List<VCEntry> invSearchSubEntries = new ArrayList<>();
+        List<VCEntry> beaconSubEntries = new ArrayList<>();
+
+        invSearchSubEntries.add(VCEntry.toggleColorOrHud(
+            "Main Toggle",
+            "Enables a HUD textfield for inventory search.",
+            Key.INV_SEARCH,
+            false,
+            null,
+            new ExtraControl("Item Search", false, false)
+        ));
+
+        invSearchSubEntries.add(VCEntry.slider(
+            "Overlay Opacity",
+            "Adjust the darkness of the search overlay when highlighting items.",
+            Key.INV_SEARCH_OPACITY,
+            0.0f,
+            1.0f,
+            "%.0f%%",
+            opacity -> ItemSearchOverlay.getInstance().setOpacity(opacity)
+        ));
+
+        entries.add(VCEntry.expandable(
+            "Inventory Search",
+            "Scan your inventory items by name or lore.\nRight-click the search field to toggle search mode.",
+            invSearchSubEntries,
+            Arrays.asList(
+                Text.literal("Inventory Search:"),
+                Text.literal("- §8Toggle setting"),
+                Text.literal("- §8Configure overlay opacity"),
+                Text.literal("- §8Shortcut to HUD editor")
+            )
+        ));
+
+        beaconSubEntries.add(VCEntry.sliderColor(
+            "Duration and Color",
+            "Beacons will be rendered for this duration with the configured color.",
+            Key.RENDER_COORD_MS,
+            10.0f,
+            120.0f,
+            "%.0fs",
+            value -> {
+                FishyConfig.setInt(Key.RENDER_COORD_MS, Math.round(value));
+                ActiveBeacons.refresh();
+            }
+        ));
+
+        beaconSubEntries.add(VCEntry.toggle(
+            "Hide when close",
+            "Hides the beacon when you are within 5 blocks of it.",
+            Key.RENDER_COORD_HIDE_CLOSE,
+            true,
+            ActiveBeacons::refresh
+        ));
+
+        beaconSubEntries.add(VCEntry.toggle(
+            "Enhanced Message",
+            "Adds a clickable [Hide] and [Redraw] buttons to coordinate messages.",
+            Key.CHAT_FILTER_COORDS_ENABLED,
+            true,
+            null
+        ));
+
+        entries.add(VCEntry.toggleExpandable(
+            "Highlight Coordinates",
+            "Render a beacon-style highlight at coordinates shared in chat.\nUse /fa coords <title> to render/send additional text.\nSupports any coordinates in the format: x:<x>, y:<y>, z:<z>",
+            beaconSubEntries,
+            Arrays.asList(
+                Text.literal("Coordinate Beacons:"),
+                Text.literal("- §8Set beacon duration and color"),
+                Text.literal("- §8Toggle redraw and hide options"),
+                Text.literal("- §8Hide when close")
+            ),
+            Key.RENDER_COORDS,
+            true,
+            null
+        ));
+        
+        entries.add(VCEntry.toggleColorOrHud(
+            "Ping Display",
+            "Shows your current ping in the HUD.\nUse the HUD editor to customize position and appearance.\nUse /fa ping to send this value in chat.",
+            Key.HUD_PING_ENABLED,
+            false,
+            ClientPing::refresh,
+            new ExtraControl("Ping Display", false, false)
+        ));
+        
+        entries.add(VCEntry.toggle2(
+            "Copy Chat",
+            "Right-click chat messages to copy them to clipboard.\nHold shift to copy just the hovered line.",
+            Key.COPY_CHAT,
+            false,
+            "NOTI",
+            Key.COPY_NOTI,
+            false,
+            CopyChat::refresh
+        ));
+        
+        entries.add(VCEntry.toggle(
+            "Skip Front Perspective",
+            "Skip the front-facing perspective when cycling camera views (F5).\nGoes directly from first person to back view.",
+            Key.SKIP_F5,
+            false,
+            null
+        ));
+
+        entries.add(VCEntry.toggleColorOrHud(
+            "Custom Keybinds",
+            "Configure custom keybinds for commands. Feature has a delay to prevent spam.",
+            Key.KEY_SHORTCUTS_ENABLED,
+            false,
+            KeyShortcut::refresh,
+            new ExtraControl(null, false, true)
+        ));
+
+        entries.add(VCEntry.toggleColorOrHud(
+            "Custom Commands",
+            "Add shortcuts (aliases) for existing server / mod commands.",
+            Key.ALIASES_ENABLED,
+            false,
+            CommandAlias::refresh,
+            new ExtraControl(null, false, true)
+        ));
+
+        entries.add(VCEntry.toggleColorOrHud(
+            "Chat Replacement",
+            "Replaces sent words/phrases with your configured alternatives.\nSupports commands and chat (Example <3 → ❤).",
+            Key.CHAT_REPLACEMENTS_ENABLED,
+            false,
+            ChatReplacement::refresh,
+            new ExtraControl(null, false, true)
+        ));
+
+        entries.add(VCEntry.toggleColorOrHud(
+            "Chat Alerts",
+            "Custom alerts with optional title, sound and autochat on\nchat events. Be specific to prevent undesired matches.",
+            Key.CHAT_ALERTS_ENABLED,
+            false,
+            ChatAlert::refresh,
+            new ExtraControl(null, false, true)
+        ));            
+
+    }    
     
     /**
      * SkyBlock features
      */
     private static void addSb(List<VCEntry> entries) {
-        entries.add(VCEntry.header("── SkyBlock Features ──", ""));
+        entries.add(VCEntry.header("§[aquamarine]── SkyBlock Features ──", ""));
 
         List<VCEntry> petSubEntries = new ArrayList<>();
         List<VCEntry> profitEntries = new ArrayList<>();
@@ -567,15 +570,15 @@ public class VCManager {
             new ExtraControl("Century Cakes: ", false, false)
         ));
 
-        trackerEntries.add(VCEntry.header("── Rain Tracker ──", ""));
+        trackerEntries.add(VCEntry.header("── Diana Tracker ──", ""));
 
         trackerEntries.add(VCEntry.toggle(
-            "Rain Warning",
-            "Tracks the worlds weather state and notifies if rain stops.\nDue to Hypixel quirks this will not work reliably in the Park cave.",
-            Key.RAIN_NOTI,
+            "Track various Diana stats",
+            "Burrows, burrows / inq, bph, chim rate etc. Use /fa diana for details.",
+            Key.TRACK_DIANA,
             false,
-            WeatherTracker::track
-        ));
+            ActivityMonitor::refresh
+        ));        
 
         trackerEntries.add(VCEntry.header("── Moonglade Minigame Alarm ──", ""));
 
@@ -598,20 +601,18 @@ public class VCManager {
 
         entries.add(VCEntry.expandable(
             "Trackers and alerts",
-            "Configure settings for Century Cake Display, Rain Tracker\nand Moonglade Minigame alarm.",
+            "Configure settings for Century Cake Display and Moonglade Minigame alarm.",
             trackerEntries,
             Arrays.asList(
                 Text.literal("Trackers and alerts:"),
-                Text.literal("- §8Toggle century cake chat alert/display"),
-                Text.literal("- §8Toggle Moonglade Alarm"),
-                Text.literal("- §8Toggle rain warning"),                
-                Text.literal("  §8- Or use /fa rain on | off")
+                Text.literal("- §8Century cake chat alert/display"),
+                Text.literal("- §8Moonglade minigame alarm")
             )
         ));
 
         entries.add(VCEntry.toggle(
             "Clean Wither Impact",
-            "Removes explosion particles and any sound effects caused by\nwither blade abilities.",
+            "Removes explosion particles and any sound effects caused by\nwither blade abilities (Hyperion).",
             Key.CLEAN_HYPE,
             false,
             SkyblockCleaner::refresh
@@ -633,31 +634,8 @@ public class VCManager {
             SkyblockCleaner::refresh
         ));
 
-        entries.add(VCEntry.toggleSlider(
-            "Hide Hotspot Holograms",
-            "Hides all fishing hotspot armor stands if they are\nin the configured distance.",
-            Key.HIDE_HOTSPOT,
-            false,
-            Key.HOTSPOT_DISTANCE,
-            0.0f,
-            20.0f,
-            "%.0f blocks",
-            SkyblockCleaner::refresh
-        ));
-
-        entries.add(VCEntry.toggle2(
-            "Hotspot Warning",
-            "Alerts you on hotspot spawn and expiration if nearby. Optionally, announce\nnew hotspots in the toggled chat.",
-            Key.TRACK_HOTSPOT,
-            false,
-            "ANNOUNCE",
-            Key.ANNOUNCE_HOTSPOT,
-            false,
-            FishingHotspot::refresh
-        ));
-
         entries.add(VCEntry.keybind(
-            "Hide Gui Buttons",
+            "Hide Skyblock Gui Buttons",
             "Set the key to hide Skyblock gui icons. Tap the key to add/remove\n hovered slots, peek and bypass block by holding shift.",
             Key.MOD_KEY_LOCK_GUISLOT,
             false,
@@ -679,13 +657,173 @@ public class VCManager {
         ));
     }
 
+    /**
+     * Fishing
+     */
+    private static void addFish(List<VCEntry> entries) {
+        entries.add(VCEntry.header("§[aquamarine]── Fishing ──", ""));
+
+        List<VCEntry> hsptSubEntries = new ArrayList<>();
+
+        entries.add(VCEntry.toggle(
+            "Rain Warning",
+            "Tracks the worlds weather state and notifies if rain stops.\nDue to Hypixel quirks this will not work reliably in the Park cave.",
+            Key.RAIN_NOTI,
+            false,
+            WeatherTracker::track
+        ));
+
+        hsptSubEntries.add(VCEntry.toggleSlider(
+            "Hide Hotspot Holograms",
+            "Hides all fishing hotspots in this distance.",
+            Key.HIDE_HOTSPOT,
+            false,
+            Key.HOTSPOT_DISTANCE,
+            0.0f,
+            20.0f,
+            "%.0f blocks",
+            SkyblockCleaner::refresh
+        ));
+
+        hsptSubEntries.add(VCEntry.toggle(
+            "Hotspot Expiration warning",
+            "Alerts you on hotspot expiration if nearby.",
+            Key.TRACK_HOTSPOT,
+            false,
+            FishingHotspot::refresh
+        ));
+
+        hsptSubEntries.add(VCEntry.toggle2(
+            "Hotspot Spawn tracker",
+            "Alerts you (or swap to party msg) when a new hotspot is visible.",
+            Key.HSPT_COORDS,
+            false,
+            "PARTY",
+            Key.ANNOUNCE_HOTSPOT,
+            false,
+            FishingHotspot::refresh
+        ));
+
+        entries.add(VCEntry.expandable(
+            "Fishing Hotspots",
+            "Hide and track hotspots.",
+            hsptSubEntries,
+            Arrays.asList(
+                Text.literal("Fishing Hotspots:"),
+                Text.literal("- §8Manage hotspot visibility"),
+                Text.literal("- §8Configure hotspot alerts")
+            )
+        ));         
+
+        entries.add(VCEntry.toggle2(
+            "Track catch data §7(§8Required for 'Catch Graph' and 'RNG Info'§7)",
+            "Allows the mod to track sc catches. Optionally count\ndouble hooks as multiple catches (this will skew true catchrate).",
+            Key.TRACK_SCS,
+            true,
+            "COUNT DH",
+            Key.TRACK_SCS_WITH_DH,
+            false,
+            ActivityMonitor::refresh
+        ));
+
+        entries.add(VCDropdownEntry.scDisplayToggle(
+            "Catch Graph",
+            "Displays a graph of catch statistics over time.\nRate: successful catches / attempts. Graph and Mean: sc's between catches.",
+            Key.HUD_CATCH_GRAPH_ENABLED,
+            false,
+            ScData::refresh
+        ));
+
+        entries.add(VCEntry.toggle(
+            "RNG Info §7(§8Sc's and vial§7)",
+            "Counts sea creatures between relevant catches and announces on catch.\nThis data can be checked anytime with /fa sc since.",
+            Key.SC_SINCE,
+            true,          
+            ActivityMonitor::refresh
+        ));        
+    }
+
+    /**
+     * Chat Filter
+     */
+    private static void addFilter(List<VCEntry> entries) {
+        entries.add(VCEntry.header("§[aquamarine]── Chat Filter ──", ""));
+
+        List<VCEntry> filterSubEntries = new ArrayList<>();        
+        
+        entries.add(VCEntry.toggleColorOrHud(
+            "Custom Sea Creature Messages",
+            "Toggle and configure Sc Filter.",
+            Key.CHAT_FILTER_SC_ENABLED,
+            false,
+            () -> {
+                FilterConfig.refreshScRules();
+                GradientRenderer.init();
+            },
+            new ExtraControl(null, false, true)
+        ));
+
+        entries.add(VCEntry.toggleColorOrHud(
+            "Custom Filter",
+            "Filter out or override any chat message.",
+            Key.CHAT_FILTER_ENABLED,
+            false,
+            GradientRenderer::init,
+            new ExtraControl(null, false, true)
+        ));
+
+        filterSubEntries.add(VCEntry.toggle(
+            "Hide Sack Messages",
+            "Hide sack drop messages from chat (tracker still receives them).",
+            Key.CHAT_FILTER_HIDE_SACK_MESSAGES,
+            false,
+            null
+        ));
+
+        filterSubEntries.add(VCEntry.toggle(
+            "Hide Autopet Messages",
+            "Hide autopet equip/summon messages from chat (pet display still tracks them).",
+            Key.CHAT_FILTER_HIDE_AUTOPET_MESSAGES,
+            false,
+            null
+        ));
+
+        filterSubEntries.add(VCEntry.toggle(
+            "Hide Implosion Messages",
+            "Hide the ability + failed teleport messages from chat.",
+            Key.CHAT_FILTER_HIDE_HYPE,
+            false,
+            null
+        ));
+
+        entries.add(VCEntry.expandable(
+            "Gameplay Filters",
+            "Hide various spammy Hypixel messages.",
+            filterSubEntries,
+            Arrays.asList(
+                Text.literal("Additional Filters:"),
+                Text.literal("- §8Hide sack notifications"),
+                Text.literal("- §8Hide autopet"),
+                Text.literal("- §8Hide implosion")
+            )
+        ));
+
+        entries.add(VCEntry.toggle(
+            "Click to Party",
+            "Adds a clickable [Party] button to specific guild messages.",
+            Key.CHAT_FILTER_PARTYBTN,
+            false,
+            null
+        ));
+    }    
+
     private static void addFg(List<VCEntry> entries) {
-        entries.add(VCEntry.header("── Item Safeguard ──", ""));
+        entries.add(VCEntry.header("§[aquamarine]── Item Safeguard ──", ""));
 
         List<VCEntry> itemManagementSubEntries = new ArrayList<>();
         
         itemManagementSubEntries.add(VCEntry.icToggle(
-            "Sell Protection",
+            "Sell Protection §7(§8Use /fg to see commands§7)",
             "Main toggle for protecting items in blacklisted GUIs.\n(Auction, salvaging, trade menu, npc shops)",
             Key.SELL_PROTECTION_ENABLED,
             false
@@ -765,73 +903,6 @@ public class VCManager {
             false,
             null
         ));
-    }
-
-    /**
-     * Chat Filter
-     */
-    private static void addFilter(List<VCEntry> entries) {
-        entries.add(VCEntry.header("── Chat Filter ──", ""));
-
-        List<VCEntry> filterSubEntries = new ArrayList<>();        
-        
-        entries.add(VCEntry.toggleColorOrHud(
-            "Custom Sea Creature Messages",
-            "Toggle and configure filter for all sea creatures.",
-            Key.CHAT_FILTER_SC_ENABLED,
-            false,
-            () -> {
-                FilterConfig.refreshScRules();
-                GradientRenderer.init();
-            },
-            new ExtraControl(null, false, true)
-        ));
-
-        entries.add(VCEntry.toggleColorOrHud(
-            "Custom Filter",
-            "Filter out or override any chat message.",
-            Key.CHAT_FILTER_ENABLED,
-            false,
-            GradientRenderer::init,
-            new ExtraControl(null, false, true)
-        ));
-
-        filterSubEntries.add(VCEntry.toggle(
-            "Hide Sack Messages",
-            "Hide sack drop messages from chat (tracker still receives them).",
-            Key.CHAT_FILTER_HIDE_SACK_MESSAGES,
-            false,
-            null
-        ));
-
-        filterSubEntries.add(VCEntry.toggle(
-            "Hide Autopet Messages",
-            "Hide autopet equip/summon messages from chat (pet display still tracks them).",
-            Key.CHAT_FILTER_HIDE_AUTOPET_MESSAGES,
-            false,
-            null
-        ));
-
-        filterSubEntries.add(VCEntry.toggle(
-            "Hide Implosion Messages",
-            "Hide the ability + failed teleport messages from chat.",
-            Key.CHAT_FILTER_HIDE_HYPE,
-            false,
-            null
-        ));
-
-        entries.add(VCEntry.expandable(
-            "Gameplay Filters",
-            "Hide various spammy Hypixel messages.",
-            filterSubEntries,
-            Arrays.asList(
-                Text.literal("Additional Filters:"),
-                Text.literal("- §8Hide sack notifications"),
-                Text.literal("- §8Hide autopet"),
-                Text.literal("- §8Hide implosion")
-            )
-        ));
-
     }
 
     /**

@@ -8,7 +8,8 @@ public class Key {
     public static final String HUD_TIMER_ENABLED = "timerHud"; 
     public static final String HUD_PET_ENABLED = "petHud";
     public static final String HUD_TRACKER_ENABLED = "profitTrackerHud";
-    public static final String HUD_CENTURY_CAKE_ENABLED = "centuryCakeHud";    
+    public static final String HUD_CENTURY_CAKE_ENABLED = "centuryCakeHud";
+    public static final String HUD_CATCH_GRAPH_ENABLED = "scGraphHud";
 
     // --- Hud State ---
     public static final String HUD_PING_X = "pingHudX";
@@ -36,7 +37,11 @@ public class Key {
     public static final String HUD_CENTURY_CAKE_X = "centuryCakeHudX";
     public static final String HUD_CENTURY_CAKE_Y = "centuryCakeHudY";
     public static final String HUD_CENTURY_CAKE_SIZE = "centuryCakeHudSize";
-    public static final String HUD_CENTURY_CAKE_COLOR = "centuryCakeHudColor";    
+    public static final String HUD_CENTURY_CAKE_COLOR = "centuryCakeHudColor";
+    public static final String HUD_CATCH_GRAPH_X = "catchHistogramHudX";
+    public static final String HUD_CATCH_GRAPH_Y = "catchHistogramHudY";
+    public static final String HUD_CATCH_GRAPH_SIZE = "catchHistogramHudSize";
+    public static final String HUD_CATCH_GRAPH_COLOR = "catchHistogramHudColor";
 
     // --- Hud Modifiers ---
     public static final String HUD_PETXP = "petXpCheck";    
@@ -76,6 +81,11 @@ public class Key {
     public static final String INV_SEARCH_OPACITY = "searchOverlayOpacity";
     public static final String TRACK_HOTSPOT = "trackHotspot";
     public static final String ANNOUNCE_HOTSPOT = "announceHotspot";
+    public static final String HSPT_COORDS = "hotspotCoords";
+    public static final String TRACK_SCS = "trackScs";
+    public static final String TRACK_SCS_WITH_DH = "trackScsWithDh";
+    public static final String SC_SINCE = "scSince";
+    public static final String TRACK_DIANA = "trackDiana";
     public static final String PRICE_TYPE = "priceType";
     public static final String HIDE_HOTSPOT = "hideHotspot";
     public static final String HOTSPOT_DISTANCE = "hotspotDistance";
@@ -98,6 +108,7 @@ public class Key {
     public static final String CHAT_FILTER_HIDE_SACK_MESSAGES = "chatFilterSackOn";
     public static final String CHAT_FILTER_HIDE_AUTOPET_MESSAGES = "chatFilterAutopetOn";
     public static final String CHAT_FILTER_HIDE_HYPE = "chatFilterHypeOn";
+    public static final String CHAT_FILTER_PARTYBTN = "chatFilterPartyBtnOn";
     public static final String KEY_SHORTCUTS_ENABLED = "keyShortcutsOn";
     public static final String THEME_MODE = "themeMode";
     public static final String INFO_ID = "infoId";
@@ -164,6 +175,11 @@ public class Key {
         settings.set(INV_SEARCH, false);
         settings.set(TRACK_HOTSPOT, false);
         settings.set(ANNOUNCE_HOTSPOT, false);
+        settings.set(HSPT_COORDS, false);
+        settings.set(TRACK_SCS, true);
+        settings.set(TRACK_SCS_WITH_DH, false);
+        settings.set(SC_SINCE, false);
+        settings.set(TRACK_DIANA, false);
         settings.set(HIDE_HOTSPOT, false);
         settings.set(HOTSPOT_DISTANCE, 7.0f);
         settings.set(PRICE_TYPE, "sellPrice");
@@ -183,6 +199,7 @@ public class Key {
         settings.set(CHAT_FILTER_HIDE_SACK_MESSAGES, false);
         settings.set(CHAT_FILTER_HIDE_AUTOPET_MESSAGES, false);
         settings.set(CHAT_FILTER_HIDE_HYPE, false);
+        settings.set(CHAT_FILTER_PARTYBTN, false);
         hud.set(HUD_PING_X, 5);
         hud.set(HUD_PING_Y, 12);
         hud.set(HUD_PING_SIZE, 12);
@@ -210,6 +227,10 @@ public class Key {
         hud.set(HUD_CENTURY_CAKE_Y, 60);
         hud.set(HUD_CENTURY_CAKE_SIZE, 12);
         hud.set(HUD_CENTURY_CAKE_COLOR, 16513273);
+        hud.set(HUD_CATCH_GRAPH_X, 570);
+        hud.set(HUD_CATCH_GRAPH_Y, 25);
+        hud.set(HUD_CATCH_GRAPH_SIZE, 80);
+        hud.set(HUD_CATCH_GRAPH_COLOR, 10155196);
         modKeys.set(MOD_KEY_LOCK, "NONE");
         modKeys.set(MOD_KEY_LOCK_GUISLOT, "NONE");
     }

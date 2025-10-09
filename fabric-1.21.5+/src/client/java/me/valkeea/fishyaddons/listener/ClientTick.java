@@ -3,6 +3,7 @@ package me.valkeea.fishyaddons.listener;
 import me.valkeea.fishyaddons.handler.ChatTimers;
 import me.valkeea.fishyaddons.handler.ClientPing;
 import me.valkeea.fishyaddons.handler.FishingHotspot;
+import me.valkeea.fishyaddons.tracker.ActivityMonitor;
 import me.valkeea.fishyaddons.util.EntityTracker;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 
@@ -12,9 +13,13 @@ public class ClientTick {
     public static void init() {
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (client.player == null || client.world == null) return;
+            
+            ActivityMonitor.getInstance().tick();
+            
             if (ClientPing.isOn() && client.world.getTime() % 60 == 0) {
                 ClientPing.send();
             }
+            
             if (ChatTimers.getInstance().isBeaconAlarmOn() && client.world.getTime() % 10 == 0) {
                 ChatTimers.getInstance().checkTimerAlert();
             }

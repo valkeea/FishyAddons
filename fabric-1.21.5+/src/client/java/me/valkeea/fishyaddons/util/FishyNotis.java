@@ -106,6 +106,7 @@ public class FishyNotis {
         chat(Text.literal("/fa lava | camera + on | off").formatted(Formatting.DARK_AQUA));
         chat(Text.literal("/fa ping | on | off").formatted(Formatting.DARK_AQUA));
         chat(Text.literal("/fa coords <title>").formatted(Formatting.DARK_AQUA));
+        chat(Text.literal("/fa sc since | rng | <scname>").formatted(Formatting.DARK_AQUA));
         chat(Text.literal("/fa hud").formatted(Formatting.DARK_AQUA));
         chat(Text.literal(GUIDE_CMD).formatted(Formatting.DARK_AQUA));
         chat(Text.literal("/fa help").formatted(Formatting.DARK_AQUA));

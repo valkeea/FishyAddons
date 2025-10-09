@@ -166,5 +166,13 @@
     "soundId": "",
     "volume": 1.0,
     "toggled": true
-  }
+  },
+  "An Oasis Rabbit appears from the water.": {
+    "msg": "",
+    "onscreen": "§[sun]Oasis Rabbit 🐇",
+    "color": 16776960,
+    "soundId": "",
+    "volume": 1.0,
+    "toggled": true
+  }  
 }

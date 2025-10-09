@@ -8,6 +8,7 @@ import java.util.Set;
 import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.config.Key;
 import me.valkeea.fishyaddons.tool.FishyMode;
+import me.valkeea.fishyaddons.tracker.fishing.ScStats;
 import me.valkeea.fishyaddons.util.FishyNotis;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.Entity;
@@ -23,18 +24,20 @@ public class FishingHotspot {
     // --- Hotspot Tracker ---
     private static final Set<String> visited = new HashSet<>();
     private static boolean track = false;
+    private static boolean trackActivity = false;
     private static boolean announce = false;
     private static int tickCounter = 0;
 
     public static void refresh() {
         track = FishyConfig.getState(Key.TRACK_HOTSPOT, false);
+        trackActivity = FishyConfig.getState(Key.TRACK_HOTSPOT, false) || FishyConfig.getState(Key.TRACK_SCS, false);
         announce = FishyConfig.getState(Key.ANNOUNCE_HOTSPOT, false);
         visited.clear();
         tickCounter = 0;
     }
 
     /**
-     * Checks if a tracked hotspot armor stand is removed and the player is still within range
+     * Warns if a tracked hotspot armor stand is removed and the player is still within range
      */
     public static void onEntityRemoved(Entity entity) {
         if (!track) return;
@@ -68,17 +71,18 @@ public class FishingHotspot {
     
     private static void checkClosest() {
         MinecraftClient client = MinecraftClient.getInstance();
-        if (client.world == null || client.player == null || !track) {  return; }
+        if (client.world == null || client.player == null || !trackActivity) {  return; }
         
         ArmorStandEntity target = findClosestVisible(client);
         if (target != null && isViewing(target)) {
+
             Text label = target.getCustomName() != null
                 ? target.getCustomName()
                 : Text.literal("");
             String labelString = label.getString();
             String hotspotKey = createKey(target.getBlockPos(), labelString);
 
-            if (!visited.contains(hotspotKey)) {
+            if (!visited.contains(hotspotKey) && track) {
                 announce(target, labelString, label);
                 visited.add(hotspotKey);
             }
@@ -96,6 +100,7 @@ public class FishingHotspot {
                 target = candidate;
             }
         }
+        ScStats.setSubArea(target);
         return target;
     }
     
@@ -103,12 +108,6 @@ public class FishingHotspot {
         return pos.getX() + "," + pos.getY() + "," + pos.getZ() + ":" + labelText;
     }
 
-    /**
-     * Finds all hotspot armor stands within the specified radius
-     * @param radius The search radius
-     * @param forHiding If true, finds all hotspot-related stands; if false, only specific hotspot types
-     * @return List of hotspot armor stands within radius
-     */
     private static List<ArmorStandEntity> findHotspotArmorStands(double radius, boolean forHiding) {
         MinecraftClient client = MinecraftClient.getInstance();
         List<ArmorStandEntity> hotspots = new ArrayList<>();
@@ -202,7 +201,7 @@ public class FishingHotspot {
         Vec3d toArmorStand = armorStandPos.subtract(playerPos).normalize();
         
         double dotProduct = lookDirection.dotProduct(toArmorStand);
-        return dotProduct > 0.5;
+        return dotProduct > 0.4;
     }
 
     private static boolean nameMatches(ArmorStandEntity armorStand, String labelText) {
@@ -226,7 +225,7 @@ public class FishingHotspot {
             MinecraftClient.getInstance().player.networkHandler.sendChatMessage(
                 "/pc " + coords + " " + labelText);
         } else {
-
+            if (!FishyConfig.getState(Key.HSPT_COORDS, false)) { return; }
             MutableText shareButton = Text.literal(" [")
             .styled(style -> style.withColor(0xFF808080))
             .append((Text.literal("Chat"))

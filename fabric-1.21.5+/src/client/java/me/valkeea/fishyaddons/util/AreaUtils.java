@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import me.valkeea.fishyaddons.handler.TransLava;
+import me.valkeea.fishyaddons.tracker.fishing.ScStats;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.util.math.BlockPos;
 
@@ -25,6 +26,8 @@ public class AreaUtils {
     private static final String DEN = "den";
     private static final String DEF = "default";
     private static final String GAL = "galatea";
+    private static final String BAYOU = "bayou";
+    private static final String JERRY = "jerry";
 
     private static final MinecraftClient mc = MinecraftClient.getInstance();
     private static String currentIsland = DEF;
@@ -36,10 +39,11 @@ public class AreaUtils {
         new SpawnData(CI, -370, -350, 75, 120, -450, -420),
         new SpawnData(CI, -380, -360, 110, 125, -1000, -970),
         new SpawnData(CI, -376, -373, 113, 115, -1035, -1030),
+        new SpawnData(CI, -293, -287, 120, 126, -1000, -993),
         // Hub
         new SpawnData(HUB, -45, -43, null, null, 10, 13),
         new SpawnData(HUB, -223, -200, null, null, -16, -14),
-        new SpawnData(HUB, -3, -2, null, null, -69, -68),
+        new SpawnData(HUB, -4, -1, 68, 71, -71, -68),
         new SpawnData(HUB, -160, -158, null, null, -159, -157),
         new SpawnData(HUB, 75, 77, null, null, -183, -180),
         new SpawnData(HUB, -11, -8, null, null, -229, -227),
@@ -74,7 +78,11 @@ public class AreaUtils {
         new SpawnData(GAL, -645, -643, null, null, 1, 3),
         // Spider's Den
         new SpawnData(DEN, -203, -201, null, null, -233, -231),
-        new SpawnData(DEN, -190, -188, null, null, -311, -309)
+        new SpawnData(DEN, -190, -188, null, null, -311, -309),
+        // Bayou
+        new SpawnData(BAYOU, -14, -10, 72, 76, -13, -9),
+        // Jerry
+        new SpawnData(JERRY, -6, -3, 75, 78, 99, 102)
     );
 
     public static String getIsland() {
@@ -85,13 +93,17 @@ public class AreaUtils {
         currentIsland = island;
         isGalatea = GAL.equalsIgnoreCase(island);
         checkCrimson(island);
+        ScStats.setArea(island);
     }
 
     public static void updateIsland() {
         if (mc.world == null || mc.player == null) return;
 
         BlockPos pos = mc.player.getBlockPos();
-        int x = pos.getX(), y = pos.getY(), z = pos.getZ();
+
+        int x = pos.getX();
+        int y = pos.getY();
+        int z = pos.getZ();
 
         for (SpawnData data : SPAWN_DATA) {
             if (data.matches(x, y, z)) {
@@ -115,6 +127,7 @@ public class AreaUtils {
     public static void updateCi() {
         if (!isCrimson) {
             TransLava.update();
+            ScStats.setArea(CI);
         }
         isCrimson = true;
     }
@@ -129,9 +142,12 @@ public class AreaUtils {
 
     public static class SpawnData {
         public final String name;
-        public final int x1, x2;
-        public final Integer y1, y2;
-        public final int z1, z2;
+        public final int x1;
+        public final int x2;
+        public final Integer y1;
+        public final Integer y2;
+        public final int z1;
+        public final int z2;
 
         public SpawnData(String name, int x1, int x2, Integer y1, Integer y2, int z1, int z2) {
             this.name = name;

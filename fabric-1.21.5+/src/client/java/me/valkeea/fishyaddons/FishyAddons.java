@@ -1,16 +1,15 @@
 package me.valkeea.fishyaddons;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import me.valkeea.fishyaddons.command.CmdManager;
 import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.config.FishyPresets;
 import me.valkeea.fishyaddons.config.ItemConfig;
+import me.valkeea.fishyaddons.config.StatConfig;
 import me.valkeea.fishyaddons.event.FishyKeys;
 import me.valkeea.fishyaddons.handler.ActiveBeacons;
 import me.valkeea.fishyaddons.handler.CakeTimer;
 import me.valkeea.fishyaddons.handler.ChatAlert;
+import me.valkeea.fishyaddons.api.skyblock.GameChat;
 import me.valkeea.fishyaddons.handler.ChatReplacement;
 import me.valkeea.fishyaddons.handler.ChatTimers;
 import me.valkeea.fishyaddons.handler.ClientPing;
@@ -30,6 +29,7 @@ import me.valkeea.fishyaddons.handler.XpColor;
 import me.valkeea.fishyaddons.hud.ElementRegistry;
 import me.valkeea.fishyaddons.hud.FishyToast;
 import me.valkeea.fishyaddons.listener.ClientChat;
+import me.valkeea.fishyaddons.listener.ClientStop;
 import me.valkeea.fishyaddons.listener.ClientConnected;
 import me.valkeea.fishyaddons.listener.ClientDisconnected;
 import me.valkeea.fishyaddons.listener.ClientTick;
@@ -38,9 +38,12 @@ import me.valkeea.fishyaddons.listener.WorldEvent;
 import me.valkeea.fishyaddons.tool.FishyMode;
 import me.valkeea.fishyaddons.tool.GuiScheduler;
 import me.valkeea.fishyaddons.tool.ModCheck;
+import me.valkeea.fishyaddons.tracker.ActivityMonitor;
 import me.valkeea.fishyaddons.tracker.ItemTrackerData;
 import me.valkeea.fishyaddons.tracker.SackDropParser;
 import me.valkeea.fishyaddons.tracker.TrackerUtils;
+import me.valkeea.fishyaddons.tracker.fishing.ScData;
+import me.valkeea.fishyaddons.tracker.fishing.ScStats;
 import me.valkeea.fishyaddons.util.CustomSounds;
 import me.valkeea.fishyaddons.util.PlaySound;
 import net.fabricmc.api.ClientModInitializer;
@@ -54,14 +57,15 @@ import net.minecraft.registry.Registry;
 
 
 public class FishyAddons implements ClientModInitializer {
-    public static final String MOD_ID = "fishyaddons";
-    public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
     @Override
     public void onInitializeClient() {
 
-        FishyConfig.init();        
+        FishyConfig.init();
+        StatConfig.init();
         ItemConfig.init();
+
+        GameChat.init();
 
         KeyShortcut.refresh();
         ChatReplacement.refresh();
@@ -72,6 +76,7 @@ public class FishyAddons implements ClientModInitializer {
         CopyChat.refresh();
         PetInfo.refresh();
         XpColor.refresh();
+        ScData.refresh();
         RenderTweaks.refresh();
         MobAnimations.refresh();
         SkyblockCleaner.refresh();
@@ -80,6 +85,7 @@ public class FishyAddons implements ClientModInitializer {
         ClientPing.refresh();
         ActiveBeacons.refresh();
         FishingHotspot.refresh();
+        ActivityMonitor.refresh();
         ChatTimers.getInstance().refresh();
 
         CustomSounds.init();
@@ -88,6 +94,7 @@ public class FishyAddons implements ClientModInitializer {
         ClientTick.init();
         ModifyChat.init();
         WorldEvent.init();
+        ClientStop.init();
         ClientConnected.init();
         ClientDisconnected.init();
         CakeTimer.getInstance().init();

@@ -152,19 +152,34 @@ public class FilterConfig {
             String result = text;
             
             try {
-                for (RuleFactory.SeaCreatureData.CreatureConfig creature : 
-                     RuleFactory.getCreatures()) {
-                    
+                // Sort creatures by displayName length (longest first) to avoid partial matches
+                List<RuleFactory.SeaCreatureData.CreatureConfig> sortedCreatures = 
+                    new ArrayList<>(RuleFactory.getCreatures());
+                sortedCreatures.sort((a, b) -> {
+                    if (a.displayName == null && b.displayName == null) return 0;
+                    if (a.displayName == null) return 1;
+                    if (b.displayName == null) return -1;
+                    return Integer.compare(b.displayName.length(), a.displayName.length());
+                });
+                
+                for (RuleFactory.SeaCreatureData.CreatureConfig creature : sortedCreatures) {
                     if (creature.displayName != null && creature.displayNamePlural != null) {
                         String quotedName = java.util.regex.Pattern.quote(creature.displayName);
                         String pluralName = creature.displayNamePlural;
                         
                         result = result.replaceAll("\\ba " + quotedName + "\\b", pluralName);
                         result = result.replaceAll("\\ban " + quotedName + "\\b", pluralName);
-                        result = result.replaceAll("\\bthe " + quotedName + "\\b", "the " + pluralName);
                         result = result.replaceAll("\\bA " + quotedName + "\\b", pluralName);
                         result = result.replaceAll("\\bAn " + quotedName + "\\b", pluralName);
-                        result = result.replaceAll("\\bThe " + quotedName + "\\b", "The " + pluralName);
+
+                        if (pluralName.startsWith("two ")) {
+                            result = result.replaceAll("\\bthe " + quotedName + "\\b", pluralName);
+                            result = result.replaceAll("\\bThe " + quotedName + "\\b", pluralName);
+                        } else {
+                            result = result.replaceAll("\\bthe " + quotedName + "\\b", "the " + pluralName);
+                            result = result.replaceAll("\\bThe " + quotedName + "\\b", "The " + pluralName);
+                        }
+                        
                         result = result.replaceAll("\\b" + quotedName + "\\b", pluralName);
                     }
                 }
@@ -559,6 +574,27 @@ public class FilterConfig {
                 original.isEnabled(),
                 original.requireFullMatch()
             );
+        }
+    }
+
+    /**
+     * Backup whole config file to fishyaddons/backup/filter_rules.json
+     */
+    public static void saveBackup() {
+        if (filterFile == null || !filterFile.exists()) {
+            return;
+        }
+        
+        try {
+            File backupDir = new File(MinecraftClient.getInstance().runDirectory, "config/fishyaddons/backup");
+            if (!backupDir.exists()) {
+                backupDir.mkdirs();
+            }
+            
+            File backupFile = new File(backupDir, "filter_rules.json");
+            java.nio.file.Files.copy(filterFile.toPath(), backupFile.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+        } catch (Exception e) {
+            System.err.println("[FishyAddons] Failed to backup filter config: " + e.getMessage());
         }
     }
 }

@@ -231,7 +231,7 @@ public class FishyCmd {
                     }))
                 .then(ClientCommandManager.literal("help")
                     .executes(context -> {
-                        FishyNotis.themed("Usage: /fa profit <add | remove | list | clear>");
+                        FishyNotis.themed("Usage: §bfa/fa guard §8< §7add §8| §7remove §8| §7list §8| §7clear §8>");
                         return 1;
                     }));
         }   
@@ -239,93 +239,93 @@ public class FishyCmd {
         protected static void addProfitSubcommands(LiteralArgumentBuilder<FabricClientCommandSource> root) {
             root.then(ClientCommandManager.literal("toggle")
                     .executes(context -> {
-                        ProfitTrackerCommand.handle(new String[]{"toggle"});
+                        TrackerCmd.handle(new String[]{"toggle"});
                         return 1;
                     }))
                 .then(ClientCommandManager.literal("stats")
                     .executes(context -> {
-                        ProfitTrackerCommand.handle(new String[]{"stats"});
+                        TrackerCmd.handle(new String[]{"stats"});
                         return 1;
                     }))
                 .then(ClientCommandManager.literal("init")
                     .executes(context -> {
-                        ProfitTrackerCommand.handle(new String[]{"init"});
+                        TrackerCmd.handle(new String[]{"init"});
                         return 1;
                     }))
                 .then(ClientCommandManager.literal("refresh")
                     .executes(context -> {
-                        ProfitTrackerCommand.handle(new String[]{"refresh"});
+                        TrackerCmd.handle(new String[]{"refresh"});
                         return 1;
                     }))
                 .then(ClientCommandManager.literal("status")
                     .executes(context -> {
-                        ProfitTrackerCommand.handle(new String[]{"status"});
+                        TrackerCmd.handle(new String[]{"status"});
                         return 1;
                     }))
                 .then(ClientCommandManager.literal("clear")
                     .executes(context -> {
-                        ProfitTrackerCommand.handle(new String[]{"clear"});
+                        TrackerCmd.handle(new String[]{"clear"});
                         return 1;
                     }))
                 .then(ClientCommandManager.literal("ignored")
                     .executes(context -> {
-                        ProfitTrackerCommand.handle(new String[]{"ignored"});
+                        TrackerCmd.handle(new String[]{"ignored"});
                         return 1;
                     }))
                 .then(ClientCommandManager.literal("restore")
                     .then(ClientCommandManager.literal("all")
                         .executes(context -> {
-                            ProfitTrackerCommand.handle(new String[]{"restore", "all"});
+                            TrackerCmd.handle(new String[]{"restore", "all"});
                             return 1;
                         }))
                     .then(ClientCommandManager.argument("item", com.mojang.brigadier.arguments.StringArgumentType.greedyString())
                         .executes(context -> {
                             String itemName = com.mojang.brigadier.arguments.StringArgumentType.getString(context, "item");
-                            ProfitTrackerCommand.handle(new String[]{"restore", itemName});
+                            TrackerCmd.handle(new String[]{"restore", itemName});
                             return 1;
                         }))
                     .executes(context -> {
-                        ProfitTrackerCommand.handle(new String[]{"restore"});
+                        TrackerCmd.handle(new String[]{"restore"});
                         return 1;
                     }))
                 .then(ClientCommandManager.literal("type")
                     .then(ClientCommandManager.literal("insta_sell")
                         .executes(context -> {
-                            ProfitTrackerCommand.handle(new String[]{"type", "insta_sell"});
+                            TrackerCmd.handle(new String[]{"type", "insta_sell"});
                             return 1;
                         }))
                     .then(ClientCommandManager.literal("sell_offer")
                         .executes(context -> {
-                            ProfitTrackerCommand.handle(new String[]{"type", "sell_offer"});
+                            TrackerCmd.handle(new String[]{"type", "sell_offer"});
                             return 1;
                         }))
                     .executes(context -> {
-                        ProfitTrackerCommand.handle(new String[]{"type"});
+                        TrackerCmd.handle(new String[]{"type"});
                         return 1;
                     }))
                 .then(ClientCommandManager.literal("price")
                     .then(ClientCommandManager.argument("item", com.mojang.brigadier.arguments.StringArgumentType.greedyString())
                         .executes(context -> {
                             String itemName = com.mojang.brigadier.arguments.StringArgumentType.getString(context, "item");
-                            ProfitTrackerCommand.handle(new String[]{"price", itemName});
+                            TrackerCmd.handle(new String[]{"price", itemName});
                             return 1;
                         }))
                     .executes(context -> {
-                        ProfitTrackerCommand.handle(new String[]{"price"});
+                        TrackerCmd.handle(new String[]{"price"});
                         return 1;
                     }))
                 .then(ClientCommandManager.literal(PROFILE)
                     .then(ClientCommandManager.argument("name", com.mojang.brigadier.arguments.StringArgumentType.greedyString())
                         .executes(context -> {
                             String profileName = com.mojang.brigadier.arguments.StringArgumentType.getString(context, "name");
-                            ProfitTrackerCommand.handle(new String[]{PROFILE, profileName});
+                            TrackerCmd.handle(new String[]{PROFILE, profileName});
                             return 1;
                         }))
                     .then(ClientCommandManager.literal("delete")
                         .then(ClientCommandManager.argument(PROFILE, com.mojang.brigadier.arguments.StringArgumentType.greedyString())
                             .executes(context -> {
                                 String profileName = com.mojang.brigadier.arguments.StringArgumentType.getString(context, PROFILE);
-                                ProfitTrackerCommand.handle(new String[]{PROFILE, "delete", profileName});
+                                TrackerCmd.handle(new String[]{PROFILE, "delete", profileName});
                                 return 1;
                             })))
                     .then(ClientCommandManager.literal("rename")
@@ -334,15 +334,15 @@ public class FishyCmd {
                                 .executes(context -> {
                                     String oldName = com.mojang.brigadier.arguments.StringArgumentType.getString(context, "oldName");
                                     String newName = com.mojang.brigadier.arguments.StringArgumentType.getString(context, "newName");
-                                    ProfitTrackerCommand.handle(new String[]{PROFILE, "rename", oldName, newName});
+                                    TrackerCmd.handle(new String[]{PROFILE, "rename", oldName, newName});
                                     return 1;
                                 }))))
                     .executes(context -> {
-                        ProfitTrackerCommand.handle(new String[]{PROFILE});
+                        TrackerCmd.handle(new String[]{PROFILE});
                         return 1;
                     }))
                 .executes(context -> {
-                    ProfitTrackerCommand.handle(new String[]{});
+                    TrackerCmd.handle(new String[]{});
                     return 1;
                 });
         }
@@ -406,7 +406,7 @@ public class FishyCmd {
         }   
         
         protected static LiteralArgumentBuilder<FabricClientCommandSource> registerCam() {
-            return ClientCommandManager.literal("cam")
+            return ClientCommandManager.literal("camera")
                     .then(ClientCommandManager.literal("on")
                         .executes(context -> {
                             FishyConfig.enable(Key.SKIP_F5, true);
@@ -431,7 +431,7 @@ public class FishyCmd {
                             return 1;
                         }))                        
                     .executes(context -> {
-                        FishyNotis.alert(Text.literal("Usage: /fa cam <on | off> | <toggle>"));
+                        FishyNotis.themed("Usage: §b/fa cam §8<§7 on §8| §7off §8| §7toggle §8>");
                         return 1;
                     });
         }
@@ -523,20 +523,58 @@ public class FishyCmd {
     }    
 
     protected static LiteralArgumentBuilder<FabricClientCommandSource> registerFishing() {
-        return ClientCommandManager.literal("fishing")
+        return ClientCommandManager.literal("sc")
                 .then(ClientCommandManager.literal("sounds")
                     .executes(context -> {
                             // Give instructions on resource pack creation
                             FishyNotis.send("§aTo create a resource pack:");
-                            FishyNotis.alert(Text.literal("§7- Create a folder named: §bfishyaddons"));
+                            FishyNotis.alert(Text.literal("§7- In any resource pack, create a folder named: §bfishyaddons"));
                             FishyNotis.alert(Text.literal("§7- Inside that folder, create another folder named: §bsounds"));
                             FishyNotis.alert(Text.literal("§7- Inside the sounds folder, create a folder named: §bcustom"));
                             FishyNotis.alert(Text.literal("§7- Place your custom .ogg files inside the custom folder"));
                             FishyNotis.alert(Text.literal("§7- Then use sound IDs: §bfishyaddons:fishyaddons_1§7, §bfishyaddons:fishyaddons_2§7, §bfishyaddons:fishyaddons_3"));
                         return 1;
                     }))
+                .then(ClientCommandManager.literal("since")
+                    .executes(context -> {
+                        me.valkeea.fishyaddons.tracker.fishing.ScStats.getInstance().sendStats();
+                        return 1;
+                    }))
+                .then(ClientCommandManager.literal("rng")
+                    .executes(context -> {
+                        me.valkeea.fishyaddons.tracker.fishing.ScData.getInstance().sendCatchPercentages();
+                        return 1;
+                    }))
+                .then(ClientCommandManager.argument("name", com.mojang.brigadier.arguments.StringArgumentType.greedyString())
+                    .executes(context -> {
+                        String name = com.mojang.brigadier.arguments.StringArgumentType.getString(context, "name");
+                        me.valkeea.fishyaddons.tracker.fishing.ScData.getInstance().sendHistogramSummary(name);
+                        return 1;
+                    }))
                 .executes(context -> {
-                    FishyNotis.send("§3Usage: /fa fishing sounds - open directory to add your custom .ogg files");
+                    FishyNotis.themed("Usage:");
+                    FishyNotis.alert(Text.literal("§3/fa sc sounds §8- §7Instructions for resource pack sounds"));
+                    FishyNotis.alert(Text.literal("§3/fa sc since §8- §7Stats for 'sc since' in the current island"));
+                    FishyNotis.alert(Text.literal("§3/fa sc rng §8- §7Catch % for rare scs"));
+                    FishyNotis.alert(Text.literal("§3/fa sc <name> §8- §7Data summary for a specific sc"));
+                    return 1;
+                });
+    }
+
+    protected static LiteralArgumentBuilder<FabricClientCommandSource> registerDiana() {
+        return ClientCommandManager.literal("diana")
+                .then(ClientCommandManager.literal("reset")
+                .executes(context -> {
+                    if (me.valkeea.fishyaddons.tracker.DianaStats.loaded()) {
+                        me.valkeea.fishyaddons.tracker.DianaStats.getInstance().resetAll();
+                        FishyNotis.send("Diana stats have been reset.");
+                    } else {
+                        FishyNotis.warn("Diana stats are not loaded.");
+                    }
+                    return 1;
+                }))
+                .executes(context -> {
+                    me.valkeea.fishyaddons.tracker.DianaStats.getInstance().sendDianaStats();
                     return 1;
                 });
     }

@@ -27,6 +27,7 @@ public class CmdManager {
     private static void registerFaCommand(CommandDispatcher<FabricClientCommandSource> dispatcher, String root) {
         dispatcher.register(
             ClientCommandManager.literal(root)
+                .then(FishyCmd.registerCam())            
                 .then(FishyCmd.registerCmd())
                 .then(FishyCmd.registerChat())
                 .then(FishyCmd.registerAlert())
@@ -36,22 +37,12 @@ public class CmdManager {
                 .then(FishyCmd.registerLava())
                 .then(FishyCmd.registerHud())
                 .then(FishyCmd.registerPing())
-                .then(FishyCmd.registerCam())
                 .then(FishyCmd.registerPos())
                 .then(FishyCmd.registerRain())
                 .then(FishyCmd.registerFishing())
+                .then(FishyCmd.registerDiana())
                 .then(buildProfitRoot("profit"))
-                .executes(context -> {
-                    me.valkeea.fishyaddons.util.FishyNotis.fp();
-                    return 1;
-                })
                 .then(buildGuardRoot("guard"))
-                .executes(context -> {
-                    if (FishyCmd.checkGUI() == 1) return 1;
-                    MinecraftClient.getInstance().execute(() ->
-                        GuiScheduler.scheduleGui(new VCScreen()));
-                    return 1;
-                })
                 .then(
                     ClientCommandManager.argument(
                         "query",
@@ -63,6 +54,12 @@ public class CmdManager {
                         return 1;
                     })
                 )
+                .executes(context -> {
+                    if (FishyCmd.checkGUI() == 1) return 1;
+                    MinecraftClient.getInstance().execute(() ->
+                        GuiScheduler.scheduleGui(new VCScreen()));
+                    return 1;
+                })
         );
     }
 

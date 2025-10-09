@@ -100,7 +100,7 @@ public class ChatDropParser {
 
         // Pattern 5a: X DROP! Enchanted Book ItemName (+x ✯ Magic Find)
         DROP_PATTERNS.add(new DropPattern(
-            Pattern.compile("(?:rare drop|very rare drop|crazy rare drop|extremely rare drop|insane drop)!\\s*Enchanted Book ([^!]+)\\s*\\(\\+\\d+ ✯ Magic Find\\)", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("(?:rare drop|very rare drop|crazy rare drop|extremely rare drop|insane drop)!\\s*Enchanted Book \\(([^)]+)\\)\\s*\\(\\+\\d+ ✯ Magic Find\\)", Pattern.CASE_INSENSITIVE),
             -1, 1
         ));
 
@@ -192,15 +192,15 @@ public class ChatDropParser {
             -1, 1
         ));
         
-        // Pattern 14: "CHARM/SALT/NAGA You charmed a CreatureName and captured X Shards from it"
+        // Pattern 14: "CHARM/SALT/NAGA You charmed a CreatureName and captured X Shards from it."
         DROP_PATTERNS.add(new DropPattern(
-            Pattern.compile("(?:salt|charm|naga)\\s+you charmed an?\\s+(.+?)\\s+and captured (\\d+)\\s+shards? from it", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("(?:salt|charm|naga)\\s+you charmed an?\\s+(.+?)\\s+and captured (\\d+)\\s+shards? from it.", Pattern.CASE_INSENSITIVE),
             2, 1
         ));
         
-        // Pattern 14b: "CHARM/SALT/NAGA You charmed a CreatureName and captured its Shard"
+        // Pattern 14b: "CHARM/SALT/NAGA You charmed a CreatureName and captured its Shard."
         DROP_PATTERNS.add(new DropPattern(
-            Pattern.compile("(?:salt|charm|naga)\\s+you charmed an?\\s+(.+?)\\s+and captured its shard", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("(?:salt|charm|naga)\\s+you charmed an?\\s+(.+?)\\s+and captured its shard.", Pattern.CASE_INSENSITIVE),
             -1, 1
         ));
         
@@ -224,22 +224,20 @@ public class ChatDropParser {
         }
         
         // Filter out annoying cases (mostly fishing) 
-        String lowerMessage = message.toLowerCase();
-        if (ignore(lowerMessage)) {
+        if (ignore(message)) {
             ApiCache.cacheMessageParse(message, null);
             return null;
         }
         
         // Quick pre-filter to check for common drop indicators
-        if (!isDrop(lowerMessage)) {
+        if (!isDrop(message)) {
             ApiCache.cacheMessageParse(message, null);
             return null;
         }
         
         // Remove color codes and clean the message
-        String cleanMessage = message.replaceAll("§[0-9a-fk-or]", "").trim();
         for (DropPattern pattern : DROP_PATTERNS) {
-            ParseResult result = tryPattern(pattern, cleanMessage);
+            ParseResult result = tryPattern(pattern, message);
             if (result != null) {
                 // Cache the successful parse result
                 ApiCache.cacheMessageParse(message, result);

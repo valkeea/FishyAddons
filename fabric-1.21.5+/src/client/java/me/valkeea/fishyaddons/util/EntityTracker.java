@@ -26,7 +26,7 @@ public class EntityTracker {
     private static boolean foundVal = false;
     
     private static final Pattern VALUABLE_MOB_PATTERN = Pattern.compile(
-        ".*\\b(the loch emperor|lord jawbus|thunder|sea walker)\\b.*",
+        ".*\\b(lord jawbus|thunder)\\b.*",
         Pattern.CASE_INSENSITIVE
     );
     
@@ -36,7 +36,7 @@ public class EntityTracker {
     );
 
     private static final Pattern VALUABLE_PLAYERENTITY_PATTERN = Pattern.compile(
-        ".*\\b(great white shark|minos inquisitor|grim reaper|ent|minotaur)\\b.*",
+        ".*\\b(great white shark|minos inquisitor|grim reaper|minotaur|minos champion)\\b.*",
         Pattern.CASE_INSENSITIVE
     );
     
@@ -84,7 +84,7 @@ public class EntityTracker {
     
     public static void onEntityAdded(Entity entity) {
         if (entity == null) return;
-        if (!TrackerUtils.isEnabled() || TrackerUtils.isOn()) return;
+        if (!TrackerUtils.isEnabled() && !TrackerUtils.isOn()) return;
 
         MinecraftClient client = MinecraftClient.getInstance();
         if (client.player == null) return;
@@ -98,7 +98,7 @@ public class EntityTracker {
     
     public static void onEntityRemoved(Entity entity) {
         if (entity == null) return;
-        if (!TrackerUtils.isEnabled() || TrackerUtils.isOn()) return;
+        if (!TrackerUtils.isEnabled() && !TrackerUtils.isOn()) return;
 
         trackedEntities.remove(entity);
         TrackedMob trackedMob = mobData.remove(entity);

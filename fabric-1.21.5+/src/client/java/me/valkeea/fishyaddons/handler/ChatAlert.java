@@ -3,6 +3,7 @@ package me.valkeea.fishyaddons.handler;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import me.valkeea.fishyaddons.api.skyblock.GameChat;
 import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.config.FishyConfig.AlertData;
 import me.valkeea.fishyaddons.hud.TitleDisplay;
@@ -18,7 +19,9 @@ public class ChatAlert {
     private static boolean enabled = false;
     
     private static final long TRIGGER_COOLDOWN_MS = 1000;
+    private static final long COMMAND_COOLDOWN_MS = 2000;
     private static final Map<String, Long> lastTriggerTime = new ConcurrentHashMap<>();
+    private static final Map<String, Long> lastCommandTime = new ConcurrentHashMap<>();
 
     public static void refresh() {
         enabled = FishyConfig.getState(me.valkeea.fishyaddons.config.Key.CHAT_ALERTS_ENABLED, false);
@@ -48,18 +51,13 @@ public class ChatAlert {
             }
         }
     }
-    
-    private static void cleanupOldTriggers(long currentTime) {
-        lastTriggerTime.entrySet().removeIf(entry -> 
-            (currentTime - entry.getValue()) > (TRIGGER_COOLDOWN_MS * 10));
-    }
 
     public static void executeAlert(AlertData data) {
         MinecraftClient client = MinecraftClient.getInstance();
 
         if (data.getMsg() != null && !data.getMsg().isBlank() &&
             client.player != null) {
-            client.player.networkHandler.sendChatMessage(data.getMsg());
+            handleMsg(data, client);
         }
 
         if (data.getOnscreen() != null && !data.getOnscreen().isBlank() &&
@@ -79,5 +77,41 @@ public class ChatAlert {
                 // Ignore sound playback errors
             }
         }
+    }    
+
+    private static boolean isValid(String command) {
+        return command != null && !command.trim().isEmpty();
     }
+
+    /**
+     * Check if enough time has passed since the last command execution.
+     */
+    private static boolean canExecuteCommand() {
+        Long lastExecution = lastCommandTime.get("global");
+        if (lastExecution == null) {
+            return true;
+        }
+        return (System.currentTimeMillis() - lastExecution) > COMMAND_COOLDOWN_MS;
+    }
+
+    private static void handleMsg(AlertData data, MinecraftClient client) {
+        String message = data.getMsg().trim();
+
+        if (message.startsWith("/")) {
+            String command = message.substring(1);
+
+            if (isValid(command) && canExecuteCommand() && GameChat.partyToggled()) {
+                client.player.networkHandler.sendChatCommand(command);
+                lastCommandTime.put("global", System.currentTimeMillis());
+            }
+
+        } else {
+            client.player.networkHandler.sendChatMessage(message);
+        }
+    }
+
+    private static void cleanupOldTriggers(long currentTime) {
+        lastTriggerTime.entrySet().removeIf(entry -> 
+            (currentTime - entry.getValue()) > (TRIGGER_COOLDOWN_MS * 10));
+    }    
 }

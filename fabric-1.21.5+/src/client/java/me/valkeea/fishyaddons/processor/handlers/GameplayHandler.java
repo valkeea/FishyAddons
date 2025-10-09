@@ -3,6 +3,7 @@ package me.valkeea.fishyaddons.processor.handlers;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import me.valkeea.fishyaddons.api.skyblock.GameChat;
 import me.valkeea.fishyaddons.handler.CakeTimer;
 import me.valkeea.fishyaddons.handler.PetInfo;
 import me.valkeea.fishyaddons.handler.TransLava;
@@ -40,6 +41,7 @@ public class GameplayHandler implements ChatHandler {
             if (handleGamemodeDetection(message)) return ChatHandlerResult.STOP;
             if (handleAreaChanges(message)) return ChatHandlerResult.STOP;
             if (handlePetInfo(context.getRawText())) return ChatHandlerResult.STOP;
+            if (handleChatMode(message)) return ChatHandlerResult.STOP;
             if (handleBeaconFrequency(message)) return ChatHandlerResult.STOP;
             if (handleCakeTimer(context.getRawText())) return ChatHandlerResult.STOP;
             return ChatHandlerResult.CONTINUE;
@@ -79,6 +81,15 @@ public class GameplayHandler implements ChatHandler {
     private boolean handleBeaconFrequency(String message) {
         if (message.contains("You adjusted the frequency of the Beacon!")) {
             me.valkeea.fishyaddons.handler.ChatTimers.getInstance().beaconStart();
+            return true;
+        }
+        return false;
+    }
+
+    private boolean handleChatMode(String message) {
+        if (message.equals("You are not in a party and were moved to the ALL channel.") ||
+            message.equals("You must be in a party to join the party channel!")) {
+            GameChat.setChannel(GameChat.Channel.ALL);
             return true;
         }
         return false;

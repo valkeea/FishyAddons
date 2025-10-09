@@ -328,7 +328,7 @@ public class AlertEditScreen extends Screen {
             "   as a trigger to not have to update alerts if you change your config",
             "",
             "- Auto Chat -",
-            " • §7Optional chat message sent with the alert",
+            " • §7Sends a chat command / message if in party channel",
             "",
             "- On-screen Title -",
             " • §7Appears for 2 seconds, position and size can be customized in /fa hud",

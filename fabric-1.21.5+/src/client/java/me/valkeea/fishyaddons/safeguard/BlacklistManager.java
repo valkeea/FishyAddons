@@ -38,12 +38,13 @@ public class BlacklistManager {
         defaultBlacklist.add(new GuiBlacklistEntry(Arrays.asList("Create Auction", "Create BIN Auction", "Find items for sale by players"), true, true));
         defaultBlacklist.add(new GuiBlacklistEntry(Arrays.asList("Coins Transaction"), true, false));
         defaultBlacklist.add(new GuiBlacklistEntry(Arrays.asList("Salvage Items"), true, true));
-        defaultBlacklist.add(new GuiBlacklistEntry(Arrays.asList("Sell Item", "Click items in your inventory to sell", "Click to buyback"), true, false));
+        defaultBlacklist.add(new GuiBlacklistEntry(Arrays.asList("Click items in your inventory to sell", "Click to buyback"), true, false));
         loadUserBlacklist();
     }
 
     // --- Blacklist logic ---
     public static List<GuiBlacklistEntry> getMergedBlacklist() {
+        
         List<GuiBlacklistEntry> merged = new ArrayList<>();
         for (GuiBlacklistEntry def : defaultBlacklist) {
             GuiBlacklistEntry override = findUserOverride(def);
@@ -53,6 +54,7 @@ public class BlacklistManager {
                 merged.add(def);
             }
         }
+
         for (GuiBlacklistEntry userEntry : userBlacklist) {
             if (userEntry.identifiers == null || userEntry.identifiers.isEmpty()) {
                 continue;

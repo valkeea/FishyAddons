@@ -32,16 +32,22 @@ Note: Development is mainly focused on 1.21.5+ but Forge-1.8.9 will be maintaine
 - Custom hex color names (global + user-configurable)
 - Mod resourses: Trasnparent ui and HD font
 
+### Fishing:
+- Custom Sea Creature messages (Also downloadable as alerts in /fa alert)
+- Catch data tracking and graph display
+- 'Took x Sc for' in chat on rare catches
+- Rain Stop / Start alert
+- Hotspot Spawn / Expiration alert
+
 ### Skyblock:
 - Pet Display
-- Custom Sea Creature messages
+- Diana Stats
 - Equipment Display
 - Century Cake Display
 - General Profit Tracker (with profiles)
-- Rain Warning
-- Hotspot Warning
 - Moonglade Beacon timer and hud display
 - Clean Wither Impact (particles, sound)
 - Hide Skyblock gui buttons
 - Scale crit particles on Galatea (invisibug)
 - Mute Meow, Bark and Jerry runes
+- Click to party (Guild chat)

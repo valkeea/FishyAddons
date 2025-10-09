@@ -3,6 +3,7 @@ package me.valkeea.fishyaddons.ui;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.config.ItemConfig;
@@ -10,6 +11,7 @@ import me.valkeea.fishyaddons.config.Key;
 import me.valkeea.fishyaddons.safeguard.BlacklistManager;
 import me.valkeea.fishyaddons.tool.FishyMode;
 import me.valkeea.fishyaddons.ui.VCScreen.ExtraControl;
+import me.valkeea.fishyaddons.ui.widget.dropdown.ToggleMenuItem;
 import net.minecraft.text.Text;
 
 /**
@@ -27,7 +29,8 @@ public class VCEntry {
         HEADER,
         SIMPLE_BUTTON,
         SLIDER,
-        TOGGLE_WITH_SLIDER
+        TOGGLE_WITH_SLIDER,
+        TOGGLE_WITH_DROPDOWN
     }
     
     public final String name;
@@ -66,6 +69,10 @@ public class VCEntry {
     public final Consumer<Float> valueChangeAction;
     public final SliderType sliderType;
     
+    // Dropdown entries
+    public final Supplier<List<ToggleMenuItem>> dropdownItemSupplier;
+    public final String dropdownButtonText;
+    
     // Enum for different slider value types
     public enum SliderType {
         FLOAT,
@@ -95,6 +102,8 @@ public class VCEntry {
         this.formatString = builder.formatString;
         this.valueChangeAction = builder.valueChangeAction;
         this.sliderType = builder.sliderType;
+        this.dropdownItemSupplier = builder.dropdownItemSupplier;
+        this.dropdownButtonText = builder.dropdownButtonText;
     }
     
     // Builder class for VCEntry
@@ -122,6 +131,8 @@ public class VCEntry {
         private String formatString = "%.0f";
         private Consumer<Float> valueChangeAction = null;
         private SliderType sliderType = SliderType.FLOAT;
+        private Supplier<List<ToggleMenuItem>> dropdownItemSupplier = null;
+        private String dropdownButtonText = null;
         
         public Builder(String name, String description, EntryType type) {
             this.name = name;
@@ -219,6 +230,16 @@ public class VCEntry {
             return this;
         }
         
+        public Builder dropdownItemSupplier(Supplier<List<ToggleMenuItem>> dropdownItemSupplier) {
+            this.dropdownItemSupplier = dropdownItemSupplier;
+            return this;
+        }
+        
+        public Builder dropdownButtonText(String dropdownButtonText) {
+            this.dropdownButtonText = dropdownButtonText;
+            return this;
+        }
+        
         // Convenience method for TOGGLE_WITH_SLIDER
         public Builder toggleWithSlider(String toggleKey, boolean defaultToggle, String sliderKey, float min, float max, String format) {
             this.configKey = toggleKey;
@@ -293,7 +314,18 @@ public class VCEntry {
             .refreshAction(refreshAction)
             .valueChangeAction(v -> refreshAction.run())
             .build();
-    }    
+    }
+
+    // Toggle + dropdown
+    public static VCEntry toggleDropdown(String name, String description, String toggleKey, boolean defaultToggle, String dropdownButtonText, Supplier<List<ToggleMenuItem>> itemSupplier, Runnable refreshAction) {
+        return new Builder(name, description, EntryType.TOGGLE_WITH_DROPDOWN)
+            .configKey(toggleKey)
+            .defaultValue(defaultToggle)
+            .dropdownButtonText(dropdownButtonText)
+            .dropdownItemSupplier(itemSupplier)
+            .refreshAction(refreshAction)
+            .build();
+    }
 
     // Slider
     public static VCEntry slider(String name, String description, String configKey, float min, float max, String format, Consumer<Float> valueChangeAction) {
@@ -386,7 +418,7 @@ public class VCEntry {
             return false;
         }
         switch (type) {
-            case TOGGLE, EXPANDABLE, TOGGLE_WITH_SLIDER, SIMPLE_BUTTON:
+            case TOGGLE, EXPANDABLE, TOGGLE_WITH_SLIDER, TOGGLE_WITH_DROPDOWN, SIMPLE_BUTTON:
                 return getFishyConfigToggleState();
             case ITEM_CONFIG_TOGGLE:
                 return getItemConfigToggleState();
@@ -400,7 +432,7 @@ public class VCEntry {
     public void toggleSetting() {
         if (configKey != null) {
             switch (type) {
-                case TOGGLE, EXPANDABLE, TOGGLE_WITH_SLIDER, SIMPLE_BUTTON:
+                case TOGGLE, EXPANDABLE, TOGGLE_WITH_SLIDER, TOGGLE_WITH_DROPDOWN, SIMPLE_BUTTON:
                     toggleFishyConfig();
                     break;
                 case ITEM_CONFIG_TOGGLE:
@@ -598,5 +630,21 @@ public class VCEntry {
     
     public SliderType getSliderType() {
         return sliderType;
+    }
+    
+    // Dropdown entry methods
+    public boolean hasDropdown() {
+        return type == EntryType.TOGGLE_WITH_DROPDOWN && dropdownItemSupplier != null;
+    }
+
+    public List<ToggleMenuItem> getDropdownItems() {
+        if (dropdownItemSupplier != null) {
+            return dropdownItemSupplier.get();
+        }
+        return new ArrayList<>();
+    }
+    
+    public String getDropdownButtonText() {
+        return dropdownButtonText != null ? dropdownButtonText : "Configure";
     }
 }

@@ -2,9 +2,11 @@ package me.valkeea.fishyaddons.ui.widget.dropdown;
 
 import java.util.List;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
-import me.valkeea.fishyaddons.ui.widget.FaTextField;
+import me.valkeea.fishyaddons.tool.FishyMode;
+import me.valkeea.fishyaddons.ui.VCRenderUtils;
+import me.valkeea.fishyaddons.ui.widget.VCTextField;
+import me.valkeea.fishyaddons.util.text.Color;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
@@ -30,7 +32,7 @@ public class SearchMenu {
     }
 
     public SearchMenu(List<SearchEntry> entries, int x, int y, int width, int entryHeight,
-        Consumer<SearchEntry> onSelect, Screen screen, TextFieldWidget externalField) {
+        Consumer<SearchEntry> onSelect, Screen screen, VCTextField externalField) {
         this.allEntries = entries;
         this.filteredEntries = entries;
         this.x = x;
@@ -42,7 +44,7 @@ public class SearchMenu {
             this.searchField = externalField;
             this.usesExternalField = true;
         } else {
-            this.searchField = new FaTextField(screen.getTextRenderer(), x, y, width, 15, Text.literal("Search..."));
+            this.searchField = new VCTextField(screen.getTextRenderer(), x, y, width, 15, Text.literal("Search..."));
             this.searchField.setEditableColor(0xFF808080);
             this.searchField.setChangedListener(this::updateFilter);
             this.usesExternalField = false;
@@ -53,7 +55,7 @@ public class SearchMenu {
         filteredEntries = allEntries.stream()
             .filter(e -> e.name.toLowerCase().contains(query.toLowerCase()) || 
                          (e.description != null && e.description.toLowerCase().contains(query.toLowerCase())))
-            .collect(Collectors.toList());
+            .toList();
     }
 
     public void render(DrawContext context, Screen screen, int mouseX, int mouseY, float delta) {
@@ -111,14 +113,18 @@ public class SearchMenu {
             int entryH = entryHeights[i];
 
             boolean hovered = mouseX >= x && mouseX <= x + width && mouseY >= currentY && mouseY <= currentY + entryHeight;
-            int bgColor = hovered ? 0xFFE2CAE9 : 0xEE222222;
-            context.fill(x, currentY, x + width, currentY + entryH, bgColor);
-
-            int textColor = hovered ? 0xFF000000 : 0xFFE2CAE9;
+            int themeColor = FishyMode.getThemeColor();
+            int hoverColor = Color.brighten(themeColor, 0.3f);
+            int bgColor = hovered ? hoverColor : 0xEE121212;
+            int textColor = hovered ? 0xFFFFFFFF : themeColor;
             String text = entry.displayName != null ? entry.displayName : entry.name;
+            
+            context.getMatrices().push();
+            context.getMatrices().translate(0, 0, 500);
+            VCRenderUtils.opaqueGradient(context, x, currentY, width, entryH, bgColor);
             context.drawText(textRenderer, text, x + 6, currentY + 2, textColor, false);
+            context.getMatrices().pop();
 
-            // Draw multi-line description if present
             if (entry.description != null && !entry.description.isEmpty()) {
                 String[] lines = entry.description.split("\n");
                 int descColor = hovered ? 0xFFEEEEEE : 0xFFCCCCCC;
@@ -159,11 +165,9 @@ public class SearchMenu {
                 scrollOffset++;
                 return true;
             }
-        } else if (keyCode == 265) {
-            if (scrollOffset > 0) {
-                scrollOffset--;
-                return true;
-            }
+        } else if (keyCode == 265 && scrollOffset > 0) {
+            scrollOffset--;
+            return true;
         }
         return searchField.keyPressed(keyCode, scanCode, modifiers);
     }
@@ -174,7 +178,6 @@ public class SearchMenu {
         int totalEntries = filteredEntries.size();
         int visibleEntries = Math.min(totalEntries, MAX_VISIBLE_ENTRIES);
         int[] entryHeights = new int[visibleEntries];
-        int currentY = y;
         for (int i = 0; i < visibleEntries; i++) {
             int entryIndex = i + scrollOffset;
             if (entryIndex >= filteredEntries.size()) break;
@@ -189,8 +192,8 @@ public class SearchMenu {
         int entryTop = y;
         for (int i = 0; i < visibleEntries; i++) {
             int entryIndex = i + scrollOffset;
-            int entryHeight = entryHeights[i];
-            int entryBottom = entryTop + entryHeight;
+            int entryH = entryHeights[i];
+            int entryBottom = entryTop + entryH;
             if (mouseX >= x && mouseX <= x + width && mouseY >= entryTop && mouseY <= entryBottom) {
                 onSelect.accept(filteredEntries.get(entryIndex));
                 searchField.setFocused(false);
@@ -206,7 +209,7 @@ public class SearchMenu {
         return false;
     }
 
-    public boolean mouseScrolled(double mouseX, double mouseY, double amount) {
+    public boolean mouseScrolled(double amount) {
         if (!visible) return false;
         int totalEntries = filteredEntries.size();
         int visibleEntries = Math.min(totalEntries, MAX_VISIBLE_ENTRIES);

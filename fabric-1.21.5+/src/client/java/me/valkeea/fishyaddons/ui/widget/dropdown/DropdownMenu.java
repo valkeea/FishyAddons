@@ -3,6 +3,8 @@ package me.valkeea.fishyaddons.ui.widget.dropdown;
 import java.util.List;
 import java.util.function.Consumer;
 
+import me.valkeea.fishyaddons.tool.FishyMode;
+import me.valkeea.fishyaddons.util.text.Color;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 
@@ -27,15 +29,21 @@ public class DropdownMenu {
         for (int i = 0; i < entries.size(); i++) {
             int entryY = y + i * entryHeight;
             boolean hovered = mouseX >= x && mouseX <= x + width && mouseY >= entryY && mouseY <= entryY + entryHeight;
-            int bgColor = hovered ? 0xFFE2CAE9 : 0xCC222222;
+            int themeColor = Color.darken(FishyMode.getThemeColor(), 0.3f);
+            int bgColor = hovered ? themeColor : 0xEE121212;
+            int textColor = hovered ? 0xFF000000 : themeColor;
+
+            context.getMatrices().push();
+            context.getMatrices().translate(0, 0, 400);       
             context.fill(x, entryY, x + width, entryY + entryHeight, bgColor);
-            int textColor = hovered ? 0xFF000000 : 0xFFE2CAE9;
             context.drawText(screen.getTextRenderer(), entries.get(i), x + 6, entryY + (entryHeight - 8) / 2, textColor, false);
+            context.getMatrices().pop();
+
             if (hovered) hoveredIndex = i;
         }
     }
 
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+    public boolean mouseClicked(double mouseX, double mouseY) {
         if (!visible) return false;
         for (int i = 0; i < entries.size(); i++) {
             int entryY = y + i * entryHeight;

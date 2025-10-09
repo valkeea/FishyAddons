@@ -2,10 +2,9 @@ package me.valkeea.fishyaddons.ui.widget.dropdown;
 
 import java.util.List;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
+import me.valkeea.fishyaddons.ui.widget.VCTextField;
 import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.registry.Registries;
 import net.minecraft.util.Identifier;
 
@@ -24,7 +23,7 @@ public class SoundSearchMenu extends SearchMenu {
         super(
             entries.stream()
                 .map(id -> new SearchEntry(id, null, null, () -> onSelect.accept(id)))
-                .collect(Collectors.toList()),
+                .toList(),
             x, y, width, entryHeight,
             entry -> onSelect.accept(entry.name),
             screen
@@ -33,11 +32,11 @@ public class SoundSearchMenu extends SearchMenu {
     }
 
     public SoundSearchMenu(List<String> entries, int x, int y, int width, int entryHeight,
-                           Consumer<String> onSelect, Consumer<String> onRightClick, Screen screen, TextFieldWidget externalField) {
+                           Consumer<String> onSelect, Consumer<String> onRightClick, Screen screen, VCTextField externalField) {
         super(
             entries.stream()
                 .map(id -> new SearchEntry(id, null, null, () -> onSelect.accept(id)))
-                .collect(Collectors.toList()),
+                .toList(),
             x, y, width, entryHeight,
             entry -> onSelect.accept(entry.name),
             screen,

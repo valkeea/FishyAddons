@@ -1,16 +1,20 @@
 package me.valkeea.fishyaddons.util;
 
+import java.util.Arrays;
+
 import me.valkeea.fishyaddons.handler.WeatherTracker;
 import me.valkeea.fishyaddons.listener.WorldEvent;
 import me.valkeea.fishyaddons.util.text.ScoreboardUtils;
-import java.util.Arrays;
 
 public class ZoneUtils {
     private ZoneUtils() {}
     private static boolean isDungeons = false;
+    private static boolean isLobby = false;
     private static boolean denOrPark = false;
 
     private static void setDungeon() {
+        isLobby = false;
+
         StringBuilder areaBuilder = new StringBuilder();
         String l10 = ScoreboardUtils.getLine(9);
         String l9 = ScoreboardUtils.getLine(8);
@@ -34,12 +38,14 @@ public class ZoneUtils {
             if (hasCrimson) {
                 AreaUtils.updateCi();
             }
+
             if (hasCatacombs && hasTimeElapsed) {
                 isDungeons = true;
                 AreaUtils.setIsland("dungeon");
                 WorldEvent.getInstance().reset();
             } else if (hasCatacombs) {
                 isDungeons = false;
+                isLobby = true;
                 WorldEvent.getInstance().reCheck(80);
             } else {
                 isDungeons = false;
@@ -70,6 +76,10 @@ public class ZoneUtils {
 
     public static boolean isInDungeon() {
         return isDungeons;
+    }
+
+    public static boolean isDungeonInstance() {
+        return isDungeons || isLobby;
     }
 
     public static void resetDungeon() {

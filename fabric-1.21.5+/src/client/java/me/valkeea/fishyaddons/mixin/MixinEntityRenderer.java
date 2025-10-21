@@ -5,21 +5,14 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
 import me.valkeea.fishyaddons.handler.FaColors;
-import me.valkeea.fishyaddons.tool.ModCheck;
 import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.render.entity.PlayerEntityRenderer;
-import net.minecraft.client.render.entity.state.PlayerEntityRenderState;
+import net.minecraft.client.render.entity.EntityRenderer;
+import net.minecraft.client.render.entity.state.EntityRenderState;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.text.Text;
 
-/**
- * Modifies labels by replacing color styling.
- * Conditionally disabled to prevent outside flattening of modern formatting
- * resulting in missing style.
- */
-
-@Mixin(PlayerEntityRenderer.class)
-public abstract class MixinPlayerEntityRenderer {
+@Mixin(EntityRenderer.class)
+public class MixinEntityRenderer<S extends EntityRenderState> {
 
     @ModifyVariable(
         method = "renderLabelIfPresent",
@@ -28,13 +21,13 @@ public abstract class MixinPlayerEntityRenderer {
         index = 2
     )
     private Text rewriteLabelText(Text text,
-        PlayerEntityRenderState state,
+        S state,
         Text origText,
         MatrixStack matrixStack,
         VertexConsumerProvider vp,
         int i
     ) {
-        if (FaColors.shouldColor() && !ModCheck.hasSh()) {
+        if (FaColors.shouldColor()) {
             return FaColors.first(text);
         }
         return text;

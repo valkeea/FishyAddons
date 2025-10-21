@@ -30,7 +30,7 @@ public class Enhancer {
     
     private static final Pattern ALL_FORMATTING_PATTERN = Pattern.compile(
         "([§&]([0-9a-fk-or]))|" +
-        "([§&](#[0-9A-F]{6}))|" +
+        "([§&](#[0-9A-F]{6}))|" + 
         "([§&]\\{([^}]+)\\})|" +
         "([§&]\\[([^\\]]+)\\])",
         Pattern.CASE_INSENSITIVE
@@ -81,40 +81,51 @@ public class Enhancer {
         COLORS.put("fire", 0xFF4500);
         COLORS.put("violet", 0x483D8B);
     }
-    
-    private static ParseResult parseAndTrackStyle(String input, Style initialStyle) {
-        if (input == null || input.isEmpty()) {
-            return new ParseResult(Text.literal(""), initialStyle);
+
+    /**
+     * Parses an existing Text object for any formatting, mod or vanilla.
+     *
+     * @param original The original Text to parse
+     * @return The parsed text with formatting applied,
+     * starting from the first identified code.
+     */
+    public static Text parseExistingStyle(Text original) {
+        String raw = original.getString();
+        if (!hasFormattingCodes(raw)) {
+            return original;
         }
-        
+
+        if (original.getSiblings().isEmpty()) {
+            return parseFormattedText(raw);
+        }
+
         MutableText result = Text.literal("");
-        Matcher matcher = ALL_FORMATTING_PATTERN.matcher(input);
-        
-        int lastEnd = 0;
-        Style currentStyle = initialStyle;
-        
-        while (matcher.find()) {
-            if (matcher.start() > lastEnd) {
-                String textBefore = input.substring(lastEnd, matcher.start());
-                if (!textBefore.isEmpty()) {
-                    result.append(Text.literal(textBefore).setStyle(currentStyle));
-                }
+
+        for (Text sibling : original.getSiblings()) {
+            Style currentStyle = sibling.getStyle() != null ? sibling.getStyle() : Style.EMPTY;
+            String siblingStr = sibling.getString();
+
+            if (siblingStr == null || siblingStr.isEmpty()) {
+                continue;
             }
-            
-            currentStyle = processFormattingCode(matcher, currentStyle);
-            lastEnd = matcher.end();
-        }
-        
-        if (lastEnd < input.length()) {
-            String remainingText = input.substring(lastEnd);
-            if (!remainingText.isEmpty()) {
-                result.append(Text.literal(remainingText).setStyle(currentStyle));
+
+            if (hasFormattingCodes(siblingStr)) {
+                Text parsed = parseFormattedText(siblingStr);
+                result.append(parsed);
+            } else {
+                result.append(Text.literal(siblingStr).setStyle(currentStyle));
             }
         }
-        
-        return new ParseResult(result, currentStyle);
+
+        return result;
     }
-    
+
+    /**
+     * Parses the input text for any formatting, mod or vanilla.
+     *
+     * @param input The input text to parse
+     * @return The parsed text with formatting applied
+     */
     public static Text parseFormattedText(String input) {
         if (input == null || input.isEmpty()) {
             return Text.literal("");
@@ -133,17 +144,14 @@ public class Enhancer {
             Style currentStyle = Style.EMPTY;
             
             do {
-                // Process text before gradient to build up the current style
                 if (gradientMatcher.start() > lastEnd) {
                     String beforeText = input.substring(lastEnd, gradientMatcher.start());
                     
-                    // Parse the before text to accumulate styles
                     ParseResult beforeResult = parseAndTrackStyle(beforeText, currentStyle);
                     result.append(beforeResult.text);
                     currentStyle = beforeResult.finalStyle;
                 }
                 
-                // Process gradient with the accumulated style
                 String gradientName = gradientMatcher.group(1);
                 String gradientText = gradientMatcher.group(2);
                 
@@ -160,7 +168,6 @@ public class Enhancer {
                 lastEnd = gradientMatcher.end();
             } while (gradientMatcher.find());
             
-            // Add remaining text
             if (lastEnd < input.length()) {
                 String remainingText = input.substring(lastEnd);
                 ParseResult remainingResult = parseAndTrackStyle(remainingText, currentStyle);
@@ -173,7 +180,10 @@ public class Enhancer {
         return parseFormattedTextSimple(input);
     }
     
-    private static Text parseFormattedTextSimple(String input) {
+    /**
+     * Simple parsing without gradients
+     */
+    public static Text parseFormattedTextSimple(String input) {
         if (input == null || input.isEmpty()) {
             return Text.literal("");
         }
@@ -205,21 +215,52 @@ public class Enhancer {
         
         return result;
     }
-    
+
+    private static ParseResult parseAndTrackStyle(String input, Style initialStyle) {
+        if (input == null || input.isEmpty()) {
+            return new ParseResult(Text.literal(""), initialStyle);
+        }
+        
+        MutableText result = Text.literal("");
+        Matcher matcher = ALL_FORMATTING_PATTERN.matcher(input);
+        
+        int lastEnd = 0;
+        Style currentStyle = initialStyle;
+        
+        while (matcher.find()) {
+            if (matcher.start() > lastEnd) {
+                String textBefore = input.substring(lastEnd, matcher.start());
+                if (!textBefore.isEmpty()) {
+                    result.append(Text.literal(textBefore).setStyle(currentStyle));
+                }
+            }
+            
+            currentStyle = processFormattingCode(matcher, currentStyle);
+            lastEnd = matcher.end();
+        }
+        
+        if (lastEnd < input.length()) {
+            String remainingText = input.substring(lastEnd);
+            if (!remainingText.isEmpty()) {
+                result.append(Text.literal(remainingText).setStyle(currentStyle));
+            }
+        }
+        
+        return new ParseResult(result, currentStyle);
+    }    
+
     private static Style processFormattingCode(Matcher matcher, Style currentStyle) {
-        // Legacy formatting (groups 1, 2)
+
         if (matcher.group(1) != null) {
             String formatChar = matcher.group(2);
             return applyLegacyFormatting(currentStyle, formatChar.toLowerCase().charAt(0));
         }
         
-        // RGB (groups 3, 4)
         if (matcher.group(3) != null) {
             String hexColor = matcher.group(4);
             return applyRgbColor(currentStyle, hexColor);
         }
         
-        // Custom color/formatting (groups 5, 6)
         if (matcher.group(5) != null) {
             String name = matcher.group(6);
             return applyCustomColorOrFormat(currentStyle, name);

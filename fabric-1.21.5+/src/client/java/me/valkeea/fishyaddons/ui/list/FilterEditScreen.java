@@ -1,9 +1,10 @@
 package me.valkeea.fishyaddons.ui.list;
 
-import me.valkeea.fishyaddons.config.FilterConfig.Rule;
 import me.valkeea.fishyaddons.config.FilterConfig;
+import me.valkeea.fishyaddons.config.FilterConfig.Rule;
 import me.valkeea.fishyaddons.ui.VCOverlay;
 import me.valkeea.fishyaddons.ui.VCPopup;
+import me.valkeea.fishyaddons.ui.VCText;
 import me.valkeea.fishyaddons.ui.widget.FaButton;
 import me.valkeea.fishyaddons.ui.widget.VCTextField;
 import me.valkeea.fishyaddons.ui.widget.dropdown.TextFormatMenu;
@@ -11,6 +12,7 @@ import me.valkeea.fishyaddons.util.text.Enhancer;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 
@@ -224,7 +226,7 @@ public class FilterEditScreen extends Screen {
         int y = this.height / 2 - 175;
         int lineHeight = 15;
 
-        Text title = Text.literal("FishyAddons Chat Filters and Overrides").formatted(Formatting.BOLD, Formatting.AQUA);
+        Text title = VCText.header("FishyAddons Chat Filters and Overrides", Style.EMPTY.withBold(true));
 
         context.getMatrices().push();
         context.getMatrices().translate(0,0, 300);

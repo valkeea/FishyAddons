@@ -119,7 +119,7 @@ public class ChatProcessor {
     
     private boolean isDisplayOnlyHandler(String handlerName) {
         return handlerName.equals("Coordinates") ||
-                handlerName.equals("ChatButton");
+                handlerName.equals("ChatFormat");
     }
     
     /**

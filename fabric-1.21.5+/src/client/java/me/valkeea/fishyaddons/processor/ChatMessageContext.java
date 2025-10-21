@@ -13,7 +13,7 @@ public class ChatMessageContext {
     private final Text unfilteredMessage;
     private final String rawText;
     private final String cleanText;
-    private final String packetInfo;
+    private final Text packetInfo;
     private final String lowercaseText;
     private final boolean overlay;
     private final long timestamp;
@@ -38,7 +38,7 @@ public class ChatMessageContext {
         this.timestamp = System.currentTimeMillis();
         this.rawText = originalMessage.getString();
         this.cleanText = TextUtils.stripColor(rawText);
-        this.packetInfo = packetInfo != null ? TextUtils.stripColor(packetInfo.getString()) : "";
+        this.packetInfo = packetInfo != null ? packetInfo : Text.empty();
         this.lowercaseText = cleanText.toLowerCase();
     }
     
@@ -49,7 +49,8 @@ public class ChatMessageContext {
     public String getUnfilteredCleanLowercaseText() { return TextUtils.stripColor(unfilteredMessage.getString()).toLowerCase(); }
     public String getRawText() { return rawText; }
     public String getCleanText() { return cleanText; }
-    public String getPacketInfo() { return packetInfo; }
+    public Text getPacketInfo() { return packetInfo; }
+    public String getPacketInfoString() { return TextUtils.stripColor(packetInfo.getString()); }
     public String getLowercaseText() { return lowercaseText; }
     public boolean isOverlay() { return overlay; }
     public long getTimestamp() { return timestamp; }
@@ -105,7 +106,7 @@ public class ChatMessageContext {
     }
 
     public boolean guildMessage() {
-        return !isOverlay() && packetInfo.startsWith("Guild >");
+        return !isOverlay() && getPacketInfoString().startsWith("Guild >");
     }
     
     private boolean skyblockMessage() {

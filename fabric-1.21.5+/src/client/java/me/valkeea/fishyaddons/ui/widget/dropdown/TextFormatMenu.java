@@ -301,6 +301,7 @@ public class TextFormatMenu {
     }
     
     private void insertAtCaret(String text) {
+        text = text.replace('§', '&');
         onSelect.accept(text);
     }
     

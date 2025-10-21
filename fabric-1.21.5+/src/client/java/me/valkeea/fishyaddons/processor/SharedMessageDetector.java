@@ -129,6 +129,10 @@ public class SharedMessageDetector {
             if (alertData.isToggled()) {
                 try {
                     int matchIndex = strippedMessage.indexOf(alertKey);
+                    if (alertData.isStartsWith() && matchIndex != 0) {
+                        matchIndex = -1;
+                    }
+                    
                     if (matchIndex != -1) {
                         AlertMatch match = new AlertMatch(
                             alertKey,

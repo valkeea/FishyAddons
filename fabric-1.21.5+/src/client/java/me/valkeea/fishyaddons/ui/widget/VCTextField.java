@@ -218,8 +218,8 @@ public class VCTextField extends TextFieldWidget {
     
     @Override
     public boolean charTyped(char chr, int modifiers) {
-        if (allowSection && this.isFocused() && this.isActive()) {
-            if (chr == '§') {
+        if (this.isFocused() && this.isActive()) {
+            if (chr == '§' && allowSection) {
                 return writeText(String.valueOf(chr));
             }
             return super.charTyped(chr, modifiers);

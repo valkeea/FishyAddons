@@ -564,21 +564,20 @@ public class FishyConfig {
         private String soundId;
         private float volume;
         private boolean toggled;
+        private boolean startsWith;
 
         public AlertData() {
-            this("", "", 0x6DE6B5, "", 1.0F, true);
+            this("", "", 0x6DE6B5, "", 1.0F, true, false);
         }
 
-        public AlertData(String msg, String onscreen, int color, String soundId, float volume, boolean toggled) {
+        public AlertData(String msg, String onscreen, int color, String soundId, float volume, boolean toggled, boolean startsWith) {
             this.msg = msg;
             this.onscreen = onscreen;
             this.color = color;
             this.soundId = soundId;
-            // Normalize volume between 0.0F and 2.0F
-            if (volume < 0.0F) volume = 0.0F;
-            if (volume > 5.0F) volume = 5.0F;
-            this.volume = volume;
+            this.volume = Math.clamp(volume, 0.0f, 10.0f);
             this.toggled = toggled;
+            this.startsWith = startsWith;
         }
 
         public void setMsg(String msg) { this.msg = msg; }        
@@ -587,7 +586,14 @@ public class FishyConfig {
         public int getColor() { return color; }
         public String getSoundId() { return soundId; }
         public float getVolume() { return volume; }
-        public boolean isToggled() { return toggled; }       
+        public boolean isToggled() { return toggled; }  
+        public void setToggled(boolean toggled) { this.toggled = toggled; }
+        public boolean isStartsWith() { return startsWith; }
+        public void setStartsWith(boolean startsWith) { this.startsWith = startsWith; }
+        public void setOnscreen(String onscreen) { this.onscreen = onscreen; }
+        public void setColor(int color) { this.color = color; }
+        public void setSoundId(String soundId) { this.soundId = soundId; }
+        public void setVolume(float volume) { this.volume = Math.clamp(volume, 0.0f, 10.0f); }
     }
 
     // --- Section instance for alerts ---

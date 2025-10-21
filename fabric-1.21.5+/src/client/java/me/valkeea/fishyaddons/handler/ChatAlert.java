@@ -10,7 +10,8 @@ import me.valkeea.fishyaddons.hud.TitleDisplay;
 import me.valkeea.fishyaddons.processor.MessageAnalysis;
 import me.valkeea.fishyaddons.processor.MessageAnalysis.AlertMatch;
 import me.valkeea.fishyaddons.processor.SharedMessageDetector;
-import me.valkeea.fishyaddons.util.SoundUtil;
+import me.valkeea.fishyaddons.tool.PlaySound;
+import me.valkeea.fishyaddons.tool.PlayerPosition;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.util.Identifier;
 
@@ -70,7 +71,7 @@ public class ChatAlert {
             try {
                 Identifier id = Identifier.tryParse(data.getSoundId());
                 if (id != null) {
-                    SoundUtil.playDynamicSound(id.toString(),
+                    PlaySound.dynamic(id.toString(),
                     data.getVolume(), 1.0F);
                 }
             } catch (Exception ignored) {
@@ -96,18 +97,29 @@ public class ChatAlert {
 
     private static void handleMsg(AlertData data, MinecraftClient client) {
         String message = data.getMsg().trim();
+        boolean isInParty = GameChat.isInParty() || GameChat.partyToggled();
+
+        if (message.isBlank()) {
+            return;
+        }
+
+        if (message.contains("<pos>")) {
+            String coords = PlayerPosition.getCoordsString(client);
+            message = message.replace("<pos>", coords);
+        }
 
         if (message.startsWith("/")) {
-            String command = message.substring(1);
 
-            if (isValid(command) && canExecuteCommand() && GameChat.partyToggled()) {
-                client.player.networkHandler.sendChatCommand(command);
-                lastCommandTime.put("global", System.currentTimeMillis());
+            if (isValid(message) && canExecuteCommand()) {
+                message = message.replace("/", "");
+                client.player.networkHandler.sendCommand(message);
             }
 
-        } else {
-            client.player.networkHandler.sendChatMessage(message);
+        } else if (isInParty) {
+            client.player.networkHandler.sendChatMessage("/pc " + message);
         }
+
+        lastCommandTime.put("global", System.currentTimeMillis());
     }
 
     private static void cleanupOldTriggers(long currentTime) {

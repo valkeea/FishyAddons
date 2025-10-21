@@ -4,8 +4,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import me.valkeea.fishyaddons.config.FishyConfig;
-import me.valkeea.fishyaddons.config.Key;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
@@ -60,7 +58,7 @@ public class GradientRenderer {
     }
 
     public static void init() {
-        if (PRESET_CACHE.isEmpty() && FishyConfig.getState(Key.CHAT_FILTER_ENABLED, false) || FishyConfig.getState(Key.CHAT_FILTER_SC_ENABLED, false)) {
+        if (PRESET_CACHE.isEmpty()) {
             precacheAllGradients();
         }
     }
@@ -179,7 +177,7 @@ public class GradientRenderer {
     /**
      * Renders a custom gradient like "FF0000>0000FF" manually
      */
-    protected static Text renderCustomGradient(String text, String gradientSpec, Style baseStyle) {
+    public static Text renderCustomGradient(String text, String gradientSpec, Style baseStyle) {
         if (text == null || text.isEmpty()) {
             return Text.literal("");
         }

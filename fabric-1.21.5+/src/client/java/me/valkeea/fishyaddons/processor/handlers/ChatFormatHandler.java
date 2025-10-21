@@ -8,10 +8,11 @@ import me.valkeea.fishyaddons.processor.ChatHandler;
 import me.valkeea.fishyaddons.processor.ChatHandlerResult;
 import me.valkeea.fishyaddons.processor.ChatMessageContext;
 import me.valkeea.fishyaddons.util.text.ChatButton;
+import me.valkeea.fishyaddons.util.text.Enhancer;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 
-public class ChatButtonHandler implements ChatHandler {
+public class ChatFormatHandler implements ChatHandler {
     
     @Override
     public int getPriority() {
@@ -20,26 +21,27 @@ public class ChatButtonHandler implements ChatHandler {
     
     @Override
     public String getHandlerName() {
-        return "ChatButton";
+        return "ChatFormat";
     }
     
     @Override
     public boolean shouldHandle(ChatMessageContext context) {
-        String rawText = context.getPacketInfo();
+        String rawText = context.getPacketInfoString();
         return context.isGuildMessage() &&
-                containsLfMsg(rawText);
+                containsIdentifiers(rawText);
     }
     
     @Override
     public ChatHandlerResult handle(ChatMessageContext context) {
         try {
             Text newLine = context.getOriginalMessage();
-            String rawOriginal = context.getPacketInfo();
+            Text original = context.getPacketInfo();
+            String cleanOriginal = context.getPacketInfoString();
 
-            Text enhanced = addButton(newLine, rawOriginal);
+            Text enhanced = addFormatting(newLine, original, cleanOriginal);
             if (!enhanced.equals(newLine)) {
                 ChatMessageContext newContext = new ChatMessageContext(enhanced, context.isOverlay());
-                    return ChatHandlerResult.modifyWith(newContext, "Added chat button");
+                    return ChatHandlerResult.modifyWith(newContext, "Added chat formatting");
                 }
 
             return ChatHandlerResult.CONTINUE;
@@ -52,13 +54,22 @@ public class ChatButtonHandler implements ChatHandler {
     
     @Override
     public boolean isEnabled() {
-        return FishyConfig.getState(Key.CHAT_FILTER_PARTYBTN, false);
+        return FishyConfig.getState(Key.CHAT_FILTER_PARTYBTN, false) || 
+               FishyConfig.getState(Key.CHAT_FORMATTING, true);
     }
     
-    private boolean containsLfMsg(String message) {
+    private boolean containsIdentifiers(String message) {
+        return hasLfgTag(message) || hasFormattingCodes(message);
+    }
+
+    private boolean hasFormattingCodes(String s) {
+        return s.contains("&{") || s.contains("&[");
+    }
+
+    private boolean hasLfgTag(String s) {
         var pattern = Pattern.compile("(?i)\\b(invite|inv| p |party)\\b");
-        var matcher = pattern.matcher(message);
-        return matcher.find() && !message.contains("Party >");
+        var matcher = pattern.matcher(s);
+        return (matcher.find() && !s.contains("Party >"));
     }
 
     private String extractIgn(String s) {
@@ -96,7 +107,15 @@ public class ChatButtonHandler implements ChatHandler {
         return lower.equals("pls") || lower.equals("please");
     }
 
-    private Text addButton(Text originalMessage, String cleanOriginal) {
+    private Text addFormatting(Text originalMessage, Text originalText, String cleanOriginal) {
+        if (hasFormattingCodes(cleanOriginal) && FishyConfig.getState(Key.CHAT_FORMATTING, true)) {
+            originalMessage = Enhancer.parseExistingStyle(originalText);
+        }
+
+        if (!FishyConfig.getState(Key.CHAT_FILTER_PARTYBTN, false) || !hasLfgTag(cleanOriginal)) {
+            return originalMessage;
+        }
+
         String ign = extractIgn(cleanOriginal);
 
         if (ign.isEmpty()) {

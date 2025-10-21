@@ -2,11 +2,13 @@ package me.valkeea.fishyaddons.render;
 
 import org.joml.Matrix4f;
 
+import me.valkeea.fishyaddons.util.text.Enhancer;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.text.Text;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
 
@@ -19,7 +21,6 @@ public class WorldElements {
         MinecraftClient client = MinecraftClient.getInstance();
         TextRenderer textRenderer = client.textRenderer;
         
-        // Calculate distance-based scaling
         Vec3d playerPos = context.camera().getPos();
         double distance = Math.sqrt(
             Math.pow(x - playerPos.x, 2) + 
@@ -36,10 +37,11 @@ public class WorldElements {
         matrices.multiply(context.camera().getRotation());
         matrices.scale(finalScale, -finalScale, finalScale);
 
-        float width = textRenderer.getWidth(text);
+        Text parsed = Enhancer.parseFormattedText(text);
+        float width = textRenderer.getWidth(parsed.getString());
         
         textRenderer.draw(
-            text,
+            parsed,
             -width / 2f,
             0,
             color,

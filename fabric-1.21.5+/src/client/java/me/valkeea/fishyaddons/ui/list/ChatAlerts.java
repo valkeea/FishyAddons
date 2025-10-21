@@ -28,7 +28,7 @@ import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 
 public class ChatAlerts extends Screen {
-    private static final String TITLE_TEXT = "─ α Chat Alerts α ─";
+    private static final String TITLE_TEXT = "Chat Alerts";
 
     private static float uiScale;
     private static int entryH;
@@ -88,6 +88,9 @@ public class ChatAlerts extends Screen {
                 this.width / 2 - entryW / 2, addBtnY, btnW, btnH,
                 Text.literal("Add").styled(style -> style.withColor(0xCCFFCC)),
                 btn -> {
+                    if (entries.size() >= maxVisibleEntries) {
+                        scrollOffset = entries.size() - maxVisibleEntries + 1;
+                    }
                     addMode = true;
                     addEntry = new AddEntry();
                     this.addDrawableChild(addEntry.keyField);
@@ -178,7 +181,7 @@ public class ChatAlerts extends Screen {
             }
         } else {
             VCText.drawScaledCenteredText(
-                context, this.textRenderer, TITLE_TEXT, this.width / 2, 15, 0xFF55FFFF, uiScale - 0.1f);
+                context, this.textRenderer, VCText.header(TITLE_TEXT, Style.EMPTY.withBold(true)), this.width / 2, 15, 0xFF55FFFF, uiScale - 0.1f);
         }
 
         if (presetDropdown != null && presetDropdown.isVisible()) {

@@ -4,19 +4,23 @@ import java.util.List;
 
 import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.handler.ChatAlert;
+import me.valkeea.fishyaddons.tool.PlaySound;
 import me.valkeea.fishyaddons.ui.ColorWheel;
 import me.valkeea.fishyaddons.ui.HudEditScreen;
 import me.valkeea.fishyaddons.ui.VCOverlay;
 import me.valkeea.fishyaddons.ui.VCPopup;
+import me.valkeea.fishyaddons.ui.VCText;
 import me.valkeea.fishyaddons.ui.widget.FaButton;
+import me.valkeea.fishyaddons.ui.widget.VCSlider;
 import me.valkeea.fishyaddons.ui.widget.VCTextField;
 import me.valkeea.fishyaddons.ui.widget.dropdown.SoundSearchMenu;
-import me.valkeea.fishyaddons.util.SoundUtil;
+import me.valkeea.fishyaddons.ui.widget.dropdown.TextFormatMenu;
 import me.valkeea.fishyaddons.util.text.Enhancer;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.registry.Registries;
+import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
@@ -27,19 +31,22 @@ public class AlertEditScreen extends Screen {
     private static final String COLOR = "Color";
     private String alertKey;
 
-    private SoundSearchMenu searchMenu; 
+    private SoundSearchMenu searchMenu;
+    private TextFormatMenu formatMenu;
     private VCTextField msgField;
     private VCTextField alertTextField;
     private VCTextField soundIdField;
-    private VCTextField volumeField;
+    private VCSlider volumeSlider;
     private VCTextField keyField;
     private int alertColor = 0x6DE6B5;
+    private boolean alertStartsWith = false;
+    private VCTextField lastFocusedField = null; 
 
     private String stateKey = null;
     private String stateMsg = null;
     private String stateOnscreen = null;
     private String stateSoundId = null;
-    private String stateVolume = null; 
+    private Float stateVolume = null; 
     
     private static String prefer(String... values) {
         for (String v : values) {
@@ -53,14 +60,14 @@ public class AlertEditScreen extends Screen {
         stateMsg = msgField.getText();
         stateOnscreen = alertTextField.getText();
         stateSoundId = soundIdField.getText();
-        stateVolume = volumeField.getText();
+        stateVolume = volumeSlider != null ? volumeSlider.getValue() : null;
     }
 
     public AlertEditScreen(String key, FishyConfig.AlertData data, Screen parent) {
         super(Text.literal("Edit Alert"));
         this.parent = parent;
         this.alertKey = key;
-        this.initialData = data != null ? data : new FishyConfig.AlertData("", "", 0xFFFFFFFF, "", 1.0F, true);
+        this.initialData = data != null ? data : new FishyConfig.AlertData("", "", 0xFFFFFFFF, "", 1.0F, true, false);
         this.alertColor = this.initialData.getColor();
     }
 
@@ -69,7 +76,7 @@ public class AlertEditScreen extends Screen {
         int centerX = this.width / 2;
         int centerY = this.height / 2 - 10;
 
-        int x = centerX - 350;
+        int x = centerX - 380;
         int y = centerY - 80;
         int w = 300;
         int h = 20;
@@ -79,8 +86,24 @@ public class AlertEditScreen extends Screen {
         keyField.setText(prefer(stateKey, alertKey));
         this.addDrawableChild(keyField);
 
+        addDrawableChild(new FaButton(x + w, y, 80, h, 
+            Text.literal(initialData.isStartsWith() ? "Starts With" : "Anywhere").styled(style -> 
+                style.withColor(initialData.isStartsWith() ? alertColor : 0xFF808080)
+            ), btn -> { 
+                boolean newMode= !initialData.isStartsWith();
+                btn.setMessage(Text.literal(newMode ? "Starts With" : "Anywhere")
+                    .styled(s -> s.withColor(newMode ? alertColor : 0xFF808080))
+                );
+                initialData.setStartsWith(newMode);
+                alertStartsWith = newMode;
+                storeState();
+                this.client.setScreen(this);
+            }
+        ));
+
         msgField = new VCTextField(this.textRenderer, x, y + 40, w, h, Text.literal("Chat message"));
         msgField.setText(prefer(stateMsg, initialData.getMsg()));
+        msgField.setSectionSymbol(false);
         this.addDrawableChild(msgField);
 
         alertTextField = new VCTextField(this.textRenderer, x, y + 80, w, h, Text.literal("On-screen Alert"));
@@ -124,7 +147,7 @@ public class AlertEditScreen extends Screen {
                 soundIdField.setText(soundId);
                 searchMenu.setVisible(false);
             },
-            soundId -> SoundUtil.playDynamicSound(soundId, 1.0F, 1.0F),
+            soundId -> PlaySound.dynamic(soundId, volumeSlider != null ? volumeSlider.getValue() : 1.0F, 1.0F),
             this,
             soundIdField
         );
@@ -135,15 +158,22 @@ public class AlertEditScreen extends Screen {
 
         searchMenu.setVisible(!soundIdField.getText().isEmpty());
 
-        volumeField = new VCTextField(this.textRenderer, x + width, sy, 50, 20, Text.literal("Volume"));
+        float initialVolume;
         if (stateVolume != null) {
-            volumeField.setText(stateVolume);
-        } else if (initialData.getVolume() != 1.0F) {
-            volumeField.setText(String.valueOf(initialData.getVolume()));
+            initialVolume = stateVolume;
         } else {
-            volumeField.setText("1.0");
+            initialVolume = initialData.getVolume();
         }
-        this.addDrawableChild(volumeField);
+        
+        volumeSlider = new VCSlider(x + width, sy, initialVolume, 0.0f, 10.0f, "%.1f", value -> {});
+        volumeSlider.setUIScale(1.0f);
+
+        formatMenu = new TextFormatMenu(
+            this.width / 2 + 50, 30, w,
+            this::insertAtCaret,
+            1.0f
+        );
+        formatMenu.setMaxEntries((this.height - 50) / h);     
 
         this.addDrawableChild(new FaButton(x + w / 2 + 80, soundIdField.getY() + 80, 80, 20,
             Text.literal("HUD").styled(style -> style.withColor(0xE2CAE9)),
@@ -168,18 +198,36 @@ public class AlertEditScreen extends Screen {
         ));
     }
 
+    private void insertAtCaret(String format) {
+        VCTextField focusedField = null;
+        if (msgField.isFocused()) {
+            focusedField = msgField;
+        } else if (alertTextField.isFocused()) {
+            focusedField = alertTextField;
+        }
+        
+        if (focusedField == null && lastFocusedField != null) {
+            focusedField = lastFocusedField;
+            focusedField.setFocused(true);
+        }
+        
+        if (focusedField != null) {
+            apply(focusedField, format);
+        }
+        formatMenu.setVisible(false);
+    }
+
+    private void apply(VCTextField field, String format) {
+        String currentText = field.getText();
+        int caretPos = field.getCursor();    
+        String newText = currentText.substring(0, caretPos) + format + currentText.substring(caretPos);
+        field.setText(newText);
+        field.setCursor(caretPos + format.length(), false);
+        field.setFocused(true);
+    }    
+
     private void save() {
-        float volume = 1.0F;
-        try {
-        String input = volumeField.getText().trim();
-        if (!input.isEmpty()) {
-            volume = Float.parseFloat(input);
-                if (volume < 0.0F) volume = 0.0F;
-                if (volume > 5.0F) volume = 5.0F;
-            }
-            } catch (NumberFormatException ignored) {
-                System.err.println("Invalid volume input: " + volumeField.getText());
-            }
+        float volume = volumeSlider != null ? volumeSlider.getValue() : 1.0f;
             String newKey = keyField.getText().trim();
         if (newKey.isEmpty()) {
             warn();
@@ -191,14 +239,14 @@ public class AlertEditScreen extends Screen {
             alertColor,
             soundIdField.getText(),
             volume,
-            true
+            true,
+            alertStartsWith
         );
 
         if (!newKey.equals(alertKey)) {
             FishyConfig.removeChatAlert(alertKey);
         }
         FishyConfig.setChatAlert(newKey, newData);
-        volumeField.setText(stateVolume != null ? stateVolume : String.valueOf(initialData.getVolume()));
     }
 
 	public void warn() {
@@ -227,18 +275,31 @@ public class AlertEditScreen extends Screen {
 
         int centerX = this.width / 2;
         int centerY = this.height / 2 - 10;
-        int x = centerX - 350;
-        int y = centerY - 90; 
+        int x = centerX - 380;
+        int y = centerY - 90;
         int w = 300;
         
         checkTooltip(context, mouseX, mouseY);
 
         context.drawText(this.textRenderer, "Detected String", x, y, 0xFF808080, false);
+        context.drawText(this.textRenderer, "Location", x + w + 10, y, 0xFF808080, false);
         context.drawText(this.textRenderer, "Auto Chat", x, y + 40, 0xFF808080, false);
         context.drawText(this.textRenderer, "On-screen Title", x, y + 80, 0xFF808080, false);
         context.drawText(this.textRenderer, COLOR, x + w + 10, y + 80, 0xFF808080, false);
         context.drawText(this.textRenderer, "SoundEvent ID", x, y + 120, 0xFF808080, false);
-        context.drawText(this.textRenderer, "Volume", x + w + 10, y + 120, 0xFF808080, false);
+        
+        if (volumeSlider != null) {
+            String volumeLabel = "Volume (" + volumeSlider.getPercentageText() + ")";
+            context.drawText(this.textRenderer, volumeLabel, x + w + 10, y + 120, 0xFF808080, false);
+            volumeSlider.render(context, mouseX, mouseY);
+        }
+
+        if (formatMenu != null && formatMenu.isVisible()) {
+            context.getMatrices().push();
+            context.getMatrices().translate(0, 0, 300);
+            formatMenu.render(context, this, mouseX, mouseY);
+            context.getMatrices().pop();
+        }        
     }
 
     private void checkTooltip(DrawContext context, int mouseX, int mouseY) {
@@ -304,16 +365,12 @@ public class AlertEditScreen extends Screen {
     }    
 
     public void renderGuideText(DrawContext context) {       
-        int x = this.width / 2 + 50;
-        int y = this.height / 2 - 175;
+        int x = this.width / 2 + 30;
+        int y = 30;
         int lineHeight = 15;
 
-        Text title = Text.literal("FishyAddons Custom Alerts").formatted(Formatting.BOLD, Formatting.AQUA);
-
-        context.getMatrices().push();
-        context.getMatrices().translate(0,0, 300);
+        Text title = VCText.header("FishyAddons Custom Alerts", Style.EMPTY.withBold(true));
         context.drawTextWithShadow(this.textRenderer, title, x, y, 0xFFFFFF);            
-        context.getMatrices().pop();
 
         y += lineHeight * 2;
                 
@@ -323,28 +380,28 @@ public class AlertEditScreen extends Screen {
             "",
             "- Detected String -",
             " • §7Matched anywhere in the message",
-            " • §8Example: alert set to 'hel', the alert will also trigger on 'hello'",
-            " • §7With Chat Filter enabled, use the original message",
+            "   §7or, only from start if 'Starts With' is selected",
+            " • §7With Chat Filter enabled, use the §doriginal message",
             "   as a trigger to not have to update alerts if you change your config",
             "",
             "- Auto Chat -",
-            " • §7Sends a chat command / message if in party channel",
+            " • §7Sends a pchat message if you are currently in a party",
+            " • §b<pos> §7can be used to insert your current coordinates!",
+            " • §7 Commands (start with '/') will be sent even if not in a party",
             "",
             "- On-screen Title -",
-            " • §7Appears for 2 seconds, position and size can be customized in /fa hud",
+            " • §7Lasts for 2 seconds, position and size can be customized in /fa hud",
             " • §7You can choose a color or use mod / legacy formatting codes",
             "",
             "- SoundEvent -",
-            " • §7Plays a Minecraft SoundEvent when",
-            "   the alert is triggered",
+            " • §7Triggers a Minecraft SoundEvent when the alert is triggered",
             " • §7You can preview sounds by right-clicking",
             "   them in the dropdown",
             " • §7Volume is affected by internal settings",
-            "   §3Note: FA provides 3 custom events with placeholder sounds.",
-            "   §3You can replace them with a normal resource pack",
-            "   §3by placing fishyaddons_1.ogg, (1-3)",
-            "   §3in assets/fishyaddons/sounds/custom.",
-            " • §7Alerts can also be loaded from JSON"           
+            "   §3Note: §8FA provides 3 custom events with placeholder sounds.",
+            "   §3Guide to replace them: §8/fa sc sounds",
+            "",
+            " • §7Alerts can be loaded from JSON in the main list UI if you want to share!"
         };
 
         for (String instruction : instructions) {
@@ -361,24 +418,58 @@ public class AlertEditScreen extends Screen {
             } else if (instruction.startsWith(" The")) {
                 format = Formatting.DARK_GRAY;
             }
-
-            context.getMatrices().push();
-            context.getMatrices().translate(0,0, 300);      
+    
             Text text = Text.literal(instruction).formatted(format);
             context.drawTextWithShadow(this.textRenderer, text, x, y, 0xFFFFFF);
-            context.getMatrices().pop();
             y += lineHeight;
         }              
     }
 
+    private void toggleFormatMenu(boolean show) {
+        if (formatMenu != null) {
+            boolean shouldShow = !formatMenu.isVisible() &&
+            (lastFocusedField == msgField || lastFocusedField == alertTextField);
+            formatMenu.setVisible(shouldShow && show);
+        }
+    }
+    
+    private boolean handleMenu(double mouseX, double mouseY) {
+        if (formatMenu != null && formatMenu.isVisible()) {
+            if (formatMenu.mouseClicked(mouseX, mouseY)) {
+                return true;
+            }
+            formatMenu.setVisible(false);
+            return false;
+        }
+        return false;
+    }    
+
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (soundIdField.isFocused() && (
-                msgField.isMouseOver(mouseX, mouseY) || 
-                alertTextField.isMouseOver(mouseX, mouseY) ||
-                volumeField.isMouseOver(mouseX, mouseY))) {
-            soundIdField.setFocused(false);
+        if (handleMenu(mouseX, mouseY)) {
+            return true;
         }
+
+        // Handle volume slider clicks
+        if (volumeSlider != null && volumeSlider.mouseClicked(mouseX, mouseY, button)) {
+            return true;
+        }
+
+        List<VCTextField> fields = List.of(msgField, alertTextField, soundIdField, keyField);
+        boolean clickedField = false;
+        for (VCTextField field : fields) {
+            if (field.isMouseOver(mouseX, mouseY)) {
+                lastFocusedField = field;
+                clickedField = true;
+                toggleFormatMenu(true);
+                break;
+            }
+        }
+
+        if (!clickedField) {
+            toggleFormatMenu(false);
+        }
+
         if (searchMenu != null && searchMenu.mouseClicked(mouseX, mouseY, button)) {
             return true;
         }
@@ -390,6 +481,12 @@ public class AlertEditScreen extends Screen {
         if (searchMenu != null && soundIdField.isFocused() && searchMenu.keyPressed(keyCode, scanCode, modifiers)) {
             return true;
         }
+
+        if (keyCode == 292) {
+            toggleFormatMenu(true);
+            return true;
+        }        
+
         return super.keyPressed(keyCode, scanCode, modifiers);
     }    
 
@@ -398,7 +495,30 @@ public class AlertEditScreen extends Screen {
         if (searchMenu != null && searchMenu.mouseScrolled(verticalAmount)) {
             return true;
         }
+        if (formatMenu != null && formatMenu.isVisible()) {
+            return formatMenu.mouseScrolled(verticalAmount);
+        }        
         return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
+    }
+
+    @Override
+    public boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
+        if (volumeSlider != null && volumeSlider.mouseDragged(mouseX, button)) {
+            return true;
+        }
+        
+        if (formatMenu != null && formatMenu.isVisible() && formatMenu.mouseDragged(mouseY)) {
+            return true;
+        }
+        return super.mouseDragged(mouseX, mouseY, button, deltaX, deltaY);
+    }
+
+    @Override
+    public boolean mouseReleased(double mouseX, double mouseY, int button) {
+        if (volumeSlider != null && volumeSlider.mouseReleased(button)) {
+            return true;
+        }
+        return super.mouseReleased(mouseX, mouseY, button);
     }
 
     @Override

@@ -10,6 +10,8 @@ import me.valkeea.fishyaddons.config.FilterConfig.Rule;
 import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.config.Key;
 import me.valkeea.fishyaddons.config.RuleFactory;
+import me.valkeea.fishyaddons.ui.VCOverlay;
+import me.valkeea.fishyaddons.ui.VCPopup;
 import me.valkeea.fishyaddons.ui.VCText;
 import me.valkeea.fishyaddons.ui.widget.FaButton;
 import me.valkeea.fishyaddons.ui.widget.VCButton;
@@ -18,16 +20,18 @@ import me.valkeea.fishyaddons.ui.widget.VCTextField;
 import me.valkeea.fishyaddons.ui.widget.VCVisuals;
 import me.valkeea.fishyaddons.ui.widget.dropdown.TextFormatMenu;
 import me.valkeea.fishyaddons.util.text.Enhancer;
+import me.valkeea.fishyaddons.util.text.GradientRenderer;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.sound.PositionedSoundInstance;
 import net.minecraft.sound.SoundEvents;
+import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 
 public class ScRules extends Screen {
-    private static final String TITLE_TEXT = "─ α Sea Creature Messages α ─";
+    private static final String TITLE_TEXT = "Sea Creature Messages";
     private static final String F3_TEXT = "§7Click a field and press F3 to apply formats...";
 
     private static float uiScale;
@@ -59,10 +63,14 @@ public class ScRules extends Screen {
     public ScRules(Screen parent) {
         super(Text.literal(TITLE_TEXT));
         this.parent = parent;
-    }
+    }  
 
     @Override
     protected void init() {
+        if (!FilterConfig.areScRulesLoaded()) {
+            FilterConfig.refreshScRules();
+        }
+        
         entries.clear();        
         this.clearChildren();
         calcDimensions(FishyConfig.getFloat(Key.MOD_UI_SCALE, 0.4265625f), this.width);
@@ -284,7 +292,7 @@ public class ScRules extends Screen {
         fieldH = (int) (20 * uiScale);
         btnH = (int) (20 * uiScale);
         entryH = (int) (28 * uiScale);
-        entryW = Math.clamp(nameW + prefixW + fieldW + (3 * btnW), 0, width - btnW * 2);
+        entryW = Math.clamp(nameW + prefixW + fieldW + (long)(3 * btnW), 0, width - btnW * 2);
     }
 
     @Override
@@ -292,8 +300,10 @@ public class ScRules extends Screen {
         this.renderBackground(context, mouseX, mouseY, delta);
         super.render(context, mouseX, mouseY, delta);
 
+        var title = VCText.header(TITLE_TEXT, Style.EMPTY.withBold(true));
+
         VCText.drawScaledCenteredText(
-        context, this.textRenderer, TITLE_TEXT, this.width / 2, 15, 0xFF55FFFF, uiScale - 0.1f);
+        context, this.textRenderer, title, this.width / 2, 15, 0xFF55FFFF, uiScale - 0.1f);
           
         addList(context);
 
@@ -420,7 +430,7 @@ public class ScRules extends Screen {
         }
 
         if (totalEntries > maxVisibleEntries) {
-            int scrollX = Math.clamp(this.width / 2 + entryW / 2 + 20, 0, this.width - 10);
+            int scrollX = Math.clamp(this.width / 2 + entryW / 2 + (long)20, 0, this.width - 10);
             renderScrollIndicator(context, scrollX, listTop, listHeight, totalEntries);
         }
     }

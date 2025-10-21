@@ -124,11 +124,17 @@ public class CoordinateHandler implements ChatHandler {
 
     private Text addButtons(Text originalMessage) {
         String messageText = originalMessage.getString();
-        String coords = extractCoordinates(messageText);
-        String title = extractTitle(messageText);
+        String coords = extractCoordinates(messageText).isEmpty() ? "" : extractCoordinates(messageText);
 
-        var hideBtn = ChatButton.create("/fa coords hide ", "Hide");
-        var reDrawBtn = ChatButton.create("/fa coords redraw " + coords + (title.isEmpty() ? "" : " " + title), "Redraw");
+        if (coords.isEmpty()) {
+            return originalMessage;
+        }
+
+        String title = extractTitle(messageText).isEmpty() ? "" : extractTitle(messageText);
+        String beacon = coords + (title.isEmpty() ? "" : " " + title);
+
+        var hideBtn = ChatButton.create("/fa coords hide " + coords, "Hide");
+        var reDrawBtn = ChatButton.create("/fa coords redraw " + beacon, "Redraw");
 
         return originalMessage.copy().append(hideBtn).append(reDrawBtn);
     }

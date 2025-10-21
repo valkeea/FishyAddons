@@ -88,8 +88,27 @@ public class GameplayHandler implements ChatHandler {
 
     private boolean handleChatMode(String message) {
         if (message.equals("You are not in a party and were moved to the ALL channel.") ||
-            message.equals("You must be in a party to join the party channel!")) {
+            message.equals("You must be in a party to join the party channel!") ||
+            message.equals("The party was disbanded because all invites expired and the party was empty.")) {
             GameChat.setChannel(GameChat.Channel.ALL);
+            GameChat.partyStatus(false);
+            return true;
+        }
+        if (message.equals("You have joined the party channel.") ||
+            message.equals("You are already in the party channel.")) {
+            GameChat.setChannel(GameChat.Channel.PARTY);
+            return true;
+        }
+        if (message.matches("You have joined .* party!") ||
+            message.matches(".* joined the party.") ||
+            message.startsWith("Created a public party! Players can join with")) {
+            GameChat.partyStatus(true);
+            return true;
+        }
+        if (message.equals("You left the party.") ||
+            message.equals("You are not in a party right now.") ||
+            message.matches(".* disbanded the party!")) {
+            GameChat.partyStatus(false);
             return true;
         }
         return false;

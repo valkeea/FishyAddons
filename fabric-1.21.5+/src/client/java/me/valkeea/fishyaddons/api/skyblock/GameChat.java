@@ -35,14 +35,11 @@ public class GameChat {
             }
             
             switch (cmd) {
-                case "a":
-                case "all":
+                case "a", "all":
                     return ALL;
-                case "p":
-                case "party":
+                case "p", "party":
                     return PARTY;
-                case "g":
-                case "guild":
+                case "g", "guild":
                     return GUILD;
                 default:
                     return null;
@@ -52,6 +49,12 @@ public class GameChat {
 
     private static Channel currentMode = null;
     private static boolean initialized = false;
+
+    /** 
+     * Attempt once, assume true until proven otherwise.
+     * Channel status can be used if absolute status is needed.
+     */
+    private static boolean isInParty = true;
     
     public static void init() {
         if (!initialized) {
@@ -103,6 +106,14 @@ public class GameChat {
             saveChatMode();
         }
     }
+
+    public static boolean isInParty() {
+        return isInParty || currentMode == Channel.PARTY;
+    }
+
+    public static void partyStatus(boolean inParty) {
+        isInParty = inParty;
+    }
     
     /**
      * Gets the current chat mode.
@@ -111,6 +122,18 @@ public class GameChat {
      */
     public static Channel getCurrentMode() {
         return ensureInitialized();
+    }
+
+    public static String channelPrefix() {
+        Channel mode = ensureInitialized();
+        switch (mode) {
+            case ALL:
+                return "/ac ";
+            case GUILD:
+                return "/gc ";
+            default:
+                return "/pc ";
+        }
     }
     
     /**

@@ -14,6 +14,7 @@ import me.valkeea.fishyaddons.config.StatConfig;
 import me.valkeea.fishyaddons.processor.MessageAnalysis;
 import me.valkeea.fishyaddons.processor.SharedMessageDetector;
 import me.valkeea.fishyaddons.tracker.ActivityMonitor;
+import me.valkeea.fishyaddons.tracker.SkillTracker;
 import me.valkeea.fishyaddons.util.AreaUtils;
 import me.valkeea.fishyaddons.util.FishyNotis;
 import net.minecraft.client.MinecraftClient;
@@ -33,7 +34,6 @@ public class ScStats {
     private static final String HUB = "hub";
     private static final String PARK = "park";
     private static final String NA = "invalid";
-    private static final String SPOOKY = "spooky";
     private static final String CRIMSON_PREFIX = "crimson_";     
     private static final String SINCE_PREFIX = "since_";
     private static final String JAWBUS_VIAL_KEY = "jawbus_since_vial";
@@ -88,6 +88,7 @@ public class ScStats {
         if (enabled) {
             ScStats instance = getInstance();            
             instance.load();
+            ScData.refresh();
         }
     }
 
@@ -179,8 +180,9 @@ public class ScStats {
 
     public void checkForVial(String s) {
         if (s.startsWith("rare drop! radioactive vial")) {
-            sendJawbusSinceVial();            
+            sendTookJawbusForVial();            
             jawbusSinceVial = 0;
+            StatConfig.setSince(JAWBUS_VIAL_KEY, 0);
         }
     }
 
@@ -200,15 +202,24 @@ public class ScStats {
                     isDoubleHook = true;
                 }
 
-                if (ruleName.contains(SPOOKY)) {
-                    ActivityMonitor.getInstance().recordActivity(ActivityMonitor.Currently.SPOOKY);
-                }
+                checkSpecialConditions(creatureId);
 
                 updateCounters(creatureId, isDoubleHook);
                 return true;
             }
         }
         return false;
+    }
+
+    private static void checkSpecialConditions(String name) {
+        if (name.equals("scarecrow") || name.equals("grim_reaper") ||
+            name.equals("nightmare") || name.equals("phantom_fisher")) {
+            ActivityMonitor.getInstance().recordActivity(ActivityMonitor.Currently.SPOOKY);
+        }
+        
+        if (name.contains("shark")) {
+            ActivityMonitor.getInstance().recordActivity(ActivityMonitor.Currently.SHARK);
+        }   
     }
 
     private static void onCatch(String creatureId, int count) {
@@ -234,7 +245,7 @@ public class ScStats {
     }
 
     private void processCatch(String creatureId, String currentArea, int increment, boolean wasDh) {
-        if (Sc.isTracked(creatureId)) {
+        if (Sc.isTracked(creatureId) && Sc.canSpawnIn(creatureId, currentArea)) {
             
             int counterValue = getCounterFor(creatureId);
             String displayName = Sc.displayName(creatureId);
@@ -265,7 +276,7 @@ public class ScStats {
                 });
             }
         }
-        
+        SkillTracker.getInstance().onCatch(wasDh);       
         incrementCounters(creatureId, currentArea, increment);
     }
     
@@ -357,18 +368,22 @@ public class ScStats {
 
     // --- User Notifications ---
     
+    private static void sendTookJawbusForVial() {
+        if (!announce) return;
+        var message = String.format("§7It took §b%d §cJawbus §7 to drop §dRadioactive Vial!", getInstance().jawbusSinceVial);
+        FishyNotis.send(Text.literal(message));
+    }
+
     private static void sendJawbusSinceVial() {
         if (!announce) return;
-        var message = String.format("§cJawbus §7since §dVial§7: §b%d", getInstance().jawbusSinceVial);
+        var message = String.format("§cJawbus §8since vial: §b%d", getInstance().jawbusSinceVial);
         FishyNotis.send(Text.literal(message));
     }
 
     private static void sendTookXScFor(String creature, int count, boolean wasDh) {
         if (!announce) return;
-        var message = String.format("Took §d%d§7 Sc for %s§7!", count, creature);
-        if (wasDh) {
-            message += " §8 (DH)";
-        }
+        var message = String.format("Took §d%d§7 Sc for %s", count, creature);
+        message += wasDh ? " §8 (DH)§7!" : "§7!";
         FishyNotis.send(Text.literal(message));
     }
 
@@ -437,6 +452,10 @@ public class ScStats {
 
         if (ActivityMonitor.getInstance().isActive(ActivityMonitor.Currently.SPOOKY)) {
             sb.append("§7, §5Grim Reaper§7: §b").append(getCounterFor(Sc.GRIM_REAPER));
+        }
+
+        if (ActivityMonitor.getInstance().isActive(ActivityMonitor.Currently.SHARK)) {
+            sb.append("§7, §6Great White Shark§7: §b").append(getCounterFor(Sc.GW));
         }
 
         return sb;

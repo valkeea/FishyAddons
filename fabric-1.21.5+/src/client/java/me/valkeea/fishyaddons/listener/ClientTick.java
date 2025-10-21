@@ -1,10 +1,11 @@
 package me.valkeea.fishyaddons.listener;
 
 import me.valkeea.fishyaddons.handler.ChatTimers;
-import me.valkeea.fishyaddons.handler.ClientPing;
-import me.valkeea.fishyaddons.handler.FishingHotspot;
+import me.valkeea.fishyaddons.handler.NetworkMetrics;
 import me.valkeea.fishyaddons.tracker.ActivityMonitor;
-import me.valkeea.fishyaddons.util.EntityTracker;
+import me.valkeea.fishyaddons.tracker.SkillTracker;
+import me.valkeea.fishyaddons.util.ModInfo;
+import me.valkeea.fishyaddons.util.NearbyEntities;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 
 public class ClientTick {
@@ -16,20 +17,19 @@ public class ClientTick {
             
             ActivityMonitor.getInstance().tick();
             
-            if (ClientPing.isOn() && client.world.getTime() % 60 == 0) {
-                ClientPing.send();
+            if (NetworkMetrics.isOn() && client.world.getTime() % 40 == 0) {
+                NetworkMetrics.send();
             }
             
             if (ChatTimers.getInstance().isBeaconAlarmOn() && client.world.getTime() % 10 == 0) {
                 ChatTimers.getInstance().checkTimerAlert();
             }
             
-            FishingHotspot.tick();
-            me.valkeea.fishyaddons.util.ModInfo.tick();
+            NearbyEntities.tick();
+            SkillTracker.getInstance().tick();            
+            ModInfo.tick();
 
             if (client.world != null && client.world.getTime() % 600 == 0) {
-                EntityTracker.cleanup();
-                EntityTracker.cleanVal();
                 me.valkeea.fishyaddons.tracker.InventoryTracker.cleanup();
             }
         });

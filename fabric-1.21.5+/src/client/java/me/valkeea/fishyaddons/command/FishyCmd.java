@@ -10,17 +10,17 @@ import me.valkeea.fishyaddons.config.Key;
 import me.valkeea.fishyaddons.handler.ActiveBeacons;
 import me.valkeea.fishyaddons.handler.ChatAlert;
 import me.valkeea.fishyaddons.handler.ChatReplacement;
-import me.valkeea.fishyaddons.handler.ClientPing;
 import me.valkeea.fishyaddons.handler.CommandAlias;
 import me.valkeea.fishyaddons.handler.KeyShortcut;
+import me.valkeea.fishyaddons.handler.NetworkMetrics;
 import me.valkeea.fishyaddons.handler.RenderTweaks;
 import me.valkeea.fishyaddons.safeguard.ItemHandler;
 import me.valkeea.fishyaddons.tool.GuiScheduler;
+import me.valkeea.fishyaddons.tool.PlayerPosition;
 import me.valkeea.fishyaddons.ui.HudEditScreen;
 import me.valkeea.fishyaddons.ui.list.ChatAlerts;
 import me.valkeea.fishyaddons.ui.list.TabbedListScreen;
 import me.valkeea.fishyaddons.util.FishyNotis;
-import me.valkeea.fishyaddons.util.PlayerPosition;
 import me.valkeea.fishyaddons.util.text.TextFormatUtil;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
@@ -385,22 +385,24 @@ public class FishyCmd {
                     .then(ClientCommandManager.literal("on")
                         .executes(context -> {
                             FishyConfig.enable(Key.HUD_PING_ENABLED, true);
-                            FishyNotis.on("Ping display");
-                            ClientPing.refresh();
+                            FishyNotis.on("Network Display");
+                            NetworkMetrics.refresh();
                             return 1;
                         }))
                     .then(ClientCommandManager.literal("off")
                         .executes(context -> {
                             FishyConfig.disable(Key.HUD_PING_ENABLED);
-                            FishyNotis.off("Ping display");
-                            ClientPing.refresh();
+                            FishyNotis.off("Network Display");
+                            NetworkMetrics.refresh();
                             return 1;
                         }))
                     .executes(context -> {
-                        ClientPing.send();
-                        FishyNotis.send(
-                            Text.literal(ClientPing.get() + " §8ms").formatted(Formatting.WHITE)
-                        );
+                        NetworkMetrics.send();
+                        var msg = Text.literal(NetworkMetrics.getPing() + " §8ms");
+                        if (NetworkMetrics.shouldDisplay(Key.HUD_PING_SHOW_TPS)) {
+                            msg = msg.copy().append(Text.literal(", " + String.format("§7%.2f", NetworkMetrics.getTps()) + " §8TPS"));
+                        }
+                        FishyNotis.send(msg);
                         return 1;
                     });
         }   
@@ -578,6 +580,20 @@ public class FishyCmd {
                     return 1;
                 });
     }
+
+    protected static LiteralArgumentBuilder<FabricClientCommandSource> registerSkill() {
+        return ClientCommandManager.literal("skilltracker")
+                .then(ClientCommandManager.literal("dt")
+                .executes(context -> {
+                    me.valkeea.fishyaddons.tracker.SkillTracker.getInstance().toggleDownTime();
+                    return 1;
+                }))
+                .executes(context -> {
+                    FishyNotis.themed("Usage:");
+                    FishyNotis.alert(Text.literal("§3/fa skilltracker downtime §8- §7Toggle downtime mode. Otherwise, skill XP tracking is paused after 1.5min and wiped after 15min."));
+                    return 1;
+                });
+    }    
 
     protected static int checkGUI() {
         if (MinecraftClient.getInstance().currentScreen != null

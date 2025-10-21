@@ -41,6 +41,7 @@ public class CmdManager {
                 .then(FishyCmd.registerRain())
                 .then(FishyCmd.registerFishing())
                 .then(FishyCmd.registerDiana())
+                .then(FishyCmd.registerSkill())
                 .then(buildProfitRoot("profit"))
                 .then(buildGuardRoot("guard"))
                 .then(

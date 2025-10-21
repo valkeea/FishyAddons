@@ -31,8 +31,11 @@ public class TrackerDisplay implements HudElement {
     private float lastScale;
     private boolean editingMode = false;
 
-    public TrackerDisplay() { instance = this; }
+    private TrackerDisplay() {}
     public static TrackerDisplay getInstance() {
+        if (instance == null) {
+            instance = new TrackerDisplay();
+        }
         return instance;
     }
     
@@ -204,7 +207,7 @@ public class TrackerDisplay implements HudElement {
         for (int i = 0; i < lines.size(); i++) {
             Text line = lines.get(i);
             int yOffset = i * size;
-            context.drawText(mc.textRenderer, line, 0, yOffset, color, true);
+            context.drawText(mc.textRenderer, line, 0, yOffset, color, false);
         }
         context.getMatrices().pop();
     }

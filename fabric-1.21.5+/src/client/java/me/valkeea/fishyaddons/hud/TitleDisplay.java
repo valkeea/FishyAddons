@@ -58,7 +58,7 @@ public class TitleDisplay implements HudElement {
         context.getMatrices().push();
         context.getMatrices().translate(hudX, hudY, 0);
         context.getMatrices().scale(scale, scale, 1.0F);
-        context.drawText(mc.textRenderer, formatted, -textWidth / 2, 0, titlecolor, true);
+        HudVisuals.drawText(context, formatted, -textWidth / 2, 0, titlecolor, getHudOutline());
         context.getMatrices().pop();
 
         if (editingMode) {

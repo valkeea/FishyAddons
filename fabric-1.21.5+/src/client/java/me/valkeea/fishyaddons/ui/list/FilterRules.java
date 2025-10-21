@@ -124,6 +124,8 @@ public class FilterRules extends Screen {
         this.renderBackground(context, mouseX, mouseY, delta);
         super.render(context, mouseX, mouseY, delta);
 
+        var title = VCText.header(TITLE_TEXT, null);
+
         if (entries.isEmpty()) {
             int y = this.height / 2;
             int x = this.width / 2;
@@ -148,7 +150,7 @@ public class FilterRules extends Screen {
             }
         } else {
             VCText.drawScaledCenteredText(
-                context, this.textRenderer, TITLE_TEXT, this.width / 2, 15, 0xFF55FFFF, uiScale - 0.1f);
+                context, this.textRenderer, title, this.width / 2, 15, 0xFF55FFFF, uiScale - 0.1f);
         }
        
         addList(context);

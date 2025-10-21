@@ -2,11 +2,14 @@ package me.valkeea.fishyaddons.ui;
 
 import java.awt.Rectangle;
 
+import me.valkeea.fishyaddons.config.FishyConfig;
+import me.valkeea.fishyaddons.config.Key;
 import me.valkeea.fishyaddons.hud.ElementRegistry;
 import me.valkeea.fishyaddons.hud.HudElement;
 import me.valkeea.fishyaddons.hud.PetDisplay;
 import me.valkeea.fishyaddons.hud.TitleDisplay;
 import me.valkeea.fishyaddons.hud.TrackerDisplay;
+import me.valkeea.fishyaddons.tool.FishyMode;
 import me.valkeea.fishyaddons.ui.list.ChatAlerts;
 import me.valkeea.fishyaddons.ui.widget.FaButton;
 import net.minecraft.client.MinecraftClient;
@@ -88,7 +91,19 @@ public class HudEditScreen extends Screen {
                 }
             }
         );
-        addDrawableChild(bgBtn);        
+        addDrawableChild(bgBtn);
+        
+        addDrawableChild(new FaButton(
+            this.width / 2 - 50, this.height - 140, 100, 20,
+            GuiUtil.onOffLabel("Shadow", FishyConfig.getState(Key.HUD_TEXT_SHADOW, true)),
+            btn -> {
+                FishyConfig.toggle(Key.HUD_TEXT_SHADOW, true);
+                btn.setMessage(GuiUtil.onOffLabel("Shadow", FishyConfig.getState(Key.HUD_TEXT_SHADOW, true)));
+                for (HudElement element : ElementRegistry.getElements()) {
+                    element.invalidateCache();
+                }
+            }
+        ));
     }
 
     private void colorBtn() {
@@ -217,17 +232,21 @@ public class HudEditScreen extends Screen {
             popup.render(context, this.textRenderer, mouseX, mouseY, delta);
         }
 
+        String globalText = "All Elements";
         String helpText = "Select an element to edit";
-        int textWidth = this.textRenderer.getWidth(helpText);
-        int helpX = (this.width - textWidth) / 2;
-        int helpY = this.height - 120;
-        context.drawText(this.textRenderer, helpText, helpX, helpY, 0xFFFFD1FF, false);         
+        int helpWidth = this.textRenderer.getWidth(helpText);
+        int globalWidth = this.textRenderer.getWidth(globalText);
+        int helpX = (this.width - helpWidth) / 2;
+        int helpY = this.height - 115;
+        int globalX = (this.width - globalWidth) / 2;
+        int globalY = helpY - 45;
+        int textColor = FishyMode.getThemeColor();
+        context.drawText(this.textRenderer, globalText, globalX, globalY, textColor, false);
+        context.drawText(this.textRenderer, helpText, helpX, helpY, textColor, false);
     }
 
     private void updateButtons() {
-        if (outlineBtn != null && (selectedElement instanceof TrackerDisplay)) {
-            outlineBtn.setMessage(Text.literal("-").styled(s -> s.withColor(0x848484)));
-        } else if (outlineBtn != null) {
+        if (outlineBtn != null) {
             outlineBtn.setMessage(GuiUtil.onOffLabel(OUTLINE, selectedElement != null && selectedElement.getHudOutline()));
         }
 

@@ -5,9 +5,9 @@ import java.util.regex.Pattern;
 
 import me.valkeea.fishyaddons.config.Key;
 import me.valkeea.fishyaddons.util.SkyblockCheck;
+import me.valkeea.fishyaddons.util.text.Enhancer;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
 
 public class PetInfo {
     private PetInfo() {}
@@ -66,18 +66,12 @@ public class PetInfo {
     public static boolean handleChat(String message) {
         if (!isOn || !SkyblockCheck.getInstance().rules()) return false;
 
-        Pattern directPattern = Pattern.compile("§cAutopet §eequipped your (?:§.)+\\[Lvl \\d+\\] (.+?)(?=§a§lVIEW RULE|$)");
+        Pattern directPattern = Pattern.compile("§cAutopet §eequipped your (§.\\[Lvl \\d+\\] (?:§.\\[§.\\d+§.⚔§.\\] )?(?:§.)+.+?)§e! §a§lVIEW RULE");
         Matcher directMatcher = directPattern.matcher(message);
         if (directMatcher.find()) {
-            String fullMatch = directMatcher.group(0);
-            String petInfoPart = fullMatch.substring(fullMatch.indexOf("[Lvl"));
-            petInfoPart = petInfoPart.replaceAll("[!¡]+(?:§.)*$", "").replaceAll("§.$", "");
-            
-            String stripped = Formatting.strip(petInfoPart);
-            Text petInfo = Text.literal(petInfoPart);
+            String petInfoPart = directMatcher.group(1);
+            Text petInfo = Enhancer.parseFormattedTextSimple(petInfoPart);
             TabScanner.setOverride(petInfo);
-            Text petOutline = Text.literal(stripped).styled(style -> style.withColor(Formatting.BLACK));
-            TabScanner.setOutline(petOutline);
             return true;
         }
 

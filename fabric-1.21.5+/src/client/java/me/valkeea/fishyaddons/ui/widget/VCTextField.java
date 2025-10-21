@@ -13,11 +13,12 @@ public class VCTextField extends TextFieldWidget {
     private static final Identifier BG_TEXTURE = Identifier.of("fishyaddons", "textures/gui/default/textbg.png");
 
     private boolean useCustomCharacterHandling = false;
+    private boolean isDragging = false;    
     private boolean drawsBg = true;
+    private boolean allowSection = true;
     private float uiScale = 1.0f;
     private int maxLength = 256;
     private int selectionStart = 0;
-    private boolean isDragging = false;
 
     public VCTextField(TextRenderer textRenderer, int x, int y, int width, int height, Text message) {
         super(textRenderer, x, y, width, height, message);
@@ -41,6 +42,10 @@ public class VCTextField extends TextFieldWidget {
 
     public void setDrawsCustomBg(boolean shouldDraw) {
         this.drawsBg = shouldDraw;
+    }
+
+    public void setSectionSymbol(boolean allow) {
+        this.allowSection = allow;
     }
 
     @Override
@@ -213,7 +218,7 @@ public class VCTextField extends TextFieldWidget {
     
     @Override
     public boolean charTyped(char chr, int modifiers) {
-        if (this.isFocused() && this.isActive()) {
+        if (allowSection && this.isFocused() && this.isActive()) {
             if (chr == '§') {
                 return writeText(String.valueOf(chr));
             }

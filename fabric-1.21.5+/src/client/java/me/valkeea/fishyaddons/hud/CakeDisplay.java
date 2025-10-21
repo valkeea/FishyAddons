@@ -41,13 +41,13 @@ public class CakeDisplay implements HudElement {
         int hudY = state.y;
         int size = state.size;
         int color = state.color;
-        boolean outlined = state.outlined;
         boolean showBg = state.bg;
 
         float scale = size / 12.0F;
         
         String displayText;
         String symbolText = "";
+        
         if (editingMode) {
             displayText = "1d 23h 45m";
         } else {
@@ -92,34 +92,13 @@ public class CakeDisplay implements HudElement {
 
         int textX = iconSize + 2;
 
+        var hudRenderer = new HudVisuals(mc, context, state);
         if (!symbolText.isEmpty()) {
-            if (outlined) {
-                me.valkeea.fishyaddons.util.text.TextUtils.drawOutlinedText(
-                    context,
-                    mc.textRenderer,
-                    symbolTextComponent,
-                    textX, 0,
-                    0x808080,
-                    0xFF000000
-                );
-            } else {
-                context.drawText(mc.textRenderer, symbolTextComponent, textX, 0, 0x808080, true);
-            }
+            hudRenderer.drawText(symbolTextComponent, textX, 0, 0x808080);
             textX += symbolWidth + symbolPadding;
         }
 
-        if (outlined) {
-            me.valkeea.fishyaddons.util.text.TextUtils.drawOutlinedText(
-                context,
-                mc.textRenderer,
-                timerText,
-                textX, 0,
-                color,
-                0xFF000000
-            );
-        } else {
-            context.drawText(mc.textRenderer, timerText, textX, 0, color, true);
-        }
+        hudRenderer.drawText(timerText, textX, 0, color);
         context.getMatrices().pop();
 
         if (editingMode) {

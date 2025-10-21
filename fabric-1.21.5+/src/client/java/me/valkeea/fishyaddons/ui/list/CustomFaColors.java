@@ -6,6 +6,7 @@ import java.util.Map;
 
 import me.valkeea.fishyaddons.handler.FaColors;
 import me.valkeea.fishyaddons.ui.ColorWheel;
+import me.valkeea.fishyaddons.ui.VCText;
 import me.valkeea.fishyaddons.ui.widget.FaButton;
 import me.valkeea.fishyaddons.ui.widget.VCTextField;
 import me.valkeea.fishyaddons.ui.widget.VCVisuals;
@@ -99,8 +100,10 @@ public class CustomFaColors extends Screen {
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         this.renderBackground(context, mouseX, mouseY, delta);
-        super.render(context, mouseX, mouseY, delta);        
-        context.drawText(this.textRenderer, "User Color Overrides", this.width / 2 - 80, 15, 0xFF55FFFF, false);
+        super.render(context, mouseX, mouseY, delta);
+
+        context.drawText(this.textRenderer, VCText.header("User Color Overrides", null),
+            this.width / 2 - 80, 15, 0xFF55FFFF, false);
 
         int listTop = 40;
         int listBottom = this.height - 60;

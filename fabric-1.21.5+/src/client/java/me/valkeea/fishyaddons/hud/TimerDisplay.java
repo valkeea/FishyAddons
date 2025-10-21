@@ -39,7 +39,6 @@ public class TimerDisplay implements HudElement {
         int hudY = state.y;
         int size = state.size;
         int color = state.color;
-        boolean outlined = state.outlined;
         boolean showBg = state.bg;
 
         float scale = size / 12.0F;
@@ -57,32 +56,16 @@ public class TimerDisplay implements HudElement {
             int shadowY2 = hudY + (int)(size * 0.8F) - 1;
             context.fill(shadowX1, shadowY1, shadowX2, shadowY2, 0x80000000);
         }
-
+        
+        var hudRenderer = new HudVisuals(mc, context, state);
+        
         context.getMatrices().push();
         context.getMatrices().translate(hudX, hudY, 0);
         context.getMatrices().scale(scale, scale, 1.0F);
 
-        if (outlined) {
-            me.valkeea.fishyaddons.util.text.TextUtils.drawOutlinedText(
-                context,
-                mc.textRenderer,
-                timerLabel,
-                0, 0,
-                color,
-                0xFF000000
-            );
-            me.valkeea.fishyaddons.util.text.TextUtils.drawOutlinedText(
-                context,
-                mc.textRenderer,
-                timerValue,
-                labelWidth, 0,
-                0xFFFFFF,
-                0xFF000000
-            );
-        } else {
-            context.drawText(mc.textRenderer, timerLabel, 0, 0, color, true);
-            context.drawText(mc.textRenderer, timerValue, labelWidth, 0, 0xFFFFFF, true);
-        }
+        hudRenderer.drawText(timerLabel, 0, 0, color);
+        hudRenderer.drawText(timerValue, labelWidth, 0, 0xFFFFFF);
+
         context.getMatrices().pop();
 
         if (editingMode) {

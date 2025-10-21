@@ -5,7 +5,6 @@ import java.awt.Rectangle;
 import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.handler.PetInfo;
 import me.valkeea.fishyaddons.handler.TabScanner;
-import me.valkeea.fishyaddons.util.text.TextUtils;
 import net.fabricmc.fabric.api.client.rendering.v1.HudLayerRegistrationCallback;
 import net.fabricmc.fabric.api.client.rendering.v1.IdentifiedLayer;
 import net.minecraft.client.MinecraftClient;
@@ -18,7 +17,6 @@ public class PetDisplay implements HudElement {
     private static final String HUD_KEY = me.valkeea.fishyaddons.config.Key.HUD_PET_ENABLED;
     private static final String PLACE_HOLDER = "Pet Display";
     private Text saved = null;
-    private Text outline = null;
     private HudElementState cachedState = null;
 
     public void register() {
@@ -36,11 +34,13 @@ public class PetDisplay implements HudElement {
         if (!editingMode && !PetInfo.isOn()) return;
 
         Text pet = TabScanner.getPet();
-        if (pet == null || pet.getString().isEmpty() && !editingMode) return;
+        if ((pet == null || pet.getString().isEmpty())) {
+            if (!editingMode) return;
+            pet = Text.literal(PLACE_HOLDER);
+        }
 
         if (saved == null || !saved.getString().equals(pet.getString())) {
             saved = pet;
-            outline = TabScanner.getOutline();
         }
 
         MinecraftClient mc = MinecraftClient.getInstance();
@@ -49,11 +49,10 @@ public class PetDisplay implements HudElement {
         int hudX = state.x;
         int hudY = state.y;
         int size = state.size;
-        boolean outlined = state.outlined;
         boolean showBg = state.bg;
 
         float scale = size / 12.0F;
-        Text fullText = TextUtils.stripColor(pet).getString().isEmpty() ? Text.literal(PLACE_HOLDER) : saved;
+        Text fullText = saved.getString().isEmpty() ? Text.literal(PLACE_HOLDER) : saved;
         int textWidth = mc.textRenderer.getWidth(fullText);
 
         if (editingMode || showBg) {
@@ -68,27 +67,13 @@ public class PetDisplay implements HudElement {
         context.getMatrices().translate(hudX, hudY, 0);
         context.getMatrices().scale(scale, scale, 1.0F);
 
-        if (outlined) {
-            TextUtils.drawOutlinedText(
-                context,
-                mc.textRenderer,
-                outline,
-                0, 0,
-                0xFFFFFF,
-                0xFF000000
-            );
-            context.drawText(mc.textRenderer, saved, 0, 0, 0xFFFFFF, false);
-        } else {
-            context.drawText(mc.textRenderer, saved, 0, 0, 0xFFFFFF, true);
-        }
+        var hudRenderer = new HudVisuals(mc, context, state);
+        hudRenderer.drawFormattedText(fullText, 0, 0, state.color);
 
         context.getMatrices().pop();
 
         if (editingMode) {
             int placeHolderWidth = mc.textRenderer.getWidth(PLACE_HOLDER);
-            context.drawText(mc.textRenderer, 
-                Text.literal(PLACE_HOLDER), 
-                hudX + 4, hudY + size + 2, 0xFFAAAAAA, false);
             context.fill(hudX - 2, hudY - 2, hudX + (int)(placeHolderWidth * scale) + 18, hudY + (int)(size * 1.1F) + 4, 0x80FFFFFF);
         }        
     }

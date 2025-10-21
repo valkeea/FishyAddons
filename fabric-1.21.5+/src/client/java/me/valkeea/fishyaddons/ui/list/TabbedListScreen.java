@@ -10,6 +10,7 @@ import me.valkeea.fishyaddons.handler.CommandAlias;
 import me.valkeea.fishyaddons.handler.KeyShortcut;
 import me.valkeea.fishyaddons.ui.GuiUtil;
 import me.valkeea.fishyaddons.ui.VCScreen;
+import me.valkeea.fishyaddons.ui.VCText;
 import me.valkeea.fishyaddons.ui.widget.FaButton;
 import me.valkeea.fishyaddons.ui.widget.FaTextField;
 import me.valkeea.fishyaddons.ui.widget.FishyPopup;
@@ -20,6 +21,7 @@ import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.text.Text;
+
 
 public class TabbedListScreen extends Screen {
     public enum Tab { COMMANDS, KEYBINDS, CHAT }
@@ -146,6 +148,9 @@ public class TabbedListScreen extends Screen {
         this.renderBackground(context, mouseX, mouseY, delta);
         context.drawCenteredTextWithShadow(this.textRenderer, this.title, width / 2, 20, 0xFF55FFFF);
         super.render(context, mouseX, mouseY, delta);
+
+        var title = VCText.header(this.title.getString(), null);
+        context.drawCenteredTextWithShadow(textRenderer, title, mouseX, mouseY, mouseY);
 
         if (presetDropdown != null && presetDropdown.isVisible()) {
             presetDropdown.render(context, this, mouseX, mouseY);

@@ -7,7 +7,9 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.config.Key;
+import me.valkeea.fishyaddons.render.OutlinedText;
 import me.valkeea.fishyaddons.tracker.ActivityMonitor;
+import me.valkeea.fishyaddons.tracker.ActivityMonitor.Currently;
 import me.valkeea.fishyaddons.tracker.fishing.Sc;
 import me.valkeea.fishyaddons.tracker.fishing.ScData;
 import me.valkeea.fishyaddons.tracker.fishing.ScRegistry;
@@ -22,9 +24,7 @@ import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 
 public class ScDisplay implements HudElement {
-    private static final String HUD_KEY = Key.HUD_CATCH_GRAPH_ENABLED;
     private static ScDisplay instance = null;
-
     private HudElementState cachedState = null;
     private boolean editingMode = false;
 
@@ -42,6 +42,8 @@ public class ScDisplay implements HudElement {
     private static final String GALATEA = "galatea";
     
     private static final float AXIS_FONT_SCALE = 0.75f;
+
+    private static final String HUD_KEY = Key.HUD_CATCH_GRAPH_ENABLED;    
     
     // Reusable Text objects and operations
     private static final Text EMPTY_MEAN_TEXT = Text.literal("§7Mean: §f--");
@@ -105,7 +107,8 @@ public class ScDisplay implements HudElement {
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY) {
-        if (!isEnabled() && !editingMode) {
+        if ((!isEnabled() || !ActivityMonitor.getInstance().isActive(Currently.FISHING)) &&
+            !editingMode) {
             return;
         }
 
@@ -118,7 +121,7 @@ public class ScDisplay implements HudElement {
         checkAreaChange(currentArea);
         
         long currentTime = System.currentTimeMillis();
-        if (currentTime - lastDataUpdate > 5000) {
+        if (currentTime - lastDataUpdate > 10000) {
             clearAllCaches();
             lastDataUpdate = currentTime;
         }
@@ -190,7 +193,9 @@ public class ScDisplay implements HudElement {
             Map<Integer, Integer> histogram = ScData.getInstance().getDataFor(creatureKey, MAX_BARS_PER_CHART);
             if (histogram != null && !histogram.isEmpty()) {
                 renderBase(context, currentX, y, creatureKey, histogram);
-                currentX += CHART_WIDTH + 10;
+                boolean moveRight = (currentX < MinecraftClient.getInstance().getWindow().getScaledWidth() / 2);
+                int distance = moveRight ? CHART_WIDTH + 10 : -(CHART_WIDTH + 10);
+                currentX += distance;
                 hasAnyData = true;
             }
         }
@@ -233,12 +238,11 @@ public class ScDisplay implements HudElement {
         }
 
         if (getHudOutline()) {
-            TextUtils.drawOutlinedText(
+            OutlinedText.withColor(
                 context,
                 MinecraftClient.getInstance().textRenderer, 
                 Text.literal(displayName),
-                (float)x + 5, (float)y + 5, getHudColor(),
-                0xFF000000               
+                (float)x + 5, (float)y + 5, getHudColor()              
             );
 
         } else {

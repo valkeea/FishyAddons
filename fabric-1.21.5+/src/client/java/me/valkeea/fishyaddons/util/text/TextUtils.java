@@ -1,98 +1,79 @@
 package me.valkeea.fishyaddons.util.text;
 
-import java.util.List;
-
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gui.DrawContext;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 
 public class TextUtils {
     private TextUtils() {}
-    
-    public static void drawOutlinedText(
-        DrawContext context,
-        TextRenderer textRenderer,
-        Text text,
-        float x, float y,
-        int textColor,
-        int outlineColor
-    ) {
-        var matrix = context.getMatrices().peek().getPositionMatrix();
-        var vertices = MinecraftClient.getInstance().getBufferBuilders().getEntityVertexConsumers();
-        var layer = net.minecraft.client.font.TextRenderer.TextLayerType.NORMAL;
-        for (int dx = -1; dx <= 1; dx++) {
-            for (int dy = -1; dy <= 1; dy++) {
-                if (dx != 0 || dy != 0) {
-                    textRenderer.draw(
-                        text,
-                        x + dx,
-                        y + dy,
-                        outlineColor,
-                        false,
-                        matrix,
-                        vertices,
-                        layer,
-                        0,
-                        0xF000F0
-                    );
-                }
-            }
-        }
 
-        textRenderer.draw(
-            text,
-            x,
-            y,
-            textColor,
-            false,
-            matrix,
-            vertices,
-            layer,
-            0,
-            0xF000F0
-        );
-    }
+    private static final java.util.LinkedHashMap<Text, Text> stripColorCache = new java.util.LinkedHashMap<Text, Text>(16, 0.75f, true) {
+        @Override
+        protected boolean removeEldestEntry(java.util.Map.Entry<Text, Text> eldest) {
+            return size() > 10;
+        }
+    };
 
     public static Text stripColor(Text text) {
-        MutableText base = Text.literal(text.getString());
+        Text cached = stripColorCache.get(text);
+        if (cached != null) {
+            return cached;
+        }
+        
+        var style = text.getStyle();
+        boolean wasBold = style != null && style.isBold();
+        boolean wasItalic = style != null && style.isItalic();
+
+        var newStyle = Style.EMPTY;
+        if (wasBold) {
+            newStyle = newStyle.withBold(true);
+        }
+
+        if (wasItalic) {
+            newStyle = newStyle.withItalic(true);
+        }
+        
+        MutableText base;
+        if (text.getSiblings().isEmpty()) {
+            // Leaf node - use its content
+            base = Text.literal(text.getString()).setStyle(newStyle);
+        } else {
+            // Container node - start empty and only add siblings
+            base = Text.empty().setStyle(newStyle);
+        }
+
         for (Text sibling : text.getSiblings()) {
             base.append(stripColor(sibling));
         }
+        
+        stripColorCache.put(text, base);
         return base;
     }
+
+    public static Text stripFormatting(Text text) {
+        if (text == null) return Text.literal("");
+        String cleanString = stripColor(text.getString());
+        return Text.literal(cleanString);
+    }    
 
     public static String stripColor(String text) {
         return text == null ? "" : text.replaceAll("(?i)§[0-9a-fk-or]", "");
     }
 
-    public static Text recolor(Text original) {
-        Text copied = original.copy();
+    /**
+     * Flatten and combine overly nested text into a single line, preserving styles
+     */
+    public static void combineToFlat(Text suffix, MutableText target) {
+        if (suffix.getSiblings().isEmpty()) {
+            String content = suffix.getString();
+            if (!content.isEmpty()) {
+                target.append(Text.literal(content).setStyle(suffix.getStyle()));
+            }
 
-        Style origStyle = copied.getStyle() != null ? copied.getStyle() : Style.EMPTY;
-        boolean isMaxLevel = copied.getString().equals("MAX LEVEL");
-        Style newStyle = Style.EMPTY.withColor(0x000000);
-
-        if (isMaxLevel && origStyle.isBold()) {
-            newStyle = newStyle.withBold(true);
+        } else {
+            for (Text sibling : suffix.getSiblings()) {
+                combineToFlat(sibling, target);
+            }
         }
-
-        if (copied instanceof MutableText mutableText) {
-            mutableText.setStyle(newStyle);
-        }
-
-        List<Text> recoloredSiblings = copied.getSiblings().stream()
-            .map(TextUtils::recolor)
-            .toList();
-
-        copied.getSiblings().clear();
-        if (copied instanceof MutableText mutableText) {
-            recoloredSiblings.forEach(mutableText::append);
-        }
-
-        return copied;
-    }
+    }   
 }
-

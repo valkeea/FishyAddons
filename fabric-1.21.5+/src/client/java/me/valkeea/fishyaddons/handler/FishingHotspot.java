@@ -5,18 +5,18 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import me.valkeea.fishyaddons.api.skyblock.GameChat;
 import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.config.Key;
-import me.valkeea.fishyaddons.tool.FishyMode;
 import me.valkeea.fishyaddons.tracker.fishing.ScStats;
 import me.valkeea.fishyaddons.util.FishyNotis;
+import me.valkeea.fishyaddons.util.NearbyEntities;
+import me.valkeea.fishyaddons.util.text.ChatButton;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.decoration.ArmorStandEntity;
-import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
 
 public class FishingHotspot {
     private FishingHotspot() {}
@@ -26,14 +26,12 @@ public class FishingHotspot {
     private static boolean track = false;
     private static boolean trackActivity = false;
     private static boolean announce = false;
-    private static int tickCounter = 0;
 
     public static void refresh() {
         track = FishyConfig.getState(Key.TRACK_HOTSPOT, false);
         trackActivity = FishyConfig.getState(Key.TRACK_HOTSPOT, false) || FishyConfig.getState(Key.TRACK_SCS, false);
         announce = FishyConfig.getState(Key.ANNOUNCE_HOTSPOT, false);
         visited.clear();
-        tickCounter = 0;
     }
 
     /**
@@ -50,46 +48,17 @@ public class FishingHotspot {
 
                 if (closest != null && extractLabel(closest).equals(labelText)) {
                     FishyNotis.warn2("Hotspot expired!");
-                    me.valkeea.fishyaddons.util.PlaySound.hotspotAlarm();
+                    me.valkeea.fishyaddons.tool.PlaySound.hotspotAlarm();
                 }
             }
         }
     }
 
-    /**
-     * Checks for new hotspots every second
-     */
-    public static void tick() {
-        tickCounter++;
+    private static ArmorStandEntity findClosestVisible(MinecraftClient client) {
         if (visited.size() > 3) {
             visited.clear();
         }
-        if (tickCounter % 20 == 0) {
-            checkClosest();
-        }
-    }
-    
-    private static void checkClosest() {
-        MinecraftClient client = MinecraftClient.getInstance();
-        if (client.world == null || client.player == null || !trackActivity) {  return; }
-        
-        ArmorStandEntity target = findClosestVisible(client);
-        if (target != null && isViewing(target)) {
 
-            Text label = target.getCustomName() != null
-                ? target.getCustomName()
-                : Text.literal("");
-            String labelString = label.getString();
-            String hotspotKey = createKey(target.getBlockPos(), labelString);
-
-            if (!visited.contains(hotspotKey) && track) {
-                announce(target, labelString, label);
-                visited.add(hotspotKey);
-            }
-        }
-    }
-    
-    private static ArmorStandEntity findClosestVisible(MinecraftClient client) {
         ArmorStandEntity target = null;
         double targetDistance = Double.MAX_VALUE;
         
@@ -100,39 +69,69 @@ public class FishingHotspot {
                 target = candidate;
             }
         }
-        ScStats.setSubArea(target);
         return target;
-    }
-    
-    private static String createKey(BlockPos pos, String labelText) {
-        return pos.getX() + "," + pos.getY() + "," + pos.getZ() + ":" + labelText;
-    }
+    }    
 
-    private static List<ArmorStandEntity> findHotspotArmorStands(double radius, boolean forHiding) {
-        MinecraftClient client = MinecraftClient.getInstance();
+    /**
+     * Finds armor stands that match hotspot criteria
+     */
+    public static List<ArmorStandEntity> findHotspotArmorStands(double radius, boolean forHiding) {
         List<ArmorStandEntity> hotspots = new ArrayList<>();
         
-        if (client.player == null || client.world == null) return hotspots;
+        for (ArmorStandEntity armorStand : NearbyEntities.findArmorStands(radius)) {
+            String labelText = extractLabel(armorStand);
+            boolean isValid = isValidLabel(labelText);
 
-        for (Entity entity : client.world.getEntitiesByClass(
-                ArmorStandEntity.class,
-                client.player.getBoundingBox().expand(radius),
-                e -> true)) {
+            boolean isRelevantHotspot = isValid &&
+                (forHiding ? isHotspotForHiding(labelText) : isHotspotType(labelText));
 
-            if (entity instanceof ArmorStandEntity armorStand) {
-                String labelText = extractLabel(armorStand);
-                boolean isValid = isValidLabel(labelText);
-
-                boolean isRelevantHotspot = isValid &&
-                (forHiding ? isHotspotForHiding(labelText) : typesHas(labelText));
-
-                if (isRelevantHotspot) {
-                    hotspots.add(armorStand);
-                }
+            if (isRelevantHotspot) {
+                hotspots.add(armorStand);
             }
         }
         
         return hotspots;
+    }      
+
+    /**
+     * Called by EntityTracker to check if an armor stand represents a hotspot
+     */
+    public static void update(List<ArmorStandEntity> nearbyHspts) {
+        if (!trackActivity) return;
+
+        MinecraftClient client = MinecraftClient.getInstance();
+        if (client.player == null) return;
+
+        ArmorStandEntity closestHotspot = null;
+
+        for (ArmorStandEntity armorStand : nearbyHspts) {
+            if (NearbyEntities.lookingAt(armorStand)) {
+                Text label = armorStand.getCustomName() != null
+                    ? armorStand.getCustomName()
+                    : Text.literal("");
+                String labelString = label.getString();
+                var pos = armorStand.getBlockPos();
+                if (client.player.distanceTo(armorStand) <= 14.0) {
+                    closestHotspot = armorStand;
+                }
+                String hotspotKey = createKey(pos, labelString);
+
+                if (!visited.contains(hotspotKey) && track) {
+                    announce(armorStand, labelString, label);
+                    visited.add(hotspotKey);
+                }
+            }
+        }
+
+        ScStats.setSubArea(closestHotspot);
+    }
+
+    public static boolean isHotspot(String labelText) {
+        return isHotspotType(labelText);
+    }
+    
+    private static String createKey(BlockPos pos, String labelText) {
+        return pos.getX() + "," + pos.getY() + "," + pos.getZ() + ":" + labelText;
     }    
 
     // --- Hotspot Hider ---
@@ -162,15 +161,23 @@ public class FishingHotspot {
         return false;
     }    
 
-    private static boolean isHotspotForHiding(String labelText) {
-        return isHotspotLabel(labelText) || typesHas(labelText);
+    private static boolean nameMatches(ArmorStandEntity armorStand, String labelText) {
+        String name = NearbyEntities.extractLabel(armorStand);
+        return name.equals(labelText);
+    }
+    
+    private static String extractLabel(ArmorStandEntity armorStand) {
+        return NearbyEntities.extractLabel(armorStand);
     }
 
-    private static boolean isHotspotLabel(String labelText) {
-        return labelText.contains("HOTSPOT");
+    private static boolean isValidLabel(String labelText) {
+        return NearbyEntities.isValidLabel(labelText);
     }
 
-    private static boolean typesHas(String labelText) {
+    /**
+     * Checks if a label represents a hotspot type
+     */
+    public static boolean isHotspotType(String labelText) {
         if (labelText.contains("Fishing Speed") && labelText.contains("☂")) {
             return true;
         }
@@ -190,56 +197,52 @@ public class FishingHotspot {
         return labelText.contains("Double Hook Chance") && labelText.contains("⚓");
     }
 
-    private static boolean isViewing(ArmorStandEntity armorStand) {
-        var client = MinecraftClient.getInstance();
-        if (client.player == null || client.world == null) return false;
-        if (!client.player.canSee(armorStand)) return false;
-        
-        Vec3d playerPos = client.player.getEyePos();
-        Vec3d armorStandPos = armorStand.getPos();
-        Vec3d lookDirection = client.player.getRotationVector();
-        Vec3d toArmorStand = armorStandPos.subtract(playerPos).normalize();
-        
-        double dotProduct = lookDirection.dotProduct(toArmorStand);
-        return dotProduct > 0.4;
+    /**
+     * Checks if a label represents a hotspot for hiding purposes
+     */
+    public static boolean isHotspotForHiding(String labelText) {
+        return isHotspotLabel(labelText) || isHotspotType(labelText);
     }
 
-    private static boolean nameMatches(ArmorStandEntity armorStand, String labelText) {
-        String name = extractLabel(armorStand);
-        return name.equals(labelText);
-    }
-    
-    private static String extractLabel(ArmorStandEntity armorStand) {
-        if (armorStand.getCustomName() == null) { return ""; }
-            return armorStand.getCustomName().getString();
-    }
-
-    private static boolean isValidLabel(String labelText) {
-        return labelText != null && !labelText.isEmpty();
-    }
+    /**
+     * Checks if a label contains "HOTSPOT"
+     */
+    public static boolean isHotspotLabel(String labelText) {
+        return labelText.contains("HOTSPOT");
+    }    
 
     private static void announce(ArmorStandEntity hotspot, String labelText, Text label) {
-        String coords = String.format("x: %.0f, y: %.0f, z: %.0f", hotspot.getX(), hotspot.getY(), hotspot.getZ());
-        
-        if (announce) {
+
+        var blockPos = hotspot.getBlockPos();
+        double x = blockPos.getX();
+        double y = blockPos.getY();
+        double z = blockPos.getZ();
+        var coords = String.format("x: %.0f, y: %.0f, z: %.0f", x, y, z);
+
+        if (announce && GameChat.isInParty()) {
             MinecraftClient.getInstance().player.networkHandler.sendChatMessage(
                 "/pc " + coords + " " + labelText);
-        } else {
-            if (!FishyConfig.getState(Key.HSPT_COORDS, false)) { return; }
-            MutableText shareButton = Text.literal(" [")
-            .styled(style -> style.withColor(0xFF808080))
-            .append((Text.literal("Chat"))
-            .styled(style -> style.withClickEvent(
-                new net.minecraft.text.ClickEvent.RunCommand("/pc " + coords + " " + labelText)
-            ).withColor(FishyMode.getCmdColor())))
-            .append(Text.literal("]").styled(style -> style.withColor(0xFF808080)));
 
-            FishyNotis.alert(label.copy()
-            .append(Text.literal(
-                " " + String.format("x: %.0f y: %.0f z: %.0f", hotspot.getX(), hotspot.getY(), hotspot.getZ()))
-                .styled(style -> style.withColor(0xFF808080))).append(shareButton));
+        } else if (FishyConfig.getState(Key.HSPT_COORDS, false)) {
+            var pos = String.format("%.0f %.0f %.0f", x, y, z);
 
-            ActiveBeacons.setBeacon(hotspot.getBlockPos(), 0xFF1E90FF, labelText);
+            String chatCmd = GameChat.channelPrefix() + coords + " " + labelText;
+            String hspCmd = "/fa coords redraw " + pos + " " + labelText;
+            String hideCmd = "/fa coords hide " + pos;
+
+            var shareBtn = ChatButton.create(chatCmd, "Chat");
+            var redrawBtn = ChatButton.create(hspCmd, "Redraw");
+            var hideBtn = ChatButton.create(hideCmd, "Hide");
+
+            FishyNotis.alert(label.copy().append(Text.literal(" " + coords + " ").styled(
+                style -> style.withColor(0xFF808080))).append(shareBtn).append(redrawBtn).append(hideBtn));
+
+            var color = label.getSiblings().isEmpty()
+                ? null
+                : label.getSiblings().get(0).getStyle().getColor();
+
+            int hsptColor = color != null ? color.getRgb() : 0xFF1E90FF;    
+            ActiveBeacons.setBeacon(hotspot.getBlockPos(), hsptColor, labelText, 15000L);
         }
     }    
 }

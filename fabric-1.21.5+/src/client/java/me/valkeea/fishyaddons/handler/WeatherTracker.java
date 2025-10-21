@@ -2,8 +2,8 @@ package me.valkeea.fishyaddons.handler;
 
 import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.config.Key;
+import me.valkeea.fishyaddons.tool.PlaySound;
 import me.valkeea.fishyaddons.util.FishyNotis;
-import me.valkeea.fishyaddons.util.PlaySound;
 import me.valkeea.fishyaddons.util.ZoneUtils;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.text.Text;

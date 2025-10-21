@@ -1,7 +1,7 @@
 package me.valkeea.fishyaddons.safeguard;
 
 import me.valkeea.fishyaddons.config.ItemConfig;
-import me.valkeea.fishyaddons.util.PlaySound;
+import me.valkeea.fishyaddons.tool.PlaySound;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 
 public class SlotProtectionManager {

@@ -2,7 +2,7 @@ package me.valkeea.fishyaddons.handler;
 
 import me.valkeea.fishyaddons.config.Key;
 import me.valkeea.fishyaddons.hud.FishyToast;
-import me.valkeea.fishyaddons.util.PlaySound;
+import me.valkeea.fishyaddons.tool.PlaySound;
 
 @SuppressWarnings("squid:S6548")
 public class ChatTimers {

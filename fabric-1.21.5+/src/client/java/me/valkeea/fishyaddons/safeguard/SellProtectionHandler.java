@@ -1,18 +1,18 @@
 package me.valkeea.fishyaddons.safeguard;
 
-import me.valkeea.fishyaddons.util.FishyNotis;
-import me.valkeea.fishyaddons.util.PlaySound;
-import me.valkeea.fishyaddons.config.ItemConfig;
-import net.minecraft.item.ItemStack;
-import net.minecraft.registry.RegistryWrapper;
-
 import java.util.Map;
 import java.util.WeakHashMap;
+
+import me.valkeea.fishyaddons.config.ItemConfig;
+import me.valkeea.fishyaddons.tool.PlaySound;
+import me.valkeea.fishyaddons.util.FishyNotis;
+import net.minecraft.item.ItemStack;
+import net.minecraft.registry.RegistryWrapper;
 
 public class SellProtectionHandler {
     private SellProtectionHandler() {}
     private static final Map<ItemStack, Boolean> protectionCache = new WeakHashMap<>();
-    private static final int MAX_CACHE_SIZE = 1000; // Prevent cache from growing too large
+    private static final int MAX_CACHE_SIZE = 1000;
 
     public static boolean isProtectedCached(ItemStack stack, RegistryWrapper.WrapperLookup registries) {
         if (stack == null || stack.isEmpty() || registries == null) return false;
@@ -21,7 +21,6 @@ public class SellProtectionHandler {
             protectionCache.clear();
         }
 
-        // Compute and cache protection status if not already cached
         return protectionCache.computeIfAbsent(stack, s -> {
             try {
                 String uuid = ItemHandler.extractUUID(s, registries);

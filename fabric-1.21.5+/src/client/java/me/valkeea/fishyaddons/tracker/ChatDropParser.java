@@ -388,7 +388,7 @@ public class ChatDropParser {
     
     private static String handleSpecialMessages(String itemName, String cleanMessage) {
         String lowerMessage = cleanMessage.toLowerCase();
-        if ((lowerMessage.contains(CHARM_KEYWORD) || lowerMessage.contains("salt")) || lowerMessage.contains(NAGA_KEYWORD) &&
+        if ((lowerMessage.startsWith(CHARM_KEYWORD) || lowerMessage.startsWith("salt")) || lowerMessage.startsWith(NAGA_KEYWORD) &&
             (lowerMessage.contains("captured") || lowerMessage.contains(SHARD_KEYWORD))) {
             return itemName + " " + SHARD_KEYWORD;
         }

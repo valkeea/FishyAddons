@@ -1,49 +1,57 @@
 package me.valkeea.fishyaddons.tracker;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import me.valkeea.fishyaddons.util.FishyNotis;
+import me.valkeea.fishyaddons.util.text.FromText;
+import net.minecraft.component.DataComponentTypes;
+import net.minecraft.component.type.LoreComponent;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
+import net.minecraft.text.Style;
+import net.minecraft.text.Text;
+import net.minecraft.util.Formatting;
 
 public class InventoryTracker {
-    // Constants
+
     private static final int STACK_INCREASE_THRESHOLD = 32;
-    private static final long DROP_CORRELATION_WINDOW = 5000; // 5 seconds to correlate drops
-    
-    // Max monitoring window in case quick disable is missed
-    private static boolean monitoringEnabled = false;
-    private static long monitoringStartTime = 0;
-    private static final long MONITORING_WINDOW = 60000;
-    private static boolean lsEnabled = false; 
-    private static long lsStartTime = 0;
-    private static final long LS_WINDOW = 10000;
-    
-    private static final Map<String, String> TRACKED_PLAYER_HEADS = new ConcurrentHashMap<>();
-    private static final Map<String, String> TRACKED_GHAST_TEARS = new ConcurrentHashMap<>();
-    private static final Map<String, String> TRACKED_AXES = new ConcurrentHashMap<>();
+    private static final long DROP_CORRELATION_WINDOW = 2000;
+    private static final long MONITORING_WINDOW = 180000;
+    private static final long LS_WINDOW = 1000;
 
+    private static final String ULTIMATE_PREFIX = "ultimate_";
     private static final String CLEAN_REGEX = "§[0-9a-fk-or]";
-    
-    static {
-        TRACKED_PLAYER_HEADS.put("emperor's skull", "DIVER_FRAGMENT");
-        TRACKED_PLAYER_HEADS.put("magma lord fragment", "MAGMA_LORD_FRAGMENT");
-        TRACKED_PLAYER_HEADS.put("soul fragment", "SOUL_FRAGMENT");
-        TRACKED_PLAYER_HEADS.put("foraging exp boost", "Foraging Exp Boost");
-        TRACKED_PLAYER_HEADS.put("minos relic", "Minos Relic");
-        TRACKED_PLAYER_HEADS.put("dwarf turtle shelmet", "Dwarf Turtle Shelmet");
-        TRACKED_PLAYER_HEADS.put("antique remedies", "Antique Remedies");
-        TRACKED_PLAYER_HEADS.put("crown of greed", "Crown of Greed");
-    }
 
+    private static final List<String> TRACKED_PLAYER_HEADS = new ArrayList<>();
+    private static final List<String> TRACKED_GHAST_TEARS = new ArrayList<>();
+    private static final List<String> TRACKED_TOOLS = new ArrayList<>();    
+
+    private static boolean monitoringEnabled = false;
+    private static boolean lsEnabled = false;
+
+    private static long monitoringStartTime = 0;
+    private static long lsStartTime = 0;    
+    
     static {
-        TRACKED_GHAST_TEARS.put("great white shark tooth", "GREAT_WHITE_SHARK_TOOTH");
+        TRACKED_PLAYER_HEADS.add("emperor's skull");
+        TRACKED_PLAYER_HEADS.add("magma lord fragment");
+        TRACKED_PLAYER_HEADS.add("soul fragment");
+        TRACKED_PLAYER_HEADS.add("foraging exp boost");
+        TRACKED_PLAYER_HEADS.add("minos relic");
+        TRACKED_PLAYER_HEADS.add("dwarf turtle shelmet");
+        TRACKED_PLAYER_HEADS.add("antique remedies");
+        TRACKED_PLAYER_HEADS.add("crown of greed");
+        TRACKED_PLAYER_HEADS.add("water hydra head");
+        TRACKED_GHAST_TEARS.add("great white shark tooth");
+        TRACKED_TOOLS.add("fishing exp boost");
+        TRACKED_TOOLS.add("foraging exp boost");        
     }
     
-    // Track recently detected special item drops from chat
     private static final Map<Long, String> recentTrackedItemDrops = new ConcurrentHashMap<>();
-    
-    // Track last known stack sizes for stackable skulls to detect increases
     private static final Map<String, Integer> lastKnownStackSizes = new ConcurrentHashMap<>();
 
     private InventoryTracker() {}
@@ -51,30 +59,37 @@ public class InventoryTracker {
     public static void onItemAdded(ItemStack stack) {
         if (stack.isEmpty()) return;
         
-        // Only process items if we're in a monitoring window (after entity death)
         if (!isMonitoringActive()) {
             return;
         }
+
+        var newItem = stack.getItem();
         
-        // Handle other tracked items during monitoring window
-        if (stack.getItem() == Items.PLAYER_HEAD) {
+        if (newItem == Items.PLAYER_HEAD) {
             handlePlayerHeadAdded(stack);
+            return;
         }
 
-        if (stack.getItem() == Items.GHAST_TEAR) {
+        if (newItem == Items.ENCHANTED_BOOK) {
+            handleBookAdded(stack);
+            return;
+        }
+
+        if (newItem == Items.GHAST_TEAR) {
             handleGhastTearAdded(stack);
+            return;
         }
 
-        if (stack.getItem() == Items.IRON_AXE) {
-            handleAxeAdded(stack);
+        if (newItem == Items.IRON_AXE || newItem == Items.COD) {
+            handleToolAdded(stack);
         }
-    }
+    }   
     
     private static boolean isMonitoringActive() {
         if (!monitoringEnabled) return false;
         
         long currentTime = System.currentTimeMillis();
-        if (currentTime - monitoringStartTime > MONITORING_WINDOW) {
+        if (currentTime - monitoringStartTime > MONITORING_WINDOW) {          
             monitoringEnabled = false;
             monitoringStartTime = 0;
             return false;
@@ -94,70 +109,142 @@ public class InventoryTracker {
     }
     
     private static void handlePlayerHeadAdded(ItemStack stack) {
-        String displayName = stack.getName().getString().toLowerCase().trim();
-        String cleanDisplayName = displayName.replaceAll(CLEAN_REGEX, "").trim();
-        String bazaarId = TRACKED_PLAYER_HEADS.get(cleanDisplayName);
-        
-        if (bazaarId == null) {
-            return; // Not a tracked skull
+        var displayName = stack.getName();
+        var cleanName = displayName.getString().toLowerCase().replaceAll(CLEAN_REGEX, "").trim();
+
+        if (!TRACKED_PLAYER_HEADS.contains(cleanName)) {
+            return;
         }
         
         int currentStackSize = stack.getCount();
-        int previousStackSize = lastKnownStackSizes.getOrDefault(cleanDisplayName, 0);
+        int previousStackSize = lastKnownStackSizes.getOrDefault(cleanName, 0);
         
         if (currentStackSize > previousStackSize) {
             int rawIncrease = currentStackSize - previousStackSize;
-            
-            // Failsafe: If increase is more than threshold, likely user bought/moved items
-            // Count as only 1 to avoid false positives from purchases/trades
             int newItems = (rawIncrease > STACK_INCREASE_THRESHOLD) ? 1 : rawIncrease;
             
-            lastKnownStackSizes.put(cleanDisplayName, currentStackSize);
-            TrackerUtils.trackerNoti(cleanDisplayName);
-            ItemTrackerData.addDrop(cleanDisplayName, newItems);
+            lastKnownStackSizes.put(cleanName, currentStackSize);
+            FishyNotis.trackerNoti(displayName, newItems);
+            ItemTrackerData.addDrop(cleanName, newItems);
         } else {
-            // Stack size didn't increase, just update our tracking
-            lastKnownStackSizes.put(cleanDisplayName, currentStackSize);
+            lastKnownStackSizes.put(cleanName, currentStackSize);
         }
     }
 
     private static void handleGhastTearAdded(ItemStack stack) {
-        String displayName = stack.getName().getString().toLowerCase().trim();
-        String cleanDisplayName = displayName.replaceAll(CLEAN_REGEX, "").trim();
-        String bazaarId = TRACKED_GHAST_TEARS.get(cleanDisplayName);
-        
-        if (bazaarId == null) {
-            return; // Not a tracked ghast tear
-        }
-        
-        int currentStackSize = stack.getCount();
-        int previousStackSize = lastKnownStackSizes.getOrDefault(cleanDisplayName, 0);
-        
-        if (currentStackSize > previousStackSize) {
-            int rawIncrease = currentStackSize - previousStackSize;
-            
-            // Failsafe: If increase is more than threshold, likely user bought/moved items
-            // Count as only 1 to avoid false positives from purchases/trades
-            int newItems = (rawIncrease > STACK_INCREASE_THRESHOLD) ? 1 : rawIncrease;
-            
-            lastKnownStackSizes.put(cleanDisplayName, currentStackSize);
-            TrackerUtils.trackerNoti(cleanDisplayName);
-            ItemTrackerData.addDrop(cleanDisplayName, newItems);
-        } else {
-            // Stack size didn't increase, just update our tracking
-            lastKnownStackSizes.put(cleanDisplayName, currentStackSize);
+        var displayName = stack.getName();
+        var cleanName = displayName.getString().toLowerCase().replaceAll(CLEAN_REGEX, "").trim();
+
+        if (TRACKED_GHAST_TEARS.contains(cleanName)) {
+            FishyNotis.trackerNoti(displayName, 1);
+            ItemTrackerData.addDrop(cleanName, 1);
         }
     }
 
-    private static void handleAxeAdded(ItemStack stack) {
-        String displayName = stack.getName().getString().toLowerCase().trim();
-        String cleanDisplayName = displayName.replaceAll(CLEAN_REGEX, "").trim();
-        String auctionId = TRACKED_AXES.get(cleanDisplayName);
-        if (auctionId == null) {
-            return;
+    private static void handleToolAdded(ItemStack stack) {
+        var displayName = stack.getName();
+        var cleanName = displayName.getString().toLowerCase().replaceAll(CLEAN_REGEX, "").trim();      
+
+        if (TRACKED_TOOLS.contains(cleanName)) {
+            var rarity = getRarityTier(displayName.getSiblings().get(0).getStyle());
+            var tieredName = rarity + cleanName;
+            FishyNotis.trackerNoti(displayName, 1);
+            ItemTrackerData.addDrop(tieredName, 1);
         }
-        TrackerUtils.trackerNoti(cleanDisplayName);
-        ItemTrackerData.addDrop(cleanDisplayName, 1);
+    }
+
+    private static String getRarityTier(Style style) {
+        String def = "common ";
+
+        if (style == null || style.getColor() == null) {
+            return def;
+        }
+
+        switch (style.getColor().toString()) {
+            case "white": return def;
+            case "blue": return "rare ";
+            case "dark_purple": return "epic ";
+            case "gold": return "legendary ";
+            case "light_purple": return "mythic ";
+            default: return def;
+        }
+    }
+
+    public static void handleBookAdded(ItemStack stack) {
+
+        var lore = stack.get(DataComponentTypes.LORE);
+        if (lore == null) return;
+
+        var bookInfo = extractBookInfoFromLore(lore);
+        if (bookInfo == null) return;
+        
+        if (ItemTrackerData.wasCountedAsBook(bookInfo.name)) {
+            ItemTrackerData.clearSuccessfulBooks();
+        } else {
+            FishyNotis.bookNoti(bookInfo.styledText);
+            ItemTrackerData.addDrop(bookInfo.name, 1);
+        }
+    }
+
+    private static class BookInfo {
+        final String name;
+        final Text styledText;
+        
+        BookInfo(String name, Text styledText) {
+            this.name = name;
+            this.styledText = styledText;
+        }
+    }
+    
+    private static BookInfo extractBookInfoFromLore(LoreComponent lore) {
+        for (Text line : lore.lines()) {
+            var firstText = FromText.firstLiteral(line);
+            
+            if (firstText != null) {
+                var plainName = firstText.getString();
+                var numericName = toNumeric(plainName);
+                var ultimateText = FromText.findNodeWithColor(line, Formatting.LIGHT_PURPLE);
+
+                if (ultimateText != null) {
+                    var styledUltimate = Text.literal(plainName)
+                        .styled(style -> style.withColor(Formatting.LIGHT_PURPLE).withBold(true));
+                    return new BookInfo(ULTIMATE_PREFIX + numericName, styledUltimate);
+
+                } else {
+                    return new BookInfo(numericName, firstText.copy());
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private static String toNumeric(String plainName) {
+        String[] parts = plainName.split(" ");
+        if (parts.length < 2) {
+            return plainName;
+        }
+
+        String tier = parts[parts.length - 1];
+        String baseName = String.join(" ", Arrays.copyOf(parts, parts.length - 1));
+
+        return baseName + " " + romanToNumeric(tier);
+    }
+
+    private static String romanToNumeric(String roman) {
+        switch (roman.toLowerCase()) {
+            case "i": return "1";
+            case "ii": return "2";
+            case "iii": return "3";
+            case "iv": return "4";
+            case "v": return "5";
+            case "vi": return "6";
+            case "vii": return "7";
+            case "viii": return "8";
+            case "ix": return "9";
+            case "x": return "10";
+            default: return roman;
+        }
     }
 
     /**
@@ -183,28 +270,24 @@ public class InventoryTracker {
     }
     
     /**
-     * Called when any entity enters death animation - enables packet monitoring window
+     * Called when a relevant entity is found nearby
      */
-    public static void onValuableEntityDamaged() {
+    public static void onValuableFound() {
         if (!monitoringEnabled) {
             monitoringEnabled = true;
         }
         monitoringStartTime = System.currentTimeMillis();
     }
     
-    /**
-     * Called when a valuable entity dies - brief monitoring window then quick disable
-     */
-    public static void onValuableEntityDeath() {
-        // Enable monitoring window for immediate drops
+    public static void onValuableGone() {
+
         monitoringEnabled = true;
         monitoringStartTime = System.currentTimeMillis();
         
-        // Schedule a quick disable after 1 second (drops should be immediate)
         Thread.startVirtualThread(() -> {
             try {
-                Thread.sleep(200);
-                if (System.currentTimeMillis() - monitoringStartTime >= 200) {
+                Thread.sleep(500); 
+                if (System.currentTimeMillis() - monitoringStartTime >= 200 && monitoringEnabled) {
                     monitoringEnabled = false;
                 }
             } catch (InterruptedException e) {

@@ -33,8 +33,13 @@ public class TrackerUtils {
 
         ScStats.getInstance().checkForVial(s);
 
-        if (s.contains("loot share")) {
+        if (s.startsWith("loot share")) {
             InventoryTracker.onLsDetected();
+            return true;
+        }
+
+        if (s.startsWith("[Bazaar] Bought")) {
+            SackDropParser.onBazaarBuy(s);
             return true;
         }
         
@@ -146,12 +151,6 @@ public class TrackerUtils {
         MinecraftClient cl = MinecraftClient.getInstance();
         cl.setScreen(new VCOverlay(cl.currentScreen, popup));
 	}
-
-    public static void trackerNoti(String itemName) {
-        if (me.valkeea.fishyaddons.config.FishyConfig.getState(Key.TRACKER_NOTIS, false)) {
-            me.valkeea.fishyaddons.util.FishyNotis.send("Tracker drop: " + itemName);
-        }
-    }
     
     private TrackerUtils() {
         throw new UnsupportedOperationException("Utility class");

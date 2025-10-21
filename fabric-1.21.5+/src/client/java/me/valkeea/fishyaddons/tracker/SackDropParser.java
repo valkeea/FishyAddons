@@ -21,19 +21,9 @@ public class SackDropParser {
     private static boolean shouldTrackSack = false;
     
     private static final java.util.Map<String, Long> recentlyProcessedTooltips = new java.util.concurrent.ConcurrentHashMap<>();
-    private static final java.util.Map<String, ChatDropEntry> recentChatDrops = new java.util.concurrent.ConcurrentHashMap<>();   
+    private static final java.util.Map<String, Integer> recentChatDrops = new java.util.concurrent.ConcurrentHashMap<>();   
 
     private static final long DEDUP_WINDOW_MS = 1000;
-    
-    private static class ChatDropEntry {
-        final int quantity;
-        final long timestamp;
-        
-        ChatDropEntry(int quantity, long timestamp) {
-            this.quantity = quantity;
-            this.timestamp = timestamp;
-        }
-    }
     
     public static boolean isOn() {
         return shouldTrackSack;
@@ -230,12 +220,7 @@ public class SackDropParser {
      * @return The quantity from the recent chat drop, or 0 if no recent drop
      */
     private static int getChatDropQuantity(String itemName) {
-        // Check if this item was recently processed via chat
-        ChatDropEntry entry = recentChatDrops.get(itemName);
-        if (entry != null) {
-            return entry.quantity;
-        }
-        return 0;
+        return recentChatDrops.get(itemName) == null ? 0 : recentChatDrops.get(itemName);
     }
     
     private static void clearChatDrops() {
@@ -253,6 +238,33 @@ public class SackDropParser {
         }
 
         String normalizedItemName = cleanSackItemName(itemName);
-        recentChatDrops.put(normalizedItemName, new ChatDropEntry(quantity, System.currentTimeMillis()));
+        recentChatDrops.put(normalizedItemName, quantity);
+    }
+
+    /**
+     * Register bazaar purchases as chat drops
+     */
+    public static void onBazaarBuy(String message) {
+        if (message == null || message.trim().isEmpty()) {
+            return;
+        }
+        
+        Pattern bazaarPattern = Pattern.compile("\\[Bazaar\\]\\s*Bought\\s*(\\d{1,3}(?:,\\d{3})*)x\\s*(.+?)\\s*for", Pattern.CASE_INSENSITIVE);
+        Matcher matcher = bazaarPattern.matcher(message);
+        if (matcher.find()) {
+            try {
+                String quantityStr = matcher.group(1).replace(",", "");
+                int quantity = Integer.parseInt(quantityStr);
+                String itemName = matcher.group(2).trim();
+                
+                itemName = cleanSackItemName(itemName);
+                
+                if (isTrackableSackItem(itemName) && quantity > 0) {
+                    registerChatDrop(itemName, quantity);
+                }
+            } catch (NumberFormatException e) {
+                // Ignore invalid number format
+            }
+        }
     }
 }

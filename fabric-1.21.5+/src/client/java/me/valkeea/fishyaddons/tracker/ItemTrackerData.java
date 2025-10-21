@@ -1,6 +1,7 @@
 package me.valkeea.fishyaddons.tracker;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -13,6 +14,7 @@ import net.minecraft.text.Text;
 public class ItemTrackerData {
     private static final Map<String, Integer> itemCounts = new ConcurrentHashMap<>();
     private static final Map<String, Double> itemValues = new ConcurrentHashMap<>();
+    private static final List<String> successfulBooks = new java.util.concurrent.CopyOnWriteArrayList<>();
 
     private static final String ENCHANTED_BOOK = "enchanted book";
     private static final String REGEX = "[^a-zA-Z0-9]";
@@ -38,6 +40,15 @@ public class ItemTrackerData {
         }
     }
 
+    public static boolean wasCountedAsBook(String itemName) {
+        if (itemName == null || itemName.trim().isEmpty()) return false;
+        return successfulBooks.contains(itemName);
+    }
+
+    public static void clearSuccessfulBooks() {
+        successfulBooks.clear();
+    }
+
     public static void addDrop(String itemName, int quantity) {
         addDrop(itemName, quantity, null);
     }
@@ -45,7 +56,6 @@ public class ItemTrackerData {
     public static void addDrop(String itemName, int quantity, @Nullable Text originalMessage) {
         if (itemName == null || itemName.trim().isEmpty()) return;
 
-        // Check if pause threshold has been exceeded
         long currentTime = System.currentTimeMillis();
         long timeSinceLastActivity = currentTime - lastActivityTime;
         if (timeSinceLastActivity > INACTIVITY_THRESHOLD) {
@@ -59,6 +69,7 @@ public class ItemTrackerData {
         if (originalMessage != null) {
             boolean isUltimate = extractBookRarity(itemName, originalMessage);
             normalizedName = isUltimate ? "ultimate_" + itemName : itemName;
+            successfulBooks.add(normalizedName);
         } else {
             normalizedName = normalizeItemName(itemName);
         }

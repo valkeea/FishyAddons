@@ -1,8 +1,13 @@
 package me.valkeea.fishyaddons.util;
 
+import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.config.ItemConfig;
+import me.valkeea.fishyaddons.config.Key;
 import me.valkeea.fishyaddons.tool.FishyMode;
+import me.valkeea.fishyaddons.ui.VCText;
+import me.valkeea.fishyaddons.util.text.Color;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 
@@ -26,7 +31,10 @@ public class FishyNotis {
     
     private static Text prefix() {
         int theme = FishyMode.getCmdColor();
-        return Text.literal("[α]").styled(style -> style.withColor(theme))
+        int theme2 = Color.darken(theme, 0.7f);
+        return Text.literal("[").styled(style -> style.withColor(theme2))
+                .append(Text.literal("α").styled(style -> style.withColor(theme)))
+                .append(Text.literal("]").styled(style -> style.withColor(theme2)))
             .append(Text.literal(" » ").styled(style -> style.withColor(Formatting.DARK_GRAY)));
     }
 
@@ -67,8 +75,11 @@ public class FishyNotis {
 
     public static void format(Text message) {
         int theme = FishyMode.getCmdColor();
-        Text prefix = Text.literal("[α]").styled(style -> style.withColor(theme))
-            .append(Text.literal(" » ").formatted(Formatting.DARK_GRAY));
+        int theme2 = Color.darken(theme, 0.7f);
+        Text prefix = Text.literal("[").styled(style -> style.withColor(theme))
+            .append(Text.literal("α").styled(style -> style.withColor(theme2).withBold(true)))
+            .append(Text.literal("]").styled(style -> style.withColor(theme2)))
+            .append(Text.literal(" » ").styled(style -> style.withColor(Formatting.DARK_GRAY)));
         chat(prefix.copy().append(message));
     }
 
@@ -94,6 +105,22 @@ public class FishyNotis {
         send("Copied to clipboard");
     }
 
+    public static void bookNoti(Text styledItemName) {
+        if (FishyConfig.getState(Key.TRACKER_NOTIS, false)) {
+            var prefix = VCText.header("BOOK DROP! ", Style.EMPTY.withBold(true));
+            var message = prefix.copy().append(styledItemName);
+            FishyNotis.alert(message);
+        }
+    }
+    
+    public static void trackerNoti(Text styledItemName, int quantity) {
+        if (FishyConfig.getState(Key.TRACKER_NOTIS, false)) {
+            var prefix = VCText.header("TRACKED DROP! ", Style.EMPTY.withBold(true));
+            var message = prefix.copy().append(styledItemName).append(Text.literal(quantity > 1 ? " §8x" + quantity : ""));
+            FishyNotis.alert(message);
+        }
+    }    
+
     public static void helpNoti() {
         int theme = FishyMode.getCmdColor();
         chat(Text.literal("α Available Commands α").styled(style -> style.withColor(theme).withBold(true)));
@@ -107,6 +134,8 @@ public class FishyNotis {
         chat(Text.literal("/fa ping | on | off").formatted(Formatting.DARK_AQUA));
         chat(Text.literal("/fa coords <title>").formatted(Formatting.DARK_AQUA));
         chat(Text.literal("/fa sc since | rng | <scname>").formatted(Formatting.DARK_AQUA));
+        chat(Text.literal("/fa diana | reset").formatted(Formatting.DARK_AQUA));
+        chat(Text.literal("/fa skilltracker dt").formatted(Formatting.DARK_AQUA));
         chat(Text.literal("/fa hud").formatted(Formatting.DARK_AQUA));
         chat(Text.literal(GUIDE_CMD).formatted(Formatting.DARK_AQUA));
         chat(Text.literal("/fa help").formatted(Formatting.DARK_AQUA));

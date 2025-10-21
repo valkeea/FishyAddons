@@ -84,12 +84,12 @@ public class HypixelPriceClient {
         if (cachedPrice != null) {
             return cachedPrice;
         }
-        
-        if (isPetDrop(itemName)) {
-            double petPrice = getPetPrice(itemName);
-            if (petPrice > 0) {
-                ApiCache.cachePrice(apiId, ApiCache.PriceType.BEST_PRICE, petPrice);
-                return petPrice;
+
+        if (isTieredDrop(itemName)) {
+            double tieredPrice = getTieredPrice(itemName);
+            if (tieredPrice > 0) {
+                ApiCache.cachePrice(apiId, ApiCache.PriceType.BEST_PRICE, tieredPrice);
+                return tieredPrice;
             }
         }
         
@@ -148,9 +148,9 @@ public class HypixelPriceClient {
     }
     
     /**
-     * Check if an item name represents a pet drop (rarity + pet name format)
+     * Check if an item name represents a tiered drop (rarity + item name format)
      */
-    private boolean isPetDrop(String itemName) {
+    private boolean isTieredDrop(String itemName) {
         if (itemName == null) return false;
         String lower = itemName.toLowerCase().trim();
         
@@ -161,41 +161,41 @@ public class HypixelPriceClient {
                lower.startsWith("legendary ") || 
                lower.startsWith("mythic ");
     }
-    
-    public double getPetPrice(String petDropName) {
-        String[] parts = getNameAndRarity(petDropName);
+
+    public double getTieredPrice(String tieredDropName) {
+        String[] parts = getNameAndRarity(tieredDropName);
         if (parts.length != 2) return 0.0;
-        
-        String petName = parts[0];
+
+        String itemName = parts[0];
         String rarity = parts[1];
-        String cacheKey = rarity.toLowerCase() + "_" + petName.toLowerCase().replace(" ", "_");
+        String cacheKey = rarity.toLowerCase() + "_" + itemName.toLowerCase().replace(" ", "_");
         Double cachedPrice = ApiCache.getCachedPrice(cacheKey, ApiCache.PriceType.AH_BIN);
         if (cachedPrice != null) {
             return cachedPrice;
         }
-        
-        double price = searchForPet(petName, rarity);
+
+        double price = searchForTiered(itemName, rarity);
         ApiCache.cachePrice(cacheKey, ApiCache.PriceType.AH_BIN, price);
         return price;
     }
-    
-    private String[] getNameAndRarity(String petDropName) {
-        if (petDropName == null) return new String[0];
-        
-        String lower = petDropName.toLowerCase().trim();
+
+    private String[] getNameAndRarity(String tieredDropName) {
+        if (tieredDropName == null) return new String[0];
+
+        String lower = tieredDropName.toLowerCase().trim();
         String[] rarities = {"mythic", "legendary", "epic", "rare", "uncommon", "common"};
         
         for (String rarity : rarities) {
             if (lower.startsWith(rarity + " ")) {
-                String petName = petDropName.substring(rarity.length() + 1).trim();
-                return new String[]{petName, rarity.toUpperCase()};
+                String itemName = tieredDropName.substring(rarity.length() + 1).trim();
+                return new String[]{itemName, rarity.toUpperCase()};
             }
         }
         
         return new String[0];
     }
-    
-    private double searchForPet(String petName, String rarity) {
+
+    private double searchForTiered(String itemName, String rarity) {
         try {
             int maxPagesToSearch = 15;
             double lowestPrice = 0.0;
@@ -218,7 +218,7 @@ public class HypixelPriceClient {
                     continue;
                 }
                 
-                double pageLowestPrice = parseForPet(response.body(), petName, rarity);
+                double pageLowestPrice = parseForTiered(response.body(), itemName, rarity);
                 if (pageLowestPrice > 0) {
                     foundCount++;
                     emptyPageCount = 0;
@@ -244,15 +244,15 @@ public class HypixelPriceClient {
             
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            System.err.println("Pet auction search interrupted for " + petName + ": " + e.getMessage());
+            System.err.println("Tiered auction search interrupted for " + itemName + ": " + e.getMessage());
             return 0.0;
         } catch (Exception e) {
-            System.err.println("Error during pet auction search for " + petName + ": " + e.getMessage());
+            System.err.println("Error during tiered auction search for " + itemName + ": " + e.getMessage());
             return 0.0;
         }
     }
-    
-    private double parseForPet(String responseBody, String targetPetName, String targetRarity) {
+
+    private double parseForTiered(String responseBody, String targetItemName, String targetRarity) {
         try {
             JsonObject root = JsonParser.parseString(responseBody).getAsJsonObject();
             if (!root.has(SUCCESS_KEY) || !root.get(SUCCESS_KEY).getAsBoolean()) {
@@ -268,8 +268,8 @@ public class HypixelPriceClient {
                 if (!auction.has("bin") || !auction.get("bin").getAsBoolean()) {
                     continue;
                 }
-                
-                if (isMatch(auction, targetPetName, targetRarity)) {
+
+                if (isMatch(auction, targetItemName, targetRarity)) {
                     double price = auction.get("starting_bid").getAsDouble();
                     if (lowestPrice == 0 || price < lowestPrice) {
                         lowestPrice = price;
@@ -280,7 +280,7 @@ public class HypixelPriceClient {
             return lowestPrice;
             
         } catch (Exception e) {
-            System.err.println("Error parsing auction page for pet " + targetPetName + ": " + e.getMessage());
+            System.err.println("Error parsing auction page for item " + targetItemName + ": " + e.getMessage());
             return 0.0;
         }
     }

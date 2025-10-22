@@ -31,11 +31,11 @@ public class ActiveBeacons {
 
     public static void init() {
         refresh();
-        WorldRenderEvents.AFTER_ENTITIES.register(context -> {
+        WorldRenderEvents.AFTER_TRANSLUCENT.register(context -> {
             if (beacons.isEmpty()) return;
 
             long now = System.currentTimeMillis();
-            beacons.removeIf(beacon -> now - beacon.setTime > duration);
+            beacons.removeIf(beacon -> now - beacon.setTime > beacon.duration);
 
             if (hideNear) {
                 renderFar(context);
@@ -63,7 +63,6 @@ public class ActiveBeacons {
             if (distance <= HIDE_DISTANCE) {
                 long beaconAge = now - beacon.getSetTime();
                 
-                // Remove if self-spawned and past grace period
                 if (beaconAge <= GRACE_PERIOD_MS) {
                     Beacon.renderBeacon(context, beacon);
                     return false;
@@ -96,7 +95,14 @@ public class ActiveBeacons {
     public static void setBeacon(BlockPos pos, int colorARGB, String displayLabel) {
         beacons.add(new BeaconData(getActualPos(new Vec3d(pos)), colorARGB, displayLabel));
         lastBeacon = beacons.get(beacons.size() - 1);
-    }     
+    }
+    
+    public static void setBeacon(BlockPos pos, int colorARGB, String displayLabel, long customDuration) {
+        BeaconData beacon = new BeaconData(getActualPos(new Vec3d(pos)), colorARGB, displayLabel);
+        beacon.setDuration(customDuration);
+        beacons.add(beacon);
+        lastBeacon = beacons.get(beacons.size() - 1);
+    }
 
     /**
      * Convert Vec3d to centered BlockPos with proper flooring for negative coordinates.
@@ -130,14 +136,12 @@ public class ActiveBeacons {
         beacons.removeIf(beacon -> beacon.getPos().equals(getActualPos(new Vec3d(pos))));
     }
 
-    /**
-     * Data class representing a beacon with position, color, label, and timestamp.
-     */
     public static class BeaconData {
         final BlockPos pos;
         final int color;
         final String label;
         final long setTime;
+        long duration = ActiveBeacons.duration;
 
         BeaconData(BlockPos pos, int color, @Nullable String label) {
             this.pos = pos;
@@ -159,6 +163,10 @@ public class ActiveBeacons {
 
         public long getSetTime() {
             return setTime;
+        }
+
+        public void setDuration(long duration) {
+            this.duration = duration;
         }
     }
 }

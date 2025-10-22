@@ -27,7 +27,7 @@ public class Beacon {
         float r = ((beacon.getColor() >> 16) & 0xFF) / 255f;
         float g = ((beacon.getColor() >> 8) & 0xFF) / 255f;
         float b = (beacon.getColor() & 0xFF) / 255f;
-        float a = ((beacon.getColor() >> 24) & 0xFF) / 255f;
+        float a = Math.max(0.2f, ((beacon.getColor() >> 24) & 0xFF) / 255f);
 
         matrices.push();
         matrices.translate(-camPos.x, -camPos.y, -camPos.z);

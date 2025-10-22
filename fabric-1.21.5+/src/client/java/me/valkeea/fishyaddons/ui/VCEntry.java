@@ -30,7 +30,8 @@ public class VCEntry {
         SIMPLE_BUTTON,
         SLIDER,
         TOGGLE_WITH_SLIDER,
-        TOGGLE_WITH_DROPDOWN
+        TOGGLE_WITH_DROPDOWN,
+        DROPDOWN
     }
     
     public final String name;
@@ -321,6 +322,15 @@ public class VCEntry {
         return new Builder(name, description, EntryType.TOGGLE_WITH_DROPDOWN)
             .configKey(toggleKey)
             .defaultValue(defaultToggle)
+            .dropdownButtonText(dropdownButtonText)
+            .dropdownItemSupplier(itemSupplier)
+            .refreshAction(refreshAction)
+            .build();
+    }
+
+    // Dropdown
+    public static VCEntry dropdown(String name, String description, String dropdownButtonText, Supplier<List<ToggleMenuItem>> itemSupplier, Runnable refreshAction) {
+        return new Builder(name, description, EntryType.DROPDOWN)
             .dropdownButtonText(dropdownButtonText)
             .dropdownItemSupplier(itemSupplier)
             .refreshAction(refreshAction)
@@ -634,7 +644,7 @@ public class VCEntry {
     
     // Dropdown entry methods
     public boolean hasDropdown() {
-        return type == EntryType.TOGGLE_WITH_DROPDOWN && dropdownItemSupplier != null;
+        return (type == EntryType.TOGGLE_WITH_DROPDOWN || type == EntryType.DROPDOWN) && dropdownItemSupplier != null;
     }
 
     public List<ToggleMenuItem> getDropdownItems() {

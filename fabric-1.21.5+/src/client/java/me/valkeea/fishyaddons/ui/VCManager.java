@@ -11,15 +11,16 @@ import me.valkeea.fishyaddons.handler.ActiveBeacons;
 import me.valkeea.fishyaddons.handler.ChatAlert;
 import me.valkeea.fishyaddons.handler.ChatReplacement;
 import me.valkeea.fishyaddons.handler.ChatTimers;
-import me.valkeea.fishyaddons.handler.ClientPing;
 import me.valkeea.fishyaddons.handler.CommandAlias;
 import me.valkeea.fishyaddons.handler.CopyChat;
 import me.valkeea.fishyaddons.handler.FaColors;
 import me.valkeea.fishyaddons.handler.FishingHotspot;
 import me.valkeea.fishyaddons.handler.GuiIcons;
+import me.valkeea.fishyaddons.handler.HeldItems;
 import me.valkeea.fishyaddons.handler.ItemSearchOverlay;
 import me.valkeea.fishyaddons.handler.KeyShortcut;
 import me.valkeea.fishyaddons.handler.MobAnimations;
+import me.valkeea.fishyaddons.handler.NetworkMetrics;
 import me.valkeea.fishyaddons.handler.ParticleVisuals;
 import me.valkeea.fishyaddons.handler.PetInfo;
 import me.valkeea.fishyaddons.handler.RenderTweaks;
@@ -33,10 +34,11 @@ import me.valkeea.fishyaddons.hud.TrackerDisplay;
 import me.valkeea.fishyaddons.tool.FishyMode;
 import me.valkeea.fishyaddons.tracker.ActivityMonitor;
 import me.valkeea.fishyaddons.tracker.SackDropParser;
+import me.valkeea.fishyaddons.tracker.SkillTracker;
 import me.valkeea.fishyaddons.tracker.TrackerUtils;
+import me.valkeea.fishyaddons.tracker.ValuableMobs;
 import me.valkeea.fishyaddons.tracker.fishing.ScData;
 import me.valkeea.fishyaddons.ui.VCScreen.ExtraControl;
-import me.valkeea.fishyaddons.util.text.GradientRenderer;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.text.Text;
 
@@ -59,6 +61,8 @@ public class VCManager {
         addFilter(entries);
         addFg(entries);
 
+        ConfigUIResolver.initializeHandlers();
+
         return entries;
     }
     
@@ -66,7 +70,7 @@ public class VCManager {
      * Interface and Mod visuals
      */
     private static void addUi(List<VCEntry> entries) {
-        entries.add(VCEntry.header("§[aquamarine]── Interface ──", ""));
+        entries.add(VCEntry.header("── Interface ──", ""));
 
         entries.add(VCEntry.slider(
             "Custom UI Scale",
@@ -149,11 +153,21 @@ public class VCManager {
      * Rendering Tweaks
      */
     private static void addRender(List<VCEntry> entries) {
-        entries.add(VCEntry.header("§[aquamarine]── Rendering Tweaks ──", ""));
+        entries.add(VCEntry.header("── Rendering Tweaks ──", ""));
 
         List<VCEntry> colorSubEntries = new ArrayList<>();
         List<VCEntry> xpSubEntries = new ArrayList<>();
         List<VCEntry> lavaSubEntries = new ArrayList<>();
+
+        entries.add(VCEntry.toggleColorOrHud(
+            "Held Item Size and Animations",
+            "Configure the behavior and attributes of held items such as position,\nrotation, scale and swing.",
+            Key.HELD_ITEM_TRANSFORMS,
+            false,
+            HeldItems::refresh,
+            new ExtraControl(null, false, true)
+            
+        ));
 
         entries.add(VCEntry.toggle(
             "Skip Entity Death Animation",
@@ -194,7 +208,7 @@ public class VCManager {
             Key.FISHY_FIRE_OVERLAY,
             false,
             () -> { 
-                ResourceHandler.updateGuiPack();
+                ResourceHandler.updateFirePack();
                 MinecraftClient client = MinecraftClient.getInstance();
                 if (client.currentScreen instanceof VCScreen currentScreen) {
                     VCState.preservePersistentState(
@@ -216,8 +230,6 @@ public class VCManager {
                 Text.literal("Lava Options:"),
                 Text.literal("- §8Translucent, water-like lava"),
                 Text.literal("  §8with custom tint"),
-                Text.literal("- §8Note: If the tint is off, check your"),
-                Text.literal("  §8resource pack for colored water!"),
                 Text.literal("- §8Remove lava fog overlay when submerged"),
                 Text.literal("- §8Custom fire texture matching lava color")
             )
@@ -300,7 +312,7 @@ public class VCManager {
 
     // General QoL Features
     private static void addQol(List<VCEntry> entries) {
-        entries.add(VCEntry.header("§[aquamarine]── General QoL ──", ""));
+        entries.add(VCEntry.header("── General QoL ──", ""));
 
         List<VCEntry> invSearchSubEntries = new ArrayList<>();
         List<VCEntry> beaconSubEntries = new ArrayList<>();
@@ -379,14 +391,13 @@ public class VCManager {
             true,
             null
         ));
-        
-        entries.add(VCEntry.toggleColorOrHud(
-            "Ping Display",
-            "Shows your current ping in the HUD.\nUse the HUD editor to customize position and appearance.\nUse /fa ping to send this value in chat.",
+
+        entries.add(VCDropdownEntry.networkDisplayToggle(
+            "Debug HUD §7(§8Ping/TPS/FPS§7)",
+            "Shows your current ping, fps and a tps estimate in the hud.\nUse /fa ping to send this value in chat, /fa hud to customize.",
             Key.HUD_PING_ENABLED,
             false,
-            ClientPing::refresh,
-            new ExtraControl("Ping Display", false, false)
+            NetworkMetrics::refresh
         ));
         
         entries.add(VCEntry.toggle2(
@@ -450,9 +461,8 @@ public class VCManager {
      * SkyBlock features
      */
     private static void addSb(List<VCEntry> entries) {
-        entries.add(VCEntry.header("§[aquamarine]── SkyBlock Features ──", ""));
+        entries.add(VCEntry.header("── SkyBlock Features ──", ""));
 
-        List<VCEntry> petSubEntries = new ArrayList<>();
         List<VCEntry> profitEntries = new ArrayList<>();
         List<VCEntry> trackerEntries = new ArrayList<>(); 
 
@@ -464,37 +474,24 @@ public class VCManager {
             EqDisplay::reset
         ));
 
-        petSubEntries.add(VCEntry.toggleColorOrHud(
-            "Dynamic",
-            "Updates data on tab updates, limited to once per second.\nIf disabled, data will rely on chat.",
-            Key.HUD_PET_DYNAMIC,
-            false,
-            PetInfo::refresh,
-            new ExtraControl("Pet Display", false, false)
-        ));
-
-        petSubEntries.add(VCEntry.toggle(
-            "Show XP",
-            "Displays the XP of your active pet.",
-            Key.HUD_PETXP,
-            false,
-            PetInfo::refresh
-        ));
-
-        entries.add(VCEntry.toggleExpandable(
+        entries.add(VCEntry.toggle2(
             "Pet Display",
-            "Renders an editable HUD element for your currently active pet.",
-            petSubEntries,
-            Arrays.asList(
-                Text.literal("Pet Display:"),
-                Text.literal("- §8Show/Hide pet XP"),
-                Text.literal("- §8Toggle dynamic/chat-based mode"),
-                Text.literal("- §8Shortcut to HUD editor")
-            ),
+            "Renders a HUD element for your currently active pet, optionally with xp.\nRequires the tab widget for active pet.",
             Key.HUD_PET_ENABLED,
             false,
+            "SHOW XP",
+            Key.HUD_PETXP,
+            true,
             PetInfo::refresh
         ));
+
+        entries.add(VCEntry.toggle(
+            "Mob Health Bar",
+            "Hud element to display the current health of relevant mobs (mostly fishing).",
+            Key.HUD_HEALTH_ENABLED,
+            false,
+            ValuableMobs::refresh
+        ));        
 
         profitEntries.add(VCEntry.toggle(
             "Price per Item",
@@ -597,6 +594,16 @@ public class VCManager {
             false,
             ChatTimers.getInstance()::refresh,
             new ExtraControl("Moonglade: ", false, false)
+        ));
+
+        trackerEntries.add(VCEntry.header("── Skill XP Tracker ──", ""));
+
+        trackerEntries.add(VCEntry.toggle(
+            "Skill Xp per hour",
+            "Displays your skill xp gain rate in the HUD. (Needs skill tabwidget if skill isn't maxed)",
+            Key.HUD_SKILL_XP_ENABLED,
+            false,
+            SkillTracker::refresh
         ));        
 
         entries.add(VCEntry.expandable(
@@ -616,23 +623,15 @@ public class VCManager {
             Key.CLEAN_HYPE,
             false,
             SkyblockCleaner::refresh
+        ));
+
+        entries.add(VCEntry.dropdown(
+            "Mute List",
+            "Configure a list of sounds to mute in Skyblock. (Thunder, phantom, runes)",
+            "Configure",
+            VCDropdownEntry::getMuteListItems,
+            SkyblockCleaner::refresh
         ));        
-
-        entries.add(VCEntry.toggle(
-            "Mute Phantoms",
-            "Disables all phantom mob sounds.",
-            Key.MUTE_PHANTOM,
-            false,
-            SkyblockCleaner::refresh
-        ));
-
-        entries.add(VCEntry.toggle(
-            "Mute Runes",
-            "Disables all annoying rune sounds.",
-            Key.MUTE_RUNE,
-            false,
-            SkyblockCleaner::refresh
-        ));
 
         entries.add(VCEntry.keybind(
             "Hide Skyblock Gui Buttons",
@@ -661,7 +660,7 @@ public class VCManager {
      * Fishing
      */
     private static void addFish(List<VCEntry> entries) {
-        entries.add(VCEntry.header("§[aquamarine]── Fishing ──", ""));
+        entries.add(VCEntry.header("── Fishing ──", ""));
 
         List<VCEntry> hsptSubEntries = new ArrayList<>();
 
@@ -713,7 +712,7 @@ public class VCManager {
                 Text.literal("- §8Manage hotspot visibility"),
                 Text.literal("- §8Configure hotspot alerts")
             )
-        ));         
+        ));
 
         entries.add(VCEntry.toggle2(
             "Track catch data §7(§8Required for 'Catch Graph' and 'RNG Info'§7)",
@@ -723,7 +722,10 @@ public class VCManager {
             "COUNT DH",
             Key.TRACK_SCS_WITH_DH,
             false,
-            ActivityMonitor::refresh
+            ()-> {
+                FilterConfig.refreshScRules();
+                ActivityMonitor.refresh();
+            }
         ));
 
         entries.add(VCDropdownEntry.scDisplayToggle(
@@ -747,7 +749,7 @@ public class VCManager {
      * Chat Filter
      */
     private static void addFilter(List<VCEntry> entries) {
-        entries.add(VCEntry.header("§[aquamarine]── Chat Filter ──", ""));
+        entries.add(VCEntry.header("── Chat Filter ──", ""));
 
         List<VCEntry> filterSubEntries = new ArrayList<>();        
         
@@ -756,10 +758,7 @@ public class VCManager {
             "Toggle and configure Sc Filter.",
             Key.CHAT_FILTER_SC_ENABLED,
             false,
-            () -> {
-                FilterConfig.refreshScRules();
-                GradientRenderer.init();
-            },
+            FilterConfig::refreshScRules,
             new ExtraControl(null, false, true)
         ));
 
@@ -768,7 +767,7 @@ public class VCManager {
             "Filter out or override any chat message.",
             Key.CHAT_FILTER_ENABLED,
             false,
-            GradientRenderer::init,
+            null,
             new ExtraControl(null, false, true)
         ));
 
@@ -815,10 +814,19 @@ public class VCManager {
             false,
             null
         ));
-    }    
+
+        entries.add(VCEntry.toggle(
+            "Ingame Chat Formatting",
+            "Allow rendering and using custom / minecraft formatting codes\n(§, & etc) in chat messages.",
+            Key.CHAT_FORMATTING,
+            true,
+            null
+        ));
+
+    }
 
     private static void addFg(List<VCEntry> entries) {
-        entries.add(VCEntry.header("§[aquamarine]── Item Safeguard ──", ""));
+        entries.add(VCEntry.header("── Item Safeguard ──", ""));
 
         List<VCEntry> itemManagementSubEntries = new ArrayList<>();
         

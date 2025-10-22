@@ -10,6 +10,8 @@ public class Key {
     public static final String HUD_TRACKER_ENABLED = "profitTrackerHud";
     public static final String HUD_CENTURY_CAKE_ENABLED = "centuryCakeHud";
     public static final String HUD_CATCH_GRAPH_ENABLED = "scGraphHud";
+    public static final String HUD_SKILL_XP_ENABLED = "skillXpHud";
+    public static final String HUD_HEALTH_ENABLED = "healthHud";
 
     // --- Hud State ---
     public static final String HUD_PING_X = "pingHudX";
@@ -26,7 +28,6 @@ public class Key {
     public static final String HUD_PET_X = "petHudX";
     public static final String HUD_PET_Y = "petHudY";
     public static final String HUD_PET_SIZE = "petHudSize";
-    public static final String HUD_PET_COLOR = "petHudColor";
     public static final String HUD_TRACKER_X = "trackerHudX";
     public static final String HUD_TRACKER_Y = "trackerHudY";
     public static final String HUD_TRACKER_SIZE = "trackerHudSize";
@@ -42,12 +43,18 @@ public class Key {
     public static final String HUD_CATCH_GRAPH_Y = "catchHistogramHudY";
     public static final String HUD_CATCH_GRAPH_SIZE = "catchHistogramHudSize";
     public static final String HUD_CATCH_GRAPH_COLOR = "catchHistogramHudColor";
+    public static final String HUD_SKILL_XP_X = "skillXpHudX";
+    public static final String HUD_SKILL_XP_Y = "skillXpHudY";
+    public static final String HUD_SKILL_XP_SIZE = "skillXpHudSize";
+    public static final String HUD_SKILL_XP_COLOR = "skillXpHudColor";
 
     // --- Hud Modifiers ---
     public static final String HUD_PETXP = "petXpCheck";    
-    public static final String HUD_PET_DYNAMIC = "tabTicks";    
     public static final String TRACK_SACK = "trackSack";
     public static final String PER_ITEM = "pricePerItem";
+    public static final String HUD_PING_SHOW_PING = "pingHudShowPing";
+    public static final String HUD_PING_SHOW_TPS = "pingHudShowTps";
+    public static final String HUD_PING_SHOW_FPS = "pingHudShowFps";    
 
     // --- Settings ---
     public static final String XP_COLOR = "xpColor";
@@ -70,6 +77,7 @@ public class Key {
     public static final String CLEAN_HYPE = "cleanHype";
     public static final String MUTE_PHANTOM = "mutePhantom";
     public static final String MUTE_RUNE = "muteRune";
+    public static final String MUTE_THUNDER = "muteThunder";
     public static final String RENDER_COORDS = "renderCoords";
     public static final String RENDER_COORD_COLOR = "renderCoordsColor";
     public static final String RENDER_COORD_MS = "renderCoordsMs";
@@ -112,6 +120,9 @@ public class Key {
     public static final String KEY_SHORTCUTS_ENABLED = "keyShortcutsOn";
     public static final String THEME_MODE = "themeMode";
     public static final String INFO_ID = "infoId";
+    public static final String HUD_TEXT_SHADOW = "hudTextShadow";
+    public static final String CHAT_FORMATTING = "chatFormatting";
+    public static final String HELD_ITEM_TRANSFORMS = "heldItemTransforms";
 
     // GUI Scale
     public static final String MOD_UI_SCALE = "modUiScale";
@@ -157,6 +168,7 @@ public class Key {
         settings.set(CLEAN_HYPE, false);
         settings.set(MUTE_PHANTOM, false);
         settings.set(MUTE_RUNE, false);
+        settings.set(MUTE_THUNDER, false);
         settings.set(RENDER_COORDS, true);
         settings.set(COPY_CHAT, true);
         settings.set(COPY_NOTI, true);
@@ -166,7 +178,6 @@ public class Key {
         settings.set(HUD_TIMER_ENABLED, true);
         settings.set(HUD_PET_ENABLED, false);
         settings.set(HUD_PETXP, true);
-        settings.set(HUD_PET_DYNAMIC, true);
         settings.set(TRACK_SACK, false);
         settings.set(FILTER_MIN_VALUE, 2.0f);
         settings.set(VALUE_FILTER, true);
@@ -200,6 +211,10 @@ public class Key {
         settings.set(CHAT_FILTER_HIDE_AUTOPET_MESSAGES, false);
         settings.set(CHAT_FILTER_HIDE_HYPE, false);
         settings.set(CHAT_FILTER_PARTYBTN, false);
+        settings.set(HUD_HEALTH_ENABLED, false);
+        settings.set(HUD_TEXT_SHADOW, true);
+        settings.set(CHAT_FORMATTING, true);
+        settings.set(HELD_ITEM_TRANSFORMS, false);        
         hud.set(HUD_PING_X, 5);
         hud.set(HUD_PING_Y, 12);
         hud.set(HUD_PING_SIZE, 12);
@@ -215,7 +230,6 @@ public class Key {
         hud.set(HUD_PET_X, 601);
         hud.set(HUD_PET_Y, 486);
         hud.set(HUD_PET_SIZE, 12);
-        hud.set(HUD_PET_COLOR, 0xFFFFFF);
         hud.set(HUD_TRACKER_X, 5);
         hud.set(HUD_TRACKER_Y, 44);
         hud.set(HUD_TRACKER_SIZE, 12);

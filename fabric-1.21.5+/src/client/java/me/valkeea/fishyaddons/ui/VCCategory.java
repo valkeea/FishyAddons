@@ -259,6 +259,7 @@ public class VCCategory {
         
         var renderTab = new Tab("Rendering", "Render", "── Rendering Tweaks ──");
         renderTab.setDropdownItems(Arrays.asList(
+            new DropdownItem("Held Item", "held item size and animations"),
             new DropdownItem("Entity Death", "skip entity death animation"),
             new DropdownItem("Entity Fire", "skip entity fire animation"),
             new DropdownItem("Lava", "clear lava"),
@@ -273,7 +274,7 @@ public class VCCategory {
         qolTab.setDropdownItems(Arrays.asList(
             new DropdownItem("Inventory", "inventory search"),
             new DropdownItem("Coordinates", "highlight coordinates"),
-            new DropdownItem("Ping Display", "ping display"),
+            new DropdownItem("Ping/TPS/FPS", "debug display"),
             new DropdownItem("Copy Chat"),
             new DropdownItem("F5", "skip front perspective"),
             new DropdownItem("Keybinds", "custom keybinds"),
@@ -287,13 +288,14 @@ public class VCCategory {
         skyblockTab.setDropdownItems(Arrays.asList(
             new DropdownItem("Equipment", "equipment display"),
             new DropdownItem("Pet Display"),
+            new DropdownItem("Healthbars", "mob health bar"),
             new DropdownItem("Profit", "price per item"),
+            new DropdownItem("Skill XP", "skill xp per hour"),
             new DropdownItem("Cakes", "century cake display"),
             new DropdownItem("Diana", "track various diana stats"),
             new DropdownItem("Moonglade", "timer display"),
             new DropdownItem("Hyperion", "clean wither impact"),
-            new DropdownItem("Phantoms", "mute phantoms"),
-            new DropdownItem("Runes", "mute runes"),
+            new DropdownItem("Sounds", "mute list"),
             new DropdownItem("Sb Gui", "hide skyblock gui buttons"),
             new DropdownItem("Invisibug", "invisibug helper")
         ));

@@ -2,6 +2,7 @@ package me.valkeea.fishyaddons.hud;
 
 import java.awt.Rectangle;
 
+import me.valkeea.fishyaddons.util.ModInfo;
 import net.fabricmc.fabric.api.client.rendering.v1.HudLayerRegistrationCallback;
 import net.fabricmc.fabric.api.client.rendering.v1.IdentifiedLayer;
 import net.minecraft.client.MinecraftClient;
@@ -42,12 +43,15 @@ public class InfoDisplay implements HudElement {
     }    
 
     public void show(String msg) {
-        this.message = msg;
-        this.visible = true;
+        if (msg != null && !msg.trim().isEmpty()) {
+            this.message = msg;
+            this.visible = true;
+        }
     }
 
     public void hide() {
         this.visible = false;
+        this.message = "";
         invalidateCache();
     }
 
@@ -55,11 +59,21 @@ public class InfoDisplay implements HudElement {
         return visible;
     }
 
+    public void forceHide() {
+        hide();
+    }
+
     @Override
     public void render(DrawContext context, int mouseX, int mouseY) {
-        if (!visible) return;
+        if (!visible || !ModInfo.shouldShowInfo() || message == null || message.trim().isEmpty()) {
+            if (visible && !ModInfo.shouldShowInfo()) {
+                forceHide();
+            }
+            return;
+        }
 
         MinecraftClient mc = MinecraftClient.getInstance();
+        if (mc == null || mc.textRenderer == null) return;
         String[] lines = message.replace("\\n", "\n").split("\n");
         int maxWidth = 0;
         int lineHeight = mc.textRenderer.fontHeight + 2;

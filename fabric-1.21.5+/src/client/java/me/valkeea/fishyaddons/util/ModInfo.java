@@ -15,6 +15,9 @@ public class ModInfo {
     private static String infoMessage = "";
     private static boolean showInfo = false;
     private static boolean wasPressed = false;
+    private static boolean wasClosePressed = false;
+    private static long displayStartTime = 0;
+    private static final long MAX_DISPLAY_TIME = 30000;
 
     static {
         fetchInfo();
@@ -54,19 +57,34 @@ public class ModInfo {
             var client = MinecraftClient.getInstance();
             var handle = client.getWindow().getHandle();
 
-            if (InputUtil.isKeyPressed(handle, CLOSE_KEY)) {
-                InfoDisplay.getInstance().hide();
-                FishyConfig.setString(Key.INFO_ID, getInfoId());
-                showInfo = false;
+            if (displayStartTime > 0 && System.currentTimeMillis() - displayStartTime > MAX_DISPLAY_TIME) {
+                hideInfo();
+                return;
             }
 
-            boolean keyDown = InputUtil.isKeyPressed(handle, COPY_LINK_KEY);
-            if (wasPressed && !keyDown) {
+            boolean closeKeyDown = InputUtil.isKeyPressed(handle, CLOSE_KEY);
+            if (closeKeyDown && !wasClosePressed) {
+                hideInfo();
+                return;
+            }
+            wasClosePressed = closeKeyDown;
+
+            boolean copyKeyDown = InputUtil.isKeyPressed(handle, COPY_LINK_KEY);
+            if (wasPressed && !copyKeyDown) {
                 client.keyboard.setClipboard("https://modrinth.com/project/QOUIa2cU");
                 FishyNotis.ccNoti();
             }
-            wasPressed = keyDown;
+            wasPressed = copyKeyDown;
         }
+    }
+
+    private static void hideInfo() {
+        InfoDisplay.getInstance().hide();
+        FishyConfig.setString(Key.INFO_ID, getInfoId());
+        showInfo = false;
+        displayStartTime = 0;
+        wasClosePressed = false;
+        wasPressed = false;
     }
 
 
@@ -92,6 +110,10 @@ public class ModInfo {
         } else {
             showInfo = false;
         }
+        
+        if (showInfo && displayStartTime == 0) {
+            displayStartTime = System.currentTimeMillis();
+        }
     }
 
     public static String getInfoId() {
@@ -104,6 +126,19 @@ public class ModInfo {
 
     public static boolean shouldShowInfo() {
         return showInfo;
+    }
+
+    /**
+     * Force hide the display
+     */
+    public static void forceHide() {
+        hideInfo();
+    }
+
+    public static void forceShow() {
+        showInfo = true;
+        displayStartTime = System.currentTimeMillis();
+        InfoDisplay.getInstance().show(getInfoMessage());
     }
 
     private ModInfo() {

@@ -110,6 +110,7 @@ public class SkillTracker {
                 }
                 
                 cacheValid = false;
+                SkillXpDisplay.refreshDisplay(this);
                 lastXpGain = System.currentTimeMillis();
             }
         }
@@ -310,7 +311,6 @@ public class SkillTracker {
         }
         
         cacheValid = true;
-        SkillXpDisplay.refreshDisplay(this);
     }
     
     public java.util.Set<String> getTrackedSkills() {

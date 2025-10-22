@@ -153,16 +153,17 @@ public class TabScanner {
         List<Text> lines = TablistUtils.getLines();
         if (lines.isEmpty()) return false;
         
+        Map<String, Integer> extractedSkills = new HashMap<>();
         for (Text line : lines) {
-            Map<String, Integer> extractedSkills = extractSkillLevels(line);
-            if (!extractedSkills.isEmpty()) {
-                
-                for (Map.Entry<String, Integer> entry : extractedSkills.entrySet()) {
-                    me.valkeea.fishyaddons.tracker.SkillTracker.getInstance().updateSkillLevel(entry.getKey(), entry.getValue());
-                }
-                return true;
-            }
+            extractedSkills.putAll(extractSkillLevels(line));
         }
+
+        if (!extractedSkills.isEmpty()) {
+            for (Map.Entry<String, Integer> entry : extractedSkills.entrySet()) {
+                me.valkeea.fishyaddons.tracker.SkillTracker.getInstance().updateSkillLevel(entry.getKey(), entry.getValue());
+            }
+            return true;
+        }        
 
         synchronized (lock) {
             skillFails++;

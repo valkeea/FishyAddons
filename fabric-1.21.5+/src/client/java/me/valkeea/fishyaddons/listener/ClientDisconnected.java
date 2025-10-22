@@ -5,6 +5,7 @@ import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.config.ItemConfig;
 import me.valkeea.fishyaddons.config.StatConfig;
 import me.valkeea.fishyaddons.config.TrackerProfiles;
+import me.valkeea.fishyaddons.handler.HeldItems;
 import me.valkeea.fishyaddons.tracker.ActivityMonitor;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 
@@ -22,6 +23,7 @@ public class ClientDisconnected {
         FilterConfig.saveBackup();
         TrackerProfiles.backupAll();
         TrackerProfiles.saveProfile();
+        HeldItems.saveConfig();
         ActivityMonitor.getInstance().forceSave();
     }
 }

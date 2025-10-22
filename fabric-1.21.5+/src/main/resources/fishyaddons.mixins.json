@@ -43,7 +43,8 @@
 		"MixinPlayerListHud",
 		"MixinRedDustParticle",
 		"MixinSoundManager",
-		"MixinTextHandler"
+		"MixinTextHandler",
+		"MixinHeldItemRenderer"
 	],
 	"refmap": "client-FishyAddons.refmap.json",
 	"injectors": {

@@ -1,5 +1,6 @@
 package me.valkeea.fishyaddons;
 
+import me.valkeea.fishyaddons.api.skyblock.GameChat;
 import me.valkeea.fishyaddons.command.CmdManager;
 import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.config.FishyPresets;
@@ -9,17 +10,17 @@ import me.valkeea.fishyaddons.event.FishyKeys;
 import me.valkeea.fishyaddons.handler.ActiveBeacons;
 import me.valkeea.fishyaddons.handler.CakeTimer;
 import me.valkeea.fishyaddons.handler.ChatAlert;
-import me.valkeea.fishyaddons.api.skyblock.GameChat;
 import me.valkeea.fishyaddons.handler.ChatReplacement;
 import me.valkeea.fishyaddons.handler.ChatTimers;
-import me.valkeea.fishyaddons.handler.ClientPing;
 import me.valkeea.fishyaddons.handler.CommandAlias;
 import me.valkeea.fishyaddons.handler.CopyChat;
 import me.valkeea.fishyaddons.handler.FaColors;
 import me.valkeea.fishyaddons.handler.FishingHotspot;
 import me.valkeea.fishyaddons.handler.GuiIcons;
+import me.valkeea.fishyaddons.handler.HeldItems;
 import me.valkeea.fishyaddons.handler.KeyShortcut;
 import me.valkeea.fishyaddons.handler.MobAnimations;
+import me.valkeea.fishyaddons.handler.NetworkMetrics;
 import me.valkeea.fishyaddons.handler.ParticleVisuals;
 import me.valkeea.fishyaddons.handler.PetInfo;
 import me.valkeea.fishyaddons.handler.RenderTweaks;
@@ -29,23 +30,25 @@ import me.valkeea.fishyaddons.handler.XpColor;
 import me.valkeea.fishyaddons.hud.ElementRegistry;
 import me.valkeea.fishyaddons.hud.FishyToast;
 import me.valkeea.fishyaddons.listener.ClientChat;
-import me.valkeea.fishyaddons.listener.ClientStop;
 import me.valkeea.fishyaddons.listener.ClientConnected;
 import me.valkeea.fishyaddons.listener.ClientDisconnected;
+import me.valkeea.fishyaddons.listener.ClientStop;
 import me.valkeea.fishyaddons.listener.ClientTick;
 import me.valkeea.fishyaddons.listener.ModifyChat;
 import me.valkeea.fishyaddons.listener.WorldEvent;
 import me.valkeea.fishyaddons.tool.FishyMode;
 import me.valkeea.fishyaddons.tool.GuiScheduler;
 import me.valkeea.fishyaddons.tool.ModCheck;
+import me.valkeea.fishyaddons.tool.PlaySound;
 import me.valkeea.fishyaddons.tracker.ActivityMonitor;
 import me.valkeea.fishyaddons.tracker.ItemTrackerData;
 import me.valkeea.fishyaddons.tracker.SackDropParser;
+import me.valkeea.fishyaddons.tracker.SkillTracker;
 import me.valkeea.fishyaddons.tracker.TrackerUtils;
+import me.valkeea.fishyaddons.tracker.ValuableMobs;
 import me.valkeea.fishyaddons.tracker.fishing.ScData;
-import me.valkeea.fishyaddons.tracker.fishing.ScStats;
 import me.valkeea.fishyaddons.util.CustomSounds;
-import me.valkeea.fishyaddons.util.PlaySound;
+import me.valkeea.fishyaddons.util.text.GradientRenderer;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
@@ -54,7 +57,6 @@ import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
-
 
 public class FishyAddons implements ClientModInitializer {
 
@@ -66,6 +68,7 @@ public class FishyAddons implements ClientModInitializer {
         ItemConfig.init();
 
         GameChat.init();
+        GradientRenderer.init();
 
         KeyShortcut.refresh();
         ChatReplacement.refresh();
@@ -77,17 +80,20 @@ public class FishyAddons implements ClientModInitializer {
         PetInfo.refresh();
         XpColor.refresh();
         ScData.refresh();
+        SkillTracker.refresh();        
         RenderTweaks.refresh();
         MobAnimations.refresh();
         SkyblockCleaner.refresh();
         TrackerUtils.refresh();
+        ValuableMobs.refresh();
         SackDropParser.refresh();
-        ClientPing.refresh();
+        NetworkMetrics.refresh();
         ActiveBeacons.refresh();
         FishingHotspot.refresh();
         ActivityMonitor.refresh();
         ChatTimers.getInstance().refresh();
 
+        HeldItems.init();        
         CustomSounds.init();
         FaColors.init();
         FishyMode.init();

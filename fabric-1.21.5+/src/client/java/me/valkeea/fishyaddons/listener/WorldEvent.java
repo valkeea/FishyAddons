@@ -2,6 +2,7 @@ package me.valkeea.fishyaddons.listener;
 
 import me.valkeea.fishyaddons.handler.ActiveBeacons;
 import me.valkeea.fishyaddons.handler.CakeTimer;
+import me.valkeea.fishyaddons.handler.NetworkMetrics;
 import me.valkeea.fishyaddons.handler.PetInfo;
 import me.valkeea.fishyaddons.handler.WeatherTracker;
 import me.valkeea.fishyaddons.util.AreaUtils;
@@ -47,6 +48,7 @@ public class WorldEvent {
         PetInfo.onWorldLoad();
         ZoneUtils.resetDungeon();
         ActiveBeacons.clearBeacons();
+        NetworkMetrics.reset();
         CakeTimer.getInstance().onLoad();
         
         if (pendingBypass) {

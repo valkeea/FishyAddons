@@ -195,6 +195,8 @@ public class VCToggleMenu {
             if (scrollOffset > maxOffset) scrollOffset = maxOffset;
             return true;
         }
+
+        setVisible(false);
         return false;
     }
 

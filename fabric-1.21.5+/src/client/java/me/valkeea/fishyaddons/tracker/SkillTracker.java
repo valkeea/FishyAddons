@@ -7,8 +7,9 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import me.valkeea.fishyaddons.api.skyblock.SkillLevelTables;
 import me.valkeea.fishyaddons.config.FishyConfig;
-import me.valkeea.fishyaddons.handler.TabScanner;
+import me.valkeea.fishyaddons.hud.SkillXpDisplay;
 import me.valkeea.fishyaddons.util.FishyNotis;
+import me.valkeea.fishyaddons.util.TabScanner;
 
 public class SkillTracker {
     
@@ -309,11 +310,8 @@ public class SkillTracker {
         }
         
         cacheValid = true;
+        SkillXpDisplay.refreshDisplay(this);
     }
-
-    public boolean hasNewData() {
-        return cacheValid;
-    }    
     
     public java.util.Set<String> getTrackedSkills() {
         return new java.util.HashSet<>(trackedSkills.keySet());

@@ -16,17 +16,19 @@ public class ElementRegistry {
     }
 
     public static void init() {
-        PingDisplay pingDisplay = new PingDisplay();
+        NetworkDisplay networkDisplay = new NetworkDisplay();
         TimerDisplay timerDisplay = new TimerDisplay();
         TitleDisplay titleDisplay = new TitleDisplay();
         PetDisplay petDisplay = new PetDisplay();
-        TrackerDisplay trackerDisplay = new TrackerDisplay();
         SearchHudElement searchHudElement = new SearchHudElement();
         CakeDisplay centuryCakeDisplay = new CakeDisplay();
+        SkillXpDisplay skillXpDisplay = new SkillXpDisplay();
+        HealthDisplay healthDisplay = new HealthDisplay();        
+        TrackerDisplay trackerDisplay = TrackerDisplay.getInstance();
         InfoDisplay infoDisplay = InfoDisplay.getInstance();
-        ScDisplay scDisplay = ScDisplay.getInstance();
+        ScDisplay catchHistogramDisplay = ScDisplay.getInstance();
 
-        register(pingDisplay);
+        register(networkDisplay);
         register(timerDisplay);
         register(titleDisplay);
         register(petDisplay);
@@ -34,9 +36,11 @@ public class ElementRegistry {
         register(searchHudElement);
         register(centuryCakeDisplay);
         register(infoDisplay);
-        register(scDisplay);
+        register(catchHistogramDisplay);
+        register(skillXpDisplay);
+        register(healthDisplay);
 
-        pingDisplay.register();
+        networkDisplay.register();
         timerDisplay.register();
         titleDisplay.register();
         petDisplay.register();
@@ -44,7 +48,9 @@ public class ElementRegistry {
         searchHudElement.register();
         centuryCakeDisplay.register();
         infoDisplay.register();
-        scDisplay.register();
+        catchHistogramDisplay.register();
+        skillXpDisplay.register();
+        healthDisplay.register();
 
         me.valkeea.fishyaddons.handler.ItemSearchOverlay searchOverlay = me.valkeea.fishyaddons.handler.ItemSearchOverlay.getInstance();
         searchOverlay.setSearchHudElement(searchHudElement);        

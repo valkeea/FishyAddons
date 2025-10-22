@@ -214,18 +214,24 @@ public class FilterConfig {
     }
     
     private static void initScRules() {
-        if (FishyConfig.getState(Key.CHAT_FILTER_SC_ENABLED, false)) {
+        if (!areScRulesLoaded() && isUsed()) {
             Map<String, Rule> seaCreatureRules = RuleFactory.generateSeaCreatureRules();
             DEFAULT_RULES.putAll(seaCreatureRules);
         }
     }
 
+    public static boolean areScRulesLoaded() {
+        return DEFAULT_RULES.keySet().stream().anyMatch(name -> name.startsWith("sc_"));
+    }
+
+    public static boolean isUsed() {
+        return FishyConfig.getState(Key.CHAT_FILTER_SC_ENABLED, false) || FishyConfig.getState(Key.TRACK_SCS, false);
+    }
+
     public static void refreshScRules() {
-        boolean anyScRuleExists = DEFAULT_RULES.keySet().stream()
-                .anyMatch(name -> name.startsWith("sc_"));
-        if (!anyScRuleExists) {
+        if (!areScRulesLoaded()) {
             initScRules();
-        } else {
+        } else if (!isUsed()) {
             DEFAULT_RULES.keySet().removeIf(name -> name.startsWith("sc_"));
         }
     }

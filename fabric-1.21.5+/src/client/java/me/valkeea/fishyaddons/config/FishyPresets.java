@@ -99,7 +99,8 @@ public class FishyPresets {
             0xFF00FF,
             "minecraft:entity.player.levelup",
             1.0F,
-            true
+            true,
+            false
         )
     );
 
@@ -175,7 +176,6 @@ public class FishyPresets {
             }
             
             if (!Files.exists(target)) {
-                System.out.println("Copying resource " + resourcePath + " to " + target);
                 Files.createDirectories(target.getParent());
                 Files.copy(inputStream, target);
             }

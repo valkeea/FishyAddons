@@ -133,11 +133,9 @@ public class EqDisplay {
                 int slotY = pos[1];
                 
                 renderSlotBg(context, slotX, slotY);
-                if (EqTextures.hasSlotData(i)) {
-                    if (EqTextures.isEmptySlot(i)) {
-                    } else if (cachedSkullItems.containsKey(i) || EqTextures.hasSkullTexture(i)) {
-                        renderSkull(context, slotX + 1, slotY + 1, i);
-                    }
+                if (EqTextures.hasSlotData(i) && !EqTextures.isEmptySlot(i) &&
+                    (cachedSkullItems.containsKey(i) || EqTextures.hasSkullTexture(i))) {
+                    renderSkull(context, slotX + 1, slotY + 1, i);
                 }
             }
         }

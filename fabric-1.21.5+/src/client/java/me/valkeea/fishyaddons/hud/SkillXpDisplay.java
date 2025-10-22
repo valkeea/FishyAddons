@@ -96,7 +96,7 @@ public class SkillXpDisplay implements HudElement {
         }
     }
     
-    private final java.util.Map<String, SkillDisplayCache> skillCaches = new java.util.concurrent.ConcurrentHashMap<>();
+    private static final java.util.Map<String, SkillDisplayCache> skillCaches = new java.util.concurrent.ConcurrentHashMap<>();
 
     public void register() {
         HudLayerRegistrationCallback.EVENT.register(layeredDrawer ->
@@ -117,8 +117,6 @@ public class SkillXpDisplay implements HudElement {
 
         var mc = MinecraftClient.getInstance();
         var state = getCachedState();
-
-        updateSkillCaches(tracker, mc);
         
         if (tracker.hasMultipleSkills()) {
             renderMultipleSkills(context, state, mc);
@@ -127,8 +125,7 @@ public class SkillXpDisplay implements HudElement {
         }
     }
 
-    private void updateSkillCaches(SkillTracker tracker, MinecraftClient mc) {
-        if (!SkillTracker.getInstance().hasNewData()) return;
+    public static void refreshDisplay(SkillTracker tracker) {
 
         skillCaches.clear();
         for (String skillName : tracker.getTrackedSkills()) {
@@ -142,7 +139,7 @@ public class SkillXpDisplay implements HudElement {
                 tracker.getMobRate()
             );
 
-            skillCaches.put(skillName, new SkillDisplayCache(data, mc));
+            skillCaches.put(skillName, new SkillDisplayCache(data, MinecraftClient.getInstance()));
         }
     }
 
@@ -263,7 +260,7 @@ public class SkillXpDisplay implements HudElement {
             return new Rectangle(hudX, hudY, width, height);
         }
         
-        updateSkillCaches(tracker, mc);
+        refreshDisplay(tracker);
         
         int maxWidth = skillCaches.values().stream()
             .mapToInt(SkillDisplayCache::getFullWidth)

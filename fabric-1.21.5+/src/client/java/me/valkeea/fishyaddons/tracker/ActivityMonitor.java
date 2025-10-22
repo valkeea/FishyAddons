@@ -23,7 +23,8 @@ public class ActivityMonitor {
     public enum Currently {
         FISHING,
         DIANA,
-        SPOOKY
+        SPOOKY,
+        SHARK
     }
     
     private ActivityMonitor() {

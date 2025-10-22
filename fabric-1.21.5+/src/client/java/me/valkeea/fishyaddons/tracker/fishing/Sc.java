@@ -19,6 +19,7 @@ public class Sc {
     public static final String WATER_HYDRA = "water_hydra";
     public static final String NIGHT_SQUID = "night_squid";
     public static final String GRIM_REAPER = "grim_reaper";
+    public static final String GW = "great_white_shark";
     public static final String HSPT_THUNDER = "thunder_hotspot";
     public static final String HSPT_JAWBUS = "lord_jawbus_hotspot";
     public static final String POOL_THUNDER = "thunder_pool";
@@ -43,6 +44,10 @@ public class Sc {
     public static boolean isTracked(String creatureId) {
         return ScRegistry.getInstance().isTracked(creatureId);
     }
+
+    public static boolean canSpawnIn(String creatureId, String area) {
+        return ScRegistry.getInstance().canSpawnIn(creatureId, area);
+    }    
 
     public static List<String> getTrackedCreatures() {
         return ScRegistry.getInstance().getTrackedCreatures();

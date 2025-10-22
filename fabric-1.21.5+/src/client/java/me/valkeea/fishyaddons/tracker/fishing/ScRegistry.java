@@ -123,6 +123,13 @@ public class ScRegistry {
                 } catch (Exception e) { return false; }
             });
 
+        SpawnRequirement isShark = new SpawnRequirement("shark", 
+            () -> {
+                try { 
+                    return ActivityMonitor.getInstance().isActive(ActivityMonitor.Currently.SHARK); 
+                } catch (Exception e) { return false; }
+            });            
+
         SpawnRequirement notGalatea = new SpawnRequirement("not_galatea", 
             () -> {
                 try { return !GALATEA.equals(ScStats.getArea()); } catch (Exception e) { return true; }
@@ -191,6 +198,9 @@ public class ScRegistry {
             
         registerCreature(Sc.GRIM_REAPER, "§5Grim Reaper", 
             Set.of(ANY), List.of(isSpooky, water), true);
+
+        registerCreature(Sc.GW, "§6Great White Shark", 
+            Set.of(ANY), List.of(isShark, water), true);    
     }
     
     private void registerCreature(String id, String displayName, Set<String> validAreas, 
@@ -229,6 +239,7 @@ public class ScRegistry {
             hash.append(ScStats.isHspt()).append("|");
             hash.append(ScStats.isPool()).append("|");
             hash.append(ActivityMonitor.getInstance().isActive(ActivityMonitor.Currently.SPOOKY)).append("|");
+            hash.append(ActivityMonitor.getInstance().isActive(ActivityMonitor.Currently.SHARK)).append("|");
             hash.append(ScStats.getArea());
             return hash.toString();
         } catch (Exception e) {
@@ -252,6 +263,11 @@ public class ScRegistry {
         CreatureData creature = creatures.get(creatureId);
         return creature != null && creature.isTracked();
     }
+
+    public boolean canSpawnIn(String creatureId, String area) {
+        CreatureData creature = creatures.get(creatureId);
+        return creature != null && creature.canSpawnIn(area);
+    }    
     
     public String getDisplayName(String creatureId) {
         ensureInit();

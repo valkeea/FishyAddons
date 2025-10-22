@@ -45,7 +45,8 @@ public class ScData {
     }
 
     public static void refresh() {
-        enabled = FishyConfig.getState(Key.HUD_CATCH_GRAPH_ENABLED, false);
+        enabled = FishyConfig.getState(Key.HUD_CATCH_GRAPH_ENABLED, false) && 
+                  FishyConfig.getState(Key.TRACK_SCS, false);
     }
 
     public static boolean isEnabled() {
@@ -166,6 +167,9 @@ public class ScData {
         try {
             saveDataFor(creatureKey, newHistogram);
             catchGraph.put(creatureKey, newHistogram);
+            if (newMax > 200 && newMax > maxAttempts.getOrDefault(creatureKey, 0)) {
+                FishyNotis.themed("New worst drystreak recorded for §3" + creatureKey + "§7: §8" + newMax + ". §dGG§7!");
+            }
         } catch (Exception e) {
             System.err.println("Failed to save rebalanced data for " + creatureKey + ": " + e.getMessage());
             e.printStackTrace();

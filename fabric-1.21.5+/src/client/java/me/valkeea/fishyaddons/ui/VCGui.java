@@ -3,12 +3,10 @@ package me.valkeea.fishyaddons.ui;
 import java.util.Map;
 import java.util.function.Supplier;
 
-import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.config.Key;
 import me.valkeea.fishyaddons.ui.widget.VCButton;
 import me.valkeea.fishyaddons.ui.widget.VCSlider;
 import me.valkeea.fishyaddons.util.text.Color;
-import me.valkeea.fishyaddons.util.text.Enhancer;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 
@@ -142,7 +140,7 @@ public class VCGui {
             return headerHeight;
         }
         
-        var title = Enhancer.parseFormattedText(entry.name);        
+        var title = VCText.header(entry.name, null);       
         int unscaledTextWidth = screen.getTextRenderer().getWidth(title.getString());
         int effectiveTextWidth;
 
@@ -249,9 +247,9 @@ public class VCGui {
             case SLIDER:
                 renderSliderControl(context, entry, x, y, mouseX, mouseY);
                 break;
-            case TOGGLE_WITH_DROPDOWN:
-                renderToggleWithDropdownControl(context, entry, x, y, mouseX, mouseY);
-                break;    
+            case TOGGLE_WITH_DROPDOWN, DROPDOWN:
+                renderToggleWithDropdownControl(context, entry, x, y, mouseX, mouseY, entry.type);
+                break;
             case HEADER, EXPANDABLE:
                 // Rendered separately
                 break;
@@ -296,11 +294,11 @@ public class VCGui {
         }
 
         if (entry.hasAdd()) {
-            int addWidth = uiScale < 0.7f ? Math.max(20, (int)(40 * uiScale)) : (int)(30 * uiScale);
-            boolean addHovered = VCButton.isHovered(currentX, y, addWidth, buttonHeight, mouseX, mouseY);
+            int addWidth = uiScale < 0.7f ? Math.max(25, (int)(45 * uiScale)) : (int)(35 * uiScale);
+            boolean editHovered = VCButton.isHovered(currentX, y, addWidth, buttonHeight, mouseX, mouseY);
             VCButton.render(context, screen.getTextRenderer(),
-                VCButton.standard(currentX, y, addWidth, buttonHeight, "ADD")
-                    .withHovered(addHovered)
+                VCButton.standard(currentX, y, addWidth, buttonHeight, "EDIT")
+                    .withHovered(editHovered)
                     .withScale(uiScale)
             );                                    
         }
@@ -315,33 +313,7 @@ public class VCGui {
     }
     
     private int getCurrentColor(VCEntry entry) {
-        if (Key.RENDER_COORD_MS.equals(entry.configKey)) {
-            return FishyConfig.getInt(Key.RENDER_COORD_COLOR, -5653771);
-        } else if (Key.XP_OUTLINE.equals(entry.configKey)) {
-            return FishyConfig.getInt(Key.XP_COLOR);
-        } else if (Key.FISHY_TRANS_LAVA.equals(entry.configKey)) {
-            return FishyConfig.getInt(Key.FISHY_TRANS_LAVA_COLOR, -13700380);
-        } else if (Key.CUSTOM_PARTICLE_COLOR_INDEX.equals(entry.configKey)) {
-            if ("custom".equals(FishyConfig.getParticleColorMode())) {
-                float[] rgb = FishyConfig.getCustomParticleRGB();
-                if (rgb != null && rgb.length == 3) {
-                    int r = (int)(rgb[0] * 255);
-                    int g = (int)(rgb[1] * 255);
-                    int b = (int)(rgb[2] * 255);
-                    return (0xFF << 24) | (r << 16) | (g << 8) | b;
-                }
-            } else {
-                int index = FishyConfig.getCustomParticleColorIndex();
-                return switch (index) {
-                    case 1 -> 0xFF66FFFF;
-                    case 2 -> 0xFF66FF99;
-                    case 3 -> 0xFFFFCCFF;
-                    case 4 -> 0xFFE5E5FF;
-                    default -> 0xFF808080;
-                };
-            }
-        }
-        return 0xFFFF0000;
+        return ConfigUIResolver.getColor(entry);
     }
 
     public void renderSimpleButtonControl(DrawContext context, VCEntry entry, int x, int y, int mouseX, int mouseY) {
@@ -488,7 +460,7 @@ public class VCGui {
         }
     }
 
-    private void renderToggleWithDropdownControl(DrawContext context, VCEntry entry, int x, int y, int mouseX, int mouseY) {
+    private void renderToggleWithDropdownControl(DrawContext context, VCEntry entry, int x, int y, int mouseX, int mouseY, VCEntry.EntryType type) {
         int currentX = x;
         float uiScale = uiScaleSupplier.get();
         int buttonHeight = (int)(18 * uiScale);
@@ -496,14 +468,16 @@ public class VCGui {
         int toggleWidth = (int)(30 * uiScale);
         boolean toggleHovered = VCButton.isHovered(currentX, y, toggleWidth, buttonHeight, mouseX, mouseY);
         
-        VCButton.render(context, screen.getTextRenderer(),
-            VCButton.toggle(x, y, toggleWidth, buttonHeight, enabled)
-                .withHovered(toggleHovered)
-                .withScale(uiScale)
-        );
+        if (type == VCEntry.EntryType.TOGGLE_WITH_DROPDOWN) {
+            VCButton.render(context, screen.getTextRenderer(),
+                VCButton.toggle(x, y, toggleWidth, buttonHeight, enabled)
+                    .withHovered(toggleHovered)
+                    .withScale(uiScale)
+            );
+        }
 
         int toggleDropdownGap = uiScale < 0.7f ? Math.max(2, (int)(4 * uiScale)) : (int)(6 * uiScale);
-        currentX += toggleWidth + toggleDropdownGap;
+        currentX += type == VCEntry.EntryType.TOGGLE_WITH_DROPDOWN ? (toggleWidth + toggleDropdownGap) : 0;
 
         String buttonText = entry.dropdownButtonText != null ? entry.dropdownButtonText : "CONF";
         int textWidth = screen.getTextRenderer().getWidth(buttonText);

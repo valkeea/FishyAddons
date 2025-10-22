@@ -6,24 +6,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
-import me.valkeea.fishyaddons.config.FilterConfig;
 import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.config.Key;
-import me.valkeea.fishyaddons.handler.ParticleVisuals;
-import me.valkeea.fishyaddons.handler.TransLava;
-import me.valkeea.fishyaddons.handler.XpColor;
 import me.valkeea.fishyaddons.tool.FishyMode;
-import me.valkeea.fishyaddons.ui.list.ChatAlerts;
-import me.valkeea.fishyaddons.ui.list.CustomFaColors;
-import me.valkeea.fishyaddons.ui.list.FilterRules;
-import me.valkeea.fishyaddons.ui.list.ScRules;
-import me.valkeea.fishyaddons.ui.list.TabbedListScreen;
 import me.valkeea.fishyaddons.ui.widget.VCButton;
 import me.valkeea.fishyaddons.ui.widget.VCSlider;
 import me.valkeea.fishyaddons.ui.widget.VCTextField;
 import me.valkeea.fishyaddons.ui.widget.dropdown.VCToggleMenu;
-import me.valkeea.fishyaddons.util.text.Enhancer;
-import me.valkeea.fishyaddons.util.text.GradientRenderer;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
@@ -336,7 +325,7 @@ public class VCScreen extends Screen {
 
         super.render(context, mouseX, mouseY, delta);
 
-        var title = Enhancer.parseFormattedText("§[aquamarine]─ α FishyAddons Configuration α ─");
+        var title = VCText.header("FishyAddons Configuration", null);
         VCText.drawScaledCenteredText(context, textRenderer, title, width / 2, 20, 0xFF55FFFF, uiScale);
         
         renderTabs(context, mouseX, mouseY);
@@ -616,35 +605,7 @@ public class VCScreen extends Screen {
     }
     
     private int getCurrentColor(VCEntry entry) {
-        if (Key.RENDER_COORD_MS.equals(entry.configKey)) {
-            return FishyConfig.getInt(Key.RENDER_COORD_COLOR, -5653771);
-        } else if ("Color and Outline".equals(entry.name)) {
-            return FishyConfig.getInt(Key.XP_COLOR);
-        } else if (Key.FISHY_TRANS_LAVA.equals(entry.configKey)) {
-            return FishyConfig.getInt(Key.FISHY_TRANS_LAVA_COLOR, -13700380);
-        } else if (Key.CUSTOM_PARTICLE_COLOR_INDEX.equals(entry.configKey)) {
-            // For particle colors, show current color based on mode and selection
-            if ("custom".equals(FishyConfig.getParticleColorMode())) {
-                float[] rgb = FishyConfig.getCustomParticleRGB();
-                if (rgb != null && rgb.length == 3) {
-                    int r = Math.round(rgb[0] * 255);
-                    int g = Math.round(rgb[1] * 255);
-                    int b = Math.round(rgb[2] * 255);
-                    return (0xFF << 24) | (r << 16) | (g << 8) | b;
-                }
-            } else {
-                int index = FishyConfig.getCustomParticleColorIndex();
-                return switch (index) {
-                    case 0 -> 0xFF808080;
-                    case 1 -> 0xFF66FFFF;
-                    case 2 -> 0xFF66FF99;
-                    case 3 -> 0xFFFFCCFF;
-                    case 4 -> 0xFFE5E5FF;
-                    default -> 0xFFFFFFFF;
-                };
-            }
-        }
-        return 0xFFFF0000;
+        return ConfigUIResolver.getColor(entry);
     }
     
     private void openColorWheel(VCEntry entry) {
@@ -659,20 +620,7 @@ public class VCScreen extends Screen {
         
         Consumer<float[]> onColorSelected = rgb -> {
             int colorInt = ColorWheel.rgbToInt(rgb);
-
-            if (Key.RENDER_COORD_MS.equals(entry.configKey)) {
-                FishyConfig.setInt(Key.RENDER_COORD_COLOR, colorInt);
-            } else if (Key.FISHY_TRANS_LAVA.equals(entry.configKey)) {
-                FishyConfig.setInt(Key.FISHY_TRANS_LAVA_COLOR, colorInt);
-                TransLava.update();
-            } else if ("Color and Outline".equals(entry.name)) {
-                FishyConfig.setInt(Key.XP_COLOR, colorInt);
-                XpColor.refresh();
-            } else if (Key.CUSTOM_PARTICLE_COLOR_INDEX.equals(entry.configKey)) {
-                ParticleVisuals.setCustomColor(rgb);
-                FishyConfig.setParticleColorMode("custom");
-                ParticleVisuals.refreshCache();
-            }
+            ConfigUIResolver.setColor(entry, colorInt);
         };
         
         MinecraftClient.getInstance().setScreen(new ColorWheel(this, currentColor, onColorSelected));
@@ -940,7 +888,7 @@ public class VCScreen extends Screen {
             case KEYBIND -> keybindClick(mouseX, mouseY, entry, entryX, currentY);
             case SLIDER -> sliderClick(mouseX, mouseY, entry, entryX, currentY);
             case TOGGLE_WITH_SLIDER -> toggleSliderClick(mouseX, mouseY, entry, entryX, currentY);
-            case TOGGLE_WITH_DROPDOWN -> toggleDropdownClick(mouseX, mouseY, entry, entryX, currentY);
+            case TOGGLE_WITH_DROPDOWN, DROPDOWN -> toggleDropdownClick(mouseX, mouseY, entry, entryX, currentY, entry.type);
             default -> false;
         };
     }
@@ -1006,41 +954,7 @@ public class VCScreen extends Screen {
     }
 
     private void openListGui(VCEntry entry) {
-        MinecraftClient cl = MinecraftClient.getInstance();
-        if (entry.configKey == null) return;
-        switch (entry.configKey) {
-            case Key.CUSTOM_FA_COLORS -> cl.setScreen(new CustomFaColors(this));
-            case Key.CHAT_ALERTS_ENABLED -> cl.setScreen(new ChatAlerts(this));
-            case Key.ALIASES_ENABLED -> cl.setScreen(new TabbedListScreen(this, TabbedListScreen.Tab.COMMANDS));
-            case Key.KEY_SHORTCUTS_ENABLED -> cl.setScreen(new TabbedListScreen(this, TabbedListScreen.Tab.KEYBINDS));
-            case Key.CHAT_REPLACEMENTS_ENABLED -> cl.setScreen(new TabbedListScreen(this, TabbedListScreen.Tab.CHAT));
-            case Key.CHAT_FILTER_ENABLED -> cl.setScreen(new FilterRules(this));
-            case Key.CHAT_FILTER_SC_ENABLED -> tryOpenScGui(cl, this);
-            default -> {
-                // Unknown entry type
-            }
-        }
-    }
-
-    private void tryOpenScGui(MinecraftClient cl, Screen parent) {
-        if (FishyConfig.getState(Key.CHAT_FILTER_SC_ENABLED, false)) {
-            cl.setScreen(new ScRules(parent));
-        } else {
-            VCPopup popup = new VCPopup(
-                Text.literal("Sea Creature Overrides are disabled!"),
-                "Go Back",
-                () -> cl.setScreen(parent),
-                "Enable",
-                () -> {
-                    FishyConfig.enable(Key.CHAT_FILTER_SC_ENABLED, true);
-                    FilterConfig.refreshScRules();
-                    GradientRenderer.init();
-                    cl.setScreen(new ScRules(parent));
-                },
-                uiScale
-            );
-            cl.setScreen(new VCOverlay(parent, popup));
-        }
+        ConfigUIResolver.openScreen(entry);
     }
     
     private boolean simpleButtonClick(double mouseX, double mouseY, VCEntry entry, int entryX, int currentY) {
@@ -1148,20 +1062,24 @@ public class VCScreen extends Screen {
         return false;
     }
 
-    private boolean toggleDropdownClick(double mouseX, double mouseY, VCEntry entry, int entryX, int currentY) {
+    private boolean toggleDropdownClick(double mouseX, double mouseY, VCEntry entry, int entryX, int currentY, VCEntry.EntryType type) {
         ControlClickArea area = calculateControlArea(entry, entryX, currentY);
         int toggleButtonX = area.controlX;
         int toggleButtonY = area.controlY;
         int toggleButtonWidth = (int)(30 * uiScale);
         int toggleButtonHeight = (int)(18 * uiScale);
         
-        if (mouseX >= toggleButtonX && mouseX <= toggleButtonX + toggleButtonWidth &&
+        if (type == VCEntry.EntryType.TOGGLE_WITH_DROPDOWN &&
+            mouseX >= toggleButtonX && mouseX <= toggleButtonX + toggleButtonWidth &&
             mouseY >= toggleButtonY && mouseY <= toggleButtonY + toggleButtonHeight) {
             toggleConfig(entry);
             return true;
         }
         
-        int dropdownButtonX = toggleButtonX + toggleButtonWidth + (int)(6 * uiScale);
+        int dropdownButtonX = type == VCEntry.EntryType.TOGGLE_WITH_DROPDOWN
+            ? toggleButtonX + toggleButtonWidth + (int)(8 * uiScale)
+            : toggleButtonX;
+
         String buttonText = entry.dropdownButtonText != null ? entry.dropdownButtonText : "CONF";
         int textWidth = textRenderer.getWidth(buttonText);
         int dropdownButtonWidth = Math.max((int)(40 * uiScale), (int)(textWidth * uiScale) + (int)(10 * uiScale));

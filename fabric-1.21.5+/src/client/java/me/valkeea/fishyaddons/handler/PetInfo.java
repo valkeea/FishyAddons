@@ -1,103 +1,142 @@
 package me.valkeea.fishyaddons.handler;
 
-import java.util.regex.Matcher;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 import me.valkeea.fishyaddons.config.Key;
 import me.valkeea.fishyaddons.util.SkyblockCheck;
+import me.valkeea.fishyaddons.util.TabScanner;
 import me.valkeea.fishyaddons.util.text.Enhancer;
+import me.valkeea.fishyaddons.util.text.TextUtils;
+import net.minecraft.text.MutableText;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 
 public class PetInfo {
     private PetInfo() {}
     private static boolean isOn = false;
-    private static boolean dynamicMode = false;
     private static boolean tablistReady = false;
-    private static long lastScanTime = 0;
-    private static boolean needsScan = false;
+
+    private static Text l1Scanned = null;
+    private static Text directOverride = null;
+
+    private static final Pattern AUTOPET_PATTERN = Pattern.compile(
+        "§cAutopet §eequipped your (§.\\[Lvl \\d+\\] (?:§.\\[§.\\d+§.⚔§.\\] )?(?:§.)+.+?)§e! §a§lVIEW RULE");    
+
+
+    public static boolean handleChat(String s) {
+        if (!isOn || !SkyblockCheck.getInstance().rules()) return false;
+
+        var directMatcher = AUTOPET_PATTERN.matcher(s);
+        if (directMatcher.find()) {
+            String petInfoPart = directMatcher.group(1);
+            Text petInfo = Enhancer.parseFormattedTextSimple(petInfoPart);
+            setOverride(petInfo);
+            return true;
+        }
+
+        var summonPattern = Pattern.compile("You summoned your (.+) ?[!¡]?");
+        var summonMatcher = summonPattern.matcher(s);
+        if (summonMatcher.find()) {
+            if (l1Scanned == null) TabScanner.delayedScan();
+            return true;
+        }
+
+        if (s.contains("You despawned your")) {
+            Text msg = Text.literal("Despawned").setStyle(Style.EMPTY.withColor(0xFF808080));
+            setOverride(msg);
+            clearInfo();
+            return true;
+        }
+        return false;
+    }
 
     public static void refresh() {
         isOn = me.valkeea.fishyaddons.config.FishyConfig.getState(Key.HUD_PET_ENABLED, false);
-        dynamicMode = me.valkeea.fishyaddons.config.FishyConfig.getState(Key.HUD_PET_DYNAMIC, false);
+    }    
+
+    public static void setOverride(Text petInfo) { 
+        directOverride = petInfo; 
+    }
+    
+    public static void clearOverride() { 
+        directOverride = null; 
+    }
+
+    public static Text getPet() {
+        if (directOverride != null) {
+            return directOverride;
+        }
+        return l1Scanned != null ? l1Scanned : Text.literal("");
+    }
+
+    public static void setNewPet(Text flattened) {
+        l1Scanned = flattened;
+    }
+
+    public static void clearInfo() {
+        l1Scanned = null;
     }
 
     public static void onWorldLoad() {
         setTablistReady(false);
-        needsScan = true;
     }
 
     public static void onTablistReady() {
         setTablistReady(true);
-    }
 
-    public static boolean shouldScan() {
-        if (!isOn || !SkyblockCheck.getInstance().rules() || !tablistReady) {
-            return false;
+        if (l1Scanned == null) {
+            TabScanner.delayedScan();
         }
-
-        long now = System.currentTimeMillis();
-
-        if (TabScanner.isPending()) {
-            if (now - lastScanTime >= 200) {
-                lastScanTime = now;
-                return true;
-            }
-            return false;
-        }
-        
-        if (dynamicMode) {
-            if (now - lastScanTime >= 1000) {
-                lastScanTime = now;
-                return true;
-            }
-            return false;
-        }
-        
-        if (needsScan && now - lastScanTime >= 1000) {
-            lastScanTime = now;
-            needsScan = false;
-            return true;
-        }
-        
-        return false;
-    }
-
-    public static boolean handleChat(String message) {
-        if (!isOn || !SkyblockCheck.getInstance().rules()) return false;
-
-        Pattern directPattern = Pattern.compile("§cAutopet §eequipped your (§.\\[Lvl \\d+\\] (?:§.\\[§.\\d+§.⚔§.\\] )?(?:§.)+.+?)§e! §a§lVIEW RULE");
-        Matcher directMatcher = directPattern.matcher(message);
-        if (directMatcher.find()) {
-            String petInfoPart = directMatcher.group(1);
-            Text petInfo = Enhancer.parseFormattedTextSimple(petInfoPart);
-            TabScanner.setOverride(petInfo);
-            return true;
-        }
-
-        Pattern summonPattern = Pattern.compile("You summoned your (.+) ?[!¡]?");
-        Matcher summonMatcher = summonPattern.matcher(message);
-        if (summonMatcher.find() || message.matches("\\[Lvl \\d+\\] .+")) {
-            TabScanner.clearOverride();
-            TabScanner.startSummonScan();
-            needsScan = true;
-            return true;
-        }
-
-        if (message.contains("You despawned your")) {
-            Text msg = Text.literal("Despawned")
-                .setStyle(Style.EMPTY.withColor(0xFF808080));
-            TabScanner.setOverride(msg);
-            return true;
-        }
-        return false;
-    }
+    }    
 
     public static void setTablistReady(boolean ready) { tablistReady = ready; }
     public static boolean isTablistReady() { return tablistReady; }
     public static boolean isOn() { return isOn; }
-    public static boolean isDynamic() { return dynamicMode; }
     public static boolean shouldIncludeXp() { 
         return me.valkeea.fishyaddons.config.FishyConfig.getState(Key.HUD_PETXP, false);
     }
+
+    public static class ActivePet {
+        private static Text l1;
+        private static Text l2;
+        private static final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+        private static ScheduledFuture<?> pendingCombine = null;
+        private static final long DEBOUNCE_MS = 50;
+
+        private ActivePet() {}
+
+        public static synchronized void setl1(Text pet) {
+            ActivePet.l1 = pet;
+            scheduleCombine();
+        }        
+
+        public static synchronized void setl2(Text xp) {
+            ActivePet.l2 = xp;
+            scheduleCombine();
+        }
+
+        private static synchronized void scheduleCombine() {
+            if (pendingCombine != null && !pendingCombine.isDone()) {
+                pendingCombine.cancel(false);
+            }
+            pendingCombine = scheduler.schedule(ActivePet::combine, DEBOUNCE_MS, TimeUnit.MILLISECONDS);
+        }
+
+        private static synchronized void combine() {
+            MutableText flattened = Text.empty();
+            TextUtils.combineToFlat(l1, flattened);
+
+            if (PetInfo.shouldIncludeXp()) {
+                flattened.append(Text.literal(" "));
+                TextUtils.combineToFlat(l2, flattened);
+            }
+
+            clearOverride();
+            setNewPet(flattened);
+        }
+    }  
 }

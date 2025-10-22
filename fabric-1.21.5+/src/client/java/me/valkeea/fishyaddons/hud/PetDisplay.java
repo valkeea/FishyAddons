@@ -4,7 +4,6 @@ import java.awt.Rectangle;
 
 import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.handler.PetInfo;
-import me.valkeea.fishyaddons.handler.TabScanner;
 import net.fabricmc.fabric.api.client.rendering.v1.HudLayerRegistrationCallback;
 import net.fabricmc.fabric.api.client.rendering.v1.IdentifiedLayer;
 import net.minecraft.client.MinecraftClient;
@@ -33,7 +32,7 @@ public class PetDisplay implements HudElement {
     public void render(DrawContext context, int mouseX, int mouseY) {
         if (!editingMode && !PetInfo.isOn()) return;
 
-        Text pet = TabScanner.getPet();
+        Text pet = PetInfo.getPet();
         if ((pet == null || pet.getString().isEmpty())) {
             if (!editingMode) return;
             pet = Text.literal(PLACE_HOLDER);

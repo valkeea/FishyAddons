@@ -2,7 +2,7 @@
 
 Note: Development is focused on 1.21.5+ but Forge-1.8.9 will be maintained.
 
-## **Version 2.0.8:**
+## **Version 2.0.9:**
 
 ### Currently in both versions:
 - Custom Redstone particle color; mainly to enhance Jawbus laser and Flay ability
@@ -18,8 +18,7 @@ Note: Development is focused on 1.21.5+ but Forge-1.8.9 will be maintained.
 - Inventory search
 - Chat filter
 - Custom f5 (No front perspective)
-- Ping command and display
-- Mute Phantoms
+- Ping/TPS/FPS display and command
 - Send and render player coordinates
 - Chat-event based alerts with customizeable title,
   autochat and sound alarm
@@ -29,6 +28,7 @@ Note: Development is focused on 1.21.5+ but Forge-1.8.9 will be maintained.
 - Skip rendering fire on entities
 - Translucent water-like lava with a tint
 - Water visibility
+- Ingame chat formatting (preset or any color using &[]|{})
 - Custom hex color names (global + user-configurable)
 - Mod resourses: Trasnparent ui and HD font
 
@@ -44,10 +44,12 @@ Note: Development is focused on 1.21.5+ but Forge-1.8.9 will be maintained.
 - Diana Stats
 - Equipment Display
 - Century Cake Display
+- Mob health display
+- Skill XP tracker
 - General Profit Tracker (with profiles)
 - Moonglade Beacon timer and hud display
 - Clean Wither Impact (particles, sound)
 - Hide Skyblock gui buttons
 - Scale crit particles on Galatea (invisibug)
-- Mute Meow, Bark and Jerry runes
+- Mute Phantoms, Thunders and annoying runes
 - Click to party (Guild chat)

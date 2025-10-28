@@ -99,9 +99,7 @@ public class ChatAlert {
         String message = data.getMsg().trim();
         boolean isInParty = GameChat.isInParty() || GameChat.partyToggled();
 
-        if (message.isBlank()) {
-            return;
-        }
+        if (message.isBlank()) return;
 
         if (message.contains("<pos>")) {
             String coords = PlayerPosition.getCoordsString(client);
@@ -112,12 +110,10 @@ public class ChatAlert {
 
             if (isValid(message) && canExecuteCommand()) {
                 message = message.replace("/", "");
-                client.player.networkHandler.sendCommand(message);
+                client.player.networkHandler.sendChatCommand(message);
             }
 
-        } else if (isInParty) {
-            client.player.networkHandler.sendChatMessage("/pc " + message);
-        }
+        } else if (isInParty) client.player.networkHandler.sendChatMessage("/pc " + message);
 
         lastCommandTime.put("global", System.currentTimeMillis());
     }

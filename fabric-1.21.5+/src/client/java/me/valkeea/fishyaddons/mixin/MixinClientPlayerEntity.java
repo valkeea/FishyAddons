@@ -9,36 +9,30 @@ import me.valkeea.fishyaddons.safeguard.ItemHandler;
 import me.valkeea.fishyaddons.safeguard.SellProtectionHandler;
 import me.valkeea.fishyaddons.safeguard.SlotProtectionManager;
 import me.valkeea.fishyaddons.util.ZoneUtils;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.registry.RegistryWrapper;
 
 @Mixin(ClientPlayerEntity.class)
 public class MixinClientPlayerEntity {
+
     @Inject(method = "dropSelectedItem", at = @At("HEAD"), cancellable = true)
     private void onDropSelectedItem(boolean entireStack, CallbackInfoReturnable<Boolean> cir) {
-        // Skip logic if in dungeon
+
         if (ZoneUtils.isInDungeon()) {
             return;
         }
 
-        ClientPlayerEntity player = (ClientPlayerEntity) (Object) this;
-        ItemStack stack = player.getMainHandStack();
-
-        // Prevent drop if hotbar slot is locked or bound
+        var player = (ClientPlayerEntity) (Object) this;
+        var stack = player.getMainHandStack();
         int selectedSlot = ((PlayerInventoryAccessor) player.getInventory()).getSelectedSlot();
-        int guiSlotId = 36 + selectedSlot; // Map hotbar index to GUI slot ID
+        int guiSlotId = 36 + selectedSlot;
 
         if (SlotProtectionManager.isSlotLocked(guiSlotId) || SlotProtectionManager.isSlotBound(guiSlotId)) {
-            cir.setReturnValue(false); // Cancel drop, no notification
+            cir.setReturnValue(false);
             return;
         }
 
-        // UUID-based logic
-        RegistryWrapper.WrapperLookup registries = MinecraftClient.getInstance().world.getRegistryManager();
-        if (ItemHandler.isProtected(stack, registries)) {
-            cir.setReturnValue(false); // Cancel drop
+        if (ItemHandler.isProtected(stack)) {
+            cir.setReturnValue(false);
             SellProtectionHandler.triggerProtection();
         }
     }

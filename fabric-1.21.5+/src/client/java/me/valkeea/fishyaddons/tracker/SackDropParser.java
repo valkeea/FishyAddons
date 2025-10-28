@@ -6,13 +6,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import me.valkeea.fishyaddons.cache.ApiCache;
+import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.config.Key;
-import net.minecraft.text.HoverEvent;
-import net.minecraft.text.Text;
 
-/**
- * Parses Hypixel Skyblock sack notification messages with hover events to extract item drops
- */
 public class SackDropParser {
     private SackDropParser() {}
     
@@ -30,55 +26,44 @@ public class SackDropParser {
     }
 
     public static void refresh() {
-        shouldTrackSack = me.valkeea.fishyaddons.config.FishyConfig.getState(Key.TRACK_SACK, false) && 
-            me.valkeea.fishyaddons.config.FishyConfig.getState(Key.HUD_TRACKER_ENABLED, false);
+        shouldTrackSack = FishyConfig.getState(Key.TRACK_SACK, false) && 
+            FishyConfig.getState(Key.HUD_TRACKER_ENABLED, false);
     }
 
     public static void toggle() {
-        me.valkeea.fishyaddons.config.FishyConfig.toggle(Key.TRACK_SACK, false);
+        FishyConfig.toggle(Key.TRACK_SACK, false);
         refresh();
     }
-    
-    private static final Pattern SACK_MESSAGE_PATTERN = Pattern.compile(
-        "\\[Sacks\\]\\s*\\+\\d{1,3}(?:,\\d{3})*\\s*items?\\.\\s*\\(Last\\s+\\d+[smh]\\.\\)",
-        Pattern.CASE_INSENSITIVE
-    );
     
     private static final Pattern HOVER_DROP_PATTERN = Pattern.compile(
         "\\+\\s*(\\d{1,3}(?:,\\d{3})*)\\s+(.+?)(?:\\s*\\([^)]*\\ssack\\))?$",
         Pattern.CASE_INSENSITIVE
     );
+
+    private static final Pattern BAZAAR_PATTERN = Pattern.compile(
+        "\\[Bazaar\\]\\s*Bought\\s*(\\d{1,3}(?:,\\d{3})*)x\\s*(.+?)\\s*for",
+        Pattern.CASE_INSENSITIVE
+    );
     
-    public static boolean isSackNotification(String message) {
-        if (message == null || message.trim().isEmpty()) {
-            return false;
-        }
-        
-        String cleanMessage = message.replaceAll("§[0-9a-fk-or]", "").trim();
-        return SACK_MESSAGE_PATTERN.matcher(cleanMessage).find();
-    }
-    
-    public static List<ChatDropParser.ParseResult> parseSackHoverEvent(HoverEvent hoverEvent) {
+    public static List<ChatDropParser.ParseResult> parseSackHoverEvent(String tooltipContent) {
+
         List<ChatDropParser.ParseResult> results = new ArrayList<>();
-        if (hoverEvent == null || hoverEvent.getAction() != HoverEvent.Action.SHOW_TEXT) {
-            return results;
-        }
-        
-        String tooltipContent = extractTooltipContent(hoverEvent);
+
         if (tooltipContent == null || tooltipContent.trim().isEmpty()) {
             return results;
         }
-        
+
         String tooltipHash = String.valueOf(tooltipContent.hashCode());
         long currentTime = System.currentTimeMillis();
         Long lastProcessed = recentlyProcessedTooltips.get(tooltipHash);
         if (lastProcessed != null && (currentTime - lastProcessed) < DEDUP_WINDOW_MS) {
             return results;
         }
-        
+
         recentlyProcessedTooltips.put(tooltipHash, currentTime);
         cleanupOldTooltipEntries(currentTime);
         Object cachedResult = ApiCache.getCachedMessageParse(SACK_HOVER_PREFIX + tooltipContent);
+
         if (cachedResult != null) {
             if (ApiCache.isNullParseResult(cachedResult)) {
                 return results;
@@ -87,12 +72,12 @@ public class SackDropParser {
             List<ChatDropParser.ParseResult> cachedResults = (List<ChatDropParser.ParseResult>) cachedResult;
             return cachedResults;
         }
-        
+
         results = parseTooltipContent(tooltipContent);
         if (!results.isEmpty()) {
             clearChatDrops();
         }
-        
+
         if (results.isEmpty()) {
             ApiCache.cacheMessageParse(SACK_HOVER_PREFIX + tooltipContent, null);
         } else {
@@ -100,37 +85,12 @@ public class SackDropParser {
         }
 
         recentlyProcessedTooltips.put(tooltipContent, currentTime);
-        
         return results;
     }
     
     private static void cleanupOldTooltipEntries(long currentTime) {
         recentlyProcessedTooltips.entrySet().removeIf(entry -> 
             (currentTime - entry.getValue()) > DEDUP_WINDOW_MS * 2);
-    }
-    
-    private static String extractTooltipContent(HoverEvent hoverEvent) {
-        try {
-            if (hoverEvent instanceof HoverEvent.ShowText showText) {
-                Text tooltipText = showText.value();
-                return tooltipText.getString();
-            }
-        } catch (Exception e) {
-            // Continue to fallback
-        }
-        
-        try {
-            java.lang.reflect.Method getValueMethod = hoverEvent.getClass().getMethod("getValue", HoverEvent.Action.class);
-            Object value = getValueMethod.invoke(hoverEvent, hoverEvent.getAction());
-            
-            if (value instanceof Text tooltipText) {
-                return tooltipText.getString();
-            }
-        } catch (Exception e) {
-            // Failed to extract tooltip - return null
-        }
-        
-        return null;
     }
     
     private static List<ChatDropParser.ParseResult> parseTooltipContent(String tooltipContent) {
@@ -151,11 +111,8 @@ public class SackDropParser {
         return results;
     }
     
-    /**
-     * Parse a single tooltip line for item drops, account for already registered chat drops
-     */
     private static ChatDropParser.ParseResult parseTooltipLine(String line) {
-        Matcher matcher = HOVER_DROP_PATTERN.matcher(line);
+        var matcher = HOVER_DROP_PATTERN.matcher(line);
         if (!matcher.find()) {
             return null;
         }
@@ -214,11 +171,7 @@ public class SackDropParser {
         return itemName != null && !itemName.trim().isEmpty();
     }
     
-    /**
-     * Get the quantity of a recent chat drop for an item
-     * @param itemName The normalized item name
-     * @return The quantity from the recent chat drop, or 0 if no recent drop
-     */
+    /** Get the quantity of a recent chat drop for an item */
     private static int getChatDropQuantity(String itemName) {
         return recentChatDrops.get(itemName) == null ? 0 : recentChatDrops.get(itemName);
     }
@@ -227,11 +180,7 @@ public class SackDropParser {
         recentChatDrops.clear();
     }
     
-    /**
-     * Register a chat drop to prevent sack duplicates
-     * @param itemName The item name from chat parsing
-     * @param quantity The quantity of the drop
-     */
+    /** Register a chat drop to prevent sack duplicates */
     public static void registerChatDrop(String itemName, int quantity) {
         if (!shouldTrackSack) {
             return;
@@ -241,17 +190,15 @@ public class SackDropParser {
         recentChatDrops.put(normalizedItemName, quantity);
     }
 
-    /**
-     * Register bazaar purchases as chat drops
-     */
+    /** Register bazaar purchases as chat drops */
     public static void onBazaarBuy(String message) {
         if (message == null || message.trim().isEmpty()) {
             return;
         }
-        
-        Pattern bazaarPattern = Pattern.compile("\\[Bazaar\\]\\s*Bought\\s*(\\d{1,3}(?:,\\d{3})*)x\\s*(.+?)\\s*for", Pattern.CASE_INSENSITIVE);
-        Matcher matcher = bazaarPattern.matcher(message);
+
+        Matcher matcher = BAZAAR_PATTERN.matcher(message);
         if (matcher.find()) {
+
             try {
                 String quantityStr = matcher.group(1).replace(",", "");
                 int quantity = Integer.parseInt(quantityStr);
@@ -262,6 +209,7 @@ public class SackDropParser {
                 if (isTrackableSackItem(itemName) && quantity > 0) {
                     registerChatDrop(itemName, quantity);
                 }
+
             } catch (NumberFormatException e) {
                 // Ignore invalid number format
             }

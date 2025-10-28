@@ -383,7 +383,7 @@ public class ScStats {
     private static void sendTookXScFor(String creature, int count, boolean wasDh) {
         if (!announce) return;
         var message = String.format("Took §d%d§7 Sc for %s", count, creature);
-        message += wasDh ? " §8 (DH)§7!" : "§7!";
+        message += wasDh ? " §8(DH)§7!" : "§7!";
         FishyNotis.send(Text.literal(message));
     }
 

@@ -10,7 +10,6 @@ import me.valkeea.fishyaddons.safeguard.SlotProtectionManager;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.item.ItemStack;
-import net.minecraft.registry.RegistryWrapper;
 import net.minecraft.screen.slot.Slot;
 
 
@@ -43,8 +42,7 @@ public abstract class MixinHandledScreenKey {
 
         // UUID-based protection
         ItemStack stack = hoveredSlot.getStack();
-        RegistryWrapper.WrapperLookup registries = mc.world != null ? mc.world.getRegistryManager() : null;
-        if (isThrowKey && me.valkeea.fishyaddons.safeguard.ItemHandler.isProtected(stack, registries)) {
+        if (isThrowKey && me.valkeea.fishyaddons.safeguard.ItemHandler.isProtected(stack)) {
             SellProtectionHandler.triggerProtection();
             cir.setReturnValue(true);
         }

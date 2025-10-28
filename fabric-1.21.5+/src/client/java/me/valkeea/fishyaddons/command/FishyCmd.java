@@ -21,13 +21,11 @@ import me.valkeea.fishyaddons.ui.HudEditScreen;
 import me.valkeea.fishyaddons.ui.list.ChatAlerts;
 import me.valkeea.fishyaddons.ui.list.TabbedListScreen;
 import me.valkeea.fishyaddons.util.FishyNotis;
-import me.valkeea.fishyaddons.util.text.TextFormatUtil;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ChatScreen;
 import net.minecraft.item.ItemStack;
-import net.minecraft.registry.RegistryWrapper;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 
@@ -163,18 +161,16 @@ public class FishyCmd {
                             return 1;
                         }
 
-                        RegistryWrapper.WrapperLookup registries = mc.world.getRegistryManager();
-                        String uuid = ItemHandler.extractUUID(held, registries);
+                        String uuid = ItemHandler.extractUUID(held);
                         if (uuid == null || uuid.isEmpty()) {
                             FishyNotis.warn("Held item doesn't have a UUID.");
                             return 1;
                         }
-                        String displayNameJson = TextFormatUtil.serialize(held.getName());
-                        ItemConfig.addUUID(uuid, held.getName());
+                        Text name = held.getName();
+                        ItemConfig.addUUID(uuid, name);
 
-                        Text displayNameText = TextFormatUtil.deserialize(displayNameJson);
                         FishyNotis.format(Text.literal("Your ").formatted(Formatting.GRAY)
-                            .append(displayNameText)
+                            .append(name)
                             .append(Text.literal(" is now protected.").formatted(Formatting.GRAY)));
 
                         return 1;
@@ -188,12 +184,11 @@ public class FishyCmd {
                             FishyNotis.notice("You must be holding an item to use this command.");
                             return 1;
                         }
-                        RegistryWrapper.WrapperLookup registries = mc.world.getRegistryManager();
-                        String uuid = ItemHandler.extractUUID(held, registries);
-                        if (uuid != null && ItemHandler.isProtected(held, registries)) {
+                        String uuid = ItemHandler.extractUUID(held);
+                        if (uuid != null && ItemHandler.isProtected(held)) {
                             ItemConfig.removeUUID(uuid);
                             FishyNotis.format(Text.literal("Your ").formatted(Formatting.GRAY)
-                                .append(Text.literal(held.getName().getString()).formatted(Formatting.RESET))
+                                .append(held.getName())
                                 .append(Text.literal(" is no longer protected.").formatted(Formatting.GRAY)));
                         } else {
                             FishyNotis.notice("Held item isn't protected or doesn't have a UUID.");

@@ -45,7 +45,7 @@ public class CmdHelper {
         FishyNotis.send(Text.literal("Protected Items:").formatted(Formatting.AQUA));
         for (Map.Entry<String, String> entry : entries) {
             Text shown = TextFormatUtil.deserialize(entry.getValue());
-            FishyNotis.alert(Text.literal(" - ").formatted(Formatting.GRAY).append(shown));
+            FishyNotis.alert(Text.literal(" - ").formatted(Formatting.DARK_GRAY).append(shown));
         }
     }
 

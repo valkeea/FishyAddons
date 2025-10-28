@@ -3,12 +3,17 @@ package me.valkeea.fishyaddons.tracker;
 import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.config.Key;
 import me.valkeea.fishyaddons.config.TrackerProfiles;
+import me.valkeea.fishyaddons.event.EventPhase;
+import me.valkeea.fishyaddons.event.EventPriority;
+import me.valkeea.fishyaddons.event.impl.FaEvents;
+import me.valkeea.fishyaddons.event.impl.ScreenClickEvent;
+import me.valkeea.fishyaddons.hud.TrackerDisplay;
 import me.valkeea.fishyaddons.tracker.fishing.ScStats;
 import me.valkeea.fishyaddons.ui.VCOverlay;
 import me.valkeea.fishyaddons.ui.VCPopup;
 import me.valkeea.fishyaddons.util.FishyNotis;
+import me.valkeea.fishyaddons.util.text.FromText;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 
 public class TrackerUtils {
@@ -17,6 +22,19 @@ public class TrackerUtils {
 
     public static boolean isOn() {  return pricePerItem; }
     public static boolean isEnabled() { return enabled; }
+
+    public static void init() {
+        refresh();
+
+        FaEvents.SCREEN_MOUSE_CLICK.register(event -> {
+
+        var profitTracker = TrackerDisplay.getInstance();
+            if (profitTracker != null && profitTracker.handleMouseClick(event.mouseX, event.mouseY, event.button)) {
+                event.setResult(true);
+                event.setConsumed(true);
+            }
+        }, EventPriority.HIGH, EventPhase.PRE);
+    }
 
     public static void refresh() {
         pricePerItem = FishyConfig.getState(Key.PER_ITEM, false);
@@ -59,65 +77,31 @@ public class TrackerUtils {
         }
         return false;
     }    
-    
-    private static void handleSackDrop(ChatDropParser.ParseResult drop) {
-        if (drop != null) {
-            ItemTrackerData.addDrop(drop.itemName, drop.quantity);
-        }
-    }
 
     public static boolean checkForHoverEvents(Text message) {
+        if (!SackDropParser.isOn())  return false;
+        Text hoverEvent = FromText.findShowText(message);
+        return hoverEvent != null && processSackHover(hoverEvent);
+    }
+    
+    private static boolean processSackHover(Text hoverText) {
+            var sackDrops = SackDropParser.parseSackHoverEvent(hoverText.getString());
 
-            boolean sackTrackingEnabled = SackDropParser.isOn();
-            if (sackTrackingEnabled) {
-                String fullMessageText = reconstruct(message);
-                if (SackDropParser.isSackNotification(fullMessageText)) {
-                    handleSackNotification(message);
-                    return true;
-                }
+            if (sackDrops.isEmpty()) {
+                return false;
             }
-
-            for (Text sibling : message.getSiblings()) {
-                if (checkForHoverEvents(sibling)) {
-                    return true;
-                }
-            }
-            return false;
-    }
-    
-    private static String reconstruct(Text message) {
-        StringBuilder fullText = new StringBuilder();
-        fullText.append(message.getString());
-        
-        for (Text sibling : message.getSiblings()) {
-            fullText.append(reconstruct(sibling));
-        }
-        
-        return fullText.toString();
-    }
-    
-    private static void handleSackNotification(Text message) {
-        if (processSackHover(message.getStyle())) {
-            return;
-        }
-        for (Text sibling : message.getSiblings()) {
-            if (processSackHover(sibling.getStyle())) {
-                return;
-            }
-        }
-    }
-    
-    private static boolean processSackHover(Style style) {
-        if (style != null && style.getHoverEvent() != null) {
-            var sackDrops = SackDropParser.parseSackHoverEvent(style.getHoverEvent());
 
             for (var drop : sackDrops) {
                 handleSackDrop(drop);
             }
             return true;
-        }
-        return false;
     }
+
+    private static void handleSackDrop(ChatDropParser.ParseResult drop) {
+        if (drop != null) {
+            ItemTrackerData.addDrop(drop.itemName, drop.quantity);
+        }
+    }    
 
     public static void onDelete(String profile) {
         FishyNotis.send(Text.literal("§cDeleted profile: " + profile));

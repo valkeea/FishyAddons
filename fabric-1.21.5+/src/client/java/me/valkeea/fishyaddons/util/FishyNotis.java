@@ -25,10 +25,6 @@ public class FishyNotis {
         }
     }
 
-    public static void alert(Text message) {
-        chat(message);
-    }
-    
     private static Text prefix() {
         int theme = FishyMode.getCmdColor();
         int theme2 = Color.darken(theme, 0.7f);
@@ -38,15 +34,27 @@ public class FishyNotis {
             .append(Text.literal(" » ").styled(style -> style.withColor(Formatting.DARK_GRAY)));
     }
 
+    /** Send text with prefix and custom formatting */
+    public static void format(Text message) {
+        chat(prefix().copy().append(message));
+    }       
+
+    /** Send text with prefix and default styling if none present */
     public static void send(Text message) {
         Text styledMsg = message.copy().styled(style -> style.withColor(Formatting.GRAY));
         chat(prefix().copy().append(styledMsg));
     }
 
+    /** Send plain string with prefix and default styling */
     public static void send(String message) {
         Text styledMsg = Text.literal(message).styled(style -> style.withColor(Formatting.GRAY));
         chat(prefix().copy().append(styledMsg));
     }
+
+    /** Send styled text as is */
+    public static void alert(Text message) {
+        chat(message);
+    }    
 
     public static void off(String message) {
         Text styledMsg = Text.literal(message).styled(style -> style.withColor(Formatting.GRAY));
@@ -60,34 +68,29 @@ public class FishyNotis {
         chat(prefix().copy().append(styledMsg).append(on));
     }
 
+    /** warning / notice for issues */
     public static void warn(String message) {
-        chat(Text.literal(message).styled(style -> style.withColor(0xFF8080).withItalic(true)));
+        chat(Text.literal("|FA] " + message).styled(style -> style.withColor(0xFF8080).withItalic(true)));
     }
 
+    /** warning used for alert features */
     public static void warn2(String message) {
         Text styledMsg = Text.literal(message).styled(style -> style.withColor(0xA10303).withBold(true));
         chat(prefix().copy().append(styledMsg));
     }
 
+    /** non-intrusive message for minor info */
     public static void notice(String message) {
         chat(Text.literal(message).styled(style -> style.withColor(Formatting.DARK_GRAY).withItalic(true)));
     }
 
-    public static void format(Text message) {
-        int theme = FishyMode.getCmdColor();
-        int theme2 = Color.darken(theme, 0.7f);
-        Text prefix = Text.literal("[").styled(style -> style.withColor(theme))
-            .append(Text.literal("α").styled(style -> style.withColor(theme2).withBold(true)))
-            .append(Text.literal("]").styled(style -> style.withColor(theme2)))
-            .append(Text.literal(" » ").styled(style -> style.withColor(Formatting.DARK_GRAY)));
-        chat(prefix.copy().append(message));
-    }
-
+    /** Send text with current theme color */
     public static void themed(String message) {
         Text text = Text.literal(message).styled(style -> style.withColor(FishyMode.getCmdColor()));
         chat(text);
     }
 
+    /** Send text as an overlay message */
     public static void action(Text message) {
         MinecraftClient mc = MinecraftClient.getInstance();
         if (mc.player != null) {

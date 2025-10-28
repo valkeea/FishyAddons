@@ -31,28 +31,32 @@ public abstract class MixinScreen {
             CallbackInfoReturnable<List<Text>> cir
     ) {
         List<Text> originalTooltip = cir.getReturnValue();
+
         if (originalTooltip == null || originalTooltip.isEmpty()) return;
-        if (ItemConfig.isTooltipEnabled() &&
-            SellProtectionHandler.isProtectedCached(stack, cl.world != null ? cl.world.getRegistryManager() : null)) {
+        if (ItemConfig.isTooltipEnabled() && SellProtectionHandler.isProtectedCached(stack)) {
             int insertAt = originalTooltip.size();
+
             for (int i = 0; i < originalTooltip.size(); i++) {
                 if (originalTooltip.get(i).getString().startsWith("NBT:")) {
                     insertAt = i;
                     break;
                 }
             }
+
             originalTooltip.add(insertAt, Text.literal("§8§oFA Guarded"));
         }
 
         List<Text> finalTooltip = originalTooltip;
-        if (FaColors.shouldColor()) {
-        List<Text> recoloredTooltip = new ArrayList<>(originalTooltip.size());
-        for (Text line : originalTooltip) {
-            recoloredTooltip.add(FaColors.tooltipCached(line));
-        }
 
-        finalTooltip = recoloredTooltip;
+        if (FaColors.shouldColor()) {
+
+            List<Text> recoloredTooltip = new ArrayList<>(originalTooltip.size());
+            for (Text line : originalTooltip) {
+                recoloredTooltip.add(FaColors.tooltipCached(line));
+            }
+            finalTooltip = recoloredTooltip;
         }
+        
         cir.setReturnValue(finalTooltip);
     }
 }

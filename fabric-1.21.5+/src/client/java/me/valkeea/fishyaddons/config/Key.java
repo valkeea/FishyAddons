@@ -123,6 +123,7 @@ public class Key {
     public static final String HUD_TEXT_SHADOW = "hudTextShadow";
     public static final String CHAT_FORMATTING = "chatFormatting";
     public static final String HELD_ITEM_TRANSFORMS = "heldItemTransforms";
+    public static final String ACCEPT_NPC = "acceptNpcDialogue";
 
     // GUI Scale
     public static final String MOD_UI_SCALE = "modUiScale";
@@ -214,7 +215,8 @@ public class Key {
         settings.set(HUD_HEALTH_ENABLED, false);
         settings.set(HUD_TEXT_SHADOW, true);
         settings.set(CHAT_FORMATTING, true);
-        settings.set(HELD_ITEM_TRANSFORMS, false);        
+        settings.set(HELD_ITEM_TRANSFORMS, false);
+        settings.set(ACCEPT_NPC, false);
         hud.set(HUD_PING_X, 5);
         hud.set(HUD_PING_Y, 12);
         hud.set(HUD_PING_SIZE, 12);

@@ -23,7 +23,12 @@ public interface ChatHandler {
      * @return Result indicating what happened and whether to continue processing
      */
     ChatHandlerResult handle(ChatMessageContext context);
-    
+
+    /**
+     * If true, the handler is processed from ChatHud$addMessage
+     */
+    default boolean isDisplay() { return false; }
+
     /**
      * Whether the handler is currently enabled
      */

@@ -25,6 +25,7 @@ public class StatHandler implements ChatHandler {
     
     @Override
     public ChatHandlerResult handle(ChatMessageContext context) {
+
         try {
             if (ScStats.getInstance().handleMatch(context.getCleanText())) {
                 return ChatHandlerResult.STOP;
@@ -39,7 +40,7 @@ public class StatHandler implements ChatHandler {
             e.printStackTrace();
             return ChatHandlerResult.SKIP;
         }
-    }
+    }  
     
     @Override
     public boolean isEnabled() {

@@ -2,7 +2,6 @@ package me.valkeea.fishyaddons.processor.handlers;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import me.valkeea.fishyaddons.processor.ChatHandler;
@@ -13,6 +12,7 @@ import me.valkeea.fishyaddons.tracker.SkillTracker;
 public class XpHandler implements ChatHandler {
     
     private final Map<String, String> lastSeenProgress = new HashMap<>();
+    private static final Pattern XP_PATTERN = Pattern.compile("\\+(\\d{1,3}(,\\d{3})*(\\.\\d{1,2})?) ([A-Z][a-z]+) \\(([^)]+)\\)");
     
     @Override
     public int getPriority() {
@@ -45,11 +45,10 @@ public class XpHandler implements ChatHandler {
     
     private boolean handleXp(String message) {
 
-        var xpPattern = Pattern.compile("\\+(\\d{1,3}(,\\d{3})*(\\.\\d{1,2})?) ([A-Z][a-z]+) \\(([^)]+)\\)");
-        var matcher = xpPattern.matcher(message);
+        var matcher = XP_PATTERN.matcher(message);
 
         if (matcher.find()) {
-
+            
             var amountStr = matcher.group(1).replace(",", "");
             var skillName = matcher.group(4);
             var progressInfo = matcher.group(5);
@@ -71,7 +70,7 @@ public class XpHandler implements ChatHandler {
         }
         return false;
     }
-    
+
     @Override
     public boolean isEnabled() {
         return SkillTracker.isEnabled();

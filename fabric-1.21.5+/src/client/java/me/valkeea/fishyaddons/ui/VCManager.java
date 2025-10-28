@@ -639,7 +639,15 @@ public class VCManager {
             Key.MOD_KEY_LOCK_GUISLOT,
             false,
             GuiIcons::refresh
-        ));        
+        )); 
+
+        entries.add(VCEntry.toggle(
+            "Accept NPC Dialogue",
+            "Automatically chooses the confirm option to progress NPC dialogues.\nAffects most common dialogue types and Trevor the Trapper.",
+            Key.ACCEPT_NPC,
+            false,
+            null
+        ));
 
         entries.add(VCEntry.slider(
             "Invisibug Helper",

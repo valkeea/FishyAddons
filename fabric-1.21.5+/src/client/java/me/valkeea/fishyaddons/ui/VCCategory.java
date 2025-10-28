@@ -266,13 +266,13 @@ public class VCCategory {
             new DropdownItem("Water", "clear water"),
             new DropdownItem("Vanilla XP", "xp text color"),
             new DropdownItem("Redstone", "redstone particle color"),
-            new DropdownItem("FA Colors")
+            new DropdownItem("FA Colors", "custom fa colors")
         ));
         tabs.add(renderTab);
         
         var qolTab = new Tab("QoL", "QoL", "── General QoL ──");
         qolTab.setDropdownItems(Arrays.asList(
-            new DropdownItem("Inventory", "inventory search"),
+            new DropdownItem("Inventory", "overlay opacity"),
             new DropdownItem("Coordinates", "highlight coordinates"),
             new DropdownItem("Ping/TPS/FPS", "debug display"),
             new DropdownItem("Copy Chat"),
@@ -297,6 +297,7 @@ public class VCCategory {
             new DropdownItem("Hyperion", "clean wither impact"),
             new DropdownItem("Sounds", "mute list"),
             new DropdownItem("Sb Gui", "hide skyblock gui buttons"),
+            new DropdownItem("Npc Dialogue", "accept npc dialogue"),
             new DropdownItem("Invisibug", "invisibug helper")
         ));
         tabs.add(skyblockTab);

@@ -51,6 +51,11 @@ public class ChatFormatHandler implements ChatHandler {
             return ChatHandlerResult.SKIP;
         }
     }
+
+    @Override
+    public boolean isDisplay() {
+        return true;
+    }        
     
     @Override
     public boolean isEnabled() {

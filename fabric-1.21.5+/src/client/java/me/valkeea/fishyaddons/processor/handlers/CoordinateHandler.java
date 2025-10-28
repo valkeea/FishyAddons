@@ -38,14 +38,17 @@ public class CoordinateHandler implements ChatHandler {
     
     @Override
     public ChatHandlerResult handle(ChatMessageContext context) {
+
         try {
             String rawMessage = context.getRawText();
             Text originalMessage = context.getOriginalMessage();
             
             if (FishyConfig.getState(Key.RENDER_COORDS, true)) {
                 initBeaconFor(rawMessage);
+
                 if (FishyConfig.getState(Key.CHAT_FILTER_COORDS_ENABLED, true)) {
                     Text enhanced = addButtons(originalMessage);
+                    
                     if (!enhanced.equals(originalMessage)) {
                         ChatMessageContext newContext = new ChatMessageContext(enhanced, context.isOverlay());
                         return ChatHandlerResult.modifyWith(newContext, "Added coordinate enhancement");
@@ -59,6 +62,11 @@ public class CoordinateHandler implements ChatHandler {
             return ChatHandlerResult.SKIP;
         }
     }
+
+    @Override
+    public boolean isDisplay() {
+        return true;
+    }    
     
     @Override
     public boolean isEnabled() {

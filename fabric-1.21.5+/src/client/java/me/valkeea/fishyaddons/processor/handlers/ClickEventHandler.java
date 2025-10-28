@@ -1,38 +1,34 @@
 package me.valkeea.fishyaddons.processor.handlers;
 
+import me.valkeea.fishyaddons.handler.NcpDialogue;
 import me.valkeea.fishyaddons.processor.ChatHandler;
 import me.valkeea.fishyaddons.processor.ChatHandlerResult;
 import me.valkeea.fishyaddons.processor.ChatMessageContext;
-import me.valkeea.fishyaddons.tracker.SackDropParser;
-import me.valkeea.fishyaddons.tracker.TrackerUtils;
 
-public class HoverEventHandler implements ChatHandler {
+public class ClickEventHandler implements ChatHandler {
     
     @Override
     public int getPriority() {
-        return 70;
+        return 35;
     }
     
     @Override
     public String getHandlerName() {
-        return "HoverEvents";
+        return "ClickEvents";
     }
     
     @Override
     public boolean shouldHandle(ChatMessageContext context) {
-        if (!context.isSkyblockMessage()) {
-            return false;
-        }
-
-        String cleanText = context.getCleanText();
-        return cleanText.startsWith("[Sacks] +") && (cleanText.contains("items") || cleanText.contains("item"));
+        return context.isSkyblockMessage();
     }
     
     @Override
     public ChatHandlerResult handle(ChatMessageContext context) {
+        String clean = context.getUnfilteredCleanLowercaseText();
         
         try {
-            if (TrackerUtils.checkForHoverEvents(context.getUnfilteredMessage())) {
+            if ((clean.startsWith("select an option:") || clean.startsWith("accept the trapper's task to hunt the animal?")) && 
+                NcpDialogue.checkForCommands(context.getUnfilteredMessage())) {
                 return ChatHandlerResult.STOP;
             }
             return ChatHandlerResult.CONTINUE;
@@ -45,6 +41,6 @@ public class HoverEventHandler implements ChatHandler {
     
     @Override
     public boolean isEnabled() {
-        return SackDropParser.isOn() || TrackerUtils.isEnabled();
+        return NcpDialogue.enabled();
     }
 }

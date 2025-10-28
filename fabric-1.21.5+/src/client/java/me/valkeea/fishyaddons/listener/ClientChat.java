@@ -1,15 +1,16 @@
 package me.valkeea.fishyaddons.listener;
 
+import me.valkeea.fishyaddons.event.impl.FaEvents;
 import me.valkeea.fishyaddons.processor.ChatProcessor;
 import me.valkeea.fishyaddons.processor.handlers.ChatAlertHandler;
 import me.valkeea.fishyaddons.processor.handlers.ChatFormatHandler;
+import me.valkeea.fishyaddons.processor.handlers.ClickEventHandler;
 import me.valkeea.fishyaddons.processor.handlers.CoordinateHandler;
 import me.valkeea.fishyaddons.processor.handlers.GameplayHandler;
 import me.valkeea.fishyaddons.processor.handlers.HoverEventHandler;
 import me.valkeea.fishyaddons.processor.handlers.StatHandler;
 import me.valkeea.fishyaddons.processor.handlers.TrackerHandler;
 import me.valkeea.fishyaddons.processor.handlers.XpHandler;
-import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 
 @SuppressWarnings("squid:S6548")
 public class ClientChat {
@@ -25,10 +26,11 @@ public class ClientChat {
         processor.registerHandler(new StatHandler());        
         processor.registerHandler(new TrackerHandler());
         processor.registerHandler(new HoverEventHandler());
+        processor.registerHandler(new ClickEventHandler());
+        processor.registerHandler(new XpHandler());
         processor.registerHandler(new CoordinateHandler());
         processor.registerHandler(new ChatFormatHandler());
-        processor.registerHandler(new XpHandler());
-
-        ClientReceiveMessageEvents.GAME.register(processor::onMessage);
+        
+        FaEvents.GAME_MESSAGE.register(processor::onMessage);
     }
 }

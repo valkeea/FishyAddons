@@ -1,8 +1,7 @@
-package me.valkeea.fishyaddons.event;
+package me.valkeea.fishyaddons.handler;
 
 import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.config.Key;
-import me.valkeea.fishyaddons.handler.KeyShortcut;
 import me.valkeea.fishyaddons.mixin.HandledScreenAccessor;
 import me.valkeea.fishyaddons.safeguard.SlotProtectionManager;
 import me.valkeea.fishyaddons.util.Keyboard;

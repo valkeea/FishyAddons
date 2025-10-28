@@ -5,11 +5,14 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import me.valkeea.fishyaddons.event.impl.FaEvents;
+import me.valkeea.fishyaddons.event.impl.GameMessageEvent;
+import me.valkeea.fishyaddons.event.EventPhase;
 import me.valkeea.fishyaddons.handler.NetworkMetrics;
-import me.valkeea.fishyaddons.processor.ChatProcessor;
 import me.valkeea.fishyaddons.tracker.InventoryTracker;
 import me.valkeea.fishyaddons.util.SbGui;
 import me.valkeea.fishyaddons.util.TabScanner;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.network.packet.s2c.play.GameMessageS2CPacket;
 import net.minecraft.network.packet.s2c.play.InventoryS2CPacket;
@@ -59,14 +62,15 @@ public class MixinClientPlayNetworkHandler {
         SbGui.getInstance().onInvUpdate();
     }
 
-    @Inject(method = "onGameMessage",
-    at = @At("HEAD")
+    @Inject(
+        method = "onGameMessage",
+        at = @At("HEAD")
     )
-    private void passGuildRaw(GameMessageS2CPacket packet, CallbackInfo ci) {
-        if (packet == null) return;
-        if (packet.overlay()) return;
+    private void passRaw(GameMessageS2CPacket packet, CallbackInfo ci) {
+        if (packet == null || !MinecraftClient.getInstance().isOnThread()) return;
 
         var pristine = packet.content();
-        ChatProcessor.onRaw(pristine);
+        GameMessageEvent event = new GameMessageEvent(pristine, packet.overlay());
+        FaEvents.GAME_MESSAGE.firePhase(EventPhase.PRE, event, listener -> listener.onGameMessage(event));
     }
 }

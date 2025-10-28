@@ -1,7 +1,13 @@
 package me.valkeea.fishyaddons.handler;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.config.Key;
+import me.valkeea.fishyaddons.event.EventPhase;
+import me.valkeea.fishyaddons.event.EventPriority;
+import me.valkeea.fishyaddons.event.impl.FaEvents;
 import me.valkeea.fishyaddons.hud.ElementRegistry;
 import me.valkeea.fishyaddons.hud.SearchHudElement;
 import me.valkeea.fishyaddons.mixin.HandledScreenAccessor;
@@ -14,9 +20,7 @@ import net.minecraft.item.tooltip.TooltipType;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.text.Text;
 
-import java.util.HashSet;
-import java.util.Set;
-
+@SuppressWarnings("squid:S6548")
 public class ItemSearchOverlay {
     private static ItemSearchOverlay instance;
     private String lastSearchTerm = "";
@@ -34,7 +38,13 @@ public class ItemSearchOverlay {
             }
         }
     }
-    
+
+    public static void init() {
+        FaEvents.SCREEN_MOUSE_CLICK.register(
+            event -> ItemSearchOverlay.getInstance().handleMouseClicked(event.mouseX, event.mouseY, event.button),
+            EventPriority.LOW, EventPhase.NORMAL);
+    }
+
     public static ItemSearchOverlay getInstance() {
         if (instance == null) {
             instance = new ItemSearchOverlay();
@@ -147,15 +157,14 @@ public class ItemSearchOverlay {
         
         float opacity = getOpacity();
         int alpha = (int)(opacity * 255) << 24;
-        int overlayColor = alpha; // Black with dynamic alpha
+        int overlayColor = alpha;
 
         for (int y = 0; y < screenHeight; y += segmentSize) {
             for (int x = 0; x < screenWidth; x += segmentSize) {
-                // Calculate segment bounds
+
                 int segmentEndX = Math.min(x + segmentSize, screenWidth);
                 int segmentEndY = Math.min(y + segmentSize, screenHeight);
                 
-                // Check if this segment overlaps with any excluded area
                 if (!overlapsWithExcludedArea(x, y, segmentEndX - x, segmentEndY - y, excludedAreas)) {
                     context.fill(x, y, segmentEndX, segmentEndY, overlayColor);
                 }
@@ -255,19 +264,14 @@ public class ItemSearchOverlay {
     }
     
     private long calculateSlotContentHash(HandledScreen<?> screen) {
-        // Calculate a hash of all slot contents to detect changes
         long hash = 0;
         for (Slot slot : screen.getScreenHandler().slots) {
             ItemStack stack = slot.getStack();
             if (stack != null && !stack.isEmpty()) {
-                // Combine item type, count into hash
                 hash = hash * 31 + stack.getItem().hashCode();
                 hash = hash * 31 + stack.getCount();
-                
-                // Use the stack's own hashCode which includes NBT data
                 hash = hash * 31 + stack.hashCode();
             }
-            // Include slot position in hash to detect slot reordering
             hash = hash * 31 + slot.id;
         }
         return hash;

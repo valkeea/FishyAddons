@@ -56,7 +56,8 @@ public class TrackerDisplay implements HudElement {
     }
 
     private boolean isTrackerVisible() {
-        return !HudDisplayCache.getInstance().getDisplayData().isEmpty();
+        return !HudDisplayCache.getInstance().getDisplayData().isEmpty() &&
+                TrackerUtils.isEnabled();
     }
 
     @Override

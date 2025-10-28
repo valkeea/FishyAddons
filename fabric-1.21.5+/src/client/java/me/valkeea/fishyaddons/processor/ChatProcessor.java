@@ -7,6 +7,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
+import me.valkeea.fishyaddons.event.impl.GameMessageEvent;
 import net.minecraft.text.Text;
 
 @SuppressWarnings("squid:S6548")
@@ -43,16 +44,16 @@ public class ChatProcessor {
         handlersNeedSorting = true;
     }
 
-    public void onMessage(Text message, boolean overlay) {
-        if (!enabled || message == null) {
+    public void onMessage(GameMessageEvent event) {
+        if (!enabled || event.message == null) {
             return;
         }
-        
+
         long startTime = System.nanoTime();
         messagesProcessed.incrementAndGet();
         
         try {
-            ChatMessageContext context = new ChatMessageContext(message, overlay);
+            ChatMessageContext context = new ChatMessageContext(event.message, event.overlay);
             
             if (shouldSkipProcessing(context)) {
                 return;
@@ -62,16 +63,11 @@ public class ChatProcessor {
             processHandlers(context);
             
         } finally {
-            recordProcessingTime(startTime, message);
+            recordProcessingTime(startTime, event.message);
         }
     }
 
     private static final AtomicReference<Text> lastPacket = new AtomicReference<>(null);
-
-    public static void onRaw(Text packetInfo) {
-        if (!INSTANCE.enabled || packetInfo == null) return;
-        lastPacket.set(packetInfo);
-    }
 
     public Text applyDisplayFilters(Text message) {
         if (!enabled || message == null) {
@@ -80,6 +76,7 @@ public class ChatProcessor {
         
         Text currentMessage = message;
         
+        // User-configurable rules are processed late
         try {
             Text filteredMessage = me.valkeea.fishyaddons.handler.ChatFilter.applyFilters(currentMessage);
             if (!filteredMessage.equals(currentMessage)) {
@@ -91,13 +88,13 @@ public class ChatProcessor {
         
         ensureHandlersSorted();
 
+        // Display handlers have access to raw packet info
         var packetInfo = lastPacket.get() != null ? lastPacket.get() : currentMessage;
         var context = new ChatMessageContext(currentMessage, false, packetInfo);
         lastPacket.set(null);
 
         for (ChatHandler handler : handlers) {
-            String handlerName = handler.getHandlerName();
-            boolean isDisplayHandler = isDisplayOnlyHandler(handlerName);
+            boolean isDisplayHandler = isDisplayOnlyHandler(handler);
             
             if (isDisplayHandler && handler.isEnabled() && handler.shouldHandle(context)) {
                 try {
@@ -109,17 +106,16 @@ public class ChatProcessor {
                     }
                 } catch (Exception e) {
                     System.err.println("[FishyAddons] Error in display handler '" + 
-                                     handlerName + "': " + e.getMessage());
+                                     handler.getHandlerName() + "': " + e.getMessage());
                 }
             }
         }
         
         return currentMessage;
     }
-    
-    private boolean isDisplayOnlyHandler(String handlerName) {
-        return handlerName.equals("Coordinates") ||
-                handlerName.equals("ChatFormat");
+
+    private boolean isDisplayOnlyHandler(ChatHandler handler) {
+        return handler.isDisplay();
     }
     
     /**
@@ -131,7 +127,7 @@ public class ChatProcessor {
 
         boolean shouldStop = false;
         for (ChatHandler handler : handlers) {
-            boolean isDisplayOnly = isDisplayOnlyHandler(handler.getHandlerName());
+            boolean isDisplayOnly = isDisplayOnlyHandler(handler);
             ProcessingResult result = null;
             if (!isDisplayOnly) {
                 result = processSingleHandler(handler, currentContext, processedBy);

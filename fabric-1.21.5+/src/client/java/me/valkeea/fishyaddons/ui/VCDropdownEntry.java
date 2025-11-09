@@ -9,11 +9,13 @@ import me.valkeea.fishyaddons.ui.widget.dropdown.MuteListItem;
 import me.valkeea.fishyaddons.ui.widget.dropdown.NetworkDisplayItem;
 import me.valkeea.fishyaddons.ui.widget.dropdown.ScItem;
 import me.valkeea.fishyaddons.ui.widget.dropdown.ToggleMenuItem;
+import me.valkeea.fishyaddons.ui.widget.dropdown.WaypointChainItem;
 
 /**
  * Utility class for creating dropdown entries for toggle sets
  */
 public class VCDropdownEntry {
+    private static final String CONFIGURE = "Configure";
     
     /**
      * Sc Display toggles
@@ -24,7 +26,7 @@ public class VCDropdownEntry {
             description, 
             toggleKey,
             defaultValue,
-            "Configure",
+            CONFIGURE,
             VCDropdownEntry::getScItems,
             refreshAction
         );
@@ -39,8 +41,21 @@ public class VCDropdownEntry {
             description, 
             toggleKey,
             defaultValue,
-            "Configure",
+            CONFIGURE,
             VCDropdownEntry::getNetworkDisplayItems,
+            refreshAction
+        );
+    }
+
+    /**
+     * Waypoint Chain preset toggles
+     */
+    public static VCEntry waypointChainToggle(String name, String description, Runnable refreshAction) {
+        return VCEntry.dropdown(
+            name,
+            description, 
+            CONFIGURE,
+            VCDropdownEntry::getWaypointChainItems,
             refreshAction
         );
     }
@@ -61,6 +76,12 @@ public class VCDropdownEntry {
         items.add(new NetworkDisplayItem(Key.HUD_PING_SHOW_PING));
         items.add(new NetworkDisplayItem(Key.HUD_PING_SHOW_TPS));
         items.add(new NetworkDisplayItem(Key.HUD_PING_SHOW_FPS));
+        return items;
+    }
+
+    private static List<ToggleMenuItem> getWaypointChainItems() {
+        List<ToggleMenuItem> items = new ArrayList<>();
+        items.add(new WaypointChainItem(Key.WAYPOINT_CHAINS_SHOW_RELICS, "Relic Locations (Den)", "Toggle relic waypoints for Dragon's Den. Right-click to reset completion."));
         return items;
     }
 

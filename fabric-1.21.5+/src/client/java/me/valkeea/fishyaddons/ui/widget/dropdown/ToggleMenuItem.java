@@ -26,6 +26,21 @@ public interface ToggleMenuItem {
      */
     void toggle();
     
+    /**
+     * Handle right-click on this item. Default implementation does nothing.
+     * @return true if the right-click was handled, false otherwise
+     */
+    default boolean onRightClick() {
+        return false;
+    }
+    
+    /**
+     * @return true if this item supports right-click actions
+     */
+    default boolean supportsRightClick() {
+        return false;
+    }
+    
     default Text getEnabledSuffix() {
         Text checkMark = Text.literal("✓").styled(style -> style.withColor(0xCCFFCC).withBold(true));
         return Text.literal(" §8[").append(checkMark).append(Text.literal("§8]"));

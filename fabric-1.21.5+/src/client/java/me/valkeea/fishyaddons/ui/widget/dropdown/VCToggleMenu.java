@@ -137,6 +137,10 @@ public class VCToggleMenu {
     }
 
     public boolean mouseClicked(double mouseX, double mouseY, float uiScale) {
+        return mouseClicked(mouseX, mouseY, uiScale, 0);
+    }
+
+    public boolean mouseClicked(double mouseX, double mouseY, float uiScale, int button) {
         if (!visible) return false;
 
         List<ToggleMenuItem> items = itemSupplier.get();
@@ -150,7 +154,6 @@ public class VCToggleMenu {
             if (mouseX >= scrollbarX && mouseX <= scrollbarX + scrollbarWidth && 
                 mouseY >= scaledY && mouseY <= scaledY + menuHeight) {
                 
-                // Calculate where within the thumb the user clicked
                 int thumbHeight = Math.max((int)(8 * uiScale), (visibleEntries * menuHeight) / totalEntries);
                 int thumbY = scaledY + (scrollOffset * (menuHeight - thumbHeight)) / (totalEntries - visibleEntries);
                 scrollbarThumbOffset = mouseY - thumbY;
@@ -168,7 +171,12 @@ public class VCToggleMenu {
             int entryBottom = entryTop + scaledEntryHeight;
             if (mouseX >= scaledX && mouseX <= scaledX + scaledWidth && mouseY >= entryTop && mouseY <= entryBottom) {
                 ToggleMenuItem item = items.get(itemIndex);
-                item.toggle();
+                
+                if (button == 1 && item.supportsRightClick()) {
+                    item.onRightClick();
+                } else {
+                    item.toggle();
+                }
                 
                 if (onRefresh != null) {
                     onRefresh.run();

@@ -10,7 +10,15 @@ public class Color {
         return new float[]{r, g, b};
     }
 
-    public static int darken(int color, float factor) {
+    public static float[] intToRGBA(int color) {
+        float a = ((color >> 24) & 0xFF) / 255f;
+        float r = ((color >> 16) & 0xFF) / 255f;
+        float g = ((color >> 8) & 0xFF) / 255f;
+        float b = (color & 0xFF) / 255f;
+        return new float[]{r, g, b, a};
+    }
+
+    public static int dim(int color, float factor) {
         int a = (color >> 24) & 0xFF;
         int r = (color >> 16) & 0xFF;
         int g = (color >> 8) & 0xFF;
@@ -23,17 +31,17 @@ public class Color {
         return (a << 24) | (r << 16) | (g << 8) | b;
     }
 
-    public static int darkenRGB(int color) {
+    public static int darken(int color, float factor) {
         int r = (color >> 16) & 0xFF;
         int g = (color >> 8) & 0xFF;
         int b = color & 0xFF;
 
-        r = (int)(r * 0.8);
-        g = (int)(g * 0.8);
-        b = (int)(b * 0.8);
+        r = (int)(r * factor);
+        g = (int)(g * factor);
+        b = (int)(b * factor);
 
         return (color & 0xFF000000) | (r << 16) | (g << 8) | b;
-    }    
+    }
 
     public static int lighten(int color, float factor) {
         int a = (color >> 24) & 0xFF;
@@ -46,7 +54,7 @@ public class Color {
         b = Math.min((int)(b * factor), 255);
 
         return (a << 24) | (r << 16) | (g << 8) | b;
-    }
+    } 
 
     public static int brighten(int color, float factor) {
         int a = (color >> 24) & 0xFF;
@@ -57,6 +65,25 @@ public class Color {
         r = Math.min(255, (int)(r + (255 - r) * factor));
         g = Math.min(255, (int)(g + (255 - g) * factor));
         b = Math.min(255, (int)(b + (255 - b) * factor));
+
+        return (a << 24) | (r << 16) | (g << 8) | b;
+    }
+
+    public static int desaturateAndDarken(int color, float factor) {
+        int a = (color >> 24) & 0xFF;
+        int r = (color >> 16) & 0xFF;
+        int g = (color >> 8) & 0xFF;
+        int b = color & 0xFF;
+
+        int gray = (r + g + b) / 3;
+
+        r = (int)(gray + (r - gray) * (1 - factor));
+        g = (int)(gray + (g - gray) * (1 - factor));
+        b = (int)(gray + (b - gray) * (1 - factor));
+
+        r = (int)(r * (1 - factor));
+        g = (int)(g * (1 - factor));
+        b = (int)(b * (1 - factor));
 
         return (a << 24) | (r << 16) | (g << 8) | b;
     }
@@ -92,8 +119,6 @@ public class Color {
     
     /**
      * Ensure a color has full alpha
-     * @param color Input color
-     * @return Color with full alpha
      */
     public static int ensureOpaque(int color) {
         return color | 0xFF000000;

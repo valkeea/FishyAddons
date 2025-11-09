@@ -26,23 +26,23 @@ public class ChatFormatHandler implements ChatHandler {
     
     @Override
     public boolean shouldHandle(ChatMessageContext context) {
-        String rawText = context.getPacketInfoString();
+        String rawText = context.getRawString();
         return context.isGuildMessage() &&
                 containsIdentifiers(rawText);
     }
     
     @Override
     public ChatHandlerResult handle(ChatMessageContext context) {
-        try {
-            Text newLine = context.getOriginalMessage();
-            Text original = context.getPacketInfo();
-            String cleanOriginal = context.getPacketInfoString();
 
+        try {
+            Text newLine = context.getCurrentMessage();
+            Text original = context.getOriginalText();
+            String cleanOriginal = context.getRawString();
             Text enhanced = addFormatting(newLine, original, cleanOriginal);
+
             if (!enhanced.equals(newLine)) {
-                ChatMessageContext newContext = new ChatMessageContext(enhanced, context.isOverlay());
-                    return ChatHandlerResult.modifyWith(newContext, "Added chat formatting");
-                }
+                context.setCurrentMessage(enhanced);
+            }
 
             return ChatHandlerResult.CONTINUE;
 

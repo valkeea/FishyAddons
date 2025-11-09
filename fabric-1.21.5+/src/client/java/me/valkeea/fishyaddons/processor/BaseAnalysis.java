@@ -18,8 +18,8 @@ import me.valkeea.fishyaddons.util.text.TextUtils;
 /**
  * Single-pass message analysis for chat filter and alerts
  */
-public class SharedMessageDetector {
-    private SharedMessageDetector() {}
+public class BaseAnalysis {
+    private BaseAnalysis() {}
     
     private static final Map<String, MessageAnalysis> resultCache = new ConcurrentHashMap<>();
     
@@ -29,9 +29,9 @@ public class SharedMessageDetector {
     private static final CopyOnWriteArrayList<Map.Entry<String, Rule>> cachedFilterRules = new CopyOnWriteArrayList<>();
     private static final Map<String, AlertData> cachedAlertData = new ConcurrentHashMap<>();
     
-    private static final int MAX_CACHE_SIZE = 1000;
+    private static final int MAX_CACHE_SIZE = 500;
     
-    public static MessageAnalysis analyzeMessage(String originalMessage) {
+    public static MessageAnalysis onPacket(String originalMessage) {
         if (originalMessage == null || originalMessage.isEmpty()) {
             return MessageAnalysis.EMPTY;
         }
@@ -52,14 +52,38 @@ public class SharedMessageDetector {
         long endTime = System.nanoTime();
         long analysisTime = endTime - startTime;
         
-        MessageAnalysis result = new MessageAnalysis(originalMessage, strippedMessage, 
-            filterMatches, alertMatches, analysisTime);
+        var result = new MessageAnalysis(filterMatches, alertMatches, analysisTime);
         
         cacheResult(originalMessage, result);
         
         return result;
     }
-    
+
+    /**
+     * Analyze message with support for modifications done by other mods
+     */
+    public static MessageAnalysis onRender(String originalMessage, net.minecraft.text.Text modifiedText) {
+        var baseAnalysis = onPacket(originalMessage);
+
+        long startTime = System.nanoTime();
+
+        String modifiedString = modifiedText != null ? modifiedText.getString() : "";
+        if (baseAnalysis.hasAlertMatches() || modifiedString.isEmpty() || modifiedString.equals(originalMessage)) {
+            return baseAnalysis;
+        }
+
+        List<AlertMatch> additionalAlerts = analyzeAlertPatterns(TextUtils.stripColor(modifiedString));
+        if (additionalAlerts.isEmpty()) {
+            return baseAnalysis;
+        }
+        
+        List<FilterMatch> filterMatches = baseAnalysis.getFilterMatches();
+        long endTime = System.nanoTime();
+        long analysisTime = endTime - startTime + baseAnalysis.getAnalysisTimeNs();
+
+        return new MessageAnalysis(filterMatches, additionalAlerts, analysisTime);
+    }
+
     private static List<FilterMatch> analyzeFilterPatterns(String originalMessage) {
         List<FilterMatch> matches = new ArrayList<>();
         
@@ -164,10 +188,10 @@ public class SharedMessageDetector {
                 enabledRules.add(entry);
             }
         }
+
         enabledRules.sort((a, b) -> Integer.compare(b.getValue().getPriority(), a.getValue().getPriority()));
-        
+
         long currentFilterVersion = enabledRules.hashCode();
-        
         if (currentFilterVersion != lastFilterConfigVersion) {
             
             cachedFilterRules.clear();

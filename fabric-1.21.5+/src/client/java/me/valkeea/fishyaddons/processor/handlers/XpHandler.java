@@ -31,7 +31,7 @@ public class XpHandler implements ChatHandler {
     
     @Override
     public ChatHandlerResult handle(ChatMessageContext context) {
-        String message = context.getUnfilteredCleanText();
+        String message = context.getCleanString();
         
         try {
             if (handleXp(message)) return ChatHandlerResult.STOP;

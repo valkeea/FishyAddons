@@ -3,7 +3,7 @@ package me.valkeea.fishyaddons.processor.handlers;
 import me.valkeea.fishyaddons.processor.ChatHandler;
 import me.valkeea.fishyaddons.processor.ChatHandlerResult;
 import me.valkeea.fishyaddons.processor.ChatMessageContext;
-import me.valkeea.fishyaddons.tracker.TrackerUtils;
+import me.valkeea.fishyaddons.tracker.profit.TrackerUtils;
 
 public class TrackerHandler implements ChatHandler {
     
@@ -25,8 +25,8 @@ public class TrackerHandler implements ChatHandler {
     @Override
     public ChatHandlerResult handle(ChatMessageContext context) {
         try {
-            String unfilteredText = context.getUnfilteredCleanLowercaseText();
-            var originalText = context.getOriginalMessage();
+            String unfilteredText = context.getLowerCleanString();
+            var originalText = context.getOriginalText();
             if (TrackerUtils.handleChat(unfilteredText, originalText)) return ChatHandlerResult.STOP;
             return ChatHandlerResult.CONTINUE;
 

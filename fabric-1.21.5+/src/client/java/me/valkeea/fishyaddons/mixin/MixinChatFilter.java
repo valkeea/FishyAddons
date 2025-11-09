@@ -7,6 +7,7 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import me.valkeea.fishyaddons.processor.ChatProcessor;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.hud.ChatHud;
 import net.minecraft.client.gui.hud.MessageIndicator;
 import net.minecraft.network.message.MessageSignatureData;
@@ -15,7 +16,7 @@ import net.minecraft.text.Text;
 @Mixin(ChatHud.class)
 public class MixinChatFilter {
 
-    private Text cachedFilteredMessage = null;
+    private ThreadLocal<Text> filtered = ThreadLocal.withInitial(() -> null);
 
     @Inject(
         method = "addMessage(Lnet/minecraft/text/Text;Lnet/minecraft/network/message/MessageSignatureData;Lnet/minecraft/client/gui/hud/MessageIndicator;)V",
@@ -23,10 +24,12 @@ public class MixinChatFilter {
         cancellable = true
     )
     private void cancelEmptyFilteredMessages(Text message, MessageSignatureData signatureData, MessageIndicator indicator, CallbackInfo ci) {
-        cachedFilteredMessage = ChatProcessor.getInstance().applyDisplayFilters(message);
+
+        Text filteredMessage = ChatProcessor.getInstance().applyDisplayFilters(message);
+        filtered.set(filteredMessage);
         
-        if (cachedFilteredMessage == null || cachedFilteredMessage.getString().trim().isEmpty()) {
-            cachedFilteredMessage = null;
+        if (filteredMessage == null || filteredMessage.getString().trim().isEmpty()) {
+            filtered.remove();
             ci.cancel();
         }
     }
@@ -37,11 +40,16 @@ public class MixinChatFilter {
         argsOnly = true
     )
     private Text applyDisplayFiltersToMessage(Text message) {
-        if (cachedFilteredMessage != null) {
-            Text result = cachedFilteredMessage;
-            cachedFilteredMessage = null;
-            return result;
+
+        if (MinecraftClient.getInstance().isOnThread()) {
+
+            Text result = filtered.get();
+            if (result != null) {
+                filtered.remove();
+                return result;
+            }
         }
+
         return message;
     }    
 }

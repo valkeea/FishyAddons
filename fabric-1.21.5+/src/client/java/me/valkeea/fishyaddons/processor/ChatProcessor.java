@@ -5,27 +5,31 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import me.valkeea.fishyaddons.config.FilterConfig.MessageContext;
 import me.valkeea.fishyaddons.event.impl.GameMessageEvent;
+import me.valkeea.fishyaddons.feature.qol.ChatFilter;
 import net.minecraft.text.Text;
 
 @SuppressWarnings("squid:S6548")
 public class ChatProcessor {
+    private static final Logger LOGGER = LoggerFactory.getLogger("FishyAddons/ChatProcessor");
     private static final ChatProcessor INSTANCE = new ChatProcessor();
-    private ChatProcessor() {}
-    
     public static ChatProcessor getInstance() { return INSTANCE; }
-    
+    private ChatProcessor() {}
+
     private final List<ChatHandler> handlers = new CopyOnWriteArrayList<>();
-    private volatile boolean handlersNeedSorting = false;
-    
+    private final ThreadLocal<ChatMessageContext> pendingDisplayContext = ThreadLocal.withInitial(() -> null);
+
     // Monitoring
     private final AtomicLong messagesProcessed = new AtomicLong(0);
     private final AtomicLong totalProcessingTimeNs = new AtomicLong(0);
     
-    private volatile boolean enabled = true;
     private volatile boolean debugMode = false;
+    private volatile boolean handlersNeedSorting = false;    
     private volatile int maxProcessingTimeWarningMs = 10;
 
     public void registerHandler(ChatHandler handler) {
@@ -45,7 +49,7 @@ public class ChatProcessor {
     }
 
     public void onMessage(GameMessageEvent event) {
-        if (!enabled || event.message == null) {
+        if (event.message == null) {
             return;
         }
 
@@ -53,99 +57,97 @@ public class ChatProcessor {
         messagesProcessed.incrementAndGet();
         
         try {
+
             ChatMessageContext context = new ChatMessageContext(event.message, event.overlay);
+            ChatEvents.dispatch(context);
+            MessageContext.recordMessage(context.getRawString());
+
+            if (!event.overlay) pendingDisplayContext.set(context);
             
-            if (shouldSkipProcessing(context)) {
-                return;
-            }
-            
+            if (shouldSkipProcessing(context)) return;
+
             ensureHandlersSorted();
-            processHandlers(context);
+            processInternalHandlers(context);
             
         } finally {
             recordProcessingTime(startTime, event.message);
         }
     }
 
-    private static final AtomicReference<Text> lastPacket = new AtomicReference<>(null);
-
     public Text applyDisplayFilters(Text message) {
-        if (!enabled || message == null) {
+        if (message == null) return message;
+
+        ChatMessageContext context = pendingDisplayContext.get();
+        if (context == null) return message;
+
+        pendingDisplayContext.remove();
+        
+        if (!message.equals(context.getOriginalText())) {
+            context = new ChatMessageContext(context.getOriginalText(), message, context.isOverlay());
+        }
+
+        try {
+            Text filteredMessage = ChatFilter.applyFilters(context);
+            context.setCurrentMessage(filteredMessage);
+
+            processDisplayHandlers(context);
+            
+            return context.getCurrentMessage();
+            
+        } catch (Exception e) {
+            LOGGER.error("Error in display filters: {}", e.getMessage());
             return message;
         }
-        
-        Text currentMessage = message;
-        
-        // User-configurable rules are processed late
-        try {
-            Text filteredMessage = me.valkeea.fishyaddons.handler.ChatFilter.applyFilters(currentMessage);
-            if (!filteredMessage.equals(currentMessage)) {
-                currentMessage = filteredMessage;
-            }
-        } catch (Exception e) {
-            System.err.println("[FishyAddons] Error in ChatFilter: " + e.getMessage());
-        }
-        
-        ensureHandlersSorted();
-
-        // Display handlers have access to raw packet info
-        var packetInfo = lastPacket.get() != null ? lastPacket.get() : currentMessage;
-        var context = new ChatMessageContext(currentMessage, false, packetInfo);
-        lastPacket.set(null);
-
-        for (ChatHandler handler : handlers) {
-            boolean isDisplayHandler = isDisplayOnlyHandler(handler);
-            
-            if (isDisplayHandler && handler.isEnabled() && handler.shouldHandle(context)) {
-                try {
-                    ChatHandlerResult result = handler.handle(context);
-                    
-                    if (result.hasModification()) {
-                        context = result.getModifiedContext();
-                        currentMessage = context.getOriginalMessage();
-                    }
-                } catch (Exception e) {
-                    System.err.println("[FishyAddons] Error in display handler '" + 
-                                     handler.getHandlerName() + "': " + e.getMessage());
-                }
-            }
-        }
-        
-        return currentMessage;
     }
 
-    private boolean isDisplayOnlyHandler(ChatHandler handler) {
-        return handler.isDisplay();
-    }
-    
-    /**
-     * Process the message through all handlers
-     */
-    private void processHandlers(ChatMessageContext initialContext) {
-        ChatMessageContext currentContext = initialContext;
+    private void processInternalHandlers(ChatMessageContext context) {
         List<String> processedBy = debugMode ? new ArrayList<>() : null;
+        ChatMessageContext currentContext = context;
 
-        boolean shouldStop = false;
         for (ChatHandler handler : handlers) {
-            boolean isDisplayOnly = isDisplayOnlyHandler(handler);
-            ProcessingResult result = null;
-            if (!isDisplayOnly) {
-                result = processSingleHandler(handler, currentContext, processedBy);
-                if (result.hasModification()) {
-                    currentContext = result.getModifiedContext();
-                }
+            if (!isDisplayOnlyHandler(handler)) {
+                ProcessingResult result = processSingleHandler(handler, currentContext, processedBy);
                 if (result.shouldStop()) {
-                    shouldStop = true;
+                    break;
                 }
-            }
-            if (shouldStop) {
-                break;
             }
         }
 
         logProcessedBy(processedBy);
     }
 
+    private void processDisplayHandlers(ChatMessageContext context) {
+        List<String> processedBy = debugMode ? new ArrayList<>() : null;
+
+        for (ChatHandler handler : handlers) {
+            if (isDisplayOnlyHandler(handler) && handler.isEnabled()) {
+                processDisplayHandler(handler, context, processedBy);
+            }
+        }
+
+        logProcessedBy(processedBy);
+    }
+
+    private void processDisplayHandler(ChatHandler handler, ChatMessageContext context, List<String> processedBy) {
+
+        try {
+            if (handler.shouldHandle(context)) {
+                ChatHandlerResult result = handler.handle(context);
+
+                if (debugMode && processedBy != null) {
+                    processedBy.add(handler.getHandlerName() + ":" + result.getAction());
+                }
+            }
+
+        } catch (Exception e) {
+            LOGGER.error("Error in display handler '{}': {}", handler.getHandlerName(), e.getMessage());
+        }
+    }
+
+    private boolean isDisplayOnlyHandler(ChatHandler handler) {
+        return handler.isDisplay();
+    }
+    
     private ProcessingResult processSingleHandler(ChatHandler handler, ChatMessageContext context, List<String> processedBy) {
         ProcessingResult result = processHandler(handler, context);
         if (!result.wasSkipped() && debugMode && processedBy != null) {
@@ -155,8 +157,8 @@ public class ChatProcessor {
     }
 
     private void logProcessedBy(List<String> processedBy) {
-        if (debugMode && processedBy != null && !processedBy.isEmpty()) {
-            System.out.println("[FishyAddons] Message processed by: " + String.join(", ", processedBy));
+        if (debugMode && processedBy != null && !processedBy.isEmpty() && LOGGER.isInfoEnabled()) {
+            LOGGER.info("Message processed by: {}", String.join(", ", processedBy));
         }
     }
     
@@ -166,26 +168,23 @@ public class ChatProcessor {
         }
         
         try {
+
             if (!handler.shouldHandle(context)) {
                 return ProcessingResult.skipped();
             }
-            
+
             ChatHandlerResult result = handler.handle(context);
-            
-            return new ProcessingResult(result.getAction(), result.getModifiedContext());
-            
+            return new ProcessingResult(result.getAction());
+
         } catch (Exception e) {
-            System.err.println("[FishyAddons] Error in chat handler '" + handler.getHandlerName() + "': " + e.getMessage());
+            LOGGER.error("Error in chat handler '{}': {}", handler.getHandlerName(), e.getMessage());
             if (debugMode) {
                 e.printStackTrace();
             }
             return ProcessingResult.skipped();
         }
     }
-    
-    /**
-     * Record total processing time and warn if too slow
-     */
+
     private void recordProcessingTime(long startTime, Text message) {
         long endTime = System.nanoTime();
         long totalTime = endTime - startTime;
@@ -193,25 +192,21 @@ public class ChatProcessor {
         
         if (totalTime > maxProcessingTimeWarningMs * 1_000_000L) {
             String messagePreview = message.getString().substring(0, Math.min(50, message.getString().length()));
-            System.err.println("[FishyAddons] Chat processing took " + (totalTime / 1_000_000.0) + "ms for message: " + messagePreview);
+            LOGGER.warn("Chat processing took {}ms for message: {}", (totalTime / 1_000_000.0), messagePreview);
         }
     }
 
-    // Processing result for each chat handler
     private static class ProcessingResult {
         private final ChatHandlerResult.Action action;
-        private final ChatMessageContext modifiedContext;
         private final boolean skipped;
         
-        private ProcessingResult(ChatHandlerResult.Action action, ChatMessageContext modifiedContext) {
+        private ProcessingResult(ChatHandlerResult.Action action) {
             this.action = action;
-            this.modifiedContext = modifiedContext;
             this.skipped = false;
         }
         
         private ProcessingResult() {
             this.action = null;
-            this.modifiedContext = null;
             this.skipped = true;
         }
         
@@ -221,13 +216,11 @@ public class ChatProcessor {
         
         boolean wasSkipped() { return skipped; }
         boolean shouldStop() { return action == ChatHandlerResult.Action.STOP; }
-        boolean hasModification() { return action == ChatHandlerResult.Action.MODIFY && modifiedContext != null; }
-        ChatMessageContext getModifiedContext() { return modifiedContext; }
         ChatHandlerResult.Action getAction() { return action; }
     }
 
     private boolean shouldSkipProcessing(ChatMessageContext context) {
-        return context.getCleanText().trim().isEmpty();
+        return context.getCleanString().trim().isEmpty();
     }
     
     private void ensureHandlersSorted() {
@@ -241,10 +234,7 @@ public class ChatProcessor {
         }
     }
     
-    public void setEnabled(boolean enabled) { this.enabled = enabled; }
     public void setDebugMode(boolean debugMode) { this.debugMode = debugMode; }
-    
-    public boolean isEnabled() { return enabled; }
     public boolean isDebugMode() { return debugMode; }
     public double getAverageProcessingTimeMs() {
         long messages = messagesProcessed.get();

@@ -55,7 +55,7 @@ public class RuleFactory {
     private static final String[] DH_TRIGGERS = new String[] {
         "It's a Double Hook!",
         "It's a Double Hook! Woot woot!"
-    };    
+    };
     
     public static SeaCreatureData loadSeaCreatureData() {
         if (cachedData != null) {

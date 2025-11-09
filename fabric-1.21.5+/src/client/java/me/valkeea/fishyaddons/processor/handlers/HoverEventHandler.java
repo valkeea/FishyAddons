@@ -3,8 +3,8 @@ package me.valkeea.fishyaddons.processor.handlers;
 import me.valkeea.fishyaddons.processor.ChatHandler;
 import me.valkeea.fishyaddons.processor.ChatHandlerResult;
 import me.valkeea.fishyaddons.processor.ChatMessageContext;
-import me.valkeea.fishyaddons.tracker.SackDropParser;
-import me.valkeea.fishyaddons.tracker.TrackerUtils;
+import me.valkeea.fishyaddons.tracker.profit.SackDropParser;
+import me.valkeea.fishyaddons.tracker.profit.TrackerUtils;
 
 public class HoverEventHandler implements ChatHandler {
     
@@ -24,7 +24,7 @@ public class HoverEventHandler implements ChatHandler {
             return false;
         }
 
-        String cleanText = context.getCleanText();
+        String cleanText = context.getCleanString();
         return cleanText.startsWith("[Sacks] +") && (cleanText.contains("items") || cleanText.contains("item"));
     }
     
@@ -32,7 +32,7 @@ public class HoverEventHandler implements ChatHandler {
     public ChatHandlerResult handle(ChatMessageContext context) {
         
         try {
-            if (TrackerUtils.checkForHoverEvents(context.getUnfilteredMessage())) {
+            if (TrackerUtils.checkForHoverEvents(context.getOriginalText())) {
                 return ChatHandlerResult.STOP;
             }
             return ChatHandlerResult.CONTINUE;

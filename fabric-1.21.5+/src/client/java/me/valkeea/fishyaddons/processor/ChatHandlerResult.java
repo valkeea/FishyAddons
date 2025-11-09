@@ -1,19 +1,12 @@
 package me.valkeea.fishyaddons.processor;
 
-/**
- * Result object returned by chat handlers indicating what action was taken
- */
 public class ChatHandlerResult {
     
     public enum Action {
-        // Handler processed the message but other handlers should continue
-        CONTINUE,
-        // Handler processed the message and no further handlers should run
-        STOP,
-        // Didn't process, continue to next handler
-        SKIP,
-        // Handler wants to modify the message for subsequent handlers
-        MODIFY
+        CONTINUE, // Handler processed the message but other handlers should continue
+        STOP, // Handler processed the message and no further handlers should run
+        SKIP, // Didn't process, continue to next handler
+        MODIFY // Handler wants to modify the message for subsequent handlers
     }
     
     private final Action action;

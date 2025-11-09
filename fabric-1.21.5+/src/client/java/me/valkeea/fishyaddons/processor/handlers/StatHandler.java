@@ -27,10 +27,8 @@ public class StatHandler implements ChatHandler {
     public ChatHandlerResult handle(ChatMessageContext context) {
 
         try {
-            if (ScStats.getInstance().handleMatch(context.getCleanText())) {
-                return ChatHandlerResult.STOP;
-            }
-            if (DianaStats.getInstance().handleChat(context.getLowercaseText())) {
+            
+            if (DianaStats.getInstance().handleChat(context.getLowerCleanString())) {
                 return ChatHandlerResult.STOP;
             }
             return ChatHandlerResult.CONTINUE;

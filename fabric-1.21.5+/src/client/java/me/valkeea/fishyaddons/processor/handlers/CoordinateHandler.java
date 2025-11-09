@@ -4,7 +4,7 @@ import java.util.regex.Pattern;
 
 import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.config.Key;
-import me.valkeea.fishyaddons.handler.ActiveBeacons;
+import me.valkeea.fishyaddons.feature.waypoints.TempWaypoint;
 import me.valkeea.fishyaddons.processor.ChatHandler;
 import me.valkeea.fishyaddons.processor.ChatHandlerResult;
 import me.valkeea.fishyaddons.processor.ChatMessageContext;
@@ -32,7 +32,7 @@ public class CoordinateHandler implements ChatHandler {
     
     @Override
     public boolean shouldHandle(ChatMessageContext context) {
-        String rawText = context.getRawText();
+        String rawText = context.getRawString();
         return containsCoordinates(rawText);
     }
     
@@ -40,9 +40,9 @@ public class CoordinateHandler implements ChatHandler {
     public ChatHandlerResult handle(ChatMessageContext context) {
 
         try {
-            String rawMessage = context.getRawText();
-            Text originalMessage = context.getOriginalMessage();
-            
+            String rawMessage = context.getRawString();
+            Text originalMessage = context.getOriginalText();
+
             if (FishyConfig.getState(Key.RENDER_COORDS, true)) {
                 initBeaconFor(rawMessage);
 
@@ -50,13 +50,13 @@ public class CoordinateHandler implements ChatHandler {
                     Text enhanced = addButtons(originalMessage);
                     
                     if (!enhanced.equals(originalMessage)) {
-                        ChatMessageContext newContext = new ChatMessageContext(enhanced, context.isOverlay());
-                        return ChatHandlerResult.modifyWith(newContext, "Added coordinate enhancement");
+                        context.setCurrentMessage(enhanced);
                     }
                 }                
             }
             
             return ChatHandlerResult.CONTINUE;
+            
         } catch (Exception e) {
             System.err.println("[FishyAddons] Error in Coordinate handler: " + e.getMessage());
             return ChatHandlerResult.SKIP;
@@ -92,7 +92,7 @@ public class CoordinateHandler implements ChatHandler {
                 label = TextUtils.stripColor(rawMessage.substring(endOfCoords).trim());
             }
             
-            ActiveBeacons.setBeacon(
+            TempWaypoint.setBeacon(
                 newPos,
                 FishyConfig.getInt(Key.RENDER_COORD_COLOR, -5653771), 
                 label

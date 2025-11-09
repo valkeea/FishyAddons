@@ -11,26 +11,19 @@ import me.valkeea.fishyaddons.config.FishyConfig.AlertData;
  * Contains the results of analyzing a chat message for both filter and alert patterns.
  */
 public class MessageAnalysis {
-    private final String originalMessage;
-    private final String strippedMessage;
     private final List<FilterMatch> filterMatches;
     private final List<AlertMatch> alertMatches;
     private final long analysisTimeNs;
     private final boolean hasAnyMatches;
     
-    public MessageAnalysis(String originalMessage, String strippedMessage, 
-                          List<FilterMatch> filterMatches, List<AlertMatch> alertMatches, 
+    public MessageAnalysis(List<FilterMatch> filterMatches, List<AlertMatch> alertMatches, 
                           long analysisTimeNs) {
-        this.originalMessage = originalMessage;
-        this.strippedMessage = strippedMessage;
         this.filterMatches = filterMatches != null ? filterMatches : Collections.emptyList();
         this.alertMatches = alertMatches != null ? alertMatches : Collections.emptyList();
         this.analysisTimeNs = analysisTimeNs;
         this.hasAnyMatches = !this.filterMatches.isEmpty() || !this.alertMatches.isEmpty();
     }
     
-    public String getOriginalMessage() { return originalMessage; }
-    public String getStrippedMessage() { return strippedMessage; }
     public List<FilterMatch> getFilterMatches() { return filterMatches; }
     public List<AlertMatch> getAlertMatches() { return alertMatches; }
     public long getAnalysisTimeNs() { return analysisTimeNs; }
@@ -96,8 +89,8 @@ public class MessageAnalysis {
     /**
      * Empty analysis for when no patterns are configured or message should be skipped
      */
-    public static final MessageAnalysis EMPTY = new MessageAnalysis("", "", 
-        Collections.emptyList(), Collections.emptyList(), 0L);
+    public static final MessageAnalysis EMPTY = new MessageAnalysis(Collections.emptyList(),
+        Collections.emptyList(), 0L);
     
     @Override
     public String toString() {

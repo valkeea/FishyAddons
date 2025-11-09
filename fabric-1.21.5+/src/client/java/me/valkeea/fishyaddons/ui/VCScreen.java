@@ -616,13 +616,9 @@ public class VCScreen extends Screen {
                 currentScreen.getExpandedEntries()
             );
         }        
-        float[] currentColor = ColorWheel.intToRGB(getCurrentColor(entry));
         
-        Consumer<float[]> onColorSelected = rgb -> {
-            int colorInt = ColorWheel.rgbToInt(rgb);
-            ConfigUIResolver.setColor(entry, colorInt);
-        };
-        
+        int currentColor = getCurrentColor(entry);
+        Consumer<Integer> onColorSelected = color -> ConfigUIResolver.setColor(entry, color);
         MinecraftClient.getInstance().setScreen(new ColorWheel(this, currentColor, onColorSelected));
     }
     
@@ -657,7 +653,7 @@ public class VCScreen extends Screen {
         }
         
         if (activeDropdown != null) {
-            if (activeDropdown.mouseClicked(mouseX, mouseY, uiScale)) {
+            if (activeDropdown.mouseClicked(mouseX, mouseY, uiScale, button)) {
                 return true;
             } else {
                 activeDropdown = null;
@@ -741,7 +737,7 @@ public class VCScreen extends Screen {
         }
 
         expandedEntries.clear();
-        VCEntry entry = getEntryForFeature(clickedItem.featureName);
+        VCEntry entry = getEntryForFeature(clickedItem.navigationKey);
         if (entry == null) {
             return;
         }
@@ -1091,7 +1087,7 @@ public class VCScreen extends Screen {
         }
         
         if (activeDropdown != null && entry == activeDropdownEntry) {
-            if (activeDropdown.mouseClicked(mouseX, mouseY, uiScale)) {
+            if (activeDropdown.mouseClicked(mouseX, mouseY, uiScale, 0)) {
                 return true;
             } else {
                 activeDropdown = null;
@@ -1230,7 +1226,7 @@ public class VCScreen extends Screen {
             }
         }
 
-        if (activeDropdown != null && activeDropdown.mouseDragged(mouseY, button)) {
+        if (activeDropdown != null && activeDropdown.mouseDragged(mouseY, uiScale)) {
             return true;
         }
         

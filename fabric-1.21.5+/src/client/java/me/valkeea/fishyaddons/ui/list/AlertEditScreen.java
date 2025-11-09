@@ -3,7 +3,7 @@ package me.valkeea.fishyaddons.ui.list;
 import java.util.List;
 
 import me.valkeea.fishyaddons.config.FishyConfig;
-import me.valkeea.fishyaddons.handler.ChatAlert;
+import me.valkeea.fishyaddons.feature.qol.ChatAlert;
 import me.valkeea.fishyaddons.tool.PlaySound;
 import me.valkeea.fishyaddons.ui.ColorWheel;
 import me.valkeea.fishyaddons.ui.HudEditScreen;
@@ -114,9 +114,8 @@ public class AlertEditScreen extends Screen {
             Text.literal(COLOR).styled(style -> style.withColor(alertColor)),
             btn -> { 
                 storeState();
-                float[] rgb = ColorWheel.intToRGB(alertColor);
-                this.client.setScreen(new ColorWheel(this, rgb, selected -> {
-                    alertColor = ColorWheel.rgbToInt(selected);
+                this.client.setScreen(new ColorWheel(this, alertColor, selected -> {
+                    alertColor = selected;
                     btn.setMessage(Text.literal(COLOR).styled(s -> s.withColor(alertColor)));
                     ChatAlert.refresh();
                     this.client.setScreen(this);
@@ -450,7 +449,6 @@ public class AlertEditScreen extends Screen {
             return true;
         }
 
-        // Handle volume slider clicks
         if (volumeSlider != null && volumeSlider.mouseClicked(mouseX, mouseY, button)) {
             return true;
         }

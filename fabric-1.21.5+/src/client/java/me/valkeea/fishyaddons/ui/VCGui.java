@@ -58,7 +58,7 @@ public class VCGui {
         int contentY = scaling.getContentY(y);
 
         // Name
-        int nameColor = isSubEntry ? Color.darkenRGB(themeColorSupplier.get()) : themeColorSupplier.get();
+        int nameColor = isSubEntry ? Color.darken(themeColorSupplier.get(), 0.8f) : themeColorSupplier.get();
         String displayName = entry.name;
         VCText.drawScaledText(renderCtx.context, screen.getTextRenderer(), displayName, contentX, contentY, nameColor, uiScale);
 

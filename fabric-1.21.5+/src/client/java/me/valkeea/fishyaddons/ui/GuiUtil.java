@@ -10,6 +10,7 @@ import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 
 public class GuiUtil {
+
     public static void drawBox(DrawContext context, int x, int y, int width, int height, int color) {
         context.fill(x, y, x + width, y + height, 0x80000000);
         context.fill(x - 1, y - 1, x + width + 1, y, color);
@@ -17,6 +18,17 @@ public class GuiUtil {
         context.fill(x - 1, y, x, y + height, color);
         context.fill(x + width, y, x + width + 1, y + height, color);
     }
+
+    public static void wireRect(DrawContext context, int x, int y, int width, int height, int color) {
+        context.fill(x - 1, y - 1, x + width + 1, y, color);
+        context.fill(x - 1, y + height, x + width + 1, y + height + 1, color);
+        context.fill(x - 1, y, x, y + height, color);
+        context.fill(x + width, y, x + width + 1, y + height, color);
+    }
+    
+    public static void wireRect(DrawContext context, java.awt.Rectangle rect, int color) {
+        wireRect(context, rect.x, rect.y, rect.width, rect.height, color);
+    } 
 
     public static void fishyTooltip(DrawContext context, TextRenderer textRenderer, List<Text> lines, int mouseX, int mouseY) {
         if (lines == null || lines.isEmpty()) return;
@@ -62,27 +74,6 @@ public class GuiUtil {
                     .append(Text.literal(state).setStyle(Style.EMPTY.withColor(color)));
         }
         return Text.literal(state).setStyle(Style.EMPTY.withColor(color));
-    }    
-
-    // Replaced by texture overlays but may be added back later
-    public static void lockedOverlay(DrawContext context, int x, int y) {
-        int outerColor = 0x80E2CAE9;
-        int innerColor = 0xC0E2CAE9;
-        context.fill(x, y, x + 16, y + 2, outerColor);
-        context.fill(x, y + 14, x + 16, y + 16, outerColor);
-        context.fill(x, y + 2, x + 2, y + 14, outerColor);
-        context.fill(x + 14, y + 2, x + 16, y + 14, outerColor);
-        context.fill(x + 2, y + 2, x + 14, y + 14, innerColor);
-    }
-
-    public static void boundOverlay(DrawContext context, int x, int y) {
-        int outerColor = 0x80FFF6FA;
-        int innerColor = 0xC0FFF6FA;
-        context.fill(x, y, x + 16, y + 2, outerColor);
-        context.fill(x, y + 14, x + 16, y + 16, outerColor);
-        context.fill(x, y + 2, x + 2, y + 14, outerColor);
-        context.fill(x + 14, y + 2, x + 16, y + 14, outerColor);
-        context.fill(x + 2, y + 2, x + 14, y + 14, innerColor);
     }
 
     private GuiUtil() {

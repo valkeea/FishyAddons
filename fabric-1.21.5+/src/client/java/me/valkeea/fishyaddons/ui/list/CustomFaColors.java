@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import me.valkeea.fishyaddons.handler.FaColors;
+import me.valkeea.fishyaddons.feature.visual.FaColors;
 import me.valkeea.fishyaddons.ui.ColorWheel;
 import me.valkeea.fishyaddons.ui.VCText;
 import me.valkeea.fishyaddons.ui.widget.FaButton;
@@ -171,15 +171,14 @@ public class CustomFaColors extends Screen {
             this.colorBtn = new FaButton(
                 0, 0, COLOR_BTN_WIDTH, FIELD_HEIGHT,
                 Text.literal(COLOR_TEXT).styled(s -> s.withColor(color)),
-                btn -> {
-                    float[] rgb = ColorWheel.intToRGB(this.color);
-                    MinecraftClient.getInstance().setScreen(new ColorWheel(CustomFaColors.this, rgb, selected -> {
-                        this.color = ColorWheel.rgbToInt(selected);
+                btn -> 
+                    MinecraftClient.getInstance().setScreen(new ColorWheel(CustomFaColors.this, this.color, selected -> {
+                        this.color = selected;
                         this.colorBtn.setMessage(Text.literal(COLOR_TEXT).styled(s -> s.withColor(this.color)));
                         this.nameField.setEditableColor(this.color);                        
                         String name = this.nameField.getText().trim();
                         if (!name.isEmpty()) {
-                            FaColors.saveUserEntry(name, this.color & 0xFFFFFF);
+                            FaColors.saveUserEntry(name, this.color & 0xFFFFFFFF);
                             addMode = false;
                             CustomFaColors.this.remove(this.nameField);
                             CustomFaColors.this.remove(this.colorBtn);
@@ -189,8 +188,7 @@ public class CustomFaColors extends Screen {
                         } else {
                             MinecraftClient.getInstance().setScreen(CustomFaColors.this);
                         }
-                    }));
-                }
+                    }))
             );
 
             this.saveBtn = new FaButton(
@@ -356,16 +354,14 @@ public class CustomFaColors extends Screen {
             this.colorBtn = new FaButton(
                 0, 0, COLOR_BTN_WIDTH, FIELD_HEIGHT,
                 Text.literal(COLOR_TEXT).styled(s -> s.withColor(color)),
-                btn -> {
-                    float[] rgb = me.valkeea.fishyaddons.ui.ColorWheel.intToRGB(this.color);
-                    MinecraftClient.getInstance().setScreen(new ColorWheel(CustomFaColors.this, rgb, selected -> {
-                        this.color = ColorWheel.rgbToInt(selected);
+                btn -> 
+                    MinecraftClient.getInstance().setScreen(new ColorWheel(CustomFaColors.this, this.color, selected -> {
+                        this.color = selected;
                         btn.setMessage(Text.literal(COLOR_TEXT).styled(s -> s.withColor(this.color)));
                         MinecraftClient.getInstance().setScreen(CustomFaColors.this);
                         this.changed = true;
-                        FaColors.saveUserEntry(this.originalName, this.color & 0xFFFFFF);
-                    }));
-                }
+                        FaColors.saveUserEntry(this.originalName, this.color & 0xFFFFFFFF);
+                    }))
             );
             
             this.delBtn = new FaButton(

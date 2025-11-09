@@ -2,13 +2,20 @@ package me.valkeea.fishyaddons.ui;
 
 import java.util.function.Consumer;
 
+import me.valkeea.fishyaddons.config.FishyConfig;
+import me.valkeea.fishyaddons.config.Key;
 import me.valkeea.fishyaddons.ui.widget.FaButton;
-import me.valkeea.fishyaddons.ui.widget.FaTextField;
+import me.valkeea.fishyaddons.ui.widget.VCTextField;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.render.RenderLayer;
+import net.minecraft.client.texture.NativeImage;
+import net.minecraft.client.texture.NativeImageBackedTexture;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
+import net.minecraft.util.Identifier;
 
 public class ColorWheel extends Screen {
 
@@ -21,31 +28,39 @@ public class ColorWheel extends Screen {
     private float saturation = 1.0f;
     private float lightness = 0.5f;
 
-    private Consumer<float[]> onColorSelected;
+    private Consumer<Integer> onColorSelected;
     private Screen parent;
-    private FaTextField hexField;
+    private VCTextField hexField;
+
+    private NativeImage wheelImage;
+    private Identifier wheelTexture;
+    private float uiScale;
     
     // UI element positions and sizes
-    private int colorWheelCenterX;
-    private int colorWheelCenterY;
-    private int colorWheelRadius = 70;
-    private int lightnessBarX;
-    private int lightnessBarY;
-    private int lightnessBarWidth = 160;
-    private int lightnessBarHeight = 10;
+    private int wheelCenterX;
+    private int wheelCenterY;
+    private int wheelRadius;
+    private int barX;
+    private int barY;
+    private int barWidth;
+    private int barHeight;
+    private int widgetHeight;
+    private int fieldWidth;
+    private int btnWidth;
     
-    private boolean isDraggingWheel = false;
-    private boolean isDraggingLightness = false;
+    private boolean draggingWheel = false;
+    private boolean draggingBar = false;
 
-    public ColorWheel(Screen parent, float[] initialColor, Consumer<float[]> onColorSelected) {
+    public ColorWheel(Screen parent, int initialColor, Consumer<Integer> onColorSelected) {
         super(Text.literal("Color Picker"));
         this.parent = parent;
         this.onColorSelected = onColorSelected;
+        float[] rgb = intToRGB(initialColor);
 
-        if (initialColor != null && initialColor.length == 3) {
-            this.red = initialColor[0];
-            this.green = initialColor[1];
-            this.blue = initialColor[2];
+        if (rgb.length == 3) {
+            this.red = rgb[0];
+            this.green = rgb[1];
+            this.blue = rgb[2];
             float[] hsl = rgbToHsl(red, green, blue);
             this.hue = hsl[0];
             this.saturation = hsl[1];
@@ -54,42 +69,57 @@ public class ColorWheel extends Screen {
             this.hue = 0.0f;
             this.saturation = 1.0f;
             this.lightness = 0.5f;
-            float[] rgb = hslToRgb(this.hue * 360, this.saturation, this.lightness);
-            this.red = rgb[0];
-            this.green = rgb[1];
-            this.blue = rgb[2];
+            float[] fallback = hslToRgb(this.hue * 360, this.saturation, this.lightness);
+            this.red = fallback[0];
+            this.green = fallback[1];
+            this.blue = fallback[2];
         }
+    }
+
+    private void calcDimensions() {
+        uiScale = FishyConfig.getFloat(Key.MOD_UI_SCALE, 0.4265625f);
+        wheelRadius = (int)(70 * uiScale);
+        wheelCenterX = this.width / 2;
+        wheelCenterY = this.height / 2 - 40;
+        barWidth = (int)(140 * uiScale);
+        barHeight = (int)(10 * uiScale); 
+        widgetHeight = (int)(20 * uiScale);
+        fieldWidth = (int)(150 * uiScale);
+        btnWidth = (int)(70 * uiScale);               
+        barX = wheelCenterX - barWidth / 2;
+        barY = wheelCenterY + wheelRadius + 20;
     }
 
     @Override
     protected void init() {
-        // Calculate positions for the color wheel and lightness bar
-        colorWheelCenterX = this.width / 2;
-        colorWheelCenterY = this.height / 2 - 40;
-        lightnessBarX = colorWheelCenterX - lightnessBarWidth / 2;
-        lightnessBarY = colorWheelCenterY + colorWheelRadius + 20;
-        
+
+        calcDimensions();        
+        generateTexture();
         updateRgbFromHsl();
         
-        TextRenderer tr = this.textRenderer;
-        int fieldY = lightnessBarY + lightnessBarHeight + 20;
-        hexField = new FaTextField(tr, colorWheelCenterX - 75, fieldY, 150, 20, Text.literal("Hex (e.g. #FF00FF)"));
+        var tr = this.textRenderer;
+        int fieldY = barY + barHeight + 20;
+        
+        hexField = new VCTextField(tr, wheelCenterX - fieldWidth / 2, fieldY, fieldWidth, widgetHeight, Text.literal("Hex (e.g. #FF00FF)"));
         hexField.setMaxLength(9);
+        hexField.setUIScale(uiScale);
         updateHexField();
         this.addDrawableChild(hexField);
 
         int buttonY = fieldY + 30;
-        this.addDrawableChild(new FaButton(
-            colorWheelCenterX - 75, buttonY, 70, 20,
-            Text.literal("Cancel").setStyle(Style.EMPTY.withColor(0xFF8080)),
+        var cancelBtn = new FaButton(
+            wheelCenterX - fieldWidth  / 2, buttonY, btnWidth, widgetHeight,
+            Text.literal("Cancel").setStyle(Style.EMPTY.withColor(0xFFFF8080)),
             btn -> this.client.setScreen(parent)
-        ));
-        
-        this.addDrawableChild(new FaButton(
-            colorWheelCenterX + 5, buttonY, 70, 20,
-            Text.literal("Confirm").setStyle(Style.EMPTY.withColor(0xCCFFCC)),
+        );
+        cancelBtn.setUIScale(uiScale);
+        this.addDrawableChild(cancelBtn);
+
+        var confirmBtn = new FaButton(
+            wheelCenterX + 5, buttonY, btnWidth, widgetHeight,
+            Text.literal("Confirm").setStyle(Style.EMPTY.withColor(0xFFCCFFCC)),
+
             btn -> {
-                // Parse hex field if it has valid content
                 String hex = hexField.getText().trim();
                 float[] rgb = new float[]{red, green, blue};
                 if (hex.matches("^#?[0-9a-fA-F]{6}$")) {
@@ -102,107 +132,122 @@ public class ColorWheel extends Screen {
                         // Use current RGB values if parsing fails
                     }
                 }
-                onColorSelected.accept(rgb);
+                onColorSelected.accept(rgbToInt(rgb));
                 this.client.setScreen(parent);
             }
-        ));
+        );
+        confirmBtn.setUIScale(uiScale);
+        this.addDrawableChild(confirmBtn);
     }
 
-    @Override
-    public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+    private void generateTexture() {
+        int size = wheelRadius * 2 + 1;
+        
+        if (wheelTexture != null) {
+            MinecraftClient.getInstance().getTextureManager().destroyTexture(wheelTexture);
+        }
 
-        // Render background and color wheel
-        this.renderBackground(context, mouseX, mouseY, delta);
-        super.render(context, mouseX, mouseY, delta);        
-        renderColorWheel(context);
-        renderLightnessBar(context);
+        if (wheelImage != null) {
+            wheelImage.close();
+        }
         
-        // Render color preview
-        int previewSize = 50;
-        int px = colorWheelCenterX + colorWheelRadius + 20;
-        int py = colorWheelCenterY - previewSize / 2;
-        int color = 0xFF000000 | (int)(red * 255) << 16 | (int)(green * 255) << 8 | (int)(blue * 255);
-        context.fill(px, py, px + previewSize, py + previewSize, color);
-        context.drawBorder(px, py, previewSize, previewSize, 0xFFFFFFFF);
+        wheelImage = new NativeImage(size, size, false);
+        wheelImage.fillRect(0, 0, size, size, 0x00000000);
         
-        // Render selection indicators
-        renderSelectionIndicators(context);
-    }
-    
-    private void renderColorWheel(DrawContext context) {
-        for (int y = -colorWheelRadius; y <= colorWheelRadius; y++) {
-            for (int x = -colorWheelRadius; x <= colorWheelRadius; x++) {
+        for (int y = -wheelRadius; y <= wheelRadius; y++) {
+            for (int x = -wheelRadius; x <= wheelRadius; x++) {
                 double distance = Math.sqrt((double)x * x + (double)y * y);
                 
-                if (distance <= colorWheelRadius && distance >= 10) {
+                int pixelX = x + wheelRadius;
+                int pixelY = y + wheelRadius;
+                
+                if (pixelX < 0 || pixelX >= size || pixelY < 0 || pixelY >= size) continue;
+                
+                if (distance <= wheelRadius) {
                     float angle = (float) Math.atan2(y, x);
                     if (angle < 0) angle += 2 * Math.PI;
                     
                     float hueNormalized = angle / (2 * (float)Math.PI);
-                    float sat = (float)(distance / colorWheelRadius);
-                    
-                    // Use current lightness
+                    float sat = (float)(distance / wheelRadius);
                     float[] rgb = hslToRgb(hueNormalized * 360, sat, lightness);
-                    int color = 0xFF000000 | 
-                        ((int)(rgb[0] * 255) << 16) | 
-                        ((int)(rgb[1] * 255) << 8) | 
+                    int color = 0xFF000000 |
+                        ((int)(rgb[0] * 255) << 16) |
+                        ((int)(rgb[1] * 255) << 8) |
                         (int)(rgb[2] * 255);
-                    
-                    int pixelX = colorWheelCenterX + x;
-                    int pixelY = colorWheelCenterY + y;
-                    
-                    context.fill(pixelX, pixelY, pixelX + 1, pixelY + 1, color);
-                }
+
+                    wheelImage.setColor(pixelX, pixelY, color);
+
+                } else wheelImage.setColor(pixelX, pixelY, 0x00000000);
             }
         }
+        
+        long timestamp = System.currentTimeMillis();
+        wheelTexture = Identifier.of("fishyaddons", "color_wheel_" + timestamp);
+        NativeImageBackedTexture texture = new NativeImageBackedTexture(() -> "Color Wheel", wheelImage);
+        MinecraftClient.getInstance().getTextureManager().registerTexture(wheelTexture, texture);
+    }
+
+    @Override
+    public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+        super.render(context, mouseX, mouseY, delta);
+
+        context.drawTexture(RenderLayer::getGuiTextured, wheelTexture, wheelCenterX - wheelRadius, wheelCenterY - wheelRadius, 0, 0, wheelRadius * 2, wheelRadius * 2, wheelRadius * 2, wheelRadius * 2);
+        renderLightnessBar(context);
+        
+        int previewSize = 50;
+        int px = wheelCenterX + wheelRadius + 20;
+        int py = wheelCenterY - previewSize / 2;
+        int color = 0xFF000000 | (int)(red * 255) << 16 | (int)(green * 255) << 8 | (int)(blue * 255);
+        context.fill(px, py, px + previewSize, py + previewSize, color);
+        VCRenderUtils.border(context, px, py, previewSize, previewSize, 0xFFFFFFFF);
+
+        renderSelectionIndicators(context);
     }
     
     private void renderLightnessBar(DrawContext context) {
-        for (int x = 0; x < lightnessBarWidth; x++) {
-            float currentLightness = x / (float) lightnessBarWidth;
+        for (int x = 0; x < barWidth; x++) {
+            float currentLightness = x / (float) barWidth;
             float[] rgb = hslToRgb(hue * 360, saturation, currentLightness);
             int color = 0xFF000000 | 
                 ((int)(rgb[0] * 255) << 16) | 
                 ((int)(rgb[1] * 255) << 8) | 
                 (int)(rgb[2] * 255);
             
-            context.fill(lightnessBarX + x, lightnessBarY, lightnessBarX + x + 1, lightnessBarY + lightnessBarHeight, color);
+            context.fill(barX + x, barY, barX + x + 1, barY + barHeight, color);
         }
-        context.drawBorder(lightnessBarX, lightnessBarY, lightnessBarWidth, lightnessBarHeight, 0xFFFFFFFF);
+        VCRenderUtils.border(context, barX, barY, barWidth, barHeight, 0xFFFFFFFF);
     }
     
     private void renderSelectionIndicators(DrawContext context) {
-        // Color wheel indicator
+
         float angle = hue * 2 * (float)Math.PI;
-        int indicatorX = colorWheelCenterX + (int)(Math.cos(angle) * saturation * colorWheelRadius);
-        int indicatorY = colorWheelCenterY + (int)(Math.sin(angle) * saturation * colorWheelRadius);
+        int indicatorX = wheelCenterX + (int)(Math.cos(angle) * saturation * wheelRadius);
+        int indicatorY = wheelCenterY + (int)(Math.sin(angle) * saturation * wheelRadius);
         
-        // Draw crosshair
         context.fill(indicatorX - 4, indicatorY, indicatorX + 5, indicatorY + 1, 0xFFFFFFFF);
         context.fill(indicatorX, indicatorY - 4, indicatorX + 1, indicatorY + 5, 0xFFFFFFFF);
         
-        // Lightness bar indicator
-        int lightnessIndicatorX = lightnessBarX + (int)(lightness * lightnessBarWidth);
-        context.fill(lightnessIndicatorX - 1, lightnessBarY - 3, lightnessIndicatorX + 2, lightnessBarY + lightnessBarHeight + 3, 0xFFFFFFFF);
-        context.fill(lightnessIndicatorX, lightnessBarY - 2, lightnessIndicatorX + 1, lightnessBarY + lightnessBarHeight + 2, 0xFF000000);
+        int lightnessIndicatorX = barX + (int)(lightness * barWidth);
+        context.fill(lightnessIndicatorX - 1, barY - 3, lightnessIndicatorX + 2, barY + barHeight + 3, 0xFFFFFFFF);
+        context.fill(lightnessIndicatorX, barY - 2, lightnessIndicatorX + 1, barY + barHeight + 2, 0xFF000000);
     }
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (button == 0) {
-            double dx = mouseX - colorWheelCenterX;
-            double dy = mouseY - colorWheelCenterY;
+            double dx = mouseX - wheelCenterX;
+            double dy = mouseY - wheelCenterY;
             double distance = Math.sqrt(dx * dx + dy * dy);
             
-            if (distance <= colorWheelRadius && distance >= 10) {
-                isDraggingWheel = true;
+            if (distance <= wheelRadius && distance >= 10) {
+                draggingWheel = true;
                 updateColorFromWheel(mouseX, mouseY);
                 return true;
             }
             
-            if (mouseX >= lightnessBarX && mouseX <= lightnessBarX + lightnessBarWidth &&
-                mouseY >= lightnessBarY && mouseY <= lightnessBarY + lightnessBarHeight) {
-                isDraggingLightness = true;
+            if (mouseX >= barX && mouseX <= barX + barWidth &&
+                mouseY >= barY && mouseY <= barY + barHeight) {
+                draggingBar = true;
                 updateLightnessFromBar(mouseX);
                 return true;
             }
@@ -212,11 +257,11 @@ public class ColorWheel extends Screen {
     
     @Override
     public boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
-        if (isDraggingWheel) {
+        if (draggingWheel) {
             updateColorFromWheel(mouseX, mouseY);
             return true;
         }
-        if (isDraggingLightness) {
+        if (draggingBar) {
             updateLightnessFromBar(mouseX);
             return true;
         }
@@ -225,21 +270,21 @@ public class ColorWheel extends Screen {
     
     @Override
     public boolean mouseReleased(double mouseX, double mouseY, int button) {
-        isDraggingWheel = false;
-        isDraggingLightness = false;
+        draggingWheel = false;
+        draggingBar = false;
         return super.mouseReleased(mouseX, mouseY, button);
     }
     
     private void updateColorFromWheel(double mouseX, double mouseY) {
-        double dx = mouseX - colorWheelCenterX;
-        double dy = mouseY - colorWheelCenterY;
+        double dx = mouseX - wheelCenterX;
+        double dy = mouseY - wheelCenterY;
         double distance = Math.sqrt(dx * dx + dy * dy);
         
-        if (distance > colorWheelRadius) {
+        if (distance > wheelRadius) {
             // Clamp to wheel edge
-            dx = dx / distance * colorWheelRadius;
-            dy = dy / distance * colorWheelRadius;
-            distance = colorWheelRadius;
+            dx = dx / distance * wheelRadius;
+            dy = dy / distance * wheelRadius;
+            distance = wheelRadius;
         }
         if (distance < 10) {
             distance = 10;
@@ -249,19 +294,20 @@ public class ColorWheel extends Screen {
         if (angle < 0) angle += 2 * Math.PI;
         hue = angle / (2 * (float)Math.PI);
         
-        saturation = (float) (distance / colorWheelRadius);
+        saturation = (float) (distance / wheelRadius);
         
         updateRgbFromHsl();
         updateHexField();
     }
     
     private void updateLightnessFromBar(double mouseX) {
-        double relativeX = mouseX - lightnessBarX;
-        relativeX = Math.clamp(relativeX, 0, lightnessBarWidth);
-        lightness = (float) (relativeX / lightnessBarWidth);
+        double relativeX = mouseX - barX;
+        relativeX = Math.clamp(relativeX, 0, barWidth);
+        lightness = (float) (relativeX / barWidth);
         
         updateRgbFromHsl();
         updateHexField();
+        generateTexture();
     }
     
     private void updateRgbFromHsl() {
@@ -277,12 +323,11 @@ public class ColorWheel extends Screen {
         }
     }
     
-    // Simplified HSL to RGB conversion
     private static float[] hslToRgb(float h, float s, float l) {
         h = h / 360.0f;
         
         if (s == 0) {
-            return new float[]{l, l, l}; // achromatic
+            return new float[]{l, l, l};
         }
         
         float c = (1 - Math.abs(2 * l - 1)) * s;
@@ -311,7 +356,6 @@ public class ColorWheel extends Screen {
         return new float[]{r + m, g + m, b + m};
     }
     
-    // RGB to HSL conversion
     private static float[] rgbToHsl(float r, float g, float b) {
         float max = Math.max(r, Math.max(g, b));
         float min = Math.min(r, Math.min(g, b));
@@ -350,5 +394,18 @@ public class ColorWheel extends Screen {
         int g = (int)(rgb[1] * 255) & 0xFF;
         int b = (int)(rgb[2] * 255) & 0xFF;
         return (0xFF << 24) | (r << 16) | (g << 8) | b;
+    }
+    
+    @Override
+    public void close() {
+        if (wheelTexture != null) {
+            MinecraftClient.getInstance().getTextureManager().destroyTexture(wheelTexture);
+            wheelTexture = null;
+        }
+        if (wheelImage != null) {
+            wheelImage.close();
+            wheelImage = null;
+        }
+        super.close();
     }
 }

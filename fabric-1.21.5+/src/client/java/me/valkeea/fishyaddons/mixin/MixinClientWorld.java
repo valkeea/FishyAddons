@@ -5,8 +5,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import me.valkeea.fishyaddons.handler.FishingHotspot;
-import me.valkeea.fishyaddons.tracker.ValuableMobs;
+import me.valkeea.fishyaddons.feature.skyblock.FishingHotspot;
+import me.valkeea.fishyaddons.tracker.profit.ValuableMobs;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.Entity;
 

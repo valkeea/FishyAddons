@@ -6,7 +6,8 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import me.valkeea.fishyaddons.safeguard.SlotProtectionManager;
+import me.valkeea.fishyaddons.feature.item.safeguard.SlotHandler;
+import me.valkeea.fishyaddons.feature.skyblock.GuiIcons;
 import me.valkeea.fishyaddons.tool.FishyMode;
 import me.valkeea.fishyaddons.util.SbGui;
 import net.minecraft.client.gui.DrawContext;
@@ -26,22 +27,22 @@ public abstract class MixinHandledScreenSlotOverlay {
         CURRENT_SLOT.set(slot);
     }
 
-    @Inject(method = "drawSlot", at = @At("TAIL"))
+    @Inject(method = "drawSlot", at = @At("INVOKE"))
     private void drawSlotOverlay(DrawContext context, Slot slot, CallbackInfo ci) {
 
         if (!SbGui.isPlayerInventory()) return;
         HandledScreen<?> screen = (HandledScreen<?>) (Object) this;
-        int invIndex = SlotProtectionManager.remap(screen, slot.id);
+        int invIndex = SlotHandler.remap(screen, slot.id);
 
         if (invIndex <= 8 && invIndex >= 44) {
             return;
         }
 
-        if (SlotProtectionManager.isSlotLocked(invIndex)) {
+        if (SlotHandler.isSlotLocked(invIndex)) {
             overlay(context, slot, "falocked");
         }
 
-        else if (SlotProtectionManager.isSlotBound(invIndex)) {
+        else if (SlotHandler.isSlotBound(invIndex)) {
            overlay(context, slot, "fabound");
         }
     }
@@ -55,7 +56,7 @@ public abstract class MixinHandledScreenSlotOverlay {
     )
     private void blockDrawItem(DrawContext context, ItemStack stack, int x, int y, int seed) {
         Slot slot = CURRENT_SLOT.get();
-        if (slot != null && me.valkeea.fishyaddons.handler.GuiIcons.isBlocked(slot.id)) {
+        if (slot != null && GuiIcons.isBlocked(slot.id)) {
             return;
         }
         context.drawItem(stack, x, y, seed);
@@ -70,7 +71,7 @@ public abstract class MixinHandledScreenSlotOverlay {
     )
     private void blockDrawItemWithoutEntity(DrawContext context, ItemStack stack, int x, int y, int seed) {
         Slot slot = CURRENT_SLOT.get();
-        if (slot != null && me.valkeea.fishyaddons.handler.GuiIcons.isBlocked(slot.id)) {
+        if (slot != null && GuiIcons.isBlocked(slot.id)) {
             return;
         }
         context.drawItemWithoutEntity(stack, x, y, seed);
@@ -82,8 +83,10 @@ public abstract class MixinHandledScreenSlotOverlay {
     }    
 
     private void overlay(DrawContext context, Slot slot, String textureName) {
+
         String mode = FishyMode.getTheme();
-        Identifier texture = Identifier.of("fishyaddons", "textures/gui/" + mode + "/" + textureName + ".png");
+        var texture = Identifier.of("fishyaddons", "textures/gui/" + mode + "/" + textureName + ".png");
+        
         context.drawTexture(
             RenderLayer::getGuiTextured,
             texture,

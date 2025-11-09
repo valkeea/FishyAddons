@@ -5,7 +5,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-import me.valkeea.fishyaddons.handler.PetInfo;
+import me.valkeea.fishyaddons.api.skyblock.GameMode;
+import me.valkeea.fishyaddons.feature.skyblock.PetInfo;
 import me.valkeea.fishyaddons.util.text.FromText;
 import me.valkeea.fishyaddons.util.text.TablistUtils;
 import net.minecraft.network.packet.s2c.play.PlayerListS2CPacket;
@@ -29,7 +30,7 @@ public class TabScanner {
      * Handles tab update packet to scan for pet and XP lines.
      */
     public static void onUpdate(PlayerListS2CPacket packet) {
-        if (PetInfo.isOn() && SkyblockCheck.getInstance().rules() && !packet.getEntries().isEmpty() &&
+        if (PetInfo.isOn() && GameMode.skyblock() && !packet.getEntries().isEmpty() &&
             packet.getActions().contains(PlayerListS2CPacket.Action.UPDATE_DISPLAY_NAME)) {
 
             var displayName = packet.getEntries().get(0).displayName();
@@ -68,7 +69,7 @@ public class TabScanner {
     }
 
     private static void scanPet() {
-        if (!SkyblockCheck.getInstance().rules()) {
+        if (!GameMode.skyblock()) {
             return;
         }
 

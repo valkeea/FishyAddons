@@ -3,7 +3,7 @@ package me.valkeea.fishyaddons.ui.list;
 import java.util.Map;
 
 import me.valkeea.fishyaddons.config.FishyConfig;
-import me.valkeea.fishyaddons.handler.KeyShortcut;
+import me.valkeea.fishyaddons.feature.qol.KeyShortcut;
 import me.valkeea.fishyaddons.util.Keyboard;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;

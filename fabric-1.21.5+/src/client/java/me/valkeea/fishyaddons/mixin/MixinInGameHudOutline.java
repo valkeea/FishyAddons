@@ -5,7 +5,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import me.valkeea.fishyaddons.handler.XpColor;
+import me.valkeea.fishyaddons.feature.visual.XpColor;
 import me.valkeea.fishyaddons.render.OutlinedText;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
@@ -24,7 +24,7 @@ public class MixinInGameHudOutline {
 
         if (plr == null || plr.experienceLevel <= 0 || !XpColor.isOutlineEnabled()) return;
 
-        String levelText = String.valueOf(plr.experienceLevel);
+        var levelText = String.valueOf(plr.experienceLevel);
         var tr = mc.textRenderer;
 
         int textWidth = tr.getWidth(levelText);

@@ -1,7 +1,7 @@
 package me.valkeea.fishyaddons.listener;
 
-import me.valkeea.fishyaddons.handler.ChatTimers;
-import me.valkeea.fishyaddons.handler.NetworkMetrics;
+import me.valkeea.fishyaddons.feature.qol.NetworkMetrics;
+import me.valkeea.fishyaddons.feature.skyblock.ChatTimers;
 import me.valkeea.fishyaddons.tracker.ActivityMonitor;
 import me.valkeea.fishyaddons.tracker.SkillTracker;
 import me.valkeea.fishyaddons.util.ModInfo;
@@ -30,7 +30,7 @@ public class ClientTick {
             ModInfo.tick();
 
             if (client.world != null && client.world.getTime() % 600 == 0) {
-                me.valkeea.fishyaddons.tracker.InventoryTracker.cleanup();
+                me.valkeea.fishyaddons.tracker.profit.InventoryTracker.cleanup();
             }
         });
     }    

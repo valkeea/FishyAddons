@@ -5,8 +5,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import me.valkeea.fishyaddons.handler.FishingHotspot;
-import me.valkeea.fishyaddons.tracker.ValuableMobs;
+import me.valkeea.fishyaddons.api.skyblock.GameMode;
+import me.valkeea.fishyaddons.feature.skyblock.FishingHotspot;
+import me.valkeea.fishyaddons.tracker.profit.ValuableMobs;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.decoration.ArmorStandEntity;
@@ -28,7 +29,7 @@ public class NearbyEntities {
     }
 
     private static void checkClosest() {
-        if (!SkyblockCheck.getInstance().rules()) return;
+        if (!GameMode.skyblock()) return;
         var client = MinecraftClient.getInstance();
         if (client.world == null || client.player == null) return;
         

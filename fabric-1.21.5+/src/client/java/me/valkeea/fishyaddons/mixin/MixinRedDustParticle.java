@@ -6,7 +6,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import me.valkeea.fishyaddons.bridge.ParticleColorAccessor;
-import me.valkeea.fishyaddons.handler.ParticleVisuals;
+import me.valkeea.fishyaddons.feature.visual.ParticleVisuals;
 import net.minecraft.client.particle.RedDustParticle;
 import net.minecraft.client.particle.SpriteProvider;
 import net.minecraft.client.world.ClientWorld;
@@ -15,6 +15,7 @@ import net.minecraft.particle.DustParticleEffect;
 @Mixin(RedDustParticle.class)
 public abstract class MixinRedDustParticle {
 
+    @SuppressWarnings("squid:S107")
     @Inject(
         method = "<init>(Lnet/minecraft/client/world/ClientWorld;DDD" +
                  "DDD" +

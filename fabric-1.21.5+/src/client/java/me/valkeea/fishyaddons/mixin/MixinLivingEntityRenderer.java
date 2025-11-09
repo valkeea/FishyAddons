@@ -19,7 +19,7 @@ public abstract class MixinLivingEntityRenderer<S extends LivingEntityRenderStat
         cancellable = true
     )
     private void skipDeadEntityRendering(S state, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, CallbackInfo ci) {
-        if (state.deathTime > 0.0F && me.valkeea.fishyaddons.handler.MobAnimations.isDeathAni()) {
+        if (state.deathTime > 0.0F && me.valkeea.fishyaddons.feature.visual.MobAnimations.isDeathAni()) {
             ci.cancel();
         }
     }

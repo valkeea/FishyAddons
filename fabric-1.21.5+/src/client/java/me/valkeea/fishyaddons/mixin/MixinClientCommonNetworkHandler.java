@@ -5,7 +5,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import me.valkeea.fishyaddons.handler.NetworkMetrics;
+import me.valkeea.fishyaddons.feature.qol.NetworkMetrics;
 import net.minecraft.client.network.ClientCommonNetworkHandler;
 import net.minecraft.network.packet.s2c.common.KeepAliveS2CPacket;
 

@@ -1,14 +1,14 @@
 package me.valkeea.fishyaddons.mixin;
 
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.ingame.InventoryScreen;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import me.valkeea.fishyaddons.hud.EqDisplay;
+import me.valkeea.fishyaddons.hud.ui.EqDisplay;
+import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.screen.ingame.InventoryScreen;
 
 @Mixin(InventoryScreen.class)
 public class MixinInventoryScreen {

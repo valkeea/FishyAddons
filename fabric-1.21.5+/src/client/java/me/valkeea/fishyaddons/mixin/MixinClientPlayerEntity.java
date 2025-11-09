@@ -5,9 +5,9 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import me.valkeea.fishyaddons.safeguard.ItemHandler;
-import me.valkeea.fishyaddons.safeguard.SellProtectionHandler;
-import me.valkeea.fishyaddons.safeguard.SlotProtectionManager;
+import me.valkeea.fishyaddons.feature.item.safeguard.ItemHandler;
+import me.valkeea.fishyaddons.feature.item.safeguard.GuiHandler;
+import me.valkeea.fishyaddons.feature.item.safeguard.SlotHandler;
 import me.valkeea.fishyaddons.util.ZoneUtils;
 import net.minecraft.client.network.ClientPlayerEntity;
 
@@ -26,14 +26,14 @@ public class MixinClientPlayerEntity {
         int selectedSlot = ((PlayerInventoryAccessor) player.getInventory()).getSelectedSlot();
         int guiSlotId = 36 + selectedSlot;
 
-        if (SlotProtectionManager.isSlotLocked(guiSlotId) || SlotProtectionManager.isSlotBound(guiSlotId)) {
+        if (SlotHandler.isSlotLocked(guiSlotId) || SlotHandler.isSlotBound(guiSlotId)) {
             cir.setReturnValue(false);
             return;
         }
 
         if (ItemHandler.isProtected(stack)) {
             cir.setReturnValue(false);
-            SellProtectionHandler.triggerProtection();
+            GuiHandler.triggerProtection();
         }
     }
 }

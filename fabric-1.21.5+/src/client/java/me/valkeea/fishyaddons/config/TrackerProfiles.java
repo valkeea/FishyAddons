@@ -13,7 +13,7 @@ import java.util.Map;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
-import me.valkeea.fishyaddons.tracker.ItemTrackerData;
+import me.valkeea.fishyaddons.tracker.profit.ItemTrackerData;
 import me.valkeea.fishyaddons.util.FishyNotis;
 import net.minecraft.text.Text;
 

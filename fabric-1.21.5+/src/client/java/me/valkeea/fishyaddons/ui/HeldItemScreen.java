@@ -5,7 +5,7 @@ import java.util.List;
 
 import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.config.Key;
-import me.valkeea.fishyaddons.handler.HeldItems;
+import me.valkeea.fishyaddons.feature.item.animations.HeldItems;
 import me.valkeea.fishyaddons.tool.FishyMode;
 import me.valkeea.fishyaddons.ui.widget.FaButton;
 import me.valkeea.fishyaddons.ui.widget.VCSlider;

@@ -8,7 +8,7 @@ import java.util.function.Supplier;
 import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.config.ItemConfig;
 import me.valkeea.fishyaddons.config.Key;
-import me.valkeea.fishyaddons.safeguard.BlacklistManager;
+import me.valkeea.fishyaddons.feature.item.safeguard.BlacklistManager;
 import me.valkeea.fishyaddons.tool.FishyMode;
 import me.valkeea.fishyaddons.ui.VCScreen.ExtraControl;
 import me.valkeea.fishyaddons.ui.widget.dropdown.ToggleMenuItem;

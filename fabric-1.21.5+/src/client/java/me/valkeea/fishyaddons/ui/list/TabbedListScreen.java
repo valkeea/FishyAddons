@@ -5,9 +5,9 @@ import java.util.Map;
 
 import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.config.FishyPresets;
-import me.valkeea.fishyaddons.handler.ChatReplacement;
-import me.valkeea.fishyaddons.handler.CommandAlias;
-import me.valkeea.fishyaddons.handler.KeyShortcut;
+import me.valkeea.fishyaddons.feature.qol.ChatReplacement;
+import me.valkeea.fishyaddons.feature.qol.CommandAlias;
+import me.valkeea.fishyaddons.feature.qol.KeyShortcut;
 import me.valkeea.fishyaddons.ui.GuiUtil;
 import me.valkeea.fishyaddons.ui.VCScreen;
 import me.valkeea.fishyaddons.ui.VCText;
@@ -22,7 +22,6 @@ import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.text.Text;
 
-
 public class TabbedListScreen extends Screen {
     public enum Tab { COMMANDS, KEYBINDS, CHAT }
     private Tab currentTab = Tab.COMMANDS;
@@ -30,6 +29,7 @@ public class TabbedListScreen extends Screen {
     private KeybindEntryList keybindEntryList;
     private ChatEntryList chatEntryList;
     private final Screen parent;
+    private static final String TITLETEXT = "Aliases, Keybinds, Chat Replacement";
 
     protected boolean addingNewEntry = false;
     protected FishyPopup fishyPopup = null;
@@ -38,7 +38,7 @@ public class TabbedListScreen extends Screen {
     private TextFieldWidget presetNameField;
 
     public TabbedListScreen(Screen parent, Tab tab) {
-        super(Text.literal("Aliases, Keybinds, Chat Replacement"));
+        super(Text.literal(TITLETEXT));
         this.parent = parent;
         this.currentTab = tab;
     }
@@ -146,11 +146,10 @@ public class TabbedListScreen extends Screen {
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         this.renderBackground(context, mouseX, mouseY, delta);
-        context.drawCenteredTextWithShadow(this.textRenderer, this.title, width / 2, 20, 0xFF55FFFF);
         super.render(context, mouseX, mouseY, delta);
 
-        var title = VCText.header(this.title.getString(), null);
-        context.drawCenteredTextWithShadow(textRenderer, title, mouseX, mouseY, mouseY);
+        var title = VCText.header(TITLETEXT, null);
+        VCText.drawScaledCenteredText(context, textRenderer, title, width / 2, 20, 0xFFFFFFFF, 1.0f);
 
         if (presetDropdown != null && presetDropdown.isVisible()) {
             presetDropdown.render(context, this, mouseX, mouseY);

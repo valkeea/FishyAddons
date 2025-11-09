@@ -20,9 +20,9 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 
-import me.valkeea.fishyaddons.handler.ChatReplacement;
-import me.valkeea.fishyaddons.handler.CommandAlias;
-import me.valkeea.fishyaddons.handler.KeyShortcut;
+import me.valkeea.fishyaddons.feature.qol.ChatReplacement;
+import me.valkeea.fishyaddons.feature.qol.CommandAlias;
+import me.valkeea.fishyaddons.feature.qol.KeyShortcut;
 import net.minecraft.client.MinecraftClient;
 
 public class FishyConfig {

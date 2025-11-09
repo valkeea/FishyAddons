@@ -5,20 +5,23 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import me.valkeea.fishyaddons.safeguard.SellProtectionHandler;
+import me.valkeea.fishyaddons.feature.item.safeguard.GuiHandler;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
-import net.minecraft.item.ItemStack;
 
 @Mixin(HandledScreen.class)
 public abstract class MixinHandledScreenMouseRelease {
 
-    @Inject(method = "mouseReleased", at = @At("HEAD"), cancellable = true)
+    @Inject(
+        method = "mouseReleased",
+        at = @At("HEAD"),
+        cancellable = true
+    )
     private void onMouseReleased(double mouseX, double mouseY, int button, CallbackInfoReturnable<Boolean> cir) {
-        MinecraftClient mc = MinecraftClient.getInstance();
+        var mc = MinecraftClient.getInstance();
         if (mc.player == null) return;
 
-        ItemStack cursorStack = mc.player.currentScreenHandler.getCursorStack();
+        var cursorStack = mc.player.currentScreenHandler.getCursorStack();
         if (cursorStack == null || cursorStack.isEmpty()) return;
 
         HandledScreen<?> screen = (HandledScreen<?>) (Object) this;
@@ -31,9 +34,9 @@ public abstract class MixinHandledScreenMouseRelease {
 
         boolean notOverSlot = accessor.getFocusedSlot() == null;        
 
-        if (SellProtectionHandler.isProtectedCached(cursorStack) &&
+        if (GuiHandler.isProtectedCached(cursorStack) &&
             outsideGui && notOverSlot) {
-            SellProtectionHandler.triggerProtection();
+            GuiHandler.triggerProtection();
             cir.setReturnValue(false);
         }
     }

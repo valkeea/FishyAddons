@@ -7,13 +7,14 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import me.valkeea.fishyaddons.handler.RenderTweaks;
+import me.valkeea.fishyaddons.feature.visual.RenderTweaks;
 import net.minecraft.block.enums.CameraSubmersionType;
 import net.minecraft.client.render.BackgroundRenderer;
 import net.minecraft.client.render.Camera;
 import net.minecraft.client.render.Fog;
 import net.minecraft.client.render.FogShape;
 
+@SuppressWarnings("squid:S1118")
 @Mixin(BackgroundRenderer.class)
 public abstract class MixinBackgroundRenderer {
 

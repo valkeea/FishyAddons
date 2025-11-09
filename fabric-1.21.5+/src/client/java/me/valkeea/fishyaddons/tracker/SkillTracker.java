@@ -5,9 +5,14 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import me.valkeea.fishyaddons.api.skyblock.SkillLevelTables;
 import me.valkeea.fishyaddons.config.FishyConfig;
-import me.valkeea.fishyaddons.hud.SkillXpDisplay;
+import me.valkeea.fishyaddons.event.impl.FaEvents;
+import me.valkeea.fishyaddons.event.impl.ScCatchEvent;
+import me.valkeea.fishyaddons.hud.elements.custom.SkillXpDisplay;
 import me.valkeea.fishyaddons.util.FishyNotis;
 import me.valkeea.fishyaddons.util.TabScanner;
 
@@ -22,6 +27,8 @@ public class SkillTracker {
         
         SkillBaseline() {}
     }
+
+    private static final Logger LOGGER = LoggerFactory.getLogger("FishyAddons/SkillTracker");
     
     private static boolean enabled = false;
     private boolean downTiming = false;
@@ -52,6 +59,7 @@ public class SkillTracker {
     public static synchronized SkillTracker getInstance() {
         if (instance == null) {
             instance = new SkillTracker();
+            FaEvents.SEA_CREATURE_CATCH.register(instance::onCatch);
         }
         return instance;
     }
@@ -68,10 +76,10 @@ public class SkillTracker {
         return downTiming;
     }
 
-    public void onCatch(boolean wasDh) {
+    public void onCatch(ScCatchEvent event) {
         if (!enabled) return;
         catchCount.incrementAndGet();
-        mobCount.addAndGet(wasDh ? 2 : 1);
+        mobCount.addAndGet(event.wasDh ? 2 : 1);
     }
 
     /**
@@ -152,7 +160,7 @@ public class SkillTracker {
             }
 
         } else {
-            System.out.println("[FishyAddons] Could not set baseline for " + skillName + " - progressInfo: '" + progressInfo + "', level: " + level);
+            LOGGER.warn("Could not set baseline for {} - progressInfo: '{}', level: {}", skillName, progressInfo, level);
         }
     }
     
@@ -164,7 +172,7 @@ public class SkillTracker {
                 try {
                     return Long.parseLong(parts[0].replace(",", ""));
                 } catch (NumberFormatException e) {
-                    System.err.println("[FishyAddons] Error parsing current absolute XP: " + parts[0]);
+                    LOGGER.warn("Error parsing current absolute XP: {}", parts[0]);
                 }
             }
 
@@ -174,11 +182,11 @@ public class SkillTracker {
                 return SkillLevelTables.calculateCurrentXp(skillName, level, percentage);
 
             } catch (NumberFormatException e) {
-                System.err.println("[FishyAddons] Error parsing current percentage: " + progressInfo);
+                LOGGER.warn("Error parsing current percentage: {}", progressInfo);
             }
 
         } else {
-            System.out.println("[FishyAddons] Cannot calculate current XP - missing level or invalid format");
+            LOGGER.warn("Cannot calculate current XP - missing level or invalid format");
         }
 
         return -1;

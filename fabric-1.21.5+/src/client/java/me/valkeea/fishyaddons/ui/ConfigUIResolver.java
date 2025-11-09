@@ -8,9 +8,9 @@ import java.util.function.Supplier;
 
 import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.config.Key;
-import me.valkeea.fishyaddons.handler.ParticleVisuals;
-import me.valkeea.fishyaddons.handler.TransLava;
-import me.valkeea.fishyaddons.handler.XpColor;
+import me.valkeea.fishyaddons.feature.skyblock.TransLava;
+import me.valkeea.fishyaddons.feature.visual.ParticleVisuals;
+import me.valkeea.fishyaddons.feature.visual.XpColor;
 import me.valkeea.fishyaddons.ui.list.ChatAlerts;
 import me.valkeea.fishyaddons.ui.list.CustomFaColors;
 import me.valkeea.fishyaddons.ui.list.FilterRules;

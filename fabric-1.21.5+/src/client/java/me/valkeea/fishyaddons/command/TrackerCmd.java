@@ -5,8 +5,8 @@ import java.util.Map;
 import me.valkeea.fishyaddons.api.HypixelPriceClient;
 import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.config.TrackerProfiles;
-import me.valkeea.fishyaddons.tracker.ItemTrackerData;
-import me.valkeea.fishyaddons.tracker.TrackerUtils;
+import me.valkeea.fishyaddons.tracker.profit.ItemTrackerData;
+import me.valkeea.fishyaddons.tracker.profit.TrackerUtils;
 import me.valkeea.fishyaddons.util.FishyNotis;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.text.Text;
@@ -57,7 +57,7 @@ public class TrackerCmd {
         FishyConfig.enable(KEY, newState);
         String status = newState ? "§aenabled" : "§cdisabled";
         String msgStart = "§3Profit Tracker " + status;        
-        me.valkeea.fishyaddons.tracker.TrackerUtils.refresh();
+        me.valkeea.fishyaddons.tracker.profit.TrackerUtils.refresh();
         
         if (newState && TrackerProfiles.hasJsonFile()) {
             if (TrackerProfiles.loadFromJson()) {
@@ -252,7 +252,7 @@ public class TrackerCmd {
         }
 
         if (TrackerProfiles.deleteProfile(profileToDelete)) {
-            me.valkeea.fishyaddons.tracker.TrackerUtils.onDelete(profileToDelete);
+            me.valkeea.fishyaddons.tracker.profit.TrackerUtils.onDelete(profileToDelete);
         } else {
             FishyNotis.alert(Text.literal("§cProfile '" + profileToDelete + "' not found or cannot be deleted"));
         }
@@ -427,7 +427,7 @@ public class TrackerCmd {
     }
     
     private static boolean handleIgnored() {
-        me.valkeea.fishyaddons.hud.TrackerDisplay trackerInstance = me.valkeea.fishyaddons.hud.TrackerDisplay.getInstance();
+        me.valkeea.fishyaddons.hud.elements.custom.TrackerDisplay trackerInstance = me.valkeea.fishyaddons.hud.elements.custom.TrackerDisplay.getInstance();
         if (trackerInstance == null) {
             FishyNotis.alert(Text.literal("§cTracker display not initialized"));
             return false;
@@ -457,7 +457,7 @@ public class TrackerCmd {
     }
     
     private static boolean handleRestore(String[] args) {
-        me.valkeea.fishyaddons.hud.TrackerDisplay trackerInstance = me.valkeea.fishyaddons.hud.TrackerDisplay.getInstance();
+        me.valkeea.fishyaddons.hud.elements.custom.TrackerDisplay trackerInstance = me.valkeea.fishyaddons.hud.elements.custom.TrackerDisplay.getInstance();
         if (trackerInstance == null) {
             FishyNotis.alert(Text.literal("§cTracker display not initialized"));
             return false;

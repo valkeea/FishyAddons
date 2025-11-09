@@ -20,7 +20,7 @@ public class MixinEntityRenderDispatcher {
         cancellable = true
     )
     private void disableFireRendering(MatrixStack matrices, VertexConsumerProvider vertexConsumers, EntityRenderState renderState, Quaternionf rotation, CallbackInfo ci) {
-        if (me.valkeea.fishyaddons.handler.MobAnimations.isFireAni()) {
+        if (me.valkeea.fishyaddons.feature.visual.MobAnimations.isFireAni()) {
             ci.cancel();
         }
     }

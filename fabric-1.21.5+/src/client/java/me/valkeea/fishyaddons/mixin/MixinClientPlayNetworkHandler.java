@@ -7,9 +7,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import me.valkeea.fishyaddons.event.impl.FaEvents;
 import me.valkeea.fishyaddons.event.impl.GameMessageEvent;
-import me.valkeea.fishyaddons.event.EventPhase;
-import me.valkeea.fishyaddons.handler.NetworkMetrics;
-import me.valkeea.fishyaddons.tracker.InventoryTracker;
+import me.valkeea.fishyaddons.feature.qol.NetworkMetrics;
+import me.valkeea.fishyaddons.tracker.profit.InventoryTracker;
 import me.valkeea.fishyaddons.util.SbGui;
 import me.valkeea.fishyaddons.util.TabScanner;
 import net.minecraft.client.MinecraftClient;
@@ -71,6 +70,6 @@ public class MixinClientPlayNetworkHandler {
 
         var pristine = packet.content();
         GameMessageEvent event = new GameMessageEvent(pristine, packet.overlay());
-        FaEvents.GAME_MESSAGE.firePhase(EventPhase.PRE, event, listener -> listener.onGameMessage(event));
+        FaEvents.GAME_MESSAGE.firePhased(event, listener -> listener.onGameMessage(event));
     }
 }

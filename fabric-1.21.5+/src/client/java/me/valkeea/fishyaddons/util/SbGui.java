@@ -1,6 +1,6 @@
 package me.valkeea.fishyaddons.util;
 
-import me.valkeea.fishyaddons.handler.GuiIcons;
+import me.valkeea.fishyaddons.feature.skyblock.GuiIcons;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.text.Text;

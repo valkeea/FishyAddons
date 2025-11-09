@@ -9,14 +9,14 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import me.valkeea.fishyaddons.config.ItemConfig;
-import me.valkeea.fishyaddons.handler.FaColors;
-import me.valkeea.fishyaddons.safeguard.SellProtectionHandler;
+import me.valkeea.fishyaddons.feature.item.safeguard.GuiHandler;
+import me.valkeea.fishyaddons.feature.visual.FaColors;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.item.ItemStack;
 import net.minecraft.text.Text;
 
-
+@SuppressWarnings("squid:S1118")
 @Mixin(Screen.class)
 public abstract class MixinScreen {
 
@@ -33,7 +33,7 @@ public abstract class MixinScreen {
         List<Text> originalTooltip = cir.getReturnValue();
 
         if (originalTooltip == null || originalTooltip.isEmpty()) return;
-        if (ItemConfig.isTooltipEnabled() && SellProtectionHandler.isProtectedCached(stack)) {
+        if (ItemConfig.isTooltipEnabled() && GuiHandler.isProtectedCached(stack)) {
             int insertAt = originalTooltip.size();
 
             for (int i = 0; i < originalTooltip.size(); i++) {

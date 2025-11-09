@@ -1,8 +1,8 @@
 package me.valkeea.fishyaddons.listener;
 
 import me.valkeea.fishyaddons.api.skyblock.GameChat;
-import me.valkeea.fishyaddons.handler.ChatReplacement;
-import me.valkeea.fishyaddons.handler.CommandAlias;
+import me.valkeea.fishyaddons.feature.qol.ChatReplacement;
+import me.valkeea.fishyaddons.feature.qol.CommandAlias;
 import net.fabricmc.fabric.api.client.message.v1.ClientSendMessageEvents;
 
 public class ModifyChat {

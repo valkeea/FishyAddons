@@ -9,7 +9,7 @@ import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.config.FishyConfig.AlertData;
 import me.valkeea.fishyaddons.config.FishyPresets;
 import me.valkeea.fishyaddons.config.Key;
-import me.valkeea.fishyaddons.handler.ChatAlert;
+import me.valkeea.fishyaddons.feature.qol.ChatAlert;
 import me.valkeea.fishyaddons.ui.VCPopup;
 import me.valkeea.fishyaddons.ui.VCRenderUtils;
 import me.valkeea.fishyaddons.ui.VCScreen;

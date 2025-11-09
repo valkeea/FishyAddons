@@ -7,37 +7,40 @@ import java.util.List;
 import me.valkeea.fishyaddons.config.FilterConfig;
 import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.config.Key;
-import me.valkeea.fishyaddons.handler.ActiveBeacons;
-import me.valkeea.fishyaddons.handler.ChatAlert;
-import me.valkeea.fishyaddons.handler.ChatReplacement;
-import me.valkeea.fishyaddons.handler.ChatTimers;
-import me.valkeea.fishyaddons.handler.CommandAlias;
-import me.valkeea.fishyaddons.handler.CopyChat;
-import me.valkeea.fishyaddons.handler.FaColors;
-import me.valkeea.fishyaddons.handler.FishingHotspot;
-import me.valkeea.fishyaddons.handler.GuiIcons;
-import me.valkeea.fishyaddons.handler.HeldItems;
-import me.valkeea.fishyaddons.handler.ItemSearchOverlay;
-import me.valkeea.fishyaddons.handler.KeyShortcut;
-import me.valkeea.fishyaddons.handler.MobAnimations;
-import me.valkeea.fishyaddons.handler.NetworkMetrics;
-import me.valkeea.fishyaddons.handler.ParticleVisuals;
-import me.valkeea.fishyaddons.handler.PetInfo;
-import me.valkeea.fishyaddons.handler.RenderTweaks;
-import me.valkeea.fishyaddons.handler.ResourceHandler;
-import me.valkeea.fishyaddons.handler.SkyblockCleaner;
-import me.valkeea.fishyaddons.handler.TransLava;
-import me.valkeea.fishyaddons.handler.WeatherTracker;
-import me.valkeea.fishyaddons.handler.XpColor;
-import me.valkeea.fishyaddons.hud.EqDisplay;
-import me.valkeea.fishyaddons.hud.TrackerDisplay;
+import me.valkeea.fishyaddons.feature.item.animations.HeldItems;
+import me.valkeea.fishyaddons.feature.qol.ChatAlert;
+import me.valkeea.fishyaddons.feature.qol.ChatReplacement;
+import me.valkeea.fishyaddons.feature.qol.CommandAlias;
+import me.valkeea.fishyaddons.feature.qol.CopyChat;
+import me.valkeea.fishyaddons.feature.qol.ItemSearchOverlay;
+import me.valkeea.fishyaddons.feature.qol.KeyShortcut;
+import me.valkeea.fishyaddons.feature.qol.NetworkMetrics;
+import me.valkeea.fishyaddons.feature.skyblock.CakeTimer;
+import me.valkeea.fishyaddons.feature.skyblock.ChatTimers;
+import me.valkeea.fishyaddons.feature.skyblock.FishingHotspot;
+import me.valkeea.fishyaddons.feature.skyblock.GuiIcons;
+import me.valkeea.fishyaddons.feature.skyblock.PetInfo;
+import me.valkeea.fishyaddons.feature.skyblock.SkyblockCleaner;
+import me.valkeea.fishyaddons.feature.skyblock.TransLava;
+import me.valkeea.fishyaddons.feature.skyblock.WeatherTracker;
+import me.valkeea.fishyaddons.feature.visual.FaColors;
+import me.valkeea.fishyaddons.feature.visual.MobAnimations;
+import me.valkeea.fishyaddons.feature.visual.ParticleVisuals;
+import me.valkeea.fishyaddons.feature.visual.RenderTweaks;
+import me.valkeea.fishyaddons.feature.visual.ResourceHandler;
+import me.valkeea.fishyaddons.feature.visual.XpColor;
+import me.valkeea.fishyaddons.feature.waypoints.TempWaypoint;
+import me.valkeea.fishyaddons.feature.waypoints.WaypointChains;
+import me.valkeea.fishyaddons.hud.elements.custom.TrackerDisplay;
+import me.valkeea.fishyaddons.hud.ui.EqDisplay;
+import me.valkeea.fishyaddons.processor.AnalysisCoordinator;
 import me.valkeea.fishyaddons.tool.FishyMode;
 import me.valkeea.fishyaddons.tracker.ActivityMonitor;
-import me.valkeea.fishyaddons.tracker.SackDropParser;
 import me.valkeea.fishyaddons.tracker.SkillTracker;
-import me.valkeea.fishyaddons.tracker.TrackerUtils;
-import me.valkeea.fishyaddons.tracker.ValuableMobs;
 import me.valkeea.fishyaddons.tracker.fishing.ScData;
+import me.valkeea.fishyaddons.tracker.profit.SackDropParser;
+import me.valkeea.fishyaddons.tracker.profit.TrackerUtils;
+import me.valkeea.fishyaddons.tracker.profit.ValuableMobs;
 import me.valkeea.fishyaddons.ui.VCScreen.ExtraControl;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.text.Text;
@@ -310,12 +313,12 @@ public class VCManager {
         ));
     }
 
-    // General QoL Features
     private static void addQol(List<VCEntry> entries) {
         entries.add(VCEntry.header("── General QoL ──", ""));
 
         List<VCEntry> invSearchSubEntries = new ArrayList<>();
         List<VCEntry> beaconSubEntries = new ArrayList<>();
+        List<VCEntry> waypointChainSubEntries = new ArrayList<>();
 
         invSearchSubEntries.add(VCEntry.toggleColorOrHud(
             "Main Toggle",
@@ -357,7 +360,7 @@ public class VCManager {
             "%.0fs",
             value -> {
                 FishyConfig.setInt(Key.RENDER_COORD_MS, Math.round(value));
-                ActiveBeacons.refresh();
+                TempWaypoint.refresh();
             }
         ));
 
@@ -366,7 +369,7 @@ public class VCManager {
             "Hides the beacon when you are within 5 blocks of it.",
             Key.RENDER_COORD_HIDE_CLOSE,
             true,
-            ActiveBeacons::refresh
+            TempWaypoint::refresh
         ));
 
         beaconSubEntries.add(VCEntry.toggle(
@@ -390,6 +393,49 @@ public class VCManager {
             Key.RENDER_COORDS,
             true,
             null
+        ));
+        
+        waypointChainSubEntries.add(VCDropdownEntry.waypointChainToggle(
+            "Preset Chains",
+            "Left-click to toggle, right-click to reset completion status.",
+            WaypointChains::refresh
+        ));
+
+        waypointChainSubEntries.add(VCEntry.slider(
+            "Completion Distance",
+            "Distance in blocks to automatically mark waypoints as completed.",
+            Key.WAYPOINT_CHAINS_COMPLETION_DISTANCE,
+            1,
+            10,
+            "%.0f blocks",
+            value -> {
+                FishyConfig.setInt(Key.WAYPOINT_CHAINS_COMPLETION_DISTANCE, Math.round(value));
+                WaypointChains.refresh();
+            }
+        ));
+
+        waypointChainSubEntries.add(VCEntry.toggle(
+            "Announce completion times",
+            "Sends the completion time in chat upon finishing a chain.",
+            Key.WAYPOINT_CHAINS_INFO,
+            true,
+            WaypointChains::refresh
+        ));
+        
+        entries.add(VCEntry.toggleExpandable(
+            "Waypoint Chains",
+            "Render numbered waypoint sequences based on current area.\nIncludes preset chains like relic locations and supports user-defined chains.",
+            waypointChainSubEntries,
+            Arrays.asList(
+                Text.literal("Waypoint Chains:"),
+                Text.literal("- §8Area-based waypoint sequences"),
+                Text.literal("- §8Relic locations"),
+                Text.literal("- §8User-defined chains:"),
+                Text.literal("  - §8Use /fwp to see available commands!")
+            ),
+            Key.WAYPOINT_CHAINS_ENABLED,
+            false,
+            WaypointChains::refresh
         ));
 
         entries.add(VCDropdownEntry.networkDisplayToggle(
@@ -555,7 +601,7 @@ public class VCManager {
             "Notifies the user when a century cake is about to expire or expires.",
             Key.CAKE_NOTI,
             false,
-            null
+            CakeTimer::refresh
         ));
 
         trackerEntries.add(VCEntry.toggleColorOrHud(
@@ -599,8 +645,8 @@ public class VCManager {
         trackerEntries.add(VCEntry.header("── Skill XP Tracker ──", ""));
 
         trackerEntries.add(VCEntry.toggle(
-            "Skill Xp per hour",
-            "Displays your skill xp gain rate in the HUD. (Needs skill tabwidget if skill isn't maxed)",
+            "Skill Xp per hour §8(§8Includes catches/hour§7)",
+            "Displays your skill xp gain rate. (Needs tabwidget if skill isn't maxed)",
             Key.HUD_SKILL_XP_ENABLED,
             false,
             SkillTracker::refresh
@@ -733,6 +779,7 @@ public class VCManager {
             ()-> {
                 FilterConfig.refreshScRules();
                 ActivityMonitor.refresh();
+                AnalysisCoordinator.clearCache();
             }
         ));
 
@@ -766,7 +813,10 @@ public class VCManager {
             "Toggle and configure Sc Filter.",
             Key.CHAT_FILTER_SC_ENABLED,
             false,
-            FilterConfig::refreshScRules,
+            () -> {
+                FilterConfig.refreshScRules();
+                AnalysisCoordinator.clearCache();
+            },
             new ExtraControl(null, false, true)
         ));
 
@@ -775,7 +825,7 @@ public class VCManager {
             "Filter out or override any chat message.",
             Key.CHAT_FILTER_ENABLED,
             false,
-            null,
+            AnalysisCoordinator::clearCache,
             new ExtraControl(null, false, true)
         ));
 
@@ -784,7 +834,7 @@ public class VCManager {
             "Hide sack drop messages from chat (tracker still receives them).",
             Key.CHAT_FILTER_HIDE_SACK_MESSAGES,
             false,
-            null
+            AnalysisCoordinator::clearCache
         ));
 
         filterSubEntries.add(VCEntry.toggle(
@@ -792,7 +842,7 @@ public class VCManager {
             "Hide autopet equip/summon messages from chat (pet display still tracks them).",
             Key.CHAT_FILTER_HIDE_AUTOPET_MESSAGES,
             false,
-            null
+            AnalysisCoordinator::clearCache
         ));
 
         filterSubEntries.add(VCEntry.toggle(
@@ -800,7 +850,7 @@ public class VCManager {
             "Hide the ability + failed teleport messages from chat.",
             Key.CHAT_FILTER_HIDE_HYPE,
             false,
-            null
+            AnalysisCoordinator::clearCache
         ));
 
         entries.add(VCEntry.expandable(

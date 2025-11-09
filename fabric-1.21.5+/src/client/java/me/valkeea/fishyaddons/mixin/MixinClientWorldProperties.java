@@ -5,7 +5,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import me.valkeea.fishyaddons.handler.WeatherTracker;
+import me.valkeea.fishyaddons.feature.skyblock.WeatherTracker;
 
 @Mixin(targets = "net.minecraft.client.world.ClientWorld$Properties")
 public class MixinClientWorldProperties {

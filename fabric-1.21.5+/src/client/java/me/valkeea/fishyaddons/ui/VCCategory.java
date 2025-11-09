@@ -14,17 +14,17 @@ public class VCCategory {
      */
     public static class DropdownItem {
         public final String displayName;
-        public final String featureName;
-        
-        public DropdownItem(String displayName, String featureName) {
+        public final String navigationKey;
+
+        public DropdownItem(String displayName, String navigationKey) {
             this.displayName = displayName;
-            this.featureName = featureName;
+            this.navigationKey = navigationKey;
         }
 
         // Used when display and feature names are the same
         public DropdownItem(String name) {
             this.displayName = name;
-            this.featureName = name.toLowerCase();
+            this.navigationKey = name.toLowerCase();
         }
     }
 
@@ -205,7 +205,7 @@ public class VCCategory {
         int height = tab.getDropdownHeight();
         
         renderCtx.context.fill(x, y, x + width, y + height, 0x90000000);
-        renderCtx.context.drawBorder(x, y, width, height, Color.darken(theme, 0.6f));
+        renderCtx.context.drawBorder(x, y, width, height, Color.dim(theme, 0.6f));
         
         List<VCCategory.DropdownItem> items = tab.getDropdownItems();
         int itemHeight = (int)(14 * uiScale);
@@ -274,6 +274,7 @@ public class VCCategory {
         qolTab.setDropdownItems(Arrays.asList(
             new DropdownItem("Inventory", "overlay opacity"),
             new DropdownItem("Coordinates", "highlight coordinates"),
+            new DropdownItem("Waypoints", "preset chains"),
             new DropdownItem("Ping/TPS/FPS", "debug display"),
             new DropdownItem("Copy Chat"),
             new DropdownItem("F5", "skip front perspective"),

@@ -1,7 +1,6 @@
 package me.valkeea.fishyaddons.ui.widget.dropdown;
 
 import me.valkeea.fishyaddons.config.FishyConfig;
-import me.valkeea.fishyaddons.handler.SkyblockCleaner;
 
 public class MuteListItem implements ToggleMenuItem {
     private final String displayKey;

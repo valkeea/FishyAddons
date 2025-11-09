@@ -9,9 +9,14 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 
 public class DropdownMenu {
+
+    private final int x;
+    private final int y;
+    private final int width;
+    private final int entryHeight;
     private final List<String> entries;
-    private final int x, y, width, entryHeight;
     private final Consumer<String> onSelect;
+
     private int hoveredIndex = -1;
     private boolean visible = true;
 
@@ -29,7 +34,7 @@ public class DropdownMenu {
         for (int i = 0; i < entries.size(); i++) {
             int entryY = y + i * entryHeight;
             boolean hovered = mouseX >= x && mouseX <= x + width && mouseY >= entryY && mouseY <= entryY + entryHeight;
-            int themeColor = Color.darken(FishyMode.getThemeColor(), 0.3f);
+            int themeColor = Color.dim(FishyMode.getThemeColor(), 0.3f);
             int bgColor = hovered ? themeColor : 0xEE121212;
             int textColor = hovered ? 0xFF000000 : themeColor;
 

@@ -1,8 +1,9 @@
-package me.valkeea.fishyaddons.hud;
+package me.valkeea.fishyaddons.hud.core;
 
-import me.valkeea.fishyaddons.tracker.ItemTrackerData;
 import java.util.HashMap;
 import java.util.Map;
+
+import me.valkeea.fishyaddons.tracker.profit.ItemTrackerData;
 
 @SuppressWarnings("squid:S6548")
 public class HudDisplayCache {
@@ -81,7 +82,6 @@ public class HudDisplayCache {
         lastApiUpdate = apiTimestamp;
     }
     
-    // Calculate the API indicator for bazaar, ah is on-demand
     private String calculateApiIndicator(boolean hasRecentData) {
         long lastBazaarUpdate = ItemTrackerData.getLastBazaarUpdateTime();
         if (lastBazaarUpdate > 0) {

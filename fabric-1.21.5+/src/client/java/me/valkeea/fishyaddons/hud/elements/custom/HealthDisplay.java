@@ -1,33 +1,23 @@
-package me.valkeea.fishyaddons.hud;
+package me.valkeea.fishyaddons.hud.elements.custom;
 
 import java.awt.Rectangle;
 import java.util.List;
 
 import me.valkeea.fishyaddons.config.FishyConfig;
-import me.valkeea.fishyaddons.tracker.ValuableMobs;
-import me.valkeea.fishyaddons.tracker.ValuableMobs.ValuableMobInfo;
+import me.valkeea.fishyaddons.hud.core.HudDrawer;
+import me.valkeea.fishyaddons.hud.core.HudElement;
+import me.valkeea.fishyaddons.hud.core.HudElementState;
+import me.valkeea.fishyaddons.tracker.profit.ValuableMobs;
+import me.valkeea.fishyaddons.tracker.profit.ValuableMobs.ValuableMobInfo;
 import me.valkeea.fishyaddons.util.text.Color;
-import net.fabricmc.fabric.api.client.rendering.v1.HudLayerRegistrationCallback;
-import net.fabricmc.fabric.api.client.rendering.v1.IdentifiedLayer;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
 
 public class HealthDisplay implements HudElement {
     private boolean editingMode = false;
     private static final String HUD_KEY = me.valkeea.fishyaddons.config.Key.HUD_HEALTH_ENABLED;
     private HudElementState cachedState = null;
-
-    public void register() {
-        HudLayerRegistrationCallback.EVENT.register(layeredDrawer ->
-            layeredDrawer.attachLayerAfter(
-                IdentifiedLayer.MISC_OVERLAYS,
-                Identifier.of("fishyaddons", "health_hud"),
-                (context, tickCounter) -> render(context, 0, 0)
-            )
-        );
-    }
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY) {
@@ -66,71 +56,83 @@ public class HealthDisplay implements HudElement {
         int currentY = 0;
 
         if (editingMode) {
-            renderMobEntry(context, mc, Text.literal("§dLord Jawbus"), 1250, 2000, currentY, state);
+            renderMobEntry(context, Text.literal("§dLord Jawbus"), "Lord Jawbus", 1250, 2000, currentY, state);
             currentY += entryHeight / scale;
-            renderMobEntry(context, mc, Text.literal("§dThunder"), 800, 1500, currentY, state);
+            renderMobEntry(context, Text.literal("§dThunder"), "Thunder", 800, 1500, currentY, state);
         } else {
 
             for (ValuableMobInfo mobInfo : valuableMobs) {
-                Text mobName = mobInfo.getDisplayName();
-                int currentHealth = mobInfo.getHealth();
-                int maxHealth = mobInfo.getMaxHealth();
-                
-                renderMobEntry(context, mc, mobName, currentHealth, maxHealth, currentY, state);
+
+                renderMobEntry(
+                    context,
+                    mobInfo.getDisplayName(),
+                    mobInfo.getName(),
+                    mobInfo.getHealth(),
+                    mobInfo.getMaxHealth(),
+                    currentY, state
+                );
+
                 currentY += entryHeight / scale;
             }
         }
 
         context.getMatrices().pop();
-
-        if (editingMode) {
-            context.drawBorder(hudX - 1, hudY - 1, maxWidth + 2, totalHeight + 2, 0xFFFFFFFF);
-        }
     }
 
-    private void renderMobEntry(DrawContext context, MinecraftClient mc, Text mobName, 
+    private void renderMobEntry(DrawContext context, Text mobName, String mobNameStr, 
                                int currentHealth, int maxHealth, int yOffset, HudElementState state) {
+
+        if (maxHealth <= 0 || currentHealth < 0) return;
+
         int size = state.size;
         int color = state.color;
         float scale = size / 12.0F;
 
-        String healthText = currentHealth > 0 && maxHealth > 0 ? 
-            String.format("§c%d§8/§c%d❤", currentHealth, maxHealth) : "Unknown";
+        short healthPercent = maxHealth > 0 ? (short)((currentHealth * 100) / maxHealth) : 0;
 
-        var healthDisplay = Text.literal(healthText);
-        var hudRenderer = new HudVisuals(mc, context, state);
-        int healthTextWidth = mc.textRenderer.getWidth(healthDisplay);
-        int nameWidth = mc.textRenderer.getWidth(mobName);
-        int textX = Math.max(nameWidth + (int)(10 * scale), (int)(120 * scale) - healthTextWidth);
+        String healthFormat;
+        if (healthPercent > 60) {
+            healthFormat = "§a";
+        } else if (healthPercent > 15) {
+            healthFormat = "§e";
+        } else {
+            healthFormat = "§c";
+        }
+        String health = healthFormat + String.format("%d/%d§c❤", currentHealth, maxHealth);
 
-        hudRenderer.drawText(mobName, 0, yOffset, color);
-        hudRenderer.drawText(healthDisplay, textX, yOffset, color);
+        var mc = MinecraftClient.getInstance();
+        var healthDisplay = Text.literal(health);
+        int healthWidth = mc.textRenderer.getWidth(health);
+        int nameWidth = mc.textRenderer.getWidth(mobNameStr);
+        int textX = nameWidth + (int)(10 * scale);
+        var drawer = new HudDrawer(mc, context, state);
+
+        drawer.drawText(mobName, 0, yOffset, color);
+        drawer.drawText(healthDisplay, textX, yOffset, color);
 
         int barY = yOffset + size + (int)(2 * scale);
-        int barWidth = Math.max(nameWidth + healthTextWidth + (int)(10 * scale), (int)(120 * scale));
+        int barWidth = Math.clamp(nameWidth + (long)healthWidth + (int)(10 * scale), (int)(60 * scale), (int)(120 * scale));
         int height = Math.clamp((int)(3 * scale), 1, 4);
 
-        drawHealthBar(context, 0, barY, barWidth, height, currentHealth, maxHealth);
+        drawHealthBar(context, 0, barY, barWidth, height, healthPercent);
     }
 
-    private void drawHealthBar(DrawContext context, int x, int y, int width, int height, 
-                                int currentHealth, int maxHealth) {
+    private void drawHealthBar(DrawContext context, int x, int y, int width, int height, short healthPercent) {
 
         context.fill(x, y, x + width, y + height, 0x80000000);
         context.drawBorder(x, y, width, height + 1, 0xFF000000);
 
-        if (maxHealth > 0 && currentHealth > 0) {
-            float healthPercent = Math.min(1.0f, (float) currentHealth / maxHealth);
-            int healthWidth = (int) (width * healthPercent);
+        if (healthPercent > 0) {
+            int healthWidth = width * healthPercent / 100;
             int healthColor;
             int color = Color.ensureOpaque(getHudColor());
 
-            if (healthPercent > 0.6f) {
-                healthColor = Color.brighten(color, 0.3f);
-            } else if (healthPercent > 0.2f) {
+            if (healthPercent > 60) {
                 healthColor = color;
+            } else if (healthPercent > 15) {
+                healthColor = 0xFFFFFF00;
             } else {
-                healthColor = 0xFFFF8080;
+                healthColor = 0xFFFF0000;
             }
 
             context.fill(x, y, x + healthWidth, y + height, healthColor);
@@ -143,7 +145,7 @@ public class HealthDisplay implements HudElement {
 
     private int getMaxDisplayWidth(MinecraftClient mc, List<ValuableMobInfo> mobs, 
                                   boolean editingMode, float scale) {
-        int maxWidth = (int)(120 * scale); // Minimum width
+        int maxWidth = (int)(120 * scale);
         
         if (editingMode) {
             int exampleWidth1 = mc.textRenderer.getWidth("Lord Jawbus 1250/2000❤");
@@ -153,9 +155,9 @@ public class HealthDisplay implements HudElement {
         } else {
 
             for (ValuableMobInfo mob : mobs) {
-                String healthText = mob.getHealth() > 0 && mob.getMaxHealth() > 0 ? 
+                String health = mob.getHealth() > 0 && mob.getMaxHealth() > 0 ? 
                     String.format("%d/%d❤", mob.getHealth(), mob.getMaxHealth()) : "Unknown";
-                String fullText = mob.getName() + " " + healthText;
+                String fullText = mob.getName() + " " + health;
                 int textWidth = mc.textRenderer.getWidth(fullText);
                 maxWidth = Math.max(maxWidth, (int)(textWidth * scale));
             }

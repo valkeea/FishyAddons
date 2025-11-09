@@ -1,23 +1,28 @@
-package me.valkeea.fishyaddons.hud;
+package me.valkeea.fishyaddons.hud.elements.custom;
 
 import java.awt.Rectangle;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.config.ItemConfig;
 import me.valkeea.fishyaddons.config.Key;
 import me.valkeea.fishyaddons.config.TrackerProfiles;
-import me.valkeea.fishyaddons.hud.HudDisplayCache.CachedHudData;
-import me.valkeea.fishyaddons.tracker.ItemTrackerData;
-import me.valkeea.fishyaddons.tracker.SackDropParser;
-import me.valkeea.fishyaddons.tracker.TrackerUtils;
+import me.valkeea.fishyaddons.hud.core.HudDisplayCache;
+import me.valkeea.fishyaddons.hud.core.HudDisplayCache.CachedHudData;
+import me.valkeea.fishyaddons.hud.core.HudElement;
+import me.valkeea.fishyaddons.hud.core.HudElementState;
+import me.valkeea.fishyaddons.tracker.profit.ItemTrackerData;
+import me.valkeea.fishyaddons.tracker.profit.SackDropParser;
+import me.valkeea.fishyaddons.tracker.profit.TrackerUtils;
 import me.valkeea.fishyaddons.ui.widget.VCButton;
 import me.valkeea.fishyaddons.util.FishyNotis;
-import net.fabricmc.fabric.api.client.rendering.v1.HudLayerRegistrationCallback;
-import net.fabricmc.fabric.api.client.rendering.v1.IdentifiedLayer;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
 
 public class TrackerDisplay implements HudElement {
     private static final String HUD_KEY = me.valkeea.fishyaddons.config.Key.HUD_TRACKER_ENABLED;
@@ -44,16 +49,6 @@ public class TrackerDisplay implements HudElement {
             HudDisplayCache.getInstance().invalidateCache();
         }
     }
-    
-    public void register() {
-        HudLayerRegistrationCallback.EVENT.register(layeredDrawer ->
-            layeredDrawer.attachLayerAfter(
-                IdentifiedLayer.MISC_OVERLAYS,
-                Identifier.of("fishyaddons", "profit_tracker_hud"),
-                (context, tickCounter) -> render(context, 0, 0)
-            )
-        );
-    }
 
     private boolean isTrackerVisible() {
         return !HudDisplayCache.getInstance().getDisplayData().isEmpty() &&
@@ -64,26 +59,26 @@ public class TrackerDisplay implements HudElement {
     public void render(DrawContext context, int mouseX, int mouseY) {
         if (!editingMode && !TrackerUtils.isEnabled()) return;
 
-        MinecraftClient mc = MinecraftClient.getInstance();
-        HudElementState state = getCachedState();
+        var mc = MinecraftClient.getInstance();
+        var state = getCachedState();
         int hudX = state.x;
         int hudY = state.y;
         int size = state.size;
         int color = state.color;
         boolean showBg = state.bg;
         float scale = size / 12.0F;
-        CachedHudData displayData = HudDisplayCache.getInstance().getDisplayData();
+        var displayData = HudDisplayCache.getInstance().getDisplayData();
 
         if (!editingMode && displayData.isEmpty()) return;
 
-        java.util.List<Text> lines = getDisplayLines(editingMode, displayData);
+        List<Text> lines = getDisplayLines(editingMode, displayData);
 
         int maxWidth = getMaxLineWidth(mc, lines);
         int totalHeight = lines.size() * size;
         int scaledWidth = (int)(maxWidth * scale);
-        int scaledHeight = (int)(totalHeight * scale);
+        int scaledHeight = (int)(totalHeight * scale);       
 
-        if (editingMode || showBg) {
+        if (showBg) {
             drawBackground(context, hudX, hudY, scaledWidth, scaledHeight);
         }
 
@@ -96,7 +91,7 @@ public class TrackerDisplay implements HudElement {
         
         lastDisplayedItems.clear();
         if (!editingMode && !displayData.isEmpty()) {
-            java.util.List<ItemValueData> allItems = getSortedItemValues(displayData);
+            List<ItemValueData> allItems = getSortedItemValues(displayData);
             allItems.stream()
                 .limit(15)
                 .forEach(lastDisplayedItems::add);
@@ -108,19 +103,18 @@ public class TrackerDisplay implements HudElement {
                 drawButtons(context, hudX, buttonY);
             });
         }
-
-        if (editingMode) {
-            context.drawBorder(hudX - 1, hudY - 1, scaledWidth + 2, scaledHeight + 2, 0xFFFFFFFF);
-        }
     }
 
     // Sort and format item values
-    private java.util.List<ItemValueData> getSortedItemValues(CachedHudData displayData) {
-        java.util.List<ItemValueData> itemsWithValue = new java.util.ArrayList<>();
-        java.util.List<ItemValueData> itemsWithoutValue = new java.util.ArrayList<>();
+    private List<ItemValueData> getSortedItemValues(CachedHudData displayData) {
+
+        List<ItemValueData> itemsWithValue = new ArrayList<>();
+        List<ItemValueData> itemsWithoutValue = new ArrayList<>();
+
+        Set<String> excludedItems = getExcludedItems();
+
         boolean useMinValueFilter = FishyConfig.getState(Key.VALUE_FILTER, false);
         float minItemValue = FishyConfig.getFloat(Key.FILTER_MIN_VALUE, 0);
-        java.util.Set<String> excludedItems = getExcludedItems();
 
         displayData.items.entrySet().forEach(entry -> {
             String itemName = entry.getKey();
@@ -128,62 +122,77 @@ public class TrackerDisplay implements HudElement {
             double unitPrice = displayData.itemValues.getOrDefault(itemName, 0.0);
             double totalValue = unitPrice * quantity;
             
-            // Skip excluded items
             if (excludedItems.contains(itemName)) return;
-            
             if (useMinValueFilter && unitPrice > 0 && unitPrice < minItemValue) return;
-            ItemValueData data = new ItemValueData(itemName, quantity, totalValue);
+
+            var data = new ItemValueData(itemName, quantity, totalValue);
+
             if (totalValue > 0) itemsWithValue.add(data);
             else itemsWithoutValue.add(data);
         });
 
         itemsWithValue.sort((a, b) -> Double.compare(b.totalValue, a.totalValue));
         itemsWithoutValue.sort((a, b) -> Integer.compare(b.quantity, a.quantity));
-        java.util.List<ItemValueData> allItems = new java.util.ArrayList<>();
+
+        List<ItemValueData> allItems = new ArrayList<>();
+
         allItems.addAll(itemsWithValue);
         allItems.addAll(itemsWithoutValue);
         return allItems;
     }
 
     // Tracker lines and formatting 
-    private java.util.List<Text> getDisplayLines(boolean editingMode, CachedHudData displayData) {
-        java.util.List<Text> lines = new java.util.ArrayList<>();
+    private List<Text> getDisplayLines(boolean editingMode, CachedHudData displayData) {
+
+        List<Text> lines = new ArrayList<>();
+
         if (editingMode) {
             lines.add(Text.literal("Profit Tracker (5m)"));
             lines.add(Text.literal("§b+3 §fRecombobulator 3000"));
             lines.add(Text.literal("Total: §3 items"));
             lines.add(Text.literal("Value: §b~27m coins"));
+
         } else if (!displayData.isEmpty()) {
             String currentProfile = TrackerProfiles.getCurrentProfile();
             String profileSuffix = "default".equals(currentProfile) ? "" : " (" + currentProfile + ")";
+
             lines.add(Text.literal("Profit Tracker" + displayData.timeString + profileSuffix));
-            java.util.List<ItemValueData> allItems = getSortedItemValues(displayData);
+
+            List<ItemValueData> allItems = getSortedItemValues(displayData);
+
             allItems.stream()
                 .limit(15)
                 .forEach(data -> lines.add(Text.literal(getItemLine(data))));
             lines.add(Text.literal(String.format("Total: §3%d items", displayData.totalItems)));
+
             if (displayData.totalValue > 0) {
                 lines.add(Text.literal(String.format("Value: §b%s%s", displayData.formattedValue, displayData.apiIndicator)));
             }
+
         } else {
             lines.add(Text.literal("No items tracked"));
         }
+
         return lines;
     }
 
     // Format item line for display
     private String getItemLine(ItemValueData data) {
+
         String itemName = enhance(data.itemName);
         int quantity = data.quantity;
         StringBuilder lineBuilder = new StringBuilder();
+
         lineBuilder.append(String.format("§3+%d §7%s", quantity, itemName));
+
         if (TrackerUtils.isOn() && data.totalValue > 0) {
             lineBuilder.append(String.format(" §7(§b%s§7)", formatCoins(data.totalValue)));
         }
+
         return lineBuilder.toString();
     }
 
-    private int getMaxLineWidth(MinecraftClient mc, java.util.List<Text> lines) {
+    private int getMaxLineWidth(MinecraftClient mc, List<Text> lines) {
         int maxWidth = 0;
         for (Text line : lines) {
             int lineWidth = mc.textRenderer.getWidth(line);
@@ -200,16 +209,20 @@ public class TrackerDisplay implements HudElement {
         context.fill(bgX1, bgY1, bgX2, bgY2, 0x80000000);
     }
 
-    private void drawTextLines(DrawContext context, java.util.List<Text> lines, int hudX, int hudY, float scale, int size, int color) {
-        MinecraftClient mc = MinecraftClient.getInstance();
+    private void drawTextLines(DrawContext context, List<Text> lines, int hudX, int hudY, float scale, int size, int color) {
+
+        var mc = MinecraftClient.getInstance();
+
         context.getMatrices().push();
         context.getMatrices().translate(hudX, hudY, 0);
         context.getMatrices().scale(scale, scale, 1.0F);
+
         for (int i = 0; i < lines.size(); i++) {
             Text line = lines.get(i);
             int yOffset = i * size;
             context.drawText(mc.textRenderer, line, 0, yOffset, color, false);
         }
+
         context.getMatrices().pop();
     }
     
@@ -226,13 +239,14 @@ public class TrackerDisplay implements HudElement {
     }
     
     private void drawButtons(DrawContext context, int x, int y) {
+
         String[] buttonTexts = {"Refresh", "Save", "Delete", "Sack", "Profile"};
         float scale = getCachedState().size / 12.0F;
         int buttonWidth = (int)(40 * scale);
         int buttonHeight = (int)(16 * scale);
         int buttonSpacing = (int)(2 * scale);
         
-        MinecraftClient mc = MinecraftClient.getInstance();
+        var mc = MinecraftClient.getInstance();
         double actualMouseX = mc.mouse.getX() * mc.getWindow().getScaledWidth() / mc.getWindow().getWidth();
         double actualMouseY = mc.mouse.getY() * mc.getWindow().getScaledHeight() / mc.getWindow().getHeight();
         
@@ -251,10 +265,11 @@ public class TrackerDisplay implements HudElement {
     }
 
     public boolean handleMouseClick(double mouseX, double mouseY, int button) {
-        MinecraftClient mc = MinecraftClient.getInstance();
+
+        var mc = MinecraftClient.getInstance();
         if (!isInventoryOpen(mc) || !isTrackerVisible()) return false;
         
-        HudElementState state = getCachedState();
+        var state = getCachedState();
         int hudX = state.x;
         int hudY = state.y;
         float scale = getCachedState().size / 12.0F;
@@ -279,6 +294,7 @@ public class TrackerDisplay implements HudElement {
         if (button == 1 && !lastDisplayedItems.isEmpty()) {
             return handleItemLineRightClick(mouseX, mouseY);
         }
+
         return false;
     }
     
@@ -291,9 +307,9 @@ public class TrackerDisplay implements HudElement {
             int nextLineY = lineY + lineHeight;
             
             if (mouseY >= lineY && mouseY < nextLineY && 
-                mouseX >= lastHudX && mouseX <= lastHudX + 200) { // Reasonable width check
-                
-                ItemValueData clickedItem = lastDisplayedItems.get(i);
+                mouseX >= lastHudX && mouseX <= lastHudX + 200) {
+
+                var clickedItem = lastDisplayedItems.get(i);
                 addExcludedItem(clickedItem.itemName);
 
                 String displayName = enhance(clickedItem.itemName);
@@ -314,7 +330,7 @@ public class TrackerDisplay implements HudElement {
     }
     
     public void restoreAllExcludedItems() {
-        java.util.Set<String> excluded = getExcludedItems();
+        Set<String> excluded = getExcludedItems();
         if (excluded.isEmpty()) {
             FishyNotis.notice("§7No excluded items to restore");
             return;
@@ -324,7 +340,7 @@ public class TrackerDisplay implements HudElement {
         FishyNotis.send("§aRestored all excluded items");
     }
     
-    public java.util.Set<String> getExcludedItemsForDisplay() {
+    public Set<String> getExcludedItemsForDisplay() {
         return getExcludedItems();
     }
     
@@ -368,7 +384,7 @@ public class TrackerDisplay implements HudElement {
     }
     
     private void cycleProfile() {
-        java.util.List<String> profiles = TrackerProfiles.getAvailableProfiles();
+        List<String> profiles = TrackerProfiles.getAvailableProfiles();
         String currentProfile = TrackerProfiles.getCurrentProfile();
         
         int currentIndex = profiles.indexOf(currentProfile);
@@ -393,13 +409,15 @@ public class TrackerDisplay implements HudElement {
         }
         
         String[] words = itemName.split(" ");
-        StringBuilder result = new StringBuilder();
+        var result = new StringBuilder();
         
         for (int i = 0; i < words.length; i++) {
             if (i > 0) result.append(" ");
             String word = words[i];
+
             if (!word.isEmpty()) {
                 result.append(Character.toUpperCase(word.charAt(0)));
+
                 if (word.length() > 1) {
                     result.append(word.substring(1));
                 }
@@ -421,10 +439,9 @@ public class TrackerDisplay implements HudElement {
 
     @Override
     public Rectangle getBounds(MinecraftClient mc) {
-        HudElementState state = getCachedState();
-        float scale = state.size / 12.0F;
 
-        // Estimate
+        var state = getCachedState();
+        float scale = state.size / 12.0F;
         int estimatedWidth = (int)(150 * scale);
         int estimatedHeight = (int)(9 * state.size * scale);
         
@@ -447,17 +464,16 @@ public class TrackerDisplay implements HudElement {
         cachedState = null;
     }
 
-    // Excluded items management
     private java.util.Set<String> getExcludedItems() {
         String excludedStr = ItemConfig.getString(Key.EXCLUDED_ITEMS, "");
         if (excludedStr.isEmpty()) {
-            return new java.util.HashSet<>();
+            return new HashSet<>();
         }
-        return new java.util.HashSet<>(java.util.Arrays.asList(excludedStr.split(",")));
+        return new HashSet<>(Arrays.asList(excludedStr.split(",")));
     }
     
     private void addExcludedItem(String itemName) {
-        java.util.Set<String> excluded = getExcludedItems();
+        Set<String> excluded = getExcludedItems();
         excluded.add(itemName);
         saveExcludedItems(excluded);
     }
@@ -471,7 +487,7 @@ public class TrackerDisplay implements HudElement {
     private void saveExcludedItems(java.util.Set<String> excluded) {
         String excludedStr = String.join(",", excluded);
         ItemConfig.setString(Key.EXCLUDED_ITEMS, excludedStr);
-        HudDisplayCache.getInstance().invalidateCache(); // Refresh display
+        HudDisplayCache.getInstance().invalidateCache();
     }
 
     @Override public int getHudX() { return FishyConfig.getHudX(HUD_KEY, 14); }
@@ -488,9 +504,6 @@ public class TrackerDisplay implements HudElement {
     @Override public void setEditingMode(boolean editing) { this.editingMode = editing; }
     @Override public String getDisplayName() { return "Profit Tracker"; }    
     
-    /**
-     * Helper class for sorting items by total value
-     */
     private static class ItemValueData {
         final String itemName;
         final int quantity;

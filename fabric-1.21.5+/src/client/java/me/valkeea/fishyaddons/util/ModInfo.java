@@ -2,7 +2,7 @@ package me.valkeea.fishyaddons.util;
 
 import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.config.Key;
-import me.valkeea.fishyaddons.hud.InfoDisplay;
+import me.valkeea.fishyaddons.hud.elements.custom.InfoDisplay;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.util.InputUtil;
 

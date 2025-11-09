@@ -1,16 +1,15 @@
-package me.valkeea.fishyaddons.hud;
+package me.valkeea.fishyaddons.hud.elements.custom;
 
 import java.awt.Rectangle;
 
 import me.valkeea.fishyaddons.config.FishyConfig;
-import me.valkeea.fishyaddons.ui.GuiUtil;
+import me.valkeea.fishyaddons.hud.core.HudDrawer;
+import me.valkeea.fishyaddons.hud.core.HudElement;
+import me.valkeea.fishyaddons.hud.core.HudElementState;
 import me.valkeea.fishyaddons.util.text.Enhancer;
-import net.fabricmc.fabric.api.client.rendering.v1.HudLayerRegistrationCallback;
-import net.fabricmc.fabric.api.client.rendering.v1.IdentifiedLayer;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
 
 public class TitleDisplay implements HudElement {
     private boolean editingMode = false;
@@ -20,17 +19,6 @@ public class TitleDisplay implements HudElement {
     private static long alertStartTime = 0L;
     private static long alertDurationMs = 2000L;
     private HudElementState cachedState;    
-
-    public void register() {
-        HudLayerRegistrationCallback.EVENT.register(layeredDrawer ->
-            layeredDrawer.attachLayerAfter(
-                IdentifiedLayer.MISC_OVERLAYS,
-                Identifier.of("fishyaddons", "title_hud"),
-                (context, tickCounter) -> 
-                        render(context, 0, 0)
-            )
-        );
-    }
 
     public static void setTitle(String t, int color) {
         title = t;
@@ -46,7 +34,7 @@ public class TitleDisplay implements HudElement {
 
         if (!editingMode && !showAlert) return;
 
-        MinecraftClient mc = MinecraftClient.getInstance();
+        var mc = MinecraftClient.getInstance();
         int hudX = FishyConfig.getHudX(HUD_KEY, 5);
         int hudY = FishyConfig.getHudY(HUD_KEY, 5);
         int size = FishyConfig.getHudSize(HUD_KEY, 40);
@@ -55,22 +43,8 @@ public class TitleDisplay implements HudElement {
         var formatted = title == null ? Text.empty() : Enhancer.parseFormattedText(title);
         int textWidth = mc.textRenderer.getWidth(formatted.getString());
 
-        context.getMatrices().push();
-        context.getMatrices().translate(hudX, hudY, 0);
-        context.getMatrices().scale(scale, scale, 1.0F);
-        HudVisuals.drawText(context, formatted, -textWidth / 2, 0, titlecolor, getHudOutline());
-        context.getMatrices().pop();
-
         if (editingMode) {
             Rectangle bounds = getBounds(MinecraftClient.getInstance());
-            GuiUtil.drawBox(
-                context,
-                bounds.x - 2,
-                bounds.y - 2,
-                bounds.width + 4,
-                (int)(size + 4 * scale),
-                0x80FFFFFF
-            );
             context.drawText(
                 mc.textRenderer,
                 "Alert Title",
@@ -79,7 +53,15 @@ public class TitleDisplay implements HudElement {
                 0xFFFFFF,
                 false
             );
-        }
+        }        
+
+        context.getMatrices().push();
+        context.getMatrices().translate(hudX, hudY, 0);
+        context.getMatrices().scale(scale, scale, 1.0F);
+
+        HudDrawer.drawText(context, formatted, -textWidth / 2, 0, titlecolor, getHudOutline());
+
+        context.getMatrices().pop();
     }
 
     public static String getTitle() {

@@ -1,4 +1,4 @@
-package me.valkeea.fishyaddons.hud;
+package me.valkeea.fishyaddons.hud.core;
 
 import java.awt.Rectangle;
 
@@ -23,4 +23,8 @@ public interface HudElement {
     Rectangle getBounds(MinecraftClient mc);
     HudElementState getCachedState();
     void invalidateCache();
+    
+    default boolean isConfigurable() {
+        return true;
+    }
 }

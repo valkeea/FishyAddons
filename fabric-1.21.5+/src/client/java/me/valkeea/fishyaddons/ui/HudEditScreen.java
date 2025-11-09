@@ -4,11 +4,11 @@ import java.awt.Rectangle;
 
 import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.config.Key;
-import me.valkeea.fishyaddons.hud.ElementRegistry;
-import me.valkeea.fishyaddons.hud.HudElement;
-import me.valkeea.fishyaddons.hud.PetDisplay;
-import me.valkeea.fishyaddons.hud.TitleDisplay;
-import me.valkeea.fishyaddons.hud.TrackerDisplay;
+import me.valkeea.fishyaddons.hud.core.ElementRegistry;
+import me.valkeea.fishyaddons.hud.core.HudElement;
+import me.valkeea.fishyaddons.hud.elements.custom.TitleDisplay;
+import me.valkeea.fishyaddons.hud.elements.custom.TrackerDisplay;
+import me.valkeea.fishyaddons.hud.elements.simple.PetDisplay;
 import me.valkeea.fishyaddons.tool.FishyMode;
 import me.valkeea.fishyaddons.ui.list.ChatAlerts;
 import me.valkeea.fishyaddons.ui.widget.FaButton;
@@ -42,7 +42,7 @@ public class HudEditScreen extends Screen {
     @Override
     protected void init() {
         if (targetElementName != null) {
-            for (HudElement element : ElementRegistry.getElements()) {
+            for (HudElement element : ElementRegistry.getConfigurable()) {
                 if (targetElementName.equals(element.getDisplayName())) {
                     selectedElement = element;
                     break;
@@ -54,7 +54,7 @@ public class HudEditScreen extends Screen {
             this.width / 2 - 40, this.height - 40, 80, 20,
             Text.literal("Exit"),
             btn -> {
-                for (HudElement element : ElementRegistry.getElements()) {
+                for (HudElement element : ElementRegistry.getConfigurable()) {
                     element.setEditingMode(false);
                 }
                 MinecraftClient.getInstance().setScreen(null);
@@ -99,7 +99,7 @@ public class HudEditScreen extends Screen {
             btn -> {
                 FishyConfig.toggle(Key.HUD_TEXT_SHADOW, true);
                 btn.setMessage(GuiUtil.onOffLabel("Shadow", FishyConfig.getState(Key.HUD_TEXT_SHADOW, true)));
-                for (HudElement element : ElementRegistry.getElements()) {
+                for (HudElement element : ElementRegistry.getConfigurable()) {
                     element.invalidateCache();
                 }
             }
@@ -113,7 +113,7 @@ public class HudEditScreen extends Screen {
             btn -> {
                 HudElement element = selectedElement;
                 if (element == null) {
-                    var elements = ElementRegistry.getElements();
+                    var elements = ElementRegistry.getConfigurable();
                     if (elements.isEmpty()) return;
                     element = elements.get(0);
                 }
@@ -136,12 +136,8 @@ public class HudEditScreen extends Screen {
 
                 final HudElement finalElement = element;
                 int color = finalElement.getHudColor();
-                float red = ((color >> 16) & 0xFF) / 255.0f;
-                float green = ((color >> 8) & 0xFF) / 255.0f;
-                float blue = (color & 0xFF) / 255.0f;
                 MinecraftClient.getInstance().setScreen(
-                    new ColorWheel(this, new float[]{red, green, blue}, rgb -> {
-                        int newColor = ((int)(rgb[0] * 255) << 16) | ((int)(rgb[1] * 255) << 8) | (int)(rgb[2] * 255);
+                    new ColorWheel(this, color, newColor -> {
                         finalElement.setHudColor(newColor);
                         finalElement.invalidateCache();
                     })
@@ -153,8 +149,9 @@ public class HudEditScreen extends Screen {
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (popup != null && popup.mouseClicked(mouseX, mouseY, button)) return true;
-        MinecraftClient mc = MinecraftClient.getInstance();
-        for (HudElement element : ElementRegistry.getElements()) {
+
+        var mc = MinecraftClient.getInstance();
+        for (HudElement element : ElementRegistry.getConfigurable()) {
             Rectangle bounds = element.getBounds(mc);
             if (bounds.contains(mouseX, mouseY)) {
                 dragging = element;
@@ -164,6 +161,7 @@ public class HudEditScreen extends Screen {
                 return true;
             }
         }
+        
         return super.mouseClicked(mouseX, mouseY, button);
     }
 
@@ -197,31 +195,21 @@ public class HudEditScreen extends Screen {
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         this.renderBackground(context, mouseX, mouseY, delta);
-        for (HudElement element : ElementRegistry.getElements()) {
+        for (HudElement element : ElementRegistry.getConfigurable()) {
             element.setEditingMode(true);
             element.render(context, mouseX, mouseY);
+            GuiUtil.wireRect(context, element.getBounds(MinecraftClient.getInstance()), 0x80FFFFFF);
         }
-        if (selectedElement != null) {
-            int hudX = selectedElement.getHudX();
-            int hudY = selectedElement.getHudY();
-            int size = selectedElement.getHudSize();
-            float scale = size / 12.0F;
-            int width = (int)(80 * scale);
-            int height = size + 4;
 
-            if (selectedElement instanceof TitleDisplay) {
-                Rectangle bounds = selectedElement.getBounds(MinecraftClient.getInstance());
-                GuiUtil.drawBox(
-                    context,
-                    bounds.x - 2,
-                    bounds.y - 2,
-                    bounds.width + 4,
-                    (int)(size + 4 * scale),
-                    0x80000000
-                );
-            } else {
-                GuiUtil.drawBox(context, hudX, hudY, width, height, 0x80000000);
-            }
+        if (selectedElement != null) {
+            Rectangle bounds = selectedElement.getBounds(MinecraftClient.getInstance());
+            context.fill(
+                bounds.x,
+                bounds.y,
+                bounds.x + bounds.width,
+                bounds.y + bounds.height,
+                0x30FFFFFF
+            );
         }
 
         updateButtons();
@@ -264,7 +252,7 @@ public class HudEditScreen extends Screen {
 
     @Override
     public void removed() {
-        for (HudElement element : ElementRegistry.getElements()) {
+        for (HudElement element : ElementRegistry.getConfigurable()) {
             element.setEditingMode(false);
         }
     }

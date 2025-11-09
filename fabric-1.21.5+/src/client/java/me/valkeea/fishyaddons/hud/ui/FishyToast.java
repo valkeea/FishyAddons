@@ -1,4 +1,4 @@
-package me.valkeea.fishyaddons.hud;
+package me.valkeea.fishyaddons.hud.ui;
 
 import me.valkeea.fishyaddons.tool.FishyMode;
 import net.fabricmc.fabric.api.client.rendering.v1.HudLayerRegistrationCallback;

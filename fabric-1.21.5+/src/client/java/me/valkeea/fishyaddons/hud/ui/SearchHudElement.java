@@ -1,16 +1,15 @@
-package me.valkeea.fishyaddons.hud;
+package me.valkeea.fishyaddons.hud.ui;
 
 import java.awt.Rectangle;
 
 import me.valkeea.fishyaddons.config.FishyConfig;
+import me.valkeea.fishyaddons.hud.core.HudElement;
+import me.valkeea.fishyaddons.hud.core.HudElementState;
 import me.valkeea.fishyaddons.render.FaLayers;
 import me.valkeea.fishyaddons.ui.widget.FaTextField;
-import net.fabricmc.fabric.api.client.rendering.v1.HudLayerRegistrationCallback;
-import net.fabricmc.fabric.api.client.rendering.v1.IdentifiedLayer;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
 
 public class SearchHudElement implements HudElement {
     private boolean editingMode = false;
@@ -24,7 +23,6 @@ public class SearchHudElement implements HudElement {
     private boolean overlayActive = false;
     
     public SearchHudElement() {
-        instance = this;
         MinecraftClient client = MinecraftClient.getInstance();
         if (client != null && client.textRenderer != null) {
             searchField = new FaTextField(client.textRenderer, 10, 10, 150, 15, Text.literal(SEARCH_PLACEHOLDER), true);
@@ -33,21 +31,10 @@ public class SearchHudElement implements HudElement {
     }
     
     public static SearchHudElement getInstance() {
+        if (instance == null) {
+            instance = new SearchHudElement();
+        }
         return instance;
-    }
-
-    public void register() {
-        HudLayerRegistrationCallback.EVENT.register(layeredDrawer -> 
-            layeredDrawer.attachLayerAfter(
-                IdentifiedLayer.MISC_OVERLAYS,
-                Identifier.of("fishyaddons", "search_hud"),
-                (context, tickCounter) -> {
-                    if (shouldRender()) {
-                        render(context, 0, 0);
-                    }
-                }
-            )
-        );
     }
 
     @Override
@@ -103,7 +90,6 @@ public class SearchHudElement implements HudElement {
         int scaledWidth = (int)(150 * scale);
         int scaledHeight = (int)(15 * scale);
 
-        // Update search field dimensions and position
         if (searchField.getWidth() != scaledWidth || searchField.getHeight() != scaledHeight) {
             String currentText = searchField.getText();
             boolean wasFocused = searchField.isFocused();
@@ -130,11 +116,6 @@ public class SearchHudElement implements HudElement {
         int scaledWidth = (int)(150 * scale);
         int scaledHeight = (int)(15 * scale);
 
-        if (editingMode) {
-            FaLayers.fillAtTopLevel(context, hudX - 2, hudY - 2, hudX + scaledWidth + 2, hudY + scaledHeight + 2, 0x80000000);
-        }
-
-        // Draw placeholder text first
         if (searchField.getText().isEmpty()) {
             String placeholderText = editingMode ? EDITING_MODE_TEXT : SEARCH_PLACEHOLDER;
             int placeholderColor = editingMode ? 0x80FFFFFF : 0x80808080;
@@ -184,7 +165,6 @@ public class SearchHudElement implements HudElement {
         cachedState = null;
     }
     
-    // Methods for search functionality
     public FaTextField getSearchField() {
         return searchField;
     }

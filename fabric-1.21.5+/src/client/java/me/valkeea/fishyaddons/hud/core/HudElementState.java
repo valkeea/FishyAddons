@@ -1,4 +1,4 @@
-package me.valkeea.fishyaddons.hud;
+package me.valkeea.fishyaddons.hud.core;
 
 public class HudElementState {
     public final int x;

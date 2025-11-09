@@ -1,15 +1,15 @@
-package me.valkeea.fishyaddons.hud;
+package me.valkeea.fishyaddons.hud.elements.custom;
 
 import java.awt.Rectangle;
 
 import me.valkeea.fishyaddons.config.FishyConfig;
+import me.valkeea.fishyaddons.hud.core.HudDrawer;
+import me.valkeea.fishyaddons.hud.core.HudElement;
+import me.valkeea.fishyaddons.hud.core.HudElementState;
 import me.valkeea.fishyaddons.tracker.SkillTracker;
-import net.fabricmc.fabric.api.client.rendering.v1.HudLayerRegistrationCallback;
-import net.fabricmc.fabric.api.client.rendering.v1.IdentifiedLayer;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
 
 public class SkillXpDisplay implements HudElement {
     private boolean editingMode = false;
@@ -98,16 +98,6 @@ public class SkillXpDisplay implements HudElement {
     
     private static final java.util.Map<String, SkillDisplayCache> skillCaches = new java.util.concurrent.ConcurrentHashMap<>();
 
-    public void register() {
-        HudLayerRegistrationCallback.EVENT.register(layeredDrawer ->
-            layeredDrawer.attachLayerAfter(
-                IdentifiedLayer.MISC_OVERLAYS,
-                Identifier.of("fishyaddons", "skill_xp_hud"),
-                (context, tickCounter) -> render(context, 0, 0)
-            )
-        );
-    }
-
     @Override
     public void render(DrawContext context, int mouseX, int mouseY) {
         if (!editingMode && !SkillTracker.isEnabled()) return;
@@ -167,19 +157,32 @@ public class SkillXpDisplay implements HudElement {
 
     private void renderSkillDisplay(DrawContext context, java.util.List<SkillDisplayCache> caches, 
                                    HudElementState state, MinecraftClient mc) {
-        if (caches.isEmpty()) return;
+        if (!editingMode && caches.isEmpty()) return;
         
         int hudX = state.x;
         int hudY = state.y;
         int size = state.size;
         boolean showBg = state.bg;
         float scale = size / 12.0F;
+
+        if (editingMode) {
+            context.drawText(
+                mc.textRenderer, 
+                Text.literal("Skill XP Tracker"), 
+                hudX, 
+                hudY, 
+                state.color, 
+                false
+            );
+        }
+
+        if (caches.isEmpty()) return;
         
         int lineHeight = (int)(size * 1.2F);
         int maxWidth = caches.stream().mapToInt(SkillDisplayCache::getFullWidth).max().orElse(0);
-        int totalHeight = caches.size() * lineHeight;
+        int totalHeight = caches.size() * lineHeight;       
         
-        if (editingMode || showBg) {
+        if (showBg) {
             drawBackground(context, hudX, hudY, (int)(maxWidth * scale), totalHeight);
         }
         
@@ -194,10 +197,6 @@ public class SkillXpDisplay implements HudElement {
         }
         
         context.getMatrices().pop();
-        
-        if (editingMode) {
-            context.drawBorder(hudX - 2, hudY - 2, (int)(maxWidth * scale) + 4, totalHeight + 4, 0xFFFFFFFF);
-        }
     }
     
     private void drawSkillLine(DrawContext context, MinecraftClient mc, SkillDisplayCache cache, 
@@ -210,37 +209,37 @@ public class SkillXpDisplay implements HudElement {
         
         int currentX = 0;
         
-        var hudRenderer = new HudVisuals(mc, context, state);
+        var drawer = new HudDrawer(mc, context, state);
         // Draw skill label
-        hudRenderer.drawText(cache.skillLabel, currentX, yOffset, color);
+        drawer.drawText(cache.skillLabel, currentX, yOffset, color);
         currentX += mc.textRenderer.getWidth(cache.skillLabel);
         
         // Draw rate value
-        hudRenderer.drawText(cache.rateValue, currentX, yOffset, 0xFFFFFF);
+        drawer.drawText(cache.rateValue, currentX, yOffset, 0xFFFFFF);
         currentX += mc.textRenderer.getWidth(cache.rateValue);
         
         // Draw XP value
-        hudRenderer.drawText(cache.xpValue, currentX, yOffset, 0xAAAAAA);
+        drawer.drawText(cache.xpValue, currentX, yOffset, 0xAAAAAA);
         currentX += mc.textRenderer.getWidth(cache.xpValue);
         
         // Draw fishing stats if available
         if (cache.hasFishingData) {
-            hudRenderer.drawText(cache.catchLabel, currentX, yOffset, color);
+            drawer.drawText(cache.catchLabel, currentX, yOffset, color);
             currentX += mc.textRenderer.getWidth(cache.catchLabel);
 
-            hudRenderer.drawText(cache.catchRateText, currentX, yOffset, 0xFFFFFF);
+            drawer.drawText(cache.catchRateText, currentX, yOffset, 0xFFFFFF);
             currentX += mc.textRenderer.getWidth(cache.catchRateText);
             
-            hudRenderer.drawText(cache.catchTotal, currentX, yOffset, 0xAAAAAA);
+            drawer.drawText(cache.catchTotal, currentX, yOffset, 0xAAAAAA);
             currentX += mc.textRenderer.getWidth(cache.catchTotal);
 
-            hudRenderer.drawText(cache.mobLabel, currentX, yOffset, color);
+            drawer.drawText(cache.mobLabel, currentX, yOffset, color);
             currentX += mc.textRenderer.getWidth(cache.mobLabel);
 
-            hudRenderer.drawText(cache.mobRateText, currentX, yOffset, 0xFFFFFF);
+            drawer.drawText(cache.mobRateText, currentX, yOffset, 0xFFFFFF);
             currentX += mc.textRenderer.getWidth(cache.mobRateText);
             
-            hudRenderer.drawText(cache.mobTotal, currentX, yOffset, 0xAAAAAA);
+            drawer.drawText(cache.mobTotal, currentX, yOffset, 0xAAAAAA);
         }
     }
 

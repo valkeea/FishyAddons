@@ -1,14 +1,13 @@
-package me.valkeea.fishyaddons.hud;
+package me.valkeea.fishyaddons.hud.elements.custom;
 
 import java.awt.Rectangle;
 
+import me.valkeea.fishyaddons.hud.core.HudElement;
+import me.valkeea.fishyaddons.hud.core.HudElementState;
 import me.valkeea.fishyaddons.util.ModInfo;
-import net.fabricmc.fabric.api.client.rendering.v1.HudLayerRegistrationCallback;
-import net.fabricmc.fabric.api.client.rendering.v1.IdentifiedLayer;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
 
 public class InfoDisplay implements HudElement {
     private InfoDisplay() {}
@@ -30,17 +29,7 @@ public class InfoDisplay implements HudElement {
     private int bgColor = 0xAA222222;
     private int textColor = 0xFFFFFF;
     private boolean outlined = false;
-    private boolean bg = true;
-
-    public void register() {
-        HudLayerRegistrationCallback.EVENT.register(layeredDrawer ->
-            layeredDrawer.attachLayerAfter(
-                IdentifiedLayer.MISC_OVERLAYS,
-                Identifier.of("fishyaddons", "info_hud"),
-                (context, tickCounter) -> render(context, 0, 0)
-            )
-        );
-    }    
+    private boolean bg = true; 
 
     public void show(String msg) {
         if (msg != null && !msg.trim().isEmpty()) {
@@ -131,7 +120,6 @@ public class InfoDisplay implements HudElement {
     @Override public void setHudOutline(boolean outline) { this.outlined = outline; }
     @Override public boolean getHudBg() { return bg; }
     @Override public void setHudBg(boolean bg) { this.bg = bg; }
-    @Override public void setEditingMode(boolean editing) { // not used
-        }
+    @Override public void setEditingMode(boolean editing) { /**not used*/}
     @Override public String getDisplayName() { return "Update Notification"; }
 }

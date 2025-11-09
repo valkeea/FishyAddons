@@ -1,4 +1,4 @@
-package me.valkeea.fishyaddons.hud;
+package me.valkeea.fishyaddons.hud.core;
 
 import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.render.OutlinedText;
@@ -9,13 +9,13 @@ import net.minecraft.text.Text;
 /**
  * Helper class for drawing HUD texts with proper visuals (shadow/outline) based on HudElementState and config
  */
-public class HudVisuals {
+public class HudDrawer {
     private MinecraftClient mc;
     private DrawContext context;
     private HudElementState state;
     private boolean isShadow;
 
-    public HudVisuals(MinecraftClient mc, DrawContext context, HudElementState state) {
+    public HudDrawer(MinecraftClient mc, DrawContext context, HudElementState state) {
         this.mc = mc;
         this.context = context;
         this.state = state;
@@ -48,6 +48,14 @@ public class HudVisuals {
         }
     }
 
+    public void fill(int x1, int y1, int x2, int y2, int color) {
+        context.fill(x1, y1, x2, y2, color);
+    }
+
+    public void drawBorder(int x, int y, int width, int height, int color) {
+        context.drawBorder(x, y, width, height, color);
+    }
+    
     /**
      * Static method for elements without state
      */

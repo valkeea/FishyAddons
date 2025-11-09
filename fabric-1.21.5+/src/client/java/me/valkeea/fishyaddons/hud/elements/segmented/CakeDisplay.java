@@ -1,13 +1,14 @@
-package me.valkeea.fishyaddons.hud;
+package me.valkeea.fishyaddons.hud.elements.segmented;
 
 import java.awt.Rectangle;
 import java.util.Map;
 
 import me.valkeea.fishyaddons.config.FishyConfig;
-import me.valkeea.fishyaddons.handler.CakeTimer;
+import me.valkeea.fishyaddons.feature.skyblock.CakeTimer;
+import me.valkeea.fishyaddons.hud.core.HudDrawer;
+import me.valkeea.fishyaddons.hud.core.HudElement;
+import me.valkeea.fishyaddons.hud.core.HudElementState;
 import me.valkeea.fishyaddons.tool.FishyMode;
-import net.fabricmc.fabric.api.client.rendering.v1.HudLayerRegistrationCallback;
-import net.fabricmc.fabric.api.client.rendering.v1.IdentifiedLayer;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.render.RenderLayer;
@@ -18,25 +19,13 @@ public class CakeDisplay implements HudElement {
     private boolean editingMode = false;
     private static final String HUD_KEY = me.valkeea.fishyaddons.config.Key.HUD_CENTURY_CAKE_ENABLED;
     private HudElementState cachedState = null;
-
-    public void register() {
-        HudLayerRegistrationCallback.EVENT.register(layeredDrawer ->
-            layeredDrawer.attachLayerAfter(
-                IdentifiedLayer.MISC_OVERLAYS,
-                Identifier.of("fishyaddons", "century_cake_hud"),
-                (context, tickCounter) -> 
-                        render(context, 0, 0)
-            )
-        );
-    }
     
     public void render(DrawContext context, int mouseX, int mouseY) {
         if (!editingMode && !FishyConfig.getState(HUD_KEY, false)) return;
         
-        CakeTimer timer = CakeTimer.getInstance();
-
-        MinecraftClient mc = MinecraftClient.getInstance();
-        HudElementState state = getCachedState();
+        var timer = CakeTimer.getInstance();
+        var mc = MinecraftClient.getInstance();
+        var state = getCachedState();
         int hudX = state.x;
         int hudY = state.y;
         int size = state.size;
@@ -50,10 +39,12 @@ public class CakeDisplay implements HudElement {
         
         if (editingMode) {
             displayText = "1d 23h 45m";
+
         } else {
             Map<String, Long> activeCakes = timer.getActiveCakes();
             if (activeCakes.isEmpty()) {
                 displayText = "Expired";
+
             } else {
                 String nextCake = timer.getNextExpiringCake();
                 symbolText = nextCake != null ? timer.symbol(nextCake) : "";
@@ -71,19 +62,22 @@ public class CakeDisplay implements HudElement {
         int iconSize = (int)(12 * scale);
         int totalWidth = iconSize + 2 + symbolWidth + symbolPadding + textWidth;
 
-        if (editingMode || showBg) {
+        int bgWidth = (int)(totalWidth * scale);
+        int bgHeight = (int)(size * 0.8F);
+                
+        if (showBg) {
             int shadowX1 = hudX + 1;
             int shadowY1 = hudY + 2;
-            int shadowX2 = hudX + (int)(totalWidth * scale) + 2;
-            int shadowY2 = hudY + (int)(size * 0.8F) - 1;
+            int shadowX2 = hudX + bgWidth + 2;
+            int shadowY2 = hudY + bgHeight - 1;
             context.fill(shadowX1, shadowY1, shadowX2, shadowY2, 0x80000000);
         }
 
         context.getMatrices().push();
         context.getMatrices().translate(hudX, hudY, 0);
-        context.getMatrices().scale(scale, scale, 1.0F);
+        context.getMatrices().scale(scale, scale, 1.0F);    
 
-        Identifier cakeTexture = Identifier.of("fishyaddons", "textures/gui/" + FishyMode.getTheme() + "/cake.png");
+        var cakeTexture = Identifier.of("fishyaddons", "textures/gui/" + FishyMode.getTheme() + "/cake.png");
         context.drawTexture(
             RenderLayer::getGuiTextured,
             cakeTexture,
@@ -92,18 +86,14 @@ public class CakeDisplay implements HudElement {
 
         int textX = iconSize + 2;
 
-        var hudRenderer = new HudVisuals(mc, context, state);
+        var drawer = new HudDrawer(mc, context, state);
         if (!symbolText.isEmpty()) {
-            hudRenderer.drawText(symbolTextComponent, textX, 0, 0x808080);
+            drawer.drawText(symbolTextComponent, textX, 0, 0x808080);
             textX += symbolWidth + symbolPadding;
         }
 
-        hudRenderer.drawText(timerText, textX, 0, color);
+        drawer.drawText(timerText, textX, 0, color);
         context.getMatrices().pop();
-
-        if (editingMode) {
-            context.fill(hudX - 2, hudY - 2, hudX + (int)(totalWidth * scale) + 18, hudY + (int)(size * 1.1F) + 4, 0x80FFFFFF);
-        }
     }
 
     @Override

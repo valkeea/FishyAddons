@@ -13,7 +13,6 @@ import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,8 +30,9 @@ import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 
-import me.valkeea.fishyaddons.safeguard.BlacklistManager;
-import me.valkeea.fishyaddons.util.text.TextFormatUtil;
+import me.valkeea.fishyaddons.feature.item.safeguard.BlacklistManager;
+import me.valkeea.fishyaddons.feature.skyblock.GuiIcons;
+import me.valkeea.fishyaddons.util.JsonUtil;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.text.Text;
 
@@ -45,8 +45,8 @@ public class ItemConfig {
 
     private static final String LOCKED_PREFIX = "locked_";
     private static final String BOUND_PREFIX = "bound_";
-    private static final String TEXTURE_PREFIX = "texture_";
-    private static final String ITEM_PREFIX = "item_";
+    private static final String ITEMSTACK_PREFIX = "itemstack_";
+    private static final String EQUIPMENT_ITEMSTACKS_KEY = "equipmentItemStacks";
     private static final String GUIICONS_SCREEN_NAMES = "guiicons_screenNames";
     private static final String GUIICONS_SCREEN_SLOT_MAP = "guiicons_screenSlotMap";    
 
@@ -189,13 +189,16 @@ public class ItemConfig {
                 loadOrRestore();
                 return;
             }
+
             settings.loadFromJson(json);
+
             if (json.has(Key.PROTECTED_UUIDS)) {
                 JsonElement element = json.get(Key.PROTECTED_UUIDS);
+
                 if (element.isJsonObject()) {
                     protectedItems.loadFromJson(json);
+                    
                 } else if (element.isJsonArray()) {
-                    // Old format: List<String> - convert to Map<String, String>
                     JsonArray array = element.getAsJsonArray();
                     for (JsonElement item : array) {
                         if (item.isJsonPrimitive()) {
@@ -261,40 +264,17 @@ public class ItemConfig {
     }
 
     private static void loadEquipmentData(JsonObject json) {
-        loadEquipmentTextures(json);
-        loadEquipmentItems(json);
-    }
-
-    private static void loadEquipmentTextures(JsonObject json) {
-        if (json.has(Key.EQUIPMENT_SKULL_TEXTURES)) {
-            JsonElement element = json.get(Key.EQUIPMENT_SKULL_TEXTURES);
+        if (json.has(EQUIPMENT_ITEMSTACKS_KEY)) {
+            JsonElement element = json.get(EQUIPMENT_ITEMSTACKS_KEY);
             if (element.isJsonObject()) {
-                JsonObject texturesObj = element.getAsJsonObject();
-                for (Map.Entry<String, JsonElement> entry : texturesObj.entrySet()) {
+                JsonObject itemStacksObj = element.getAsJsonObject();
+                for (Map.Entry<String, JsonElement> entry : itemStacksObj.entrySet()) {
                     try {
                         int slot = Integer.parseInt(entry.getKey());
-                        String texture = entry.getValue().getAsString();
-                        equipmentData.set(TEXTURE_PREFIX + slot, texture);
+                        String itemStackData = entry.getValue().getAsString();
+                        equipmentData.set(ITEMSTACK_PREFIX + slot, itemStackData);
                     } catch (NumberFormatException e) {
-                        System.err.println("[ItemConfig] Invalid equipment texture slot: " + entry.getKey());
-                    }
-                }
-            }
-        }
-    }
-
-    private static void loadEquipmentItems(JsonObject json) {
-        if (json.has(Key.EQUIPMENT_SKULL_ITEMS)) {
-            JsonElement element = json.get(Key.EQUIPMENT_SKULL_ITEMS);
-            if (element.isJsonObject()) {
-                JsonObject itemsObj = element.getAsJsonObject();
-                for (Map.Entry<String, JsonElement> entry : itemsObj.entrySet()) {
-                    try {
-                        int slot = Integer.parseInt(entry.getKey());
-                        String itemData = entry.getValue().getAsString();
-                        equipmentData.set(ITEM_PREFIX + slot, itemData);
-                    } catch (NumberFormatException e) {
-                        System.err.println("[ItemConfig] Invalid equipment item slot: " + entry.getKey());
+                        System.err.println("[ItemConfig] Invalid equipment itemstack slot: " + entry.getKey());
                     }
                 }
             }
@@ -346,7 +326,7 @@ public class ItemConfig {
             JsonElement element = json.get(GUIICONS_SCREEN_NAMES);
             Set<String> names = GSON.fromJson(element, new TypeToken<Set<String>>(){}.getType());
             if (names != null) {
-                me.valkeea.fishyaddons.handler.GuiIcons.setScreenNames(names);
+                GuiIcons.setScreenNames(names);
             }
         }
         // screenSlotMap
@@ -354,7 +334,7 @@ public class ItemConfig {
             JsonElement element = json.get(GUIICONS_SCREEN_SLOT_MAP);
             Map<String, Set<Integer>> map = GSON.fromJson(element, new TypeToken<Map<String, Set<Integer>>>(){}.getType());
             if (map != null) {
-                me.valkeea.fishyaddons.handler.GuiIcons.setScreenSlotMap(map);
+                GuiIcons.setScreenSlotMap(map);
             }
         }
     }    
@@ -412,24 +392,21 @@ public class ItemConfig {
     }
 
     private static void saveEquipmentData(JsonObject json) {
-        Map<String, String> textures = new HashMap<>();
-        Map<String, String> items = new HashMap<>();
+        Map<String, String> itemStacks = new HashMap<>();
 
         for (Map.Entry<String, String> entry : equipmentData.getValues().entrySet()) {
             String key = entry.getKey();
             String value = entry.getValue();
 
-            if (key.startsWith(TEXTURE_PREFIX)) {
-                String slotStr = key.substring(TEXTURE_PREFIX.length());
-                textures.put(slotStr, value);
-            } else if (key.startsWith(ITEM_PREFIX)) {
-                String slotStr = key.substring(ITEM_PREFIX.length());
-                items.put(slotStr, value);
+            if (key.startsWith(ITEMSTACK_PREFIX)) {
+                String slotStr = key.substring(ITEMSTACK_PREFIX.length());
+                itemStacks.put(slotStr, value);
             }
         }
 
-        json.add(Key.EQUIPMENT_SKULL_TEXTURES, GSON.toJsonTree(textures));
-        json.add(Key.EQUIPMENT_SKULL_ITEMS, GSON.toJsonTree(items));
+        if (!itemStacks.isEmpty()) {
+            json.add(EQUIPMENT_ITEMSTACKS_KEY, GSON.toJsonTree(itemStacks));
+        }
     }
 
     public static void saveBackup() {
@@ -465,8 +442,8 @@ public class ItemConfig {
     }
 
     private static void saveGuiIconsConfig(JsonObject json) {
-        Set<String> names = me.valkeea.fishyaddons.handler.GuiIcons.getScreenNames();
-        Map<String, Set<Integer>> map = me.valkeea.fishyaddons.handler.GuiIcons.getScreenSlotMap();
+        Set<String> names = GuiIcons.getScreenNames();
+        Map<String, Set<Integer>> map = GuiIcons.getScreenSlotMap();
         json.add(GUIICONS_SCREEN_NAMES, GSON.toJsonTree(names));
         json.add(GUIICONS_SCREEN_SLOT_MAP, GSON.toJsonTree(map));
     }    
@@ -569,7 +546,7 @@ public class ItemConfig {
     }
 
     public static synchronized void addUUID(String uuid, Text displayName) {
-        String serialized = TextFormatUtil.serialize(displayName);
+        String serialized = JsonUtil.serializeText(displayName);
         protectedItems.set(uuid, serialized);
         save();
     }
@@ -590,7 +567,7 @@ public class ItemConfig {
 
     public static synchronized Text getDisplayName(String uuid) {
         String serialized = protectedItems.getValues().get(uuid);
-        return serialized != null ? TextFormatUtil.deserialize(serialized) : null;
+        return serialized != null ? JsonUtil.deserializeText(serialized) : null;
     }
 
     public static synchronized Map<String, String> getProtectedUUIDs() {
@@ -639,72 +616,41 @@ public class ItemConfig {
         save();
     }
 
-    // --- Equipment Skulls ---
-    public static synchronized void setEqSkull(int slot, String textureUrl) {
-        String key = TEXTURE_PREFIX + slot;
-        if (textureUrl == null) {
+    // --- Eq ItemStacks ---
+
+    public static synchronized void clearEquipmentSlot(int slot) {
+        equipmentData.remove(ITEMSTACK_PREFIX + slot);
+        save();
+    }
+
+    public static synchronized void setEqItemStack(int slot, String serializedItemStack) {
+        String key = ITEMSTACK_PREFIX + slot;
+        if (serializedItemStack == null || serializedItemStack.isEmpty()) {
             equipmentData.remove(key);
         } else {
-            equipmentData.set(key, textureUrl);
+            equipmentData.set(key, serializedItemStack);
         }
         save();
     }
 
-    public static synchronized String getEquipmentSkullTexture(int slot) {
-        return equipmentData.getValues().get(TEXTURE_PREFIX + slot);
+    public static synchronized String getEqItemStack(int slot) {
+        return equipmentData.getValues().get(ITEMSTACK_PREFIX + slot);
     }
 
-    public static synchronized void setEqItemData(int slot, String itemData) {
-        String key = ITEM_PREFIX + slot;
-        if (itemData == null) {
-            equipmentData.remove(key);
-        } else {
-            equipmentData.set(key, itemData);
-        }
-        save();
-    }
-
-    public static synchronized String getEquipmentSkullItemData(int slot) {
-        return equipmentData.getValues().get(ITEM_PREFIX + slot);
-    }
-
-    public static synchronized boolean hasEquipmentSkull(int slot) {
-        return equipmentData.getValues().containsKey(TEXTURE_PREFIX + slot);
-    }
-
-    public static synchronized void clearEquipmentSkulls() {
-        Set<String> keysToRemove = new HashSet<>();
-        for (String key : equipmentData.getValues().keySet()) {
-            if (key.startsWith(TEXTURE_PREFIX) || key.startsWith(ITEM_PREFIX)) {
-                keysToRemove.add(key);
-            }
-        }
-        for (String key : keysToRemove) {
-            equipmentData.remove(key);
-        }
-        save();
-    }
-
-    public static synchronized Map<Integer, String> getAllEquipmentSkullTextures() {
+    public static synchronized Map<Integer, String> getAllEqItemStacks() {
         Map<Integer, String> result = new HashMap<>();
         for (Map.Entry<String, String> entry : equipmentData.getValues().entrySet()) {
             String key = entry.getKey();
-            if (key.startsWith(TEXTURE_PREFIX)) {
+            if (key.startsWith(ITEMSTACK_PREFIX)) {
                 try {
-                    int slot = Integer.parseInt(key.substring(TEXTURE_PREFIX.length()));
+                    int slot = Integer.parseInt(key.substring(ITEMSTACK_PREFIX.length()));
                     result.put(slot, entry.getValue());
                 } catch (NumberFormatException e) {
-                    System.err.println("[ItemConfig] Invalid texture slot key: " + key);
+                    System.err.println("[ItemConfig] Invalid itemstack slot key: " + key);
                 }
             }
         }
         return result;
-    }
-
-    public static synchronized void clearEquipmentSlot(int slot) {
-        equipmentData.remove(TEXTURE_PREFIX + slot);
-        equipmentData.remove(ITEM_PREFIX + slot);
-        save();
     }
 
     public static void saveGuiIcons() {

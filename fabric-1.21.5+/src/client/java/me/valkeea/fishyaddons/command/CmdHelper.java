@@ -6,7 +6,7 @@ import java.util.Map;
 
 import me.valkeea.fishyaddons.config.ItemConfig;
 import me.valkeea.fishyaddons.util.FishyNotis;
-import me.valkeea.fishyaddons.util.text.TextFormatUtil;
+import me.valkeea.fishyaddons.util.JsonUtil;
 import net.minecraft.text.Text;
 import net.minecraft.text.TextColor;
 import net.minecraft.util.Formatting;
@@ -21,8 +21,8 @@ public class CmdHelper {
         List<Map.Entry<String, String>> entries = new ArrayList<>(ItemConfig.getProtectedUUIDs().entrySet());
 
         entries.sort((a, b) -> {
-            Text aText = TextFormatUtil.deserialize(a.getValue());
-            Text bText = TextFormatUtil.deserialize(b.getValue());
+            Text aText = JsonUtil.deserializeText(a.getValue());
+            Text bText = JsonUtil.deserializeText(b.getValue());
 
             char aColor = getFirstColorCode(aText);
             char bColor = getFirstColorCode(bText);
@@ -44,7 +44,7 @@ public class CmdHelper {
 
         FishyNotis.send(Text.literal("Protected Items:").formatted(Formatting.AQUA));
         for (Map.Entry<String, String> entry : entries) {
-            Text shown = TextFormatUtil.deserialize(entry.getValue());
+            Text shown = JsonUtil.deserializeText(entry.getValue());
             FishyNotis.alert(Text.literal(" - ").formatted(Formatting.DARK_GRAY).append(shown));
         }
     }

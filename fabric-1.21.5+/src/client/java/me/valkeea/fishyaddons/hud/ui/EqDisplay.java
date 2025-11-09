@@ -1,4 +1,4 @@
-package me.valkeea.fishyaddons.hud;
+package me.valkeea.fishyaddons.hud.ui;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -8,8 +8,9 @@ import org.slf4j.LoggerFactory;
 
 import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.config.Key;
-import me.valkeea.fishyaddons.util.EqTextures;
+import me.valkeea.fishyaddons.feature.skyblock.EqTextures;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ingame.InventoryScreen;
 import net.minecraft.item.ItemStack;
@@ -17,14 +18,14 @@ import net.minecraft.util.Identifier;
 
 public class EqDisplay {
     private static EqDisplay instance = null;    
-    private static final Logger LOGGER = LoggerFactory.getLogger("FishyAddons/ArmorDisplay");
+    private static final Logger LOGGER = LoggerFactory.getLogger("FishyAddons/EqDisplay");
     private static final Identifier SLOT_TEXTURE = Identifier.of("minecraft", "textures/gui/container/inventory.png");
 
     private static final Map<Integer, ItemStack> cachedSkullItems = new HashMap<>();
     private static final Map<Integer, Integer[]> cachedArmorPositions = new HashMap<>();
     private static final Map<Integer, Integer[]> renderedPositions = new HashMap<>();
 
-    private static final long CACHE_REFRESH_INTERVAL = 5000;
+    private static final long CACHE_REFRESH_INTERVAL = 1000;
     private static final int SLOT_SIZE = 18;   
 
     private static boolean positionsComputed = false;
@@ -43,7 +44,6 @@ public class EqDisplay {
      * Refresh cached equipment data
      */
     private static void refresh() {
-
         cachedSkullItems.clear();
         for (int i = 0; i < 4; i++) {
             ItemStack item = EqTextures.getSlotItemStack(i);
@@ -51,11 +51,22 @@ public class EqDisplay {
                 cachedSkullItems.put(i, item);
             }
         }
+        LOGGER.debug("Refreshed equipment cache with {} items", cachedSkullItems.size());
     }
 
     public static void reset() {
         shouldRender = false;
         lastEquipmentCheck = 0;
+        cachedSkullItems.clear();
+        LOGGER.debug("Reset equipment display");
+    }
+    
+    /**
+     * Force a refresh of cached data on next render
+     */
+    public static void requestRefresh() {
+        lastEquipmentCheck = 0;
+        LOGGER.debug("Equipment display refresh requested");
     }
 
     /**
@@ -116,7 +127,6 @@ public class EqDisplay {
         MinecraftClient client = MinecraftClient.getInstance();
         if (client.player == null) return;
         
-        // Compute positions only when needed
         computePos(screen);
 
         long currentTime = System.currentTimeMillis();
@@ -134,7 +144,7 @@ public class EqDisplay {
                 
                 renderSlotBg(context, slotX, slotY);
                 if (EqTextures.hasSlotData(i) && !EqTextures.isEmptySlot(i) &&
-                    (cachedSkullItems.containsKey(i) || EqTextures.hasSkullTexture(i))) {
+                    (cachedSkullItems.containsKey(i))) {
                     renderSkull(context, slotX + 1, slotY + 1, i);
                 }
             }
@@ -170,6 +180,7 @@ public class EqDisplay {
             for (int i = 0; i < 4; i++) {
                 if (EqTextures.hasSlotData(i)) {
                     shouldRender = true;
+                    break;
                 }
             }
         }
@@ -212,7 +223,7 @@ public class EqDisplay {
     }
 
     public boolean handleMouseClick(int button) {
-        if (!me.valkeea.fishyaddons.util.SkyblockCheck.getInstance().isInSkyblock()) {
+        if (!me.valkeea.fishyaddons.api.skyblock.GameMode.skyblock()) {
             return false;
         }
 

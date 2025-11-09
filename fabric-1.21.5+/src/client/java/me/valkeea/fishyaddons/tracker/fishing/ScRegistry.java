@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import me.valkeea.fishyaddons.api.skyblock.SkyblockAreas.Island;
 import me.valkeea.fishyaddons.config.StatConfig;
 import me.valkeea.fishyaddons.tracker.ActivityMonitor;
 
@@ -18,22 +19,14 @@ public class ScRegistry {
     private static ScRegistry instance = null;
     private final Map<String, CreatureData> creatures = new LinkedHashMap<>();
     private boolean initialized = false;
-    private String lastArea = "";
+    private Island lastArea = Island.NA;
     private List<String> checked = new ArrayList<>();
     
     private String lastConditionsHash = "";
     private Map<String, Boolean> conditionCache = new HashMap<>();
     
     // Area constants
-    private static final String GALATEA = "galatea";
-    private static final String CRIMSON_HOTSPOT = "crimson_hotspot";
-    private static final String CRIMSON_PLHLEG = "crimson_plhleg";
-    private static final String CRIMSON_ISLES = "crimson_isles";
-    private static final String JERRY = "jerry";
-    private static final String BAYOU = "bayou";
-    private static final String CRYSTAL_HOLLOWS = "crystal_hollows";
-    private static final String PARK = "park";
-    private static final String ANY = "any";
+    private static final Island ANY = Island.DEF;
 
     private ScRegistry() {}
 
@@ -57,11 +50,11 @@ public class ScRegistry {
     public static class CreatureData {
         private final String id;
         private final String displayName;
-        private final Set<String> validAreas;
+        private final Set<Island> validAreas;
         private final List<SpawnRequirement> requirements;
         private final boolean isTracked;
         
-        public CreatureData(String id, String displayName, Set<String> validAreas, 
+        public CreatureData(String id, String displayName, Set<Island> validAreas, 
                            List<SpawnRequirement> requirements, boolean isTracked) {
             this.id = id;
             this.displayName = displayName;
@@ -72,15 +65,15 @@ public class ScRegistry {
         
         public String getId() { return id; }
         public String getDisplayName() { return displayName; }
-        public Set<String> getValidAreas() { return validAreas; }
+        public Set<Island> getValidAreas() { return validAreas; }
         public List<SpawnRequirement> getRequirements() { return requirements; }
         public boolean isTracked() { return isTracked; }
         
         /**
          * Check if this creature can spawn/be tracked in the given area with current conditions
          */
-        public boolean canSpawnIn(String area) {
-            if (!validAreas.contains(area) && !validAreas.contains("any")) { //
+        public boolean canSpawnIn(Island area) {
+            if (!validAreas.contains(area) && !validAreas.contains(Island.DEF)) { //
                 return false;
             }
             
@@ -90,7 +83,7 @@ public class ScRegistry {
         /**
          * Check if this creature should be incremented when another creature is caught
          */
-        public boolean shouldIncrementWhen(String caughtCreatureId, String area) {
+        public boolean shouldIncrementWhen(String caughtCreatureId, Island area) {
             return canSpawnIn(area) && 
                    !id.equals(caughtCreatureId) &&
                    !StatConfig.isIgnoredSc(id);
@@ -132,62 +125,62 @@ public class ScRegistry {
 
         SpawnRequirement notGalatea = new SpawnRequirement("not_galatea", 
             () -> {
-                try { return !GALATEA.equals(ScStats.getArea()); } catch (Exception e) { return true; }
+                try { return !Island.GAL.equals(ScStats.getArea()); } catch (Exception e) { return true; }
             });
             
         SpawnRequirement water = new SpawnRequirement("water", 
             () -> {
-                try { return !ScStats.getArea().contains("crimson"); } catch (Exception e) { return true; }
+                try { return !ScStats.getArea().key().contains("crimson"); } catch (Exception e) { return true; }
             });
 
         // Crimson Isles
         registerCreature(Sc.THUNDER, "§dThunder", 
-            Set.of(CRIMSON_ISLES), List.of(always), true);
+            Set.of(Island.CI), List.of(always), true);
             
         registerCreature(Sc.HSPT_THUNDER, "§dThunder §8(§3Hotspot§8)", 
-            Set.of(CRIMSON_HOTSPOT), List.of(always, notPool), true);
+            Set.of(Island.CI_HOTSPOT), List.of(always, notPool), true);
             
         registerCreature(Sc.POOL_THUNDER, "§dThunder §8(§3Pool§8)", 
-            Set.of(CRIMSON_PLHLEG), List.of(always), true);
+            Set.of(Island.PLHLEGBLAST), List.of(always), true);
             
         registerCreature(Sc.JAWBUS, "§cLord Jawbus", 
-            Set.of(CRIMSON_ISLES), List.of(always), true);
+            Set.of(Island.CI), List.of(always), true);
             
         registerCreature(Sc.HSPT_JAWBUS, "§cLord Jawbus §8(§3Hotspot§8)", 
-            Set.of(CRIMSON_HOTSPOT), List.of(always, notPool), true);
+            Set.of(Island.CI_HOTSPOT), List.of(always, notPool), true);
             
         registerCreature(Sc.POOL_JAWBUS, "§cLord Jawbus §8(§3Pool§8)", 
-            Set.of(CRIMSON_PLHLEG), List.of(always), true);
+            Set.of(Island.PLHLEGBLAST), List.of(always), true);
             
         registerCreature(Sc.RAGNAROK, "§cRagnarok", 
-            Set.of(CRIMSON_HOTSPOT, CRIMSON_PLHLEG), List.of(inHotspot), true);
+            Set.of(Island.CI_HOTSPOT, Island.PLHLEGBLAST), List.of(inHotspot), true);
             
         registerCreature(Sc.PLHLEG, "§dPlhlegblast", 
-            Set.of(CRIMSON_PLHLEG), List.of(inPool), true);
+            Set.of(Island.PLHLEGBLAST), List.of(inPool), true);
         
         // Jerry Island
         registerCreature(Sc.YETI, "§6Yeti", 
-            Set.of(JERRY), List.of(always), true);
+            Set.of(Island.JERRY), List.of(always), true);
             
         registerCreature(Sc.DRAKE, "§dReindrake", 
-            Set.of(JERRY), List.of(always), true);
+            Set.of(Island.JERRY), List.of(always), true);
         
         // Galatea
         registerCreature(Sc.ENT, "§5Ent", 
-            Set.of(GALATEA), List.of(always), true);
-            
+            Set.of(Island.GAL), List.of(always), true);
+
         registerCreature(Sc.EMP, "§6Loch Emperor", 
-            Set.of(GALATEA), List.of(always), true);
+            Set.of(Island.GAL), List.of(always), true);
         
         // Bayou, Ch, Park
         registerCreature(Sc.TITANOBOA, "§dTitanoboa", 
-            Set.of(BAYOU), List.of(always), true);
+            Set.of(Island.BAYOU), List.of(always), true);
             
         registerCreature(Sc.CH_MINER, "§6Abyssal Miner", 
-            Set.of(CRYSTAL_HOLLOWS), List.of(always), true);
+            Set.of(Island.CH), List.of(always), true);
             
         registerCreature(Sc.NIGHT_SQUID, "§5Night Squid", 
-            Set.of(PARK), List.of(always), true);
+            Set.of(Island.PARK), List.of(always), true);
         
         // Special conditions
         registerCreature(Sc.WATER_HYDRA, "§6Water Hydra", 
@@ -202,8 +195,8 @@ public class ScRegistry {
         registerCreature(Sc.GW, "§6Great White Shark", 
             Set.of(ANY), List.of(isShark, water), true);    
     }
-    
-    private void registerCreature(String id, String displayName, Set<String> validAreas, 
+
+    private void registerCreature(String id, String displayName, Set<Island> validAreas, 
                                  List<SpawnRequirement> requirements, boolean isTracked) {
         creatures.put(id, new CreatureData(id, displayName, validAreas, requirements, isTracked));
     }
@@ -211,10 +204,10 @@ public class ScRegistry {
     /**
      * Get all creatures that can spawn in the given area with current conditions
      */
-    public List<String> getCreaturesForArea(String area) {
+    public List<String> getCreaturesForArea(Island area) {
         ensureInit();
         
-        String currentConditionsHash = generateConditionsHash(area);
+        String currentConditionsHash = generateConditionsHash(area.key());
         
         if (!area.equals(lastArea) || !currentConditionsHash.equals(lastConditionsHash)) {
             lastArea = area;
@@ -250,7 +243,7 @@ public class ScRegistry {
     /**
      * Get all creatures that should be incremented when the given creature is caught in the given area
      */
-    public List<String> getCreaturesToIncrement(String caughtCreatureId, String area) {
+    public List<String> getCreaturesToIncrement(String caughtCreatureId, Island area) {
         ensureInit();
         return creatures.values().stream()
             .filter(creature -> creature.shouldIncrementWhen(caughtCreatureId, area))
@@ -264,7 +257,7 @@ public class ScRegistry {
         return creature != null && creature.isTracked();
     }
 
-    public boolean canSpawnIn(String creatureId, String area) {
+    public boolean canSpawnIn(String creatureId, Island area) {
         CreatureData creature = creatures.get(creatureId);
         return creature != null && creature.canSpawnIn(area);
     }    
@@ -292,7 +285,7 @@ public class ScRegistry {
     }
     
     public void clearCache() {
-        lastArea = "";
+        lastArea = Island.NA;
         lastConditionsHash = "";
         checked.clear();
         conditionCache.clear();

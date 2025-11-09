@@ -225,8 +225,8 @@ public class ScData {
     
     private void notifyHudDataChanged() {
         try {
-            me.valkeea.fishyaddons.hud.ScDisplay hudInstance = 
-                me.valkeea.fishyaddons.hud.ScDisplay.getInstance();
+            me.valkeea.fishyaddons.hud.elements.custom.ScDisplay hudInstance = 
+                me.valkeea.fishyaddons.hud.elements.custom.ScDisplay.getInstance();
             if (hudInstance != null) {
                 hudInstance.onDataChanged();
             }

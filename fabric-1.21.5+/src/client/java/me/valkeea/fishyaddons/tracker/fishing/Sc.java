@@ -2,7 +2,7 @@ package me.valkeea.fishyaddons.tracker.fishing;
 
 import java.util.List;
 
-import me.valkeea.fishyaddons.util.AreaUtils;
+import me.valkeea.fishyaddons.api.skyblock.SkyblockAreas;
 
 public class Sc {
     public static final String THUNDER = "thunder";
@@ -28,7 +28,7 @@ public class Sc {
     public static String genAreaKey(String creature) {
         String baseKey = creature.toLowerCase().replaceAll("§[0-9a-fk-or]", "").replaceAll("[^a-z0-9_]", "_");
         
-        if (AreaUtils.isCrimson() && (baseKey.equals(Sc.THUNDER) || baseKey.equals(Sc.JAWBUS))) {
+        if (SkyblockAreas.isCrimson() && (baseKey.equals(Sc.THUNDER) || baseKey.equals(Sc.JAWBUS))) {
             if (ScStats.isPool()) {
                 return baseKey + "_pool";
             } else if (ScStats.isHspt()) {
@@ -45,7 +45,7 @@ public class Sc {
         return ScRegistry.getInstance().isTracked(creatureId);
     }
 
-    public static boolean canSpawnIn(String creatureId, String area) {
+    public static boolean canSpawnIn(String creatureId, SkyblockAreas.Island area) {
         return ScRegistry.getInstance().canSpawnIn(creatureId, area);
     }    
 

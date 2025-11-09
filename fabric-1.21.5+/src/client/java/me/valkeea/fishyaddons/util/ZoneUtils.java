@@ -2,7 +2,9 @@ package me.valkeea.fishyaddons.util;
 
 import java.util.Arrays;
 
-import me.valkeea.fishyaddons.handler.WeatherTracker;
+import me.valkeea.fishyaddons.api.skyblock.SkyblockAreas;
+import me.valkeea.fishyaddons.api.skyblock.SkyblockAreas.Island;
+import me.valkeea.fishyaddons.feature.skyblock.WeatherTracker;
 import me.valkeea.fishyaddons.listener.WorldEvent;
 import me.valkeea.fishyaddons.util.text.ScoreboardUtils;
 
@@ -36,12 +38,12 @@ public class ZoneUtils {
             boolean hasTimeElapsed = area.contains("Time Elapsed");
 
             if (hasCrimson) {
-                AreaUtils.updateCi();
+                SkyblockAreas.updateCi();
             }
 
             if (hasCatacombs && hasTimeElapsed) {
                 isDungeons = true;
-                AreaUtils.setIsland("dungeon");
+                SkyblockAreas.setIsland(Island.DUNGEON);
                 WorldEvent.getInstance().reset();
             } else if (hasCatacombs) {
                 isDungeons = false;
@@ -54,17 +56,17 @@ public class ZoneUtils {
     }
 
     public static boolean checkDenOrPark() {
-        if (AreaUtils.isDenOrPark() || denOrPark) {
+        if (SkyblockAreas.isDenOrPark() || denOrPark) {
             return true;
         }
         ScoreboardUtils.getSidebarLines().forEach(line -> {
             if (line != null && (line.contains("The Park") || line.contains("Birch Park"))) {
-                AreaUtils.setIsland("park");
+                SkyblockAreas.setIsland(Island.PARK);
                 WeatherTracker.track();
                 denOrPark = true;
                 return;
             } else if (line != null && line.contains("Spider's Den")) {
-                AreaUtils.setIsland("den");
+                SkyblockAreas.setIsland(Island.DEN);
                 WeatherTracker.track();
                 denOrPark = true;
                 return;

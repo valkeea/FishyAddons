@@ -7,15 +7,13 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.jetbrains.annotations.Nullable;
 
-import me.valkeea.fishyaddons.config.FilterConfig.MessageContext;
+import me.valkeea.fishyaddons.api.skyblock.SkyblockAreas;
+import me.valkeea.fishyaddons.api.skyblock.SkyblockAreas.Island;
 import me.valkeea.fishyaddons.config.FishyConfig;
-import me.valkeea.fishyaddons.config.RuleFactory;
 import me.valkeea.fishyaddons.config.StatConfig;
-import me.valkeea.fishyaddons.processor.MessageAnalysis;
-import me.valkeea.fishyaddons.processor.SharedMessageDetector;
+import me.valkeea.fishyaddons.event.impl.FaEvents;
+import me.valkeea.fishyaddons.event.impl.ScCatchEvent;
 import me.valkeea.fishyaddons.tracker.ActivityMonitor;
-import me.valkeea.fishyaddons.tracker.SkillTracker;
-import me.valkeea.fishyaddons.util.AreaUtils;
 import me.valkeea.fishyaddons.util.FishyNotis;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.decoration.ArmorStandEntity;
@@ -24,38 +22,28 @@ import net.minecraft.util.math.Vec3d;
 
 public class ScStats {
     private static final double POSITION_CHECK_THRESHOLD = 5.0;
-
-    private static final String CI = "crimson_isles";
-    private static final String CH = "crystal_hollows";    
-    private static final String GALATEA = "galatea";
-    private static final String BAYOU = "bayou";    
-    private static final String JERRY = "jerry";
-    private static final String DEN = "den";
-    private static final String HUB = "hub";
-    private static final String PARK = "park";
-    private static final String NA = "invalid";
     private static final String CRIMSON_PREFIX = "crimson_";     
     private static final String SINCE_PREFIX = "since_";
     private static final String JAWBUS_VIAL_KEY = "jawbus_since_vial";
 
     private final Map<String, Integer> creatureCounters = new ConcurrentHashMap<>();
 
-    private final List<String> validAreas = List.of(
-        CI,
-        GALATEA,
-        BAYOU,
-        JERRY,
-        CH,
-        DEN,
-        HUB,
-        PARK
+    private final List<Island> validAreas = List.of(
+        Island.CI,
+        Island.GAL,
+        Island.BAYOU,
+        Island.JERRY,
+        Island.CH,
+        Island.DEN,
+        Island.HUB,
+        Island.PARK
     );
 
-    private final List<String> hotspotAreas = List.of(
-        CI,
-        BAYOU,
-        DEN,
-        HUB
+    private final List<Island> hotspotAreas = List.of(
+        Island.CI,
+        Island.BAYOU,
+        Island.DEN,
+        Island.HUB
     );
 
     private int jawbusSinceVial = 0;
@@ -68,7 +56,7 @@ public class ScStats {
     private static boolean isPlhlegPool = false;
     private static boolean isHotspot = false;
 
-    private static String area = "";
+    private static Island area = Island.NA;
     private static ScStats instance = null;
 
     private ScStats() {}
@@ -89,13 +77,14 @@ public class ScStats {
             ScStats instance = getInstance();            
             instance.load();
             ScData.refresh();
+            FaEvents.SEA_CREATURE_CATCH.register(instance::handleMatch);
         }
     }
 
     // --- Area / Context Management ---
-    public static void setArea(String newArea) {
+    public static void setArea(Island newArea) {
         if (!getInstance().validAreas.contains(newArea)) {
-            area = NA;
+            area = Island.NA;
         } else {
             area = newArea;
         }
@@ -124,7 +113,7 @@ public class ScStats {
         }
     }
 
-    public static String getArea() { return area; }
+    public static Island getArea() { return area; }
     public static boolean isHspt() { return isHotspot; }
     public static boolean isPool() { return isPlhlegPool; }
 
@@ -135,7 +124,7 @@ public class ScStats {
     }
     
     private static void checkPoolStatus() {
-        if (AreaUtils.isCrimson()) {
+        if (SkyblockAreas.isCrimson()) {
             boolean currentPoolStatus = updatePoolStatus();
             if (currentPoolStatus != isPlhlegPool) {
                 isPlhlegPool = currentPoolStatus;
@@ -186,29 +175,15 @@ public class ScStats {
         }
     }
 
-    public boolean handleMatch(String s) {
-        MessageAnalysis analysis = SharedMessageDetector.analyzeMessage(s);
-        if (analysis.hasFilterMatches()) {
+    public void handleMatch(ScCatchEvent event) {
 
-            var firstMatch = analysis.getFilterMatches().get(0);
-            var ruleName = firstMatch.getRuleName();
-            if (ruleName.startsWith("sc_")) {
-                String creatureId = ruleName.replace("sc_", "");
-                
-                ActivityMonitor.getInstance().recordActivity(ActivityMonitor.Currently.FISHING);
+        if (!enabled) return;
 
-                boolean isDoubleHook = false;
-                if (MessageContext.hasTriggerWithin(RuleFactory.getDhTriggers(), 50)) {
-                    isDoubleHook = true;
-                }
-
-                checkSpecialConditions(creatureId);
-
-                updateCounters(creatureId, isDoubleHook);
-                return true;
-            }
+        String id = event.seaCreatureId;
+        if (id != null) {
+            checkSpecialConditions(id);
+            updateCounters(id, event.wasDh);
         }
-        return false;
     }
 
     private static void checkSpecialConditions(String name) {
@@ -222,7 +197,7 @@ public class ScStats {
         }   
     }
 
-    private static void onCatch(String creatureId, int count) {
+    private static void updateDataOnCatch(String creatureId, int count) {
         ScData.onCatch(creatureId, count);
     }    
 
@@ -236,22 +211,22 @@ public class ScStats {
 
         int increment = isDoubleHook && countDh ? 2 : 1;
         
-        if (AreaUtils.isCrimson()) {
+        if (SkyblockAreas.isCrimson()) {
             checkPoolStatus();
         }
-        
-        String currentArea = getCurrentAreaKey();
+
+        Island currentArea = getCurrentAreaKey();
         processCatch(Sc.genAreaKey(creatureId), currentArea, increment, isDoubleHook);
     }
 
-    private void processCatch(String creatureId, String currentArea, int increment, boolean wasDh) {
+    private void processCatch(String creatureId, Island currentArea, int increment, boolean wasDh) {
         if (Sc.isTracked(creatureId) && Sc.canSpawnIn(creatureId, currentArea)) {
             
             int counterValue = getCounterFor(creatureId);
             String displayName = Sc.displayName(creatureId);
             
             sendTookXScFor(displayName, counterValue, wasDh);
-            onCatch(creatureId, counterValue);
+            updateDataOnCatch(creatureId, counterValue);
             setCounterFor(creatureId, 0);
             
             String finalCreatureId = creatureId;
@@ -276,11 +251,11 @@ public class ScStats {
                 });
             }
         }
-        SkillTracker.getInstance().onCatch(wasDh);       
+
         incrementCounters(creatureId, currentArea, increment);
     }
-    
-    private void incrementCounters(String caughtCreatureId, String currentArea, int increment) {
+
+    private void incrementCounters(String caughtCreatureId, Island currentArea, int increment) {
         List<String> creaturesToIncrement = ScRegistry.getInstance()
             .getCreaturesToIncrement(caughtCreatureId, currentArea);
             
@@ -350,16 +325,13 @@ public class ScStats {
         return enabled;
     }
 
-    public String getCurrentAreaKey() {
-        if (area.isEmpty()) {
-            return NA;
-        }
-        
-        if (CI.equals(area)) {
+    public Island getCurrentAreaKey() {
+
+        if (Island.CI.equals(area)) {
             if (isPlhlegPool) {
-                return "crimson_plhleg";
+                return Island.PLHLEGBLAST;
             } else if (isHotspot) {
-                return "crimson_hotspot";
+                return Island.CI_HOTSPOT;
             }
         }
         
@@ -398,7 +370,7 @@ public class ScStats {
         sb.append("§3Sc since in ");
         
         var currentArea = getCurrentAreaKey();
-        var isCi = currentArea.startsWith(CRIMSON_PREFIX) || CI.equals(currentArea);
+        var isCi = currentArea.key().startsWith(CRIMSON_PREFIX);
 
         if (!validAreas.contains(currentArea) && !isCi && !isHotspot) {
             sb.append("§bN/A §c(Invalid Area)");
@@ -406,8 +378,9 @@ public class ScStats {
             return;
         }
 
-        sb.append("§7").append(currentArea.substring(0, 1).toUpperCase())
-          .append(currentArea.substring(1).replace("_", " "));
+        String areaKey = currentArea.key();
+        sb.append("§7").append(areaKey.substring(0, 1).toUpperCase())
+          .append(areaKey.substring(1).replace("_", " "));
 
         if (isCi) {
             sb = buildCiStats(sb);
@@ -418,23 +391,23 @@ public class ScStats {
         FishyNotis.send(Text.literal(sb.toString()));
     }
     
-    private StringBuilder buildAreaStats(StringBuilder sb, String currentArea) {
+    private StringBuilder buildAreaStats(StringBuilder sb, Island currentArea) {
         switch (currentArea) {
-            case JERRY:
+            case Island.JERRY:
                 sb.append("§7, §6Yeti§7: §b").append(getCounterFor(Sc.YETI));
                 sb.append("§7, §dReindrake§7: §b").append(getCounterFor(Sc.DRAKE));
                 break;
-            case GALATEA:
+            case Island.GAL:
                 sb.append("§7, §5Ent§7: §b").append(getCounterFor(Sc.ENT));
                 sb.append("§7, §6Loch Emperor§7: §b").append(getCounterFor(Sc.EMP));
                 break;
-            case BAYOU:
+            case Island.BAYOU:
                 sb.append("§7, §dTitanoboa§7: §b").append(getCounterFor(Sc.TITANOBOA));
                 break;
-            case CH:
+            case Island.CH:
                 sb.append("§7, §6Abyssal Miner§7: §b").append(getCounterFor(Sc.CH_MINER));
                 break;
-            case PARK:
+            case Island.PARK:
                 sb.append("§7, §5Night Squid§7: §b").append(getCounterFor(Sc.NIGHT_SQUID));
                 break;    
             default:
@@ -444,9 +417,9 @@ public class ScStats {
 
         if (isHotspot) {
             sb.append("§7, §dWiki Tiki§7: §b").append(getCounterFor(Sc.TIKI));
-        }        
-        
-        if (!GALATEA.equals(currentArea)) {
+        }
+
+        if (!Island.GAL.equals(currentArea)) {
             sb.append("§7, §5Water Hydra§7: §b").append(getCounterFor(Sc.WATER_HYDRA));
         }
 

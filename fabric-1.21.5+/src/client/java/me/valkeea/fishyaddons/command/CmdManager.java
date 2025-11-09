@@ -21,6 +21,7 @@ public class CmdManager {
             registerFaCommand(dispatcher, "fishyaddons");
             registerFgCommand(dispatcher, "fg");
             registerFpCommand(dispatcher, "fp");
+            registerfwpCommand(dispatcher, "fwp");
         });
     }
     
@@ -91,5 +92,9 @@ public class CmdManager {
             return 1;
         });
         return builder;
+    }
+
+    private static void registerfwpCommand(CommandDispatcher<FabricClientCommandSource> dispatcher, String root) {
+        dispatcher.register(FishyCmd.registerWaypoint(root));
     }
 }

@@ -2,14 +2,15 @@ package me.valkeea.fishyaddons.listener;
 
 import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.config.ItemConfig;
-import me.valkeea.fishyaddons.hud.InfoDisplay;
+import me.valkeea.fishyaddons.feature.waypoints.ChainConfig;
+import me.valkeea.fishyaddons.feature.waypoints.WaypointChains;
+import me.valkeea.fishyaddons.hud.elements.custom.InfoDisplay;
 import me.valkeea.fishyaddons.util.FishyNotis;
-import me.valkeea.fishyaddons.util.SkyblockCheck;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
-import net.minecraft.client.MinecraftClient;
+import net.fabricmc.fabric.api.client.networking.v1.ClientLoginConnectionEvents;
 
 public class ClientConnected {
     private ClientConnected() {}
+
     private static boolean firstLoad = false;
     private static boolean anyRecreated = false;
     private static boolean anyRestored = false;
@@ -17,21 +18,23 @@ public class ClientConnected {
     private static boolean pendingAlert = false;
 
     public static void init() {
-        ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> onClientConnected());
+        ClientLoginConnectionEvents.INIT.register((handler, client) -> onClientConnected());
     }
 
     private static void onClientConnected() {
-        refreshServerData();
 
         boolean r1 = FishyConfig.isRecreated();
         boolean r2 = ItemConfig.isRecreated();
-        boolean r3 = me.valkeea.fishyaddons.util.ModInfo.shouldShowInfo();
+        boolean r3 = ChainConfig.isRecreated();
+        boolean a1 = me.valkeea.fishyaddons.util.ModInfo.shouldShowInfo();
 
-        firstLoad = r1 && r2;
-        anyRecreated = r1 || r2;
-        anyRestored = FishyConfig.isRestored() || ItemConfig.isRestored();
-        pendingInfo = r3;
+        firstLoad = r1 && r2 && r3;
+        anyRecreated = r1 || r2 || r3;
+        anyRestored = FishyConfig.isRestored() || ItemConfig.isRestored() || ChainConfig.isRestored();
+        pendingInfo = a1;
         pendingAlert = firstLoad || anyRecreated || anyRestored || pendingInfo;
+
+        onInitialLoad();
     }
 
     public static void triggerAction() {
@@ -43,10 +46,10 @@ public class ClientConnected {
                 FishyNotis.guideNoti();
             } else {
                 if (anyRecreated) {
-                    FishyNotis.send("One or more configuration files and their backups were missing, replaced with default.");
+                    FishyNotis.notice("One or more configuration files and their backups were missing, replaced with default.");
                 }
                 if (anyRestored) {
-                    FishyNotis.send("One or more configuration files were corrupted and have been restored from backups.");
+                    FishyNotis.notice("One or more configuration files were corrupted and have been restored from backups.");
                 }
             }
             resetFlags();
@@ -56,6 +59,7 @@ public class ClientConnected {
     private static void resetFlags() {
         ItemConfig.resetFlags();
         FishyConfig.resetFlags();
+        ChainConfig.resetFlags();
         firstLoad = false;
         anyRecreated = false;
         anyRestored = false;
@@ -63,13 +67,7 @@ public class ClientConnected {
         pendingAlert = false;
     }
 
-    public static void refreshServerData() {
-        MinecraftClient mc = MinecraftClient.getInstance();
-        if (mc.getCurrentServerEntry() != null) {
-            boolean isHypixel = mc.getCurrentServerEntry().address.toLowerCase().contains("hypixel");
-            SkyblockCheck.getInstance().setInHypixel(isHypixel);
-        } else {
-            SkyblockCheck.getInstance().setInHypixel(false);
-        }
+    private static void onInitialLoad() {
+        WaypointChains.onConnect();
     }
 }

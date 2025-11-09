@@ -59,11 +59,13 @@ public class Key {
     // --- Settings ---
     public static final String XP_COLOR = "xpColor";
     public static final String XP_COLOR_ON = "xpColorEnabled";
+
     public static final String FISHY_TRANS_LAVA = "fishyTransLava";
     public static final String FISHY_TRANS_LAVA_COLOR = "fishyTransLavaColor";
     public static final String FISHY_FIRE_OVERLAY = "fishyFireOverlay";        
     public static final String FISHY_LAVA = "fishyLava";
     public static final String FISHY_WATER = "fishyWater";
+
     public static final String XP_OUTLINE = "xpOutline";
     public static final String HD_FONT = "hdFont";
     public static final String FISHY_GUI = "fishyGui";
@@ -78,10 +80,17 @@ public class Key {
     public static final String MUTE_PHANTOM = "mutePhantom";
     public static final String MUTE_RUNE = "muteRune";
     public static final String MUTE_THUNDER = "muteThunder";
+
     public static final String RENDER_COORDS = "renderCoords";
     public static final String RENDER_COORD_COLOR = "renderCoordsColor";
     public static final String RENDER_COORD_MS = "renderCoordsMs";
     public static final String RENDER_COORD_HIDE_CLOSE = "renderCoordsHideClose";
+
+    public static final String WAYPOINT_CHAINS_ENABLED = "waypointChainsEnabled";
+    public static final String WAYPOINT_CHAINS_SHOW_RELICS = "waypointChainsShowRelics";
+    public static final String WAYPOINT_CHAINS_COMPLETION_DISTANCE = "waypointChainsDistance";
+    public static final String WAYPOINT_CHAINS_INFO = "waypointChainsInfo";
+    
     public static final String BEACON_ALARM = "beaconAlarm";
     public static final String COPY_CHAT = "copyChat";
     public static final String COPY_NOTI = "ccNoti";
@@ -107,9 +116,12 @@ public class Key {
     public static final String MOD_KEY_LOCK_GUISLOT = "lockGuiSlotKey";
     public static final String GLOBAL_FA_COLORS = "globalFaColors";
     public static final String CUSTOM_FA_COLORS = "customFaColors";
+
     public static final String CHAT_ALERTS_ENABLED = "chatAlertsOn";
     public static final String ALIASES_ENABLED = "aliasesOn";
     public static final String CHAT_REPLACEMENTS_ENABLED = "chatReplacementsOn";
+    public static final String KEY_SHORTCUTS_ENABLED = "keyShortcutsOn";
+
     public static final String CHAT_FILTER_ENABLED = "chatFilterOn";
     public static final String CHAT_FILTER_SC_ENABLED = "chatFilterSCOn";
     public static final String CHAT_FILTER_COORDS_ENABLED = "chatFilterCoordsOn";
@@ -117,15 +129,13 @@ public class Key {
     public static final String CHAT_FILTER_HIDE_AUTOPET_MESSAGES = "chatFilterAutopetOn";
     public static final String CHAT_FILTER_HIDE_HYPE = "chatFilterHypeOn";
     public static final String CHAT_FILTER_PARTYBTN = "chatFilterPartyBtnOn";
-    public static final String KEY_SHORTCUTS_ENABLED = "keyShortcutsOn";
+
     public static final String THEME_MODE = "themeMode";
     public static final String INFO_ID = "infoId";
     public static final String HUD_TEXT_SHADOW = "hudTextShadow";
     public static final String CHAT_FORMATTING = "chatFormatting";
     public static final String HELD_ITEM_TRANSFORMS = "heldItemTransforms";
     public static final String ACCEPT_NPC = "acceptNpcDialogue";
-
-    // GUI Scale
     public static final String MOD_UI_SCALE = "modUiScale";
 
     // --- ItemConfig ---
@@ -155,11 +165,13 @@ public class Key {
         chatReplacements.set(":cat:", "ᗢᘏᓗ");
         chatReplacements.set(":hi:", "ඞ");
         chatReplacements.set("examplestring", "If sent by you, it will be replaced by this text. Not for commands.");
+
         settings.set(FISHY_LAVA, false);
         settings.set(FISHY_WATER, false);
         settings.set(FISHY_TRANS_LAVA, false);
         settings.set(FISHY_TRANS_LAVA_COLOR, -13700380);        
         settings.set(FISHY_FIRE_OVERLAY, false);
+
         settings.set(RENDER_COORD_COLOR, -5653771);
         settings.set(CUSTOM_PARTICLE_COLOR_INDEX, Integer.valueOf(1));
         settings.set(XP_COLOR, -3157761);
@@ -171,6 +183,12 @@ public class Key {
         settings.set(MUTE_RUNE, false);
         settings.set(MUTE_THUNDER, false);
         settings.set(RENDER_COORDS, true);
+
+        settings.set(WAYPOINT_CHAINS_ENABLED, false);
+        settings.set(WAYPOINT_CHAINS_SHOW_RELICS, false);
+        settings.set(WAYPOINT_CHAINS_COMPLETION_DISTANCE, 3);
+        settings.set(WAYPOINT_CHAINS_INFO, true);
+
         settings.set(COPY_CHAT, true);
         settings.set(COPY_NOTI, true);
         settings.set(CUSTOM_PARTICLE_MODE, "preset");
@@ -201,10 +219,12 @@ public class Key {
         settings.set(MOD_UI_SCALE, 0.4265625f);
         settings.set(GLOBAL_FA_COLORS, false);
         settings.set(CUSTOM_FA_COLORS, false);
+
         settings.set(CHAT_ALERTS_ENABLED, false);
         settings.set(ALIASES_ENABLED, false);
         settings.set(CHAT_REPLACEMENTS_ENABLED, false);
         settings.set(KEY_SHORTCUTS_ENABLED, false);
+
         settings.set(CHAT_FILTER_ENABLED, false);
         settings.set(CHAT_FILTER_SC_ENABLED, false);
         settings.set(CHAT_FILTER_COORDS_ENABLED, true);
@@ -212,11 +232,13 @@ public class Key {
         settings.set(CHAT_FILTER_HIDE_AUTOPET_MESSAGES, false);
         settings.set(CHAT_FILTER_HIDE_HYPE, false);
         settings.set(CHAT_FILTER_PARTYBTN, false);
+
         settings.set(HUD_HEALTH_ENABLED, false);
         settings.set(HUD_TEXT_SHADOW, true);
         settings.set(CHAT_FORMATTING, true);
         settings.set(HELD_ITEM_TRANSFORMS, false);
         settings.set(ACCEPT_NPC, false);
+
         hud.set(HUD_PING_X, 5);
         hud.set(HUD_PING_Y, 12);
         hud.set(HUD_PING_SIZE, 12);
@@ -247,6 +269,7 @@ public class Key {
         hud.set(HUD_CATCH_GRAPH_Y, 25);
         hud.set(HUD_CATCH_GRAPH_SIZE, 80);
         hud.set(HUD_CATCH_GRAPH_COLOR, 10155196);
+
         modKeys.set(MOD_KEY_LOCK, "NONE");
         modKeys.set(MOD_KEY_LOCK_GUISLOT, "NONE");
     }

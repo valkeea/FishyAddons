@@ -25,7 +25,6 @@ run
 .vscode
 *.class
 *.jar
-*.bat
 *.swp
 *.DS_Store
 *.srg

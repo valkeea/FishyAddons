@@ -1,12 +1,13 @@
 package me.valkeea.fishyaddons.mixin;
 
-import net.minecraft.client.gui.hud.ChatHud;
-import net.minecraft.client.gui.hud.ChatHudLine;
+import java.util.List;
+
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 import org.spongepowered.asm.mixin.gen.Invoker;
 
-import java.util.List;
+import net.minecraft.client.gui.hud.ChatHud;
+import net.minecraft.client.gui.hud.ChatHudLine;
 
 @Mixin(ChatHud.class)
 public interface ChatHudAccessor {

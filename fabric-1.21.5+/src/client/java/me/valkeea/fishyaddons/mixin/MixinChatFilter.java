@@ -24,7 +24,8 @@ public class MixinChatFilter {
         cancellable = true
     )
     private void cancelEmptyFilteredMessages(Text message, MessageSignatureData signatureData, MessageIndicator indicator, CallbackInfo ci) {
-
+        if (!MinecraftClient.getInstance().isOnThread()) return;
+        
         Text filteredMessage = ChatProcessor.getInstance().applyDisplayFilters(message);
         filtered.set(filteredMessage);
         

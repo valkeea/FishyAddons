@@ -25,6 +25,7 @@ public class ColorWheel extends Screen {
     private float hue = 0.0f;
     private float saturation = 1.0f;
     private float lightness = 0.5f;
+    private int color = rgbToInt(new float[]{red, green, blue});
 
     private Consumer<Integer> onColorSelected;
     private Screen parent;
@@ -44,7 +45,10 @@ public class ColorWheel extends Screen {
     private int widgetHeight;
     private int fieldWidth;
     private int btnWidth;
+    private int btnY;
+    private int fieldY;
     
+    private boolean thick;
     private boolean draggingWheel = false;
     private boolean draggingBar = false;
 
@@ -74,17 +78,18 @@ public class ColorWheel extends Screen {
     }
 
     private void calcDimensions() {
-        uiScale = FishyConfig.getFloat(Key.MOD_UI_SCALE, 0.4265625f);
+        uiScale = Math.clamp(FishyConfig.getFloat(Key.MOD_UI_SCALE, 0.4265625f), 0.75f, 1.3f);
+        thick = uiScale > 1.0f;
         wheelRadius = (int)(70 * uiScale);
         wheelCenterX = this.width / 2;
-        wheelCenterY = this.height / 2 - 40;
+        wheelCenterY = this.height / 2 - 30;
         barWidth = (int)(140 * uiScale);
         barHeight = (int)(10 * uiScale); 
         widgetHeight = (int)(20 * uiScale);
         fieldWidth = (int)(150 * uiScale);
         btnWidth = (int)(70 * uiScale);               
         barX = wheelCenterX - barWidth / 2;
-        barY = wheelCenterY + wheelRadius + 20;
+        barY = wheelCenterY + wheelRadius + (int)(25 * uiScale);
     }
 
     @Override
@@ -95,16 +100,17 @@ public class ColorWheel extends Screen {
         updateRgbFromHsl();
         
         var tr = this.textRenderer;
-        int fieldY = barY + barHeight + 20;
+        fieldY = barY + barHeight + 20;
         hexField = new VCTextField(tr, wheelCenterX - fieldWidth / 2, fieldY, fieldWidth, widgetHeight, Text.literal("Hex (e.g. #FF00FF)"));
         hexField.setMaxLength(9);
         hexField.setUIScale(uiScale);
+        hexField.setTextShadow(false);
         updateHexField();
         this.addDrawableChild(hexField);
 
-        int buttonY = fieldY + 30;
+        btnY = fieldY + 30;
         var cancelBtn = new FaButton(
-            wheelCenterX - fieldWidth  / 2, buttonY, btnWidth, widgetHeight,
+            wheelCenterX - fieldWidth  / 2, btnY, btnWidth, widgetHeight,
             Text.literal("Cancel").setStyle(Style.EMPTY.withColor(0xFFFF8080)),
             btn -> this.client.setScreen(parent)
         );
@@ -112,7 +118,7 @@ public class ColorWheel extends Screen {
         this.addDrawableChild(cancelBtn);
 
         var confirmBtn = new FaButton(
-            wheelCenterX + 5, buttonY, btnWidth, widgetHeight,
+            wheelCenterX + 5, btnY, btnWidth, widgetHeight,
             Text.literal("Confirm").setStyle(Style.EMPTY.withColor(0xFFCCFFCC)),
             btn -> {
                 String hex = hexField.getText().trim();
@@ -224,10 +230,28 @@ public class ColorWheel extends Screen {
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        super.render(context, mouseX, mouseY, delta);        
+
+        int bgWidth = wheelRadius * 2 + 40;
+        int bgLeft = wheelCenterX - wheelRadius - 20;
+        int bgTop = wheelCenterY - wheelRadius - (int)(widgetHeight * 1.5f);
+        int bgBottom = btnY + widgetHeight + 10;
+        int headerHeight = bgTop + (int)(widgetHeight * 0.5f);
+
+        context.fill(bgLeft - 2, bgTop - 2, bgLeft + bgWidth + 2, bgBottom + 2, 0x70000000); 
+        VCRenderUtils.gradient(context, bgLeft, bgTop, bgWidth, bgBottom - bgTop, 0x30000000);          
+        super.render(context, mouseX, mouseY, delta);
+
+        context.drawText(
+            this.textRenderer,
+            VCText.header("Color Selection", null),
+            wheelCenterX - this.textRenderer.getWidth("Color Selection") / 2,
+            headerHeight,
+            0xFFFFFFFF,
+            false
+        );
+      
         context.drawTexture(RenderPipelines.GUI_TEXTURED, wheelId, wheelCenterX - wheelRadius, wheelCenterY - wheelRadius, 0, 0, wheelRadius * 2, wheelRadius * 2, wheelRadius * 2, wheelRadius * 2);
         lightnessBar(context);
-        
         selectionIndicators(context);
     }
     
@@ -242,40 +266,39 @@ public class ColorWheel extends Screen {
             
             context.fill(barX + x, barY, barX + x + 1, barY + barHeight, color);
         }
-        VCRenderUtils.border(context, barX, barY, barWidth, barHeight, 0xFFFFFFFF);
+        VCRenderUtils.border(context, barX, barY, barWidth, barHeight, 0x95000000);
     }
     
     private void selectionIndicators(DrawContext context) {
         previewIndicator(context);
         lightnessIndicator(context);
+        preview(context);
     }
     
     private void previewIndicator(DrawContext context) {
         float angle = hue * 2 * (float)Math.PI;
-        
-        // Convert from texture coordinates back to screen coordinates
-        int indicatorX = wheelCenterX + (int)(Math.cos(angle) * saturation * wheelRadius);
-        int indicatorY = wheelCenterY + (int)(-Math.sin(angle) * saturation * wheelRadius);
-        
-        float indicatorRadius = 7 * uiScale;
+        float indicatorX = wheelCenterX + (float)(Math.cos(angle) * saturation * wheelRadius);
+        float indicatorY = wheelCenterY + (float)(-Math.sin(angle) * saturation * wheelRadius);
+        float indicatorRadius = Math.max(6.0f, 8.0f * uiScale);
         int color = 0xFF000000 | (int)(red * 255) << 16 | (int)(green * 255) << 8 | (int)(blue * 255);
         
-        renderAntiAliasedCircle(context, indicatorX, indicatorY, indicatorRadius, color);
+        renderCircle(context, indicatorX, indicatorY, indicatorRadius, color);
     }
     
-    private void renderAntiAliasedCircle(DrawContext context, int centerX, int centerY, float radius, int fillColor) {
-        int minX = (int)(centerX - radius - 2);
-        int maxX = (int)(centerX + radius + 2);
-        int minY = (int)(centerY - radius - 2);
-        int maxY = (int)(centerY + radius + 2);
+    private void renderCircle(DrawContext context, float centerX, float centerY, float radius, int fillColor) {
+        int minX = (int)(centerX - radius - 3);
+        int maxX = (int)(centerX + radius + 3);
+        int minY = (int)(centerY - radius - 3);
+        int maxY = (int)(centerY + radius + 3);
+        
+        float borderWidth = thick ? 1.8f : 1.2f;
         
         for (int y = minY; y <= maxY; y++) {
             for (int x = minX; x <= maxX; x++) {
-                float dx = (float)x - centerX;
-                float dy = (float)y - centerY;
+                float dx = (float)x + 0.5f - centerX;
+                float dy = (float)y + 0.5f - centerY;
                 float distance = (float)Math.sqrt(dx * dx + dy * dy);
-                
-                int pixelColor = calcCirclePixelColor(distance, radius, fillColor);
+                int pixelColor = calcCirclePixel(distance, radius, borderWidth, fillColor);
                 if (pixelColor != 0) {
                     context.fill(x, y, x + 1, y + 1, pixelColor);
                 }
@@ -283,17 +306,36 @@ public class ColorWheel extends Screen {
         }
     }
     
-    private int calcCirclePixelColor(float distance, float radius, int fillColor) {
+    private int calcCirclePixel(float distance, float radius, float borderWidth, int fillColor) {
+
+        float innerRadius = radius - borderWidth;
+        
+        if (distance <= innerRadius) {
+            if (distance <= innerRadius - 1.0f) {
+                return fillColor;
+            }
+
+            float alpha = Math.min(1.0f, innerRadius - distance);
+            return blend(fillColor, 0x00000000, alpha);
+        }
 
         if (distance <= radius) {
-            float alpha = distance > radius - 1 ? radius - distance : 1.0f;
-            return alpha > 0 ? blend(fillColor, 0xFFFFFFFF, alpha) : 0;
+            float borderProgress = (distance - innerRadius) / borderWidth;
+            float edgeAlpha = 1.0f;
+            
+            if (distance <= innerRadius + 0.5f) {
+                edgeAlpha = Math.min(1.0f, (distance - innerRadius) + 0.5f);
+            } else if (distance >= radius - 0.5f) {
+                edgeAlpha = Math.min(1.0f, radius - distance + 0.5f);
+            }
+            
+            int borderColor = blend(0xFF000000, 0xFF404040, borderProgress);
+            return blend(borderColor, 0x00000000, edgeAlpha);
         }
         
-        if (distance <= radius + 1.5f) {
-            float borderAlpha = distance > radius + 0.5f ? 
-                (radius + 1.5f) - distance : 1.0f;
-            return borderAlpha > 0 ? blend(0xFFFFFFFF, 0x80FFFFFF, borderAlpha) : 0;
+        if (distance <= radius + 1.0f) {
+            float alpha = Math.max(0.0f, radius + 1.0f - distance);
+            return blend(0xFF202020, 0x00000000, alpha * 0.3f);
         }
         
         return 0;
@@ -301,8 +343,16 @@ public class ColorWheel extends Screen {
     
     private void lightnessIndicator(DrawContext context) {
         int lightnessIndicatorX = barX + (int)(lightness * barWidth);
-        context.fill(lightnessIndicatorX - 1, barY - 3, lightnessIndicatorX + 2, barY + barHeight + 3, 0xFFFFFFFF);
-        context.fill(lightnessIndicatorX, barY - 2, lightnessIndicatorX + 1, barY + barHeight + 2, 0xFF000000);
+        context.fill(lightnessIndicatorX - 3, barY - 4, lightnessIndicatorX + 3, barY + barHeight + 4, 0x80000000);
+        context.fill(lightnessIndicatorX - 1, barY - 2, lightnessIndicatorX + 1, barY + barHeight + 2, color);
+    }
+
+    private void preview(DrawContext context) {
+        int previewX = (int)(wheelCenterX + wheelRadius * 0.2f);
+        int previewY = fieldY + (int)(widgetHeight * 0.2f);
+        int previewWidth = (int)(wheelRadius * 0.8f);
+        int previewHeight = (int)(widgetHeight * 0.6f);
+        context.fill(previewX, previewY, previewX + previewWidth, previewY + previewHeight, color);
     }
 
     // --- Interaction ---
@@ -349,8 +399,10 @@ public class ColorWheel extends Screen {
     }
     
     private void updateHexField() {
+        color = rgbToInt(new float[]{red, green, blue});
         if (hexField != null) {
             hexField.setText(String.format("#%02X%02X%02X", (int)(red * 255), (int)(green * 255), (int)(blue * 255)));
+            hexField.setEditableColor(color);
         }
     }
 

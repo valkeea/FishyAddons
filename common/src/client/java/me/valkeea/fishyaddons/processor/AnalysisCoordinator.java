@@ -1,7 +1,5 @@
 package me.valkeea.fishyaddons.processor;
 
-import java.util.concurrent.ConcurrentHashMap;
-
 import org.jetbrains.annotations.Nullable;
 
 import me.valkeea.fishyaddons.config.FilterConfig;
@@ -14,9 +12,6 @@ public class AnalysisCoordinator {
 
     private static final AnalysisCoordinator INSTANCE = new AnalysisCoordinator();
     public static AnalysisCoordinator getInstance() { return INSTANCE; }
-    
-    private final ConcurrentHashMap<String, AnalysisResult> analysisCache = new ConcurrentHashMap<>();
-    private static final int MAX_CACHE_SIZE = 600;
     
     public static class AnalysisResult {
         private final MessageAnalysis baseAnalysis;
@@ -69,34 +64,25 @@ public class AnalysisCoordinator {
             return new AnalysisResult(MessageAnalysis.EMPTY, false, null, false, originalMessage);
         }
         
-        AnalysisResult cached = analysisCache.get(originalMessage);
-        if (cached != null && isCacheValid(cached)) {
-            return cached;
-        }
-        
         ensureSeaCreatureRulesAvailable();
 
         var baseAnalysis = BaseAnalysis.onPacket(originalMessage);
         var scInfo = extractScInfo(baseAnalysis);
         
-        AnalysisResult result = new AnalysisResult(
+        return new AnalysisResult(
             baseAnalysis,
             scInfo.isSeaCreatureMessage,
             scInfo.creatureId,
             scInfo.isDoubleHook,
             originalMessage
         );
-        
-        cacheResult(originalMessage, result);
-        
-        return result;
     }
     
     /**
      * Analyzes a message that may have been modified by other mods.
      * (this allows users to use either original, or messages modified by other mods)
      */
-    public AnalysisResult analyzeMessage(String originalMessage, @Nullable Text modifiedText) {
+    public AnalysisResult analyzeMessage(String originalMessage, @Nullable Text modifiedText) {   
 
         var baseResult = analyzeMessage(originalMessage);
         
@@ -158,22 +144,5 @@ public class AnalysisCoordinator {
             this.creatureId = creatureId;
             this.isDoubleHook = isDoubleHook;
         }
-    }
-    
-    private boolean isCacheValid(AnalysisResult cached) {
-        return (System.currentTimeMillis() - cached.getAnalysisTimestamp()) < 5000;
-    }
-    
-    private void cacheResult(String message, AnalysisResult result) {
-        if (analysisCache.size() >= MAX_CACHE_SIZE) {
-            analysisCache.entrySet().removeIf(entry -> 
-                (System.currentTimeMillis() - entry.getValue().getAnalysisTimestamp()) > 10000
-            );
-        }
-        analysisCache.put(message, result);
-    }
-    
-    public static void clearCache() {
-        getInstance().analysisCache.clear();
     }
 }

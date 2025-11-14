@@ -33,7 +33,6 @@ import me.valkeea.fishyaddons.feature.waypoints.TempWaypoint;
 import me.valkeea.fishyaddons.feature.waypoints.WaypointChains;
 import me.valkeea.fishyaddons.hud.elements.custom.TrackerDisplay;
 import me.valkeea.fishyaddons.hud.ui.EqDisplay;
-import me.valkeea.fishyaddons.processor.AnalysisCoordinator;
 import me.valkeea.fishyaddons.tool.FishyMode;
 import me.valkeea.fishyaddons.tracker.ActivityMonitor;
 import me.valkeea.fishyaddons.tracker.SkillTracker;
@@ -779,7 +778,6 @@ public class VCManager {
             ()-> {
                 FilterConfig.refreshScRules();
                 ActivityMonitor.refresh();
-                AnalysisCoordinator.clearCache();
             }
         ));
 
@@ -813,10 +811,7 @@ public class VCManager {
             "Toggle and configure Sc Filter.",
             Key.CHAT_FILTER_SC_ENABLED,
             false,
-            () -> {
-                FilterConfig.refreshScRules();
-                AnalysisCoordinator.clearCache();
-            },
+            FilterConfig::refreshScRules,
             new ExtraControl(null, false, true)
         ));
 
@@ -825,7 +820,7 @@ public class VCManager {
             "Filter out or override any chat message.",
             Key.CHAT_FILTER_ENABLED,
             false,
-            AnalysisCoordinator::clearCache,
+            null,
             new ExtraControl(null, false, true)
         ));
 
@@ -834,7 +829,7 @@ public class VCManager {
             "Hide sack drop messages from chat (tracker still receives them).",
             Key.CHAT_FILTER_HIDE_SACK_MESSAGES,
             false,
-            AnalysisCoordinator::clearCache
+            null
         ));
 
         filterSubEntries.add(VCEntry.toggle(
@@ -842,7 +837,7 @@ public class VCManager {
             "Hide autopet equip/summon messages from chat (pet display still tracks them).",
             Key.CHAT_FILTER_HIDE_AUTOPET_MESSAGES,
             false,
-            AnalysisCoordinator::clearCache
+            null
         ));
 
         filterSubEntries.add(VCEntry.toggle(
@@ -850,7 +845,7 @@ public class VCManager {
             "Hide the ability + failed teleport messages from chat.",
             Key.CHAT_FILTER_HIDE_HYPE,
             false,
-            AnalysisCoordinator::clearCache
+            null
         ));
 
         entries.add(VCEntry.expandable(

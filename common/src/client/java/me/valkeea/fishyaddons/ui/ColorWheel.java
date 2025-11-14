@@ -7,14 +7,14 @@ import me.valkeea.fishyaddons.config.Key;
 import me.valkeea.fishyaddons.ui.widget.FaButton;
 import me.valkeea.fishyaddons.ui.widget.VCTextField;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.texture.NativeImage;
 import net.minecraft.client.texture.NativeImageBackedTexture;
-import net.minecraft.text.Style;
-import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
+import net.minecraft.client.render.RenderLayer;
+import net.minecraft.text.Text;
+import net.minecraft.text.Style;
 
 public class ColorWheel extends Screen {
 
@@ -103,7 +103,6 @@ public class ColorWheel extends Screen {
         hexField = new VCTextField(tr, wheelCenterX - fieldWidth / 2, fieldY, fieldWidth, widgetHeight, Text.literal("Hex (e.g. #FF00FF)"));
         hexField.setMaxLength(9);
         hexField.setUIScale(uiScale);
-        hexField.setTextShadow(false);
         updateHexField();
         this.addDrawableChild(hexField);
 
@@ -249,7 +248,9 @@ public class ColorWheel extends Screen {
             false
         );
       
-        context.drawTexture(RenderPipelines.GUI_TEXTURED, wheelId, wheelCenterX - wheelRadius, wheelCenterY - wheelRadius, 0, 0, wheelRadius * 2, wheelRadius * 2, wheelRadius * 2, wheelRadius * 2);
+        context.drawTexture(RenderLayer::getGuiTextured, wheelId, wheelCenterX - wheelRadius,
+            wheelCenterY - wheelRadius, 0, 0, wheelRadius * 2, wheelRadius * 2, wheelRadius * 2, wheelRadius * 2);
+
         lightnessBar(context);
         selectionIndicators(context);
     }

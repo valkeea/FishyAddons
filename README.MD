@@ -2,7 +2,7 @@
 
 Note: Development is focused on 1.21.5+ but Forge-1.8.9 will be maintained.
 
-## **Version 2.0.9:**
+## **Version 2.1.0:**
 
 ### Currently in both versions:
 - Custom Redstone particle color; mainly to enhance Jawbus laser and Flay ability
@@ -20,6 +20,7 @@ Note: Development is focused on 1.21.5+ but Forge-1.8.9 will be maintained.
 - Custom f5 (No front perspective)
 - Ping/TPS/FPS display and command
 - Send and render player coordinates
+- Area based waypoint chains
 - Chat-event based alerts with customizeable title,
   autochat and sound alarm
 
@@ -53,3 +54,5 @@ Note: Development is focused on 1.21.5+ but Forge-1.8.9 will be maintained.
 - Scale crit particles on Galatea (invisibug)
 - Mute Phantoms, Thunders and annoying runes
 - Click to party (Guild chat)
+- Automatically accept NPC dialogue
+- Spider's Den relic waypoints

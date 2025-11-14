@@ -4,11 +4,12 @@ import java.awt.Rectangle;
 import java.util.List;
 
 import me.valkeea.fishyaddons.config.FishyConfig;
-import me.valkeea.fishyaddons.hud.core.HudDrawer;
 import me.valkeea.fishyaddons.hud.core.HudElement;
 import me.valkeea.fishyaddons.hud.core.HudElementState;
+import me.valkeea.fishyaddons.hud.core.HudDrawer;
 import me.valkeea.fishyaddons.tracker.profit.ValuableMobs;
 import me.valkeea.fishyaddons.tracker.profit.ValuableMobs.ValuableMobInfo;
+import me.valkeea.fishyaddons.ui.VCRenderUtils;
 import me.valkeea.fishyaddons.util.text.Color;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
@@ -56,17 +57,16 @@ public class HealthDisplay implements HudElement {
         int currentY = 0;
 
         if (editingMode) {
-            renderMobEntry(context, Text.literal("§dLord Jawbus"), "Lord Jawbus", 1250, 2000, currentY, state);
+            renderMobEntry(context, mc, Text.literal("§dLord Jawbus"), 1250, 2000, currentY, state);
             currentY += entryHeight / scale;
-            renderMobEntry(context, Text.literal("§dThunder"), "Thunder", 800, 1500, currentY, state);
+            renderMobEntry(context, mc, Text.literal("§dThunder"), 800, 1500, currentY, state);
         } else {
 
-            for (ValuableMobInfo mobInfo : valuableMobs) {
+            for (var mobInfo : valuableMobs) {
 
                 renderMobEntry(
-                    context,
+                    context, mc,
                     mobInfo.getDisplayName(),
-                    mobInfo.getName(),
                     mobInfo.getHealth(),
                     mobInfo.getMaxHealth(),
                     currentY, state
@@ -79,7 +79,7 @@ public class HealthDisplay implements HudElement {
         context.getMatrices().pop();
     }
 
-    private void renderMobEntry(DrawContext context, Text mobName, String mobNameStr, 
+    private void renderMobEntry(DrawContext context, MinecraftClient mc, Text mobName, 
                                int currentHealth, int maxHealth, int yOffset, HudElementState state) {
 
         if (maxHealth <= 0 || currentHealth < 0) return;
@@ -89,21 +89,12 @@ public class HealthDisplay implements HudElement {
         float scale = size / 12.0F;
 
         short healthPercent = maxHealth > 0 ? (short)((currentHealth * 100) / maxHealth) : 0;
-
-        String healthFormat;
-        if (healthPercent > 60) {
-            healthFormat = "§a";
-        } else if (healthPercent > 15) {
-            healthFormat = "§e";
-        } else {
-            healthFormat = "§c";
-        }
+        String healthFormat = healthPercent > 60 ? "§a" : (healthPercent > 15 ? "§e" : "§c");
         String health = healthFormat + String.format("%d/%d§c❤", currentHealth, maxHealth);
 
-        var mc = MinecraftClient.getInstance();
         var healthDisplay = Text.literal(health);
         int healthWidth = mc.textRenderer.getWidth(health);
-        int nameWidth = mc.textRenderer.getWidth(mobNameStr);
+        int nameWidth = mc.textRenderer.getWidth(mobName);
         int textX = nameWidth + (int)(10 * scale);
         var drawer = new HudDrawer(mc, context, state);
 
@@ -111,7 +102,7 @@ public class HealthDisplay implements HudElement {
         drawer.drawText(healthDisplay, textX, yOffset, color);
 
         int barY = yOffset + size + (int)(2 * scale);
-        int barWidth = Math.clamp(nameWidth + (long)healthWidth + (int)(10 * scale), (int)(60 * scale), (int)(120 * scale));
+        int barWidth = Math.max(nameWidth + healthWidth + (int)(10 * scale), (int)(120 * scale));
         int height = Math.clamp((int)(3 * scale), 1, 4);
 
         drawHealthBar(context, 0, barY, barWidth, height, healthPercent);
@@ -120,7 +111,7 @@ public class HealthDisplay implements HudElement {
     private void drawHealthBar(DrawContext context, int x, int y, int width, int height, short healthPercent) {
 
         context.fill(x, y, x + width, y + height, 0x80000000);
-        context.drawBorder(x, y, width, height + 1, 0xFF000000);
+        VCRenderUtils.border(context, x, y, width, height + 1, 0xFF000000);
 
         if (healthPercent > 0) {
             int healthWidth = width * healthPercent / 100;
@@ -154,7 +145,7 @@ public class HealthDisplay implements HudElement {
 
         } else {
 
-            for (ValuableMobInfo mob : mobs) {
+            for (var mob : mobs) {
                 String health = mob.getHealth() > 0 && mob.getMaxHealth() > 0 ? 
                     String.format("%d/%d❤", mob.getHealth(), mob.getMaxHealth()) : "Unknown";
                 String fullText = mob.getName() + " " + health;
@@ -196,7 +187,7 @@ public class HealthDisplay implements HudElement {
                 FishyConfig.getHudX(HUD_KEY, 5),
                 FishyConfig.getHudY(HUD_KEY, 5),
                 FishyConfig.getHudSize(HUD_KEY, 12),
-                FishyConfig.getHudColor(HUD_KEY, 0xFFFFFF),
+                FishyConfig.getHudColor(HUD_KEY, 0xFFFFFFFF),
                 FishyConfig.getHudOutline(HUD_KEY, false),
                 FishyConfig.getHudBg(HUD_KEY, true)
             );
@@ -214,7 +205,7 @@ public class HealthDisplay implements HudElement {
     @Override public void setHudPosition(int x, int y) { FishyConfig.setHudX(HUD_KEY, x); FishyConfig.setHudY(HUD_KEY, y); }
     @Override public int getHudSize() { return FishyConfig.getHudSize(HUD_KEY, 12); }
     @Override public void setHudSize(int size) { FishyConfig.setHudSize(HUD_KEY, size); }
-    @Override public int getHudColor() { return FishyConfig.getHudColor(HUD_KEY, 0xEECAEC); }
+    @Override public int getHudColor() { return FishyConfig.getHudColor(HUD_KEY, 0xFFEECAEC); }
     @Override public void setHudColor(int color) { FishyConfig.setHudColor(HUD_KEY, color); }
     @Override public boolean getHudOutline() { return FishyConfig.getHudOutline(HUD_KEY, false); }
     @Override public void setHudOutline(boolean outline) { FishyConfig.setHudOutline(HUD_KEY, outline); }   

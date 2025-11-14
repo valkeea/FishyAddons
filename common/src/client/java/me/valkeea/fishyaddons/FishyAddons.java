@@ -138,7 +138,6 @@ public class FishyAddons implements ClientModInitializer {
                 MinecraftClient.getInstance().setScreen(
                     new me.valkeea.fishyaddons.ui.VCScreen()
                 );
-                me.valkeea.fishyaddons.tracker.fishing.ScStats.getInstance().checkForVial("rare drop! radioactive vial");
             }
         });
     }

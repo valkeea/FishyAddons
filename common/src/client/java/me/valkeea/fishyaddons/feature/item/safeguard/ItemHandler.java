@@ -17,7 +17,8 @@ public class ItemHandler {
     }
 
     public static String extractUUID(ItemStack stack) {
-        var component = stack.getOrDefault(DataComponentTypes.CUSTOM_DATA, null);
+        var component = stack.get(DataComponentTypes.CUSTOM_DATA);
+        if (component == null)  return "";
         var uuidElement = component.copyNbt().get("uuid");
         return uuidElement instanceof NbtString uuid ? uuid.asString().orElse("") : "";
     }

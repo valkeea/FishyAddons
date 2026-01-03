@@ -44,8 +44,7 @@ public class TransLava {
                 && FishyConfig.getState(Key.FISHY_TRANS_LAVA, false);
 
         color = FishyConfig.getInt(Key.FISHY_TRANS_LAVA_COLOR, -13700380);
-        System.out.println("[FishyAddons] TransLava state changed: isEnabled=" + isEnabled + ", isSkyblock=" + isSkyblock +
-            ", island=" + island);
+        
         if (wasEnabled != isEnabled || (isEnabled && prevColor != color)) {
             reloadRenderHandler();
         }

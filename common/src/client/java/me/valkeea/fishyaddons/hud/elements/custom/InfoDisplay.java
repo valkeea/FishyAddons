@@ -27,7 +27,7 @@ public class InfoDisplay implements HudElement {
     private int width = 220;
     private int height = 60;
     private int bgColor = 0xAA222222;
-    private int textColor = 0xFFFFFF;
+    private int textColor = 0xFFFFFFFF;
     private boolean outlined = false;
     private boolean bg = true; 
 
@@ -85,13 +85,13 @@ public class InfoDisplay implements HudElement {
         int guideW = mc.textRenderer.getWidth("Press X to close");
         int btnY = textY + lines.length * lineHeight + 6;
         context.fill(hudX + 6, btnY, hudX + guideW + 14, btnY + 12, 0xAA000000);
-        context.drawText(mc.textRenderer, Text.literal("Press X to close"), textX, btnY + 2, 0xAAAAAA, false);
+        context.drawText(mc.textRenderer, Text.literal("Press X to close"), textX, btnY + 2, 0xFFAAAAAA, false);
 
         if (!LINK_BTN) return;
         int copyW = mc.textRenderer.getWidth("C to copy link");
         int copyX = hudX + 18 + guideW;
         context.fill(copyX, btnY, hudX + guideW + copyW + 28, btnY + 12, 0xAA000000);
-        context.drawText(mc.textRenderer, Text.literal("C to copy link"), copyX + 7, btnY + 2, 0xAAAAAA, false);
+        context.drawText(mc.textRenderer, Text.literal("C to copy link"), copyX + 7, btnY + 2, 0xFFAAAAAA, false);
     }  
 
     @Override

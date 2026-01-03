@@ -87,10 +87,7 @@ public class PetInfo {
 
     public static void onTablistReady() {
         setTablistReady(true);
-
-        if (l1Scanned == null) {
-            TabScanner.delayedScan();
-        }
+        if (l1Scanned == null && isOn) TabScanner.delayedScan();
     }    
 
     public static void setTablistReady(boolean ready) { tablistReady = ready; }

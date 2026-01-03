@@ -28,7 +28,7 @@ public abstract class MixinRedDustParticle extends BillboardParticle {
                         CallbackInfo ci) {
 
         var color = ParticleVisuals.getCustomColor();
-        if (color != null) {
+        if (color != null && color.length == 3) {
             this.red = color[0];
             this.green = color[1];
             this.blue = color[2];

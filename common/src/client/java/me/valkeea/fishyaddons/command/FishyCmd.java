@@ -15,6 +15,7 @@ import me.valkeea.fishyaddons.feature.qol.KeyShortcut;
 import me.valkeea.fishyaddons.feature.qol.NetworkMetrics;
 import me.valkeea.fishyaddons.feature.visual.RenderTweaks;
 import me.valkeea.fishyaddons.feature.waypoints.TempWaypoint;
+import me.valkeea.fishyaddons.feature.waypoints.WaypointChains;
 import me.valkeea.fishyaddons.feature.waypoints.WaypointCmd;
 import me.valkeea.fishyaddons.tool.GuiScheduler;
 import me.valkeea.fishyaddons.tool.PlayerPosition;
@@ -595,9 +596,27 @@ public class FishyCmd {
                     me.valkeea.fishyaddons.tracker.SkillTracker.getInstance().toggleDownTime();
                     return 1;
                 }))
+                .then(ClientCommandManager.literal("reset")
+                .executes(context -> {
+                    me.valkeea.fishyaddons.tracker.SkillTracker.getInstance().resetAll();
+                    FishyNotis.notice("Skill Tracker has been reset.");
+                    return 1;
+                }))
+                .then(ClientCommandManager.literal(TOGGLE)
+                .executes(context -> {
+                    boolean current = FishyConfig.getState(Key.HUD_SKILL_XP_ENABLED, false);
+                    FishyConfig.toggle(Key.HUD_SKILL_XP_ENABLED, !current);
+                    me.valkeea.fishyaddons.tracker.SkillTracker.getInstance().refresh();
+
+                    if (!current) {
+                        FishyNotis.on("Skill Tracker");
+                    } else FishyNotis.off("Skill Tracker");
+                    return 1;
+                }))
                 .executes(context -> {
                     FishyNotis.themed("Usage:");
                     FishyNotis.alert(Text.literal("§3/fa skilltracker downtime §8- §7Toggle downtime mode. Otherwise, skill XP tracking is paused after 1.5min and wiped after 15min."));
+                    FishyNotis.alert(Text.literal("§3/fa skilltracker reset §8- §7Reset all tracked XP for the session."));
                     return 1;
                 });
     }    
@@ -617,6 +636,19 @@ public class FishyCmd {
                 .then(ClientCommandManager.literal("list")
                     .executes(context ->  WaypointCmd.listWaypoints()
                     ))
+                .then(ClientCommandManager.literal(TOGGLE)
+                    .executes(context -> {
+                        boolean current = FishyConfig.getState(Key.WAYPOINT_CHAINS_ENABLED, false);
+                        FishyConfig.toggle(Key.WAYPOINT_CHAINS_ENABLED, !current);
+                        if (!current) {
+                            FishyNotis.on("Waypoint Chains");
+                        } else {
+                            FishyNotis.off("Waypoint Chains");
+                        }
+                        WaypointChains.refresh();
+                        return 1;
+                    }
+                    ))  
                 .then(ClientCommandManager.literal("info")
                     .then(ClientCommandManager.argument(CHAIN_NAME, StringArgumentType.word())
                         .executes(context -> {

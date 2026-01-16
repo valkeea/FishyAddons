@@ -251,7 +251,7 @@ public class WaypointCmd {
                 }
                 
                 int color = ChainConfig.getChainColor(chainName, areaKey);
-                String colorHex = String.format("#%06X", color & 0xFFFFFF);
+                String colorHex = String.format("#%06X", color & 0xFFFFFFFF);
                 var editBtn = me.valkeea.fishyaddons.util.text.ChatButton.create(
                     "/fwp color " + chainName,
                     "Edit"
@@ -392,7 +392,7 @@ public class WaypointCmd {
         GuiScheduler.scheduleGui(new ColorWheel(null, currentColor, selected -> {
             ChainConfig.setChainColor(chainName, area.key(), selected);
 
-            String colorHex = String.format("#%06X", selected & 0xFFFFFF);
+            String colorHex = String.format("#%06X", selected & 0xFFFFFFFF);
             FishyNotis.alert(Text.literal("§7Set color for chain '§3" + chainName + "§7' to ").append(Text.literal(colorHex + "§7!").styled(style ->
                 style.withColor(selected & 0xFFFFFFFF))));
         }));
@@ -485,7 +485,7 @@ public class WaypointCmd {
     }
 
     private static void chainNotFound(String chainName, String area) {
-        FishyNotis.warn("Chain '§3" + chainName + "§7' not found in " + area + "!");
+        FishyNotis.alert(Text.literal("§cChain '§3" + chainName + "§c' not found in " + area + "§c!"));
     }
 
     private static void areaNotFound() {

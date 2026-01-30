@@ -1,56 +1,152 @@
-package me.valkeea.fishyaddons.command;
+package me.valkeea.fishyaddons.command.handler;
 
 import java.util.Map;
 
+import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+
 import me.valkeea.fishyaddons.api.HypixelPriceClient;
+import me.valkeea.fishyaddons.command.CommandBuilderUtils;
 import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.config.TrackerProfiles;
+import me.valkeea.fishyaddons.hud.elements.custom.TrackerDisplay;
 import me.valkeea.fishyaddons.tracker.profit.ItemTrackerData;
 import me.valkeea.fishyaddons.tracker.profit.TrackerUtils;
 import me.valkeea.fishyaddons.util.FishyNotis;
+import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
+import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.text.Text;
 
-public class TrackerCmd {
-    private TrackerCmd() {}
-    private static final String KEY = me.valkeea.fishyaddons.config.Key.HUD_TRACKER_ENABLED;
-
-    public static boolean handle(String[] args) {
-        if (args.length == 0) {
-            FishyNotis.fp();
-            return false;
-        }
-
-        String subcommand = args[0].toLowerCase();
-
-        switch (subcommand) {
-            case "toggle":
-                return handleToggle();
-            case "clear":
-                return handleClear();
-            case "stats":
-                return handleStats();
-            case "init":
-                return handleInit();
-            case "refresh":
-                return handleRefresh();
-            case "status":
-                return handleStatus();
-            case "price":
-                return handlePrice(args);
-            case "type":
-                return handlePriceType(args);
-            case "profile":
-                return handleProfile(args);
-            case "ignored":
-                return handleIgnored();
-            case "restore":
-                return handleRestore(args);
-            default:
-                FishyNotis.fp();
-                return false;
-        }
+public class FpRoot implements CommandHandler {
+    
+    @Override
+    public String[] getRootNames() {
+        return new String[]{"profit", "fp"};
     }
+    
+    @Override
+    public void register(LiteralArgumentBuilder<FabricClientCommandSource> builder) {
+        builder
+            .then(toggleCmd())
+            .then(statsCmd())
+            .then(initCmd())
+            .then(refreshCmd())
+            .then(statusCmd())
+            .then(clearCmd())
+            .then(ignoredCmd())
+            .then(typeCmd())
+            .then(priceCmd())
+            .then(profileCmd())
+            .then(restoreCmd())
+            .executes(context -> {
+                FishyNotis.fp();
+                return 1;
+            });
+    }
+    
+    private static LiteralArgumentBuilder<FabricClientCommandSource> toggleCmd() {
+        return ClientCommandManager.literal("toggle")
+        .executes(ctx -> handleToggle() ? 1 : 0);
+    }
+    
+    private static LiteralArgumentBuilder<FabricClientCommandSource> statsCmd() {
+        return ClientCommandManager.literal("stats")
+        .executes(ctx -> handleStats() ? 1 : 0);
+    }
+    
+    private static LiteralArgumentBuilder<FabricClientCommandSource> initCmd() {
+        return ClientCommandManager.literal("init")
+        .executes(ctx -> handleInit() ? 1 : 0);
+    }
+    
+    private static LiteralArgumentBuilder<FabricClientCommandSource> refreshCmd() {
+        return ClientCommandManager.literal("refresh")
+        .executes(ctx -> handleRefresh() ? 1 : 0);
+    }
+    
+    private static LiteralArgumentBuilder<FabricClientCommandSource> statusCmd() {
+        return ClientCommandManager.literal("status")
+        .executes(ctx -> handleStatus() ? 1 : 0);
+    }
+    
+    private static LiteralArgumentBuilder<FabricClientCommandSource> clearCmd() {
+        return ClientCommandManager.literal("clear")
+        .executes(ctx -> handleClear() ? 1 : 0);
+    }
+    
+    private static LiteralArgumentBuilder<FabricClientCommandSource> ignoredCmd() {
+        return ClientCommandManager.literal("ignored")
+        .executes(ctx -> handleIgnored() ? 1 : 0);
+    }
+    
+    private static final String PROFILE = "profile";
+    private static final String PRICE = "price";
+    private static final String DELETE = "delete";    
+    private static final String RENAME = "rename";
+    private static final String RESTORE = "restore";
+    private static final String INSTA = "insta_sell";
+    private static final String OFFER = "sell_offer";
+    
+    private static LiteralArgumentBuilder<FabricClientCommandSource> typeCmd() {
+        return ClientCommandManager.literal("type")
+        .then(ClientCommandManager.literal(INSTA)
+        .executes(ctx -> handlePriceType(new String[]{"type", INSTA}) ? 1 : 0))
+        .then(ClientCommandManager.literal(OFFER)
+        .executes(ctx -> handlePriceType(new String[]{"type", OFFER}) ? 1 : 0))
+        .executes(ctx -> handlePriceType(new String[]{"type"}) ? 1 : 0);
+    }
+    
+    private static LiteralArgumentBuilder<FabricClientCommandSource> priceCmd() {
+        return ClientCommandManager.literal(PRICE)
+        .then(ClientCommandManager.argument("item", StringArgumentType.greedyString())
+        .executes(ctx -> {
+            String item = StringArgumentType.getString(ctx, "item");
+            return handlePrice(new String[]{PRICE, item}) ? 1 : 0;
+        }))
+        .executes(ctx -> handlePrice(new String[]{PRICE}) ? 1 : 0);
+    }
+    
+    private static LiteralArgumentBuilder<FabricClientCommandSource> profileCmd() {
+        return ClientCommandManager.literal(PROFILE)
+            .then(ClientCommandManager.literal(DELETE)
+                .then(ClientCommandManager.argument(PROFILE, StringArgumentType.greedyString())
+                    .executes(ctx -> {
+                        String profileName = StringArgumentType.getString(ctx, PROFILE);
+                        return handleProfile(new String[]{PROFILE, DELETE, profileName}) ? 1 : 0;
+                    })))
+            .then(ClientCommandManager.literal(RENAME)
+                .then(ClientCommandManager.argument("oldName", StringArgumentType.word())
+                    .then(ClientCommandManager.argument("newName", StringArgumentType.greedyString())
+                        .executes(ctx -> {
+                            String oldName = StringArgumentType.getString(ctx, "oldName");
+                            String newName = StringArgumentType.getString(ctx, "newName");
+                            return handleProfile(new String[]{PROFILE, RENAME, oldName, newName}) ? 1 : 0;
+                        }))))
+            .then(ClientCommandManager.argument("name", StringArgumentType.greedyString())
+                .executes(ctx -> {
+                    String profileName = StringArgumentType.getString(ctx, "name");
+                    return handleProfile(new String[]{PROFILE, profileName}) ? 1 : 0;
+                }))
+            .executes(ctx -> {
+                sendProfileClickable();
+                return 1;
+            });
+    }
+    
+    private static LiteralArgumentBuilder<FabricClientCommandSource> restoreCmd() {
+        return ClientCommandManager.literal(RESTORE)
+            .then(ClientCommandManager.literal("all")
+                .executes(ctx -> handleRestore(new String[]{RESTORE, "all"}) ? 1 : 0))
+            .then(ClientCommandManager.argument("item", StringArgumentType.greedyString())
+                .executes(ctx -> {
+                    String item = StringArgumentType.getString(ctx, "item");
+                    return handleRestore(new String[]{RESTORE, item}) ? 1 : 0;
+                }))
+            .executes(ctx -> handleRestore(new String[]{RESTORE}) ? 1 : 0);
+    }
+
+    private static final String KEY = me.valkeea.fishyaddons.config.Key.HUD_TRACKER_ENABLED;
     
     private static boolean handleToggle() {
         boolean newState = !FishyConfig.getState(KEY, false);
@@ -72,24 +168,21 @@ public class TrackerCmd {
     }
 
     private static boolean handlePriceType(String[] args) {
-        if (args.length < 2) {
+        var cmdArgs = new CommandBuilderUtils.CommandArgs(args);
+        
+        if (!cmdArgs.has(1)) {
             FishyNotis.themed("Usage: /fp type §3<insta_sell | sell_offer>");
             return false;
         }
 
-        String typeArg = args[1].toLowerCase();
         String newType;
-
-        switch (typeArg) {
-            case "insta_sell":
-                newType = "sellPrice";
-                break;
-            case "sell_offer":
-                newType = "buyPrice";
-                break;
-            default:
-                FishyNotis.warn("Invalid type! Use 'insta_sell' or 'sell_offer'.");
-                return false;
+        if (cmdArgs.matches(1, INSTA)) {
+            newType = "sellPrice";
+        } else if (cmdArgs.matches(1, OFFER)) {
+            newType = "buyPrice";
+        } else {
+            FishyNotis.warn("Invalid type! Use 'insta_sell' or 'sell_offer'.");
+            return false;
         }
 
         HypixelPriceClient.setPriceType(newType);
@@ -125,8 +218,8 @@ public class TrackerCmd {
             long inactiveMinutes = ItemTrackerData.getInactiveMinutes();
             sessionTimeDisplay += String.format(" §8(paused for %d min)", inactiveMinutes);
         }
+
         FishyNotis.alert(Text.literal(sessionTimeDisplay));
-        
         FishyNotis.alert(Text.literal(String.format("§7Total items: §3%d", totalItems)));
         
         if (totalValue > 0) {
@@ -141,7 +234,7 @@ public class TrackerCmd {
         
         FishyNotis.alert(Text.literal("§7Top items (by value):"));
         
-        HypixelPriceClient priceClient = ItemTrackerData.getPriceClient();
+        var priceClient = ItemTrackerData.getPriceClient();
         items.entrySet().stream()
             .map(entry -> {
                 String itemName = entry.getKey();
@@ -181,7 +274,7 @@ public class TrackerCmd {
 
     private static void initTracking() {
         ItemTrackerData.init();
-        HypixelPriceClient priceClient = ItemTrackerData.getPriceClient();
+        var priceClient = ItemTrackerData.getPriceClient();
         if (priceClient != null) {
             priceClient.clearAuctionCache();
         }
@@ -220,56 +313,55 @@ public class TrackerCmd {
     }
     
     private static boolean handleProfile(String[] args) {
-        if (args.length < 2) {
+        var cmdArgs = new CommandBuilderUtils.CommandArgs(args);
+        
+        if (!cmdArgs.has(1)) {
             sendProfileClickable();
             return true;
         }
 
-        String action = args[1].toLowerCase();
-
-        if ("delete".equals(action)) {
-            return profileDelete(args);
+        if (cmdArgs.matches(1, DELETE)) {
+            return profileDelete(cmdArgs);
+        }
+        
+        if (cmdArgs.matches(1, RENAME)) {
+            return profileRename(cmdArgs);
         }
 
-        if ("rename".equals(action)) {
-            return profileRename(args);
-        }
-
-        return profileSwitchOrCreate(args[1]);
+        return profileSwitchOrCreate(cmdArgs.get(1));
     }
 
-    private static boolean profileDelete(String[] args) {
-        if (args.length < 3) {
+    private static boolean profileDelete(CommandBuilderUtils.CommandArgs args) {
+        if (!args.has(2)) {
             FishyNotis.themed("Usage: §3/fp profile delete <name>");
             return false;
         }
 
-        String profileToDelete = args[2];
-        if ("default".equals(profileToDelete)) {
+        if ("default".equals(args.get(2))) {
             FishyNotis.warn("Cannot delete the default profile!");
             FishyNotis.alert(Text.literal("§7Use §3/fp clear §7if you wish to reset the session."));            
             return false;
         }
 
+        String profileToDelete = args.get(2);
         if (TrackerProfiles.deleteProfile(profileToDelete)) {
-            me.valkeea.fishyaddons.tracker.profit.TrackerUtils.onDelete(profileToDelete);
+            TrackerUtils.onDelete(profileToDelete);
         } else {
             FishyNotis.alert(Text.literal("§cProfile '" + profileToDelete + "' not found or cannot be deleted"));
         }
         return true;
     }
 
-    private static boolean profileRename(String[] args) {
-        if (args.length < 4) {
+    private static boolean profileRename(CommandBuilderUtils.CommandArgs args) {
+        if (!args.has(3)) {
             FishyNotis.themed("Usage: §3/fp profile rename <old_name> <new_name>");
             return false;
         }
 
-        String oldName = args[2];
-        String newName = args[3];
-
-        if (TrackerProfiles.renameProfile(oldName, newName)) {
+        if (TrackerProfiles.renameProfile(args.get(2), args.get(3))) {
+            String newName = args.get(3);
             TrackerProfiles.setCurrentProfile(newName);
+            String oldName = args.get(2);
             FishyNotis.send(Text.literal("§aRenamed profile §b" + oldName + " §ato §b" + newName));
         } else {
             FishyNotis.alert(Text.literal("§cInvalid profile name or profile not found"));
@@ -284,7 +376,7 @@ public class TrackerCmd {
             initTracking();
         }
 
-        String currentProfile = TrackerProfiles.getCurrentProfile();
+        var currentProfile = TrackerProfiles.getCurrentProfile();
 
         if (!"default".equals(currentProfile)) {
             TrackerProfiles.saveToJson();
@@ -312,7 +404,7 @@ public class TrackerCmd {
     }
 
     public static void sendProfileClickable() {
-        MinecraftClient mc = MinecraftClient.getInstance();
+        var mc = MinecraftClient.getInstance();
         if (mc.player == null) return;
 
         String currentProfile = TrackerProfiles.getCurrentProfile();
@@ -331,12 +423,14 @@ public class TrackerCmd {
     }    
 
     private static boolean handlePrice(String[] args) {
-        if (args.length < 2) {
+        var cmdArgs = new CommandBuilderUtils.CommandArgs(args);
+        
+        if (!cmdArgs.has(1)) {
             FishyNotis.alert(Text.literal("§cUsage: /fp price [amount] <item>"));
             return false;
         }
 
-        PriceQuery priceQuery = parsePriceArgs(args[1]);
+        var priceQuery = parsePriceArgs(cmdArgs.get(1));
         if (!priceQuery.isValid) {
             return false;
         }
@@ -367,25 +461,28 @@ public class TrackerCmd {
         int itemStartIndex = 0;
 
         if (splitArgs.length > 1) {
+
             try {
                 amount = Integer.parseInt(splitArgs[0]);
                 if (amount <= 0) {
                     FishyNotis.send(Text.literal("§cAmount must be a positive number"));
                     return new PriceQuery(1, "", false);
                 }
+
                 itemStartIndex = 1;
 
                 if (splitArgs.length < 2) {
                     FishyNotis.send(Text.literal("§cUsage: /fp price [amount] <item>"));
                     return new PriceQuery(1, "", false);
                 }
+
             } catch (NumberFormatException e) {
                 amount = 1;
                 itemStartIndex = 0;
             }
         }
 
-        StringBuilder itemName = new StringBuilder();
+        var itemName = new StringBuilder();
         for (int i = itemStartIndex; i < splitArgs.length; i++) {
             if (i > itemStartIndex) itemName.append(" ");
             itemName.append(splitArgs[i]);
@@ -427,13 +524,13 @@ public class TrackerCmd {
     }
     
     private static boolean handleIgnored() {
-        me.valkeea.fishyaddons.hud.elements.custom.TrackerDisplay trackerInstance = me.valkeea.fishyaddons.hud.elements.custom.TrackerDisplay.getInstance();
-        if (trackerInstance == null) {
+        var tracker = TrackerDisplay.getInstance();
+        if (tracker == null) {
             FishyNotis.alert(Text.literal("§cTracker display not initialized"));
             return false;
         }
         
-        java.util.Set<String> excludedItems = trackerInstance.getExcludedItemsForDisplay();
+        java.util.Set<String> excludedItems = tracker.getExcludedItemsForDisplay();
         
         if (excludedItems.isEmpty()) {
             FishyNotis.alert(Text.literal("§7No items are currently ignored"));
@@ -457,21 +554,23 @@ public class TrackerCmd {
     }
     
     private static boolean handleRestore(String[] args) {
-        me.valkeea.fishyaddons.hud.elements.custom.TrackerDisplay trackerInstance = me.valkeea.fishyaddons.hud.elements.custom.TrackerDisplay.getInstance();
-        if (trackerInstance == null) {
+        var cmdArgs = new CommandBuilderUtils.CommandArgs(args);
+        var tracker = TrackerDisplay.getInstance();
+        
+        if (tracker == null) {
             FishyNotis.alert(Text.literal("§cTracker display not initialized"));
             return false;
         }
         
-        if (args.length < 2) {
+        if (!cmdArgs.has(1)) {
             FishyNotis.alert(Text.literal("§cUsage: /fp restore <item_name> or /fp restore all"));
             return false;
         }
         
-        String restoreTarget = args[1];
+        String restoreTarget = cmdArgs.get(1);
         
         if ("all".equals(restoreTarget)) {
-            trackerInstance.restoreAllExcludedItems();
+            tracker.restoreAllExcludedItems();
             return true;
         }
         
@@ -479,13 +578,13 @@ public class TrackerCmd {
             restoreTarget = restoreTarget.substring(1, restoreTarget.length() - 1);
         }
         
-        if (!trackerInstance.getExcludedItemsForDisplay().contains(restoreTarget)) {
+        if (!tracker.getExcludedItemsForDisplay().contains(restoreTarget)) {
             String displayName = capitalizeItemName(restoreTarget);
             FishyNotis.alert(Text.literal("§c" + displayName + " is not in the ignored list"));
             return false;
         }
         
-        trackerInstance.restoreExcludedItem(restoreTarget);
+        tracker.restoreExcludedItem(restoreTarget);
         return true;
     }
     
@@ -493,7 +592,7 @@ public class TrackerCmd {
         if (itemName == null || itemName.isEmpty()) return itemName;
         
         String[] words = itemName.split(" ");
-        StringBuilder result = new StringBuilder();
+        var result = new StringBuilder();
         
         for (int i = 0; i < words.length; i++) {
             if (i > 0) result.append(" ");
@@ -515,10 +614,7 @@ public class TrackerCmd {
             FishyNotis.alert(Text.literal(String.format("§7Per hour: §e%s", formatCoins(profitPerHour))));
         }
     }
-    
-    /**
-     * Helper class for displaying item data sorted by value
-     */
+
     private static class ItemDisplayData {
         final String itemName;
         final int quantity;
@@ -531,5 +627,5 @@ public class TrackerCmd {
             this.unitPrice = unitPrice;
             this.totalValue = totalValue;
         }
-    }
+    }    
 }

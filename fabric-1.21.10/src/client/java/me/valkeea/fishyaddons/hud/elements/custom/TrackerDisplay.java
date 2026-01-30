@@ -397,7 +397,7 @@ public class TrackerDisplay implements HudElement {
     
     private void showProfileMenu() {
         FishyNotis.alert(Text.literal("§bYou can also left-click to cycle profiles!"));        
-        me.valkeea.fishyaddons.command.TrackerCmd.sendProfileClickable();
+        me.valkeea.fishyaddons.command.handler.FpRoot.sendProfileClickable();
     }
     
     private String enhance(String itemName) {

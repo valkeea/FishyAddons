@@ -7,6 +7,8 @@ import java.util.Map;
 import me.valkeea.fishyaddons.config.ItemConfig;
 import me.valkeea.fishyaddons.util.FishyNotis;
 import me.valkeea.fishyaddons.util.JsonUtil;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.screen.ChatScreen;
 import net.minecraft.text.Text;
 import net.minecraft.text.TextColor;
 import net.minecraft.util.Formatting;
@@ -31,10 +33,7 @@ public class CmdHelper {
 
             if (aIndex == -1) aIndex = colorOrder.length();
             if (bIndex == -1) bIndex = colorOrder.length();
-
-            if (aIndex != bIndex) {
-                return Integer.compare(aIndex, bIndex);
-            }
+            if (aIndex != bIndex)  return Integer.compare(aIndex, bIndex);
 
             String aAlpha = aText.getString();
             String bAlpha = bText.getString();
@@ -74,5 +73,23 @@ public class CmdHelper {
         }
 
         return null;
+    }
+
+    public static void sendClickable(String onAccept, String onDecline) {
+        var mc = MinecraftClient.getInstance();
+        if (mc.player == null) return;
+        Text yes = Text.literal("[Yes]")
+            .styled(style -> style.withClickEvent(new net.minecraft.text.ClickEvent.RunCommand(onAccept)).withColor(0xFFCCFFCC));
+        Text no = Text.literal("[No]")
+            .styled(style -> style.withClickEvent(new net.minecraft.text.ClickEvent.RunCommand(onDecline)).withColor(0xFFFF8080));
+        mc.player.sendMessage(Text.literal(" ").append(yes).append(Text.literal(" ")).append(no), false);
+    }
+    
+    public static int checkGUI() {
+        if (MinecraftClient.getInstance().currentScreen != null
+            && !(MinecraftClient.getInstance().currentScreen instanceof ChatScreen)) {
+            return 1;
+        }
+        return 0;
     }    
 }

@@ -30,6 +30,11 @@ public class StatConfig {
     private static final File BACKUP_DIR;
     private static final File BACKUP_FILE;
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    
+    private static boolean batchMode = false;
+    private static boolean pendingSave = false;
+    
+    private static final ThreadLocal<Integer> batchDepth = ThreadLocal.withInitial(() -> 0);
 
 
     public static class Stats<V> {
@@ -45,30 +50,46 @@ public class StatConfig {
             this.onChange = onChange;
         }
 
-        public Map<String, V> getValues() { return values; }
+        public Map<String, V> getValues() { 
+            synchronized (values) {
+                return new LinkedHashMap<>(values);
+            }
+        }
 
         public void set(String key, V value) {
             if (key == null || key.isEmpty()) return;
-            values.put(key, value);
+
+            synchronized (values) {
+                values.put(key, value);
+            }
             if (onChange != null) onChange.accept(null);
         }
 
         public void remove(String key) {
             if (key == null || key.isEmpty()) return;
-            values.remove(key);
+
+            synchronized (values) {
+                values.remove(key);
+            }
             if (onChange != null) onChange.accept(null);
         }
 
         public void loadFromJson(JsonObject json) {
             if (json.has(valuesKey)) {
                 Map<String, V> loaded = GSON.fromJson(json.get(valuesKey), valueType);
-                values.clear();
-                values.putAll(loaded);
+                synchronized (values) {
+                    values.clear();
+                    values.putAll(loaded);
+                }
             }
         }
 
         public void saveToJson(JsonObject json) {
-            json.add(valuesKey, GSON.toJsonTree(values));
+            Map<String, V> snapshot;
+            synchronized (values) {
+                snapshot = new LinkedHashMap<>(values);
+            }
+            json.add(valuesKey, GSON.toJsonTree(snapshot));
         }
     }
 
@@ -94,6 +115,16 @@ public class StatConfig {
 
     private static final Stats<String> sbUserSettings =
         new Stats<>("sb_user_settings",
+            new TypeToken<Map<String, String>>(){}.getType(),
+            v -> save());
+
+    private static final Stats<Integer> slayer =
+        new Stats<>("slayer",
+            new TypeToken<Map<String, Integer>>(){}.getType(),
+            v -> save());
+
+    private static final Stats<String> slayerStrings =
+        new Stats<>("slayer_strings",
             new TypeToken<Map<String, String>>(){}.getType(),
             v -> save());
 
@@ -142,6 +173,8 @@ public class StatConfig {
             catchGraph.loadFromJson(json);
             ignoredScs.loadFromJson(json);
             sbUserSettings.loadFromJson(json);
+            slayer.loadFromJson(json);
+            slayerStrings.loadFromJson(json);
 
         } catch (JsonSyntaxException | JsonIOException e) {
             System.err.println("[StatConfig] Malformed JSON: " + e.getMessage());
@@ -152,7 +185,38 @@ public class StatConfig {
         }
     }
 
+    /**
+     * Begin a batch of config writes.
+     * Saves will be queued until endBatch() is called.
+     */
+    public static void beginBatch() {
+        batchDepth.set(batchDepth.get() + 1);
+        batchMode = true;
+    }
+    
+    /**
+     * End a batch of config writes. If this is the outermost batch, performs the queued save.
+     */
+    public static void endBatch() {
+        int depth = batchDepth.get() - 1;
+        batchDepth.set(Math.max(0, depth));
+        
+        if (depth <= 0) {
+            batchMode = false;
+            batchDepth.remove();
+            if (pendingSave) {
+                save();
+                pendingSave = false;
+            }
+        }
+    }
+
     public static synchronized void save() {
+        if (batchMode) {
+            pendingSave = true;
+            return;
+        }
+        
         try (Writer writer = new FileWriter(CONFIG_FILE)) {
             JsonObject json = new JsonObject();
             diana.saveToJson(json);
@@ -160,6 +224,8 @@ public class StatConfig {
             catchGraph.saveToJson(json);
             ignoredScs.saveToJson(json);
             sbUserSettings.saveToJson(json);
+            slayer.saveToJson(json);
+            slayerStrings.saveToJson(json);
 
             GSON.toJson(json, writer);
         } catch (IOException e) {
@@ -245,6 +311,38 @@ public class StatConfig {
     public static int getSince(String key) {
         Integer v = since.getValues().get(key);
         return v != null ? v : 0;
+    }
+
+    // --- Slayer Stats ---
+
+    public static int getSlayer(String key, int def) {
+        Integer v = slayer.getValues().getOrDefault(key, def);
+        if (v == null) {
+            slayer.set(key, def);
+            save();
+            return def;
+        }
+        return v;
+    }
+
+    public static void setSlayer(String key, int value) {
+        slayer.set(key, value);
+        save();
+    }
+
+    public static String getSlayerString(String key, String def) {
+        String v = slayerStrings.getValues().getOrDefault(key, def);
+        if (v == null) {
+            slayerStrings.set(key, def);
+            save();
+            return def;
+        }
+        return v;
+    }
+
+    public static void setSlayerString(String key, String value) {
+        slayerStrings.set(key, value);
+        save();
     }
 
     // --- Catch Histogram ---

@@ -217,6 +217,8 @@ public class DianaStats {
 
     public void save() {
         if (!enabled || sessionBurrows == 0) return;
+
+        StatConfig.beginBatch();
         
         double totalBurrows = StatConfig.getDiana(TOTAL_BURROWS_KEY, 0);
         StatConfig.setDiana(TOTAL_BURROWS_KEY, (int)(totalBurrows + sessionBurrows));
@@ -230,6 +232,8 @@ public class DianaStats {
         StatConfig.setDiana(TOTAL_MOBS_KEY, (int)(totalMobs + sessionMobs));
 
         StatConfig.setDiana(MOB_SINCE_INQ_KEY, (int)mobSinceInq);
+        
+        StatConfig.endBatch();
         clearBackup();    
     }
 
@@ -364,7 +368,7 @@ public class DianaStats {
             FishyNotis.alert(Text.literal(String.format("§7Inq since Chim: §d%d", StatConfig.getDiana(INQ_SINCE_CHIM, 0))));
             FishyNotis.alert(Text.literal("§7Chimera chance: §d" + String.format("%.2f%%", ((double) getOwnChimeraCount() / Math.max(1, getTotalInqCount())) * 100.0) + " §8 (" + String.format("§b%d", getOwnChimeraCount()) +
             String.format("§b + %d", getLsChimeraCount()) + " §bls§8)"));
-            me.valkeea.fishyaddons.command.TrackerCmd.profitPerHour();
+            me.valkeea.fishyaddons.command.handler.FpRoot.profitPerHour();
         } else {
             FishyNotis.send("No diana activity this session.");
         }

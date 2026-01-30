@@ -217,22 +217,12 @@ public class SkillTracker {
     }
 
     public void pauseTracking() {
-        if (pausedTime == 0 && !downTiming) { // Don't set pausedTime if already in downtime
+        if (pausedTime == 0 && !downTiming) {
             pausedTime = System.currentTimeMillis();
         }
 
-        // Only clear data on inactivity if not in manual downtime mode
         if (pausedTime > 0 && System.currentTimeMillis() - pausedTime > 900_000 && !downTiming) {
-            trackedSkills.clear();
-            skillBaselines.clear();
-            knownSkillLevels.clear();
-            totalPausedDuration.set(0);
-            startTime = System.currentTimeMillis();
-            pausedTime = 0;
-            lastXpGain = 0;
-            catchCount.set(0);
-            mobCount.set(0);
-            cacheValid = false;
+            resetAll();
             FishyNotis.send("Skill tracking data cleared due to extended inactivity.");
         }
     }
@@ -338,5 +328,18 @@ public class SkillTracker {
     
     public boolean hasMultipleSkills() {
         return trackedSkills.size() > 1;
+    }
+
+    public void resetAll() {
+        trackedSkills.clear();
+        skillBaselines.clear();
+        knownSkillLevels.clear();
+        totalPausedDuration.set(0);
+        startTime = System.currentTimeMillis();
+        pausedTime = 0;
+        lastXpGain = 0;
+        catchCount.set(0);
+        mobCount.set(0);
+        cacheValid = false;
     }
 }

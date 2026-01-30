@@ -1,6 +1,5 @@
 package me.valkeea.fishyaddons.mixin;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.spongepowered.asm.mixin.Mixin;
@@ -46,17 +45,14 @@ public abstract class MixinScreen {
             originalTooltip.add(insertAt, Text.literal("§8§oFA Guarded"));
         }
 
-        List<Text> finalTooltip = originalTooltip;
-
         if (FaColors.shouldColor()) {
 
-            List<Text> recoloredTooltip = new ArrayList<>(originalTooltip.size());
-            for (Text line : originalTooltip) {
-                recoloredTooltip.add(FaColors.tooltipCached(line));
+            for (int i = 0; i < originalTooltip.size(); i++) {
+                Text original = originalTooltip.get(i);
+                Text recolored = FaColors.tooltipCached(original);
+
+                if (recolored != original) originalTooltip.set(i, recolored);
             }
-            finalTooltip = recoloredTooltip;
         }
-        
-        cir.setReturnValue(finalTooltip);
     }
 }

@@ -43,14 +43,14 @@ public abstract class MixinScreen {
             originalTooltip.add(nbtIndex == -1 ? originalTooltip.size() : nbtIndex, Text.literal("§8§oFA Guarded"));
         }
 
-        List<Text> finalTooltip = originalTooltip;
-
         if (FaColors.shouldColor()) {
-            finalTooltip = originalTooltip.stream()
-                .map(FaColors::tooltipCached)
-                .toList();
+            
+            for (int i = 0; i < originalTooltip.size(); i++) {
+                Text original = originalTooltip.get(i);
+                Text recolored = FaColors.tooltipCached(original);
+
+                if (recolored != original) originalTooltip.set(i, recolored);
+            }
         }
-        
-        cir.setReturnValue(finalTooltip);
     }
 }

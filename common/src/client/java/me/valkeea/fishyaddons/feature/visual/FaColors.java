@@ -9,8 +9,10 @@ import java.util.WeakHashMap;
 import org.jetbrains.annotations.Nullable;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import me.valkeea.fishyaddons.api.skyblock.GameMode;
 import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.config.Key;
+import me.valkeea.fishyaddons.event.impl.FaEvents;
 import me.valkeea.fishyaddons.util.ZoneUtils;
 import me.valkeea.fishyaddons.util.text.Enhancer;
 import net.minecraft.text.MutableText;
@@ -38,9 +40,14 @@ public class FaColors {
     private static long lastFetchTime = 0;
 
     public static void init() {
-        if (me.valkeea.fishyaddons.config.FishyConfig.getState(
-                me.valkeea.fishyaddons.config.Key.GLOBAL_FA_COLORS, false
-        )) {
+        if (FishyConfig.getState(Key.GLOBAL_FA_COLORS, false)) {
+
+            FaEvents.ENVIRONMENT_CHANGE.register(event -> {
+                if (event.gameModeChanged()) {
+                    combine(event.isSkyblock() || !FishyConfig.getState(Key.SB_ONLY_FAC, false));
+                }
+            });
+
             fetchGlobal();
             refresh();
         }
@@ -87,21 +94,22 @@ public class FaColors {
     }
 
     public static void refresh() {
-        useGlobal = me.valkeea.fishyaddons.config.FishyConfig.getState(
-                me.valkeea.fishyaddons.config.Key.GLOBAL_FA_COLORS, false
-        );
-        useCustom = me.valkeea.fishyaddons.config.FishyConfig.getState(
-                me.valkeea.fishyaddons.config.Key.CUSTOM_FA_COLORS, false
-        );
+        useGlobal = FishyConfig.getState(Key.GLOBAL_FA_COLORS, false);
+        useCustom = FishyConfig.getState(Key.CUSTOM_FA_COLORS, false);
         loadUserMap();
-        combine();
+        combine(GameMode.skyblock() || !FishyConfig.getState(Key.SB_ONLY_FAC, false));
         clearCache();
     }
 
-    private static void combine() {
+    private static void combine(boolean shouldRecolor) {
+        clearCache();
         combinedMap.clear();
-        if (useGlobal) combinedMap.putAll(global);
-        if (useCustom) combinedMap.putAll(user);
+
+        if (shouldRecolor) {
+
+            if (useGlobal) combinedMap.putAll(global);
+            if (useCustom) combinedMap.putAll(user);
+        }
     }
 
     private static void clearCache() {
@@ -241,6 +249,28 @@ public class FaColors {
 
     private static Text multiple(Text input) {
         var content = input.getContent();
+        boolean needsRecolor = false;
+
+        if (content instanceof PlainTextContent plain) {
+            List<Segment> segments = createSegments(plain.string());
+            needsRecolor = segments.stream().anyMatch(seg -> seg.color != null || seg.fullStyle != null);
+        }
+
+        List<Text> processedSiblings = null;
+        boolean siblingsToRecolor = false;
+        if (!input.getSiblings().isEmpty()) {
+            processedSiblings = new ArrayList<>(input.getSiblings().size());
+            for (var sibling : input.getSiblings()) {
+                Text processed = multiple(sibling);
+                processedSiblings.add(processed);
+                if (processed != sibling) {
+                    siblingsToRecolor = true;
+                }
+            }
+        }
+
+        if (!needsRecolor && !siblingsToRecolor) return input;
+
         var result = Text.empty().setStyle(input.getStyle());
 
         if (content instanceof PlainTextContent plain) {
@@ -257,8 +287,8 @@ public class FaColors {
             }
         }
 
-        for (var sibling : input.getSiblings()) {
-            result.append(multiple(sibling));
+        if (processedSiblings != null) {
+            processedSiblings.forEach(result::append);
         }
         return result;
     }
@@ -321,6 +351,27 @@ public class FaColors {
     }
 
     private static Text complex(Text input, TextContent content) {
+        boolean needsRecolor = false;
+        
+        if (content instanceof PlainTextContent plain) {
+            String str = plain.string();
+            needsRecolor = combinedMap.containsKey(str);
+        }
+
+        List<Text> processedSiblings = new ArrayList<>(input.getSiblings().size());
+        boolean siblingsToRecolor = false;
+        for (var sibling : input.getSiblings()) {
+            Text processed = first(sibling);
+            processedSiblings.add(processed);
+            if (processed != sibling) {
+                siblingsToRecolor = true;
+            }
+        }
+
+        if (!needsRecolor && !siblingsToRecolor) {
+            labelCache.put(input, input);
+            return input;
+        }
 
         MutableText result;
         if (content instanceof PlainTextContent plain) {
@@ -336,9 +387,7 @@ public class FaColors {
         }
         
         result.getSiblings().clear();
-        for (var sibling : input.getSiblings()) {
-            result.append(first(sibling));
-        }
+        processedSiblings.forEach(result::append);
 
         labelCache.put(input, result);
         return result;
@@ -399,32 +448,52 @@ public class FaColors {
         Text cached = sidebarCache.get(input);
         if (cached != null) return cached;
 
-        Text result;
+        boolean needsRecolor = false;
+        TextColor foundColor = null;
+
         if (input.getContent() instanceof PlainTextContent plain) {
             String str = plain.string();
-
-            TextColor color = combinedMap.object2ObjectEntrySet().stream()
+            foundColor = combinedMap.object2ObjectEntrySet().stream()
                 .filter(e -> str.contains(e.getKey()))
                 .map(Map.Entry::getValue)
                 .findFirst()
                 .orElse(null);
-
-            if (color != null) {
-                result = Text.literal(str).setStyle(input.getStyle().withColor(color));
-            } else result = input;
-
-        } else {
-            result = input;
+            needsRecolor = foundColor != null;
         }
 
+        List<Text> processedSiblings = null;
+        boolean siblingsToRecolor = false;
         if (!input.getSiblings().isEmpty()) {
+            processedSiblings = new ArrayList<>(input.getSiblings().size());
+            for (var sibling : input.getSiblings()) {
+                Text processed = recolorSidebarText(sibling);
+                processedSiblings.add(processed);
+                if (processed != sibling) {
+                    siblingsToRecolor = true;
+                }
+            }
+        }
 
-            var mutableResult = Text.literal("").setStyle(input.getStyle());
+        if (!needsRecolor && !siblingsToRecolor) {
+            sidebarCache.put(input, input);
+            return input;
+        }
 
-            input.getSiblings().stream()
-                .map(FaColors::recolorSidebarText)
-                .forEach(mutableResult::append);
+        Text result;
+        if (needsRecolor) {
+            result = Text.literal(((PlainTextContent) input.getContent()).string())
+                .setStyle(input.getStyle().withColor(foundColor));
+        } else {
+            result = input.copy();
+        }
 
+        if (processedSiblings != null) {
+            var mutableResult = result instanceof MutableText mutableText ? mutableText : Text.empty().setStyle(result.getStyle());
+            if (!(result instanceof MutableText)) {
+                mutableResult.append(result);
+            }
+
+            processedSiblings.forEach(mutableResult::append);
             result = mutableResult;
         }
 
@@ -435,9 +504,12 @@ public class FaColors {
     public static Text tooltip(Text input) {
         if (input.getContent() instanceof PlainTextContent plain) {
             var str = plain.string();
-            var result = Text.empty().setStyle(input.getStyle());
             List<Segment> segments = createSegments(str);
             
+            boolean needsRecolor = segments.stream().anyMatch(seg -> seg.color != null || seg.fullStyle != null);
+            if (!needsRecolor && input.getSiblings().isEmpty()) return input;
+            
+            var result = Text.empty().setStyle(input.getStyle());
             
             for (var seg : segments) {
                 Style segStyle;
@@ -478,11 +550,6 @@ public class FaColors {
         return rewritten;
     }
 
-    public static void clearUserMap() {
-        user.clear();
-        combine();
-    }
-
     public static void saveUserEntry(String key, int color) {
         user.put(key, TextColor.fromRgb(color));
         FishyConfig.setFaC(key, color);
@@ -499,6 +566,5 @@ public class FaColors {
         user.clear();
         FishyConfig.getFaC().entrySet().stream()
             .forEach(entry -> user.put(entry.getKey(), TextColor.fromRgb(entry.getValue())));
-        combine();
     }
 }

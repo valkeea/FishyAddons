@@ -29,6 +29,7 @@ public class SkyblockAreas {
         MINESHAFT("mineshaft"),
         PLHLEGBLAST("crimson_plhleg"),
         CI_HOTSPOT("crimson_hotspot"),
+        RIFT("the_rift"),
         NA("unknown");
 
         private final String name;

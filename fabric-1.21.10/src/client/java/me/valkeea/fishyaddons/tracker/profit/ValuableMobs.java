@@ -90,7 +90,7 @@ public class ValuableMobs {
             this.health = extractHealth(labelText);
             this.isPlayerEntity = isPlayerEntity;
             this.mobDisplayName = setDisplayName(armorStand);
-            this.position = armorStand.getPos();
+            this.position = armorStand.getEntityPos();
         }
 
         public int getId() { return id; }
@@ -139,6 +139,9 @@ public class ValuableMobs {
                 this.maxHealth = maxHealth;
             }
 
+            /**
+             * Calculates health percentage from magnitude strings
+             */
             public int getHealthPercent() {
                 if (currentHealth == null || maxHealth == null || 
                     currentHealth.isEmpty() || maxHealth.isEmpty()) {

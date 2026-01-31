@@ -51,6 +51,12 @@ public class PlaySound {
         }
     }
 
+    public static void cocoonAlarm() {
+        if (mc.player != null) {
+            master(SoundEvents.ENTITY_BREEZE_CHARGE, 3.0F, 0.2F);
+        }
+    }
+
     private static void amethyst(float pitch) {
         if (mc.player != null) {
             master(PROTECT_TRIGGER_EVENT, 1.0F, pitch);

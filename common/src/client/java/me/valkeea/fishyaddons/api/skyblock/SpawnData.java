@@ -58,7 +58,9 @@ public class SpawnData {
         // Bayou
         new SpawnZone(Island.BAYOU, -14, -10, 72, 76, -13, -9),
         // Jerry
-        new SpawnZone(Island.JERRY, -6, -3, 75, 78, 99, 102)
+        new SpawnZone(Island.JERRY, -6, -3, 75, 78, 99, 102),
+        // Rift
+        new SpawnZone(Island.RIFT, -47, -40, 120, 125, 66, 72)
     );
 
     public static void updateIsland() {

@@ -17,14 +17,18 @@ public class NearbyEntities {
     private NearbyEntities() {}
 
     private static int tickCounter = 0;
-    
+    private static final double RADIUS = 50.0;
     private static final Map<Integer, String> labelCache = new HashMap<>();
     private static final Map<String, String> obfuscationCache = new HashMap<>();
 
     public static void tick() {
         tickCounter++;
-        if (tickCounter % 10 == 0) {
+        boolean active = ValuableMobs.hasTrackedMobs();
+        int scanInterval = active ? 2 : 10;
+        
+        if (tickCounter % scanInterval == 0) {
             checkClosest();
+            if (active) labelCache.clear();
         }
     }
 
@@ -41,9 +45,11 @@ public class NearbyEntities {
         List<ArmorStandEntity> nearbyHspts = new ArrayList<>();
         List<ArmorStandEntity> nearbyVals = new ArrayList<>();
 
-        for (var armorStand : findArmorStands(60.0)) {
+        for (var armorStand : findArmorStands(RADIUS)) {
+
             var labelText = extractLabel(armorStand);
             if (isValidLabel(labelText)) {
+
                 if (FishingHotspot.isHotspotType(labelText)) {
                     nearbyHspts.add(armorStand);
                     continue;
@@ -146,9 +152,7 @@ public class NearbyEntities {
      * Get the name of player entities, including on spawn
      */
     public static String extractDisplayName(Entity entity) {
-        if (entity.getDisplayName() == null) {
-            return "";
-        }
+        if (entity.getDisplayName() == null) return "";
         return entity.getDisplayName().getString();
     }
 
@@ -164,9 +168,7 @@ public class NearbyEntities {
         if (text == null || text.isEmpty()) return text;
 
         var cached = obfuscationCache.get(text);
-        if (cached != null) {
-            return cached;
-        }
+        if (cached != null) return cached;
 
         var obfuscationPattern = java.util.regex.Pattern.compile(".*\\b([a-z])([A-Z]\\w*).*");
         var matcher = obfuscationPattern.matcher(text);

@@ -5,6 +5,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import me.valkeea.fishyaddons.feature.skyblock.CocoonAlert;
 import me.valkeea.fishyaddons.feature.skyblock.FishingHotspot;
 import me.valkeea.fishyaddons.tracker.profit.ValuableMobs;
 import net.minecraft.client.world.ClientWorld;
@@ -16,6 +17,7 @@ public class MixinClientWorld {
     @Inject(method = "addEntity", at = @At("HEAD"))
     private void onEntityAdd(Entity entity, CallbackInfo ci) {
         ValuableMobs.onEntityAdded(entity);
+        CocoonAlert.onEntityAdded(entity);
     }    
     
     @Inject(method = "removeEntity", at = @At("HEAD"))

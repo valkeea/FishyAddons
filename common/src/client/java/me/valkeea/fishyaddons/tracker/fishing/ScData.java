@@ -11,6 +11,7 @@ import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.config.Key;
 import me.valkeea.fishyaddons.config.StatConfig;
 import me.valkeea.fishyaddons.util.FishyNotis;
+import me.valkeea.fishyaddons.util.text.StringUtils;
 import net.minecraft.text.Text;
 
 public class ScData {
@@ -70,8 +71,10 @@ public class ScData {
         catchRates.put(creatureKey, newRate);
         catchCounts.put(creatureKey, currentCatches);
         
+        StatConfig.beginBatch();
         StatConfig.setSince(TOTAL_ATTEMPTS + creatureKey, currentAttempts);
         StatConfig.setSince(TOTAL_CATCHES + creatureKey, currentCatches);
+        StatConfig.endBatch();
         
         notifyHudDataChanged();
     }
@@ -359,6 +362,8 @@ public class ScData {
         
         if (!newDataToSave.isEmpty()) {
             try {
+                StatConfig.beginBatch();
+                
                 for (Map.Entry<String, Integer> entry : newDataToSave.entrySet()) {
                     StatConfig.setData(entry.getKey(), entry.getValue());
                 }
@@ -368,6 +373,8 @@ public class ScData {
                 for (Map.Entry<String, Integer> entry : newDataToSave.entrySet()) {
                     StatConfig.setData(entry.getKey(), entry.getValue());
                 }
+                
+                StatConfig.endBatch();
                 
             } catch (Exception e) {
                 System.err.println(SAVE_ERROR_MSG + creatureKey + ": " + e.getMessage());
@@ -444,7 +451,7 @@ public class ScData {
                 }
             }
         }
-        
+
         for (String key : keysToRemove) {
             StatConfig.removeData(key);
         }
@@ -475,12 +482,17 @@ public class ScData {
         boolean allSavedSuccessfully = true;
         
         try {
+            StatConfig.beginBatch();
+            
             for (Map.Entry<String, Integer> entry : totalAttempts.entrySet()) {
                 StatConfig.setSince(TOTAL_ATTEMPTS + entry.getKey(), entry.getValue());
             }
             for (Map.Entry<String, Integer> entry : totalCatches.entrySet()) {
                 StatConfig.setSince(TOTAL_CATCHES + entry.getKey(), entry.getValue());
             }
+            
+            StatConfig.endBatch();
+            
         } catch (Exception e) {
             System.err.println("Failed to save total attempts/catches data: " + e.getMessage());
             allSavedSuccessfully = false;
@@ -612,8 +624,27 @@ public class ScData {
     public void sendHistogramSummary(String creatureKey) {
 
         Map<Integer, Integer> histogram = catchGraph.get(creatureKey);
+        var dpName = Sc.displayName(creatureKey);
+
         if (histogram == null || histogram.isEmpty()) {
-            FishyNotis.send(Text.literal("§3No catch data for " + Sc.displayName(creatureKey)));
+
+            FishyNotis.send(Text.literal("§3No catch data for " + dpName));
+
+                if (histogram == null) {
+                FishyNotis.themed("Did you mean;");
+
+                List<String> similar = new ArrayList<>();
+                Sc.getTrackedCreatures().stream()
+                .filter(key -> StringUtils.closeMatch(creatureKey, key))
+                .forEach(similar::add);
+                
+                if (!similar.isEmpty()) {
+                    FishyNotis.themed("Did you mean;");
+                    similar
+                    .forEach(key -> FishyNotis.alert(Text.literal("§7- §8" + key + " §7(§8" + Sc.displayName(key) + "§7)")
+                    .styled(style -> style.withClickEvent(new net.minecraft.text.ClickEvent.RunCommand("fa sc " + key)))));
+                }
+            }
             return;
         }
 
@@ -627,22 +658,25 @@ public class ScData {
             getCatchChance(creatureKey))));
         
         FishyNotis.alert(Text.literal("§3Top frequencies:"));
+
         histogram.entrySet().stream()
-            .sorted((a, b) -> Integer.compare(b.getValue(), a.getValue()))
-            .limit(5)
-            .forEach(entry -> {
-                int attempts = entry.getKey();
-                int frequency = entry.getValue();
-                double rate = (double) frequency / histogramCatches * 100;
-                FishyNotis.alert(Text.literal(String.format("§7  §b%d §7attempts: §b%d §7times §8(§b%.1f%%§7§8)", 
-                    attempts, frequency, rate)));
-            });
+        .sorted((a, b) -> Integer.compare(b.getValue(), a.getValue())).limit(5)
+        .forEach(entry -> {
+            int attempts = entry.getKey();
+            int frequency = entry.getValue();
+            double rate = (double) frequency / histogramCatches * 100;
+            FishyNotis.alert(Text.literal(String.format("§7  §b%d §7attempts: §b%d §7times §8(§b%.1f%%§7§8)", 
+                attempts, frequency, rate)));
+        });
+            
+        FishyNotis.alert(Text.literal(String.format("§dYou have caught: §b%d §7Sc without ", 
+        StatConfig.getSince(creatureKey)) + dpName));
 
         int worstBracket = histogram.entrySet().stream()
-            .max((a, b) -> Integer.compare(a.getKey(), b.getKey()))
-            .map(Map.Entry::getKey)
-            .orElse(0);
-        FishyNotis.alert(Text.literal(String.format("§dWorst drystreak: §b%d §7Sc without ", 
-            worstBracket) + Sc.displayName(creatureKey)));   
+        .max((a, b) -> Integer.compare(a.getKey(), b.getKey()))
+        .map(Map.Entry::getKey)
+        .orElse(0);
+
+        FishyNotis.alert(Text.literal(String.format("§dWorst drystreak: §b%d §7Sc without ", worstBracket) + dpName));   
     }
 }

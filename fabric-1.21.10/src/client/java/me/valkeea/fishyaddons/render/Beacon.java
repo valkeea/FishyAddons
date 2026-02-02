@@ -33,7 +33,9 @@ public class Beacon {
         matrices.push();
         matrices.translate(-camPos.x, -camPos.y, -camPos.z);
 
-        // 1. Pass: Render box frame and fill (no depth test)
+        boolean wouldObstructView = client.player.getEntityPos().distanceTo(beacon.getPos().toCenterPos()) < 5.0;
+        if (!wouldObstructView) renderBeam(context, beacon, matrices);
+
         org.lwjgl.opengl.GL11.glDisable(org.lwjgl.opengl.GL11.GL_DEPTH_TEST);
         
         VertexConsumer fillConsumer = context.consumers().getBuffer(RenderLayer.getDebugQuads());
@@ -44,18 +46,8 @@ public class Beacon {
         
         org.lwjgl.opengl.GL11.glEnable(org.lwjgl.opengl.GL11.GL_DEPTH_TEST);
 
-        // 2. Pass: Render beams if not obstructed (depth test for main)
-        boolean wouldObstructView = client.player.getEntityPos().distanceTo(beacon.getPos().toCenterPos()) < 5.0;
-
-        if (!wouldObstructView) {
-            renderBeam(context, beacon, matrices);
-        }
-
-        // 1. Pass (continued): Text rendering (no depth test)
         if (beacon.getLabel() != null && !beacon.getLabel().isEmpty()) {
-            org.lwjgl.opengl.GL11.glDisable(org.lwjgl.opengl.GL11.GL_DEPTH_TEST);
             WorldElements.text(context, matrices, beacon.getLabel(), x + 0.5, y + 1.5, z + 0.5, beacon.getColor());
-            org.lwjgl.opengl.GL11.glEnable(org.lwjgl.opengl.GL11.GL_DEPTH_TEST);
         }
         
         matrices.pop();
@@ -63,24 +55,14 @@ public class Beacon {
 
     private static void renderBeam(WorldRenderContext context, IBeaconData beacon, MatrixStack matrices) {
         matrices.push();
-        
-        org.lwjgl.opengl.GL11.glEnable(org.lwjgl.opengl.GL11.GL_BLEND);
-        org.lwjgl.opengl.GL11.glBlendFunc(org.lwjgl.opengl.GL11.GL_SRC_ALPHA, org.lwjgl.opengl.GL11.GL_ONE_MINUS_SRC_ALPHA);
-
-        org.lwjgl.opengl.GL11.glDisable(org.lwjgl.opengl.GL11.GL_DEPTH_TEST);
-        org.lwjgl.opengl.GL11.glDepthMask(false);
-        
-        matrices.push();
         matrices.translate(beacon.getPos().getX() + 0.5, (double)beacon.getPos().getY() + 1, beacon.getPos().getZ() + 0.5);
 
         int lightColor = (beacon.getColor() & 0x00FFFFFF) | 0x05000000;
         renderCylinder(context, matrices, lightColor, 0.2F);
         
         matrices.pop();
-        
-        org.lwjgl.opengl.GL11.glDepthMask(true);
-        org.lwjgl.opengl.GL11.glEnable(org.lwjgl.opengl.GL11.GL_DEPTH_TEST);
 
+        matrices.push();
         matrices.translate(beacon.getPos().getX(), (float)beacon.getPos().getY() + 1, beacon.getPos().getZ());
         BeaconBlockEntityRenderer.renderBeam(
             matrices,

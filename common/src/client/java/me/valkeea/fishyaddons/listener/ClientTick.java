@@ -1,7 +1,7 @@
 package me.valkeea.fishyaddons.listener;
 
 import me.valkeea.fishyaddons.feature.qol.NetworkMetrics;
-import me.valkeea.fishyaddons.feature.skyblock.ChatTimers;
+import me.valkeea.fishyaddons.feature.skyblock.timer.ChatTimers;
 import me.valkeea.fishyaddons.tracker.ActivityMonitor;
 import me.valkeea.fishyaddons.tracker.SkillTracker;
 import me.valkeea.fishyaddons.util.ModInfo;

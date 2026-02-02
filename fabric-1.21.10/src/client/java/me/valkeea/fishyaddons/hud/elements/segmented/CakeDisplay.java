@@ -4,7 +4,7 @@ import java.awt.Rectangle;
 import java.util.Map;
 
 import me.valkeea.fishyaddons.config.FishyConfig;
-import me.valkeea.fishyaddons.feature.skyblock.CakeTimer;
+import me.valkeea.fishyaddons.feature.skyblock.timer.CakeTimer;
 import me.valkeea.fishyaddons.hud.core.HudDrawer;
 import me.valkeea.fishyaddons.hud.core.HudElement;
 import me.valkeea.fishyaddons.hud.core.HudElementState;

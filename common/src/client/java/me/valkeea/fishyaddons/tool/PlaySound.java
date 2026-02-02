@@ -1,7 +1,7 @@
 package me.valkeea.fishyaddons.tool;
 
 import me.valkeea.fishyaddons.config.ItemConfig;
-import me.valkeea.fishyaddons.feature.skyblock.ChatTimers;
+import me.valkeea.fishyaddons.feature.skyblock.timer.ChatTimers;
 import me.valkeea.fishyaddons.impl.MutableSoundInstance;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.registry.Registries;

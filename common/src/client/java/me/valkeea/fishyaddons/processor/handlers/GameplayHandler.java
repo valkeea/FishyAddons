@@ -9,7 +9,7 @@ import me.valkeea.fishyaddons.api.skyblock.GameChat;
 import me.valkeea.fishyaddons.api.skyblock.GameMode;
 import me.valkeea.fishyaddons.api.skyblock.SkyblockAreas;
 import me.valkeea.fishyaddons.api.skyblock.SkyblockAreas.Island;
-import me.valkeea.fishyaddons.feature.skyblock.CakeTimer;
+import me.valkeea.fishyaddons.feature.skyblock.timer.CakeTimer;
 import me.valkeea.fishyaddons.feature.skyblock.PetInfo;
 import me.valkeea.fishyaddons.listener.WorldEvent;
 import me.valkeea.fishyaddons.processor.ChatHandler;
@@ -45,6 +45,7 @@ public class GameplayHandler implements ChatHandler {
             if (handleChatMode(message)) return ChatHandlerResult.STOP;
             if (handleBeaconFrequency(message)) return ChatHandlerResult.STOP;
             if (handleCakeTimer(context.getRawString())) return ChatHandlerResult.STOP;
+            if (handleVial(context.getLowerCleanString())) return ChatHandlerResult.STOP;
             if (handleWaypointChains(message)) return ChatHandlerResult.CONTINUE;
             return ChatHandlerResult.CONTINUE;
             
@@ -83,7 +84,7 @@ public class GameplayHandler implements ChatHandler {
 
     private boolean handleBeaconFrequency(String message) {
         if (message.contains("You adjusted the frequency of the Beacon!")) {
-            me.valkeea.fishyaddons.feature.skyblock.ChatTimers.getInstance().beaconStart();
+            me.valkeea.fishyaddons.feature.skyblock.timer.ChatTimers.getInstance().beaconStart();
             return true;
         }
         return false;
@@ -134,6 +135,10 @@ public class GameplayHandler implements ChatHandler {
         }
 
         return false;
+    }
+
+    private boolean handleVial(String message) {
+        return me.valkeea.fishyaddons.tracker.fishing.ScStats.getInstance().checkForVial(message);
     }
 
     private boolean handleApiMessages(String message) {

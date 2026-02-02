@@ -17,8 +17,10 @@ import me.valkeea.fishyaddons.feature.qol.FishyKeys;
 import me.valkeea.fishyaddons.feature.qol.ItemSearchOverlay;
 import me.valkeea.fishyaddons.feature.qol.KeyShortcut;
 import me.valkeea.fishyaddons.feature.qol.NetworkMetrics;
-import me.valkeea.fishyaddons.feature.skyblock.CakeTimer;
-import me.valkeea.fishyaddons.feature.skyblock.ChatTimers;
+import me.valkeea.fishyaddons.feature.skyblock.timer.CakeTimer;
+import me.valkeea.fishyaddons.feature.skyblock.timer.ChatTimers;
+import me.valkeea.fishyaddons.feature.skyblock.CocoonAlert;
+import me.valkeea.fishyaddons.feature.skyblock.timer.EffectTimers;
 import me.valkeea.fishyaddons.feature.skyblock.FishingHotspot;
 import me.valkeea.fishyaddons.feature.skyblock.GuiIcons;
 import me.valkeea.fishyaddons.feature.skyblock.PetInfo;
@@ -31,6 +33,7 @@ import me.valkeea.fishyaddons.feature.visual.RenderTweaks;
 import me.valkeea.fishyaddons.feature.visual.ResourceHandler;
 import me.valkeea.fishyaddons.feature.visual.XpColor;
 import me.valkeea.fishyaddons.feature.waypoints.TempWaypoint;
+import me.valkeea.fishyaddons.feature.waypoints.WaypointChains;
 import me.valkeea.fishyaddons.hud.core.ElementRegistry;
 import me.valkeea.fishyaddons.hud.ui.FishyToast;
 import me.valkeea.fishyaddons.listener.ClientConnected;
@@ -96,6 +99,7 @@ public class FishyAddons implements ClientModInitializer {
         ActivityMonitor.refresh();
         ChatTimers.getInstance().refresh();
 
+        CocoonAlert.init();        
         TrackerUtils.init();  
         TransLava.init();      
         HeldItems.init();        
@@ -113,6 +117,7 @@ public class FishyAddons implements ClientModInitializer {
         ItemSearchOverlay.init();
         GuiIcons.init();
         CakeTimer.getInstance().init();
+        EffectTimers.getInstance().init();
         TempWaypoint.init();
         ChatHandlerRegistry.init();
         FishyToast.init();
@@ -121,7 +126,7 @@ public class FishyAddons implements ClientModInitializer {
         ItemTrackerData.init();        
 
         FishyPresets.ensureDefaultPresets();
-        me.valkeea.fishyaddons.feature.waypoints.WaypointChains.init();
+        WaypointChains.init();
         
         FishyKeys.register();        
         GuiScheduler.register();

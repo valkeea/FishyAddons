@@ -1,4 +1,4 @@
-package me.valkeea.fishyaddons.feature.skyblock;
+package me.valkeea.fishyaddons.feature.skyblock.timer;
 
 import java.io.File;
 import java.io.FileReader;
@@ -63,7 +63,7 @@ public class CakeTimer {
 
         if (matcher.find()) {
 
-            String buffName = matcher.group(1);
+            var buffName = matcher.group(1);
             if (buffName != null) buffName = buffName.trim();
             
             long currentTime = System.currentTimeMillis();
@@ -119,7 +119,7 @@ public class CakeTimer {
                 long timeLeft = entry.getValue() - now;
 
                 if (timeLeft > 0 && timeLeft <= 5 * 60 * 1000) {
-                    FishyNotis.send("§d" + entry.getKey() + " §7expires in §c" + formatTimeLeft(timeLeft) + "§7!");
+                    FishyNotis.send("§8" + entry.getKey() + " §7expires in §e" + formatTimeLeft(timeLeft) + "§7!");
                     activeCakes.remove(entry.getKey());
                     saveTimers();
                     break;
@@ -191,6 +191,8 @@ public class CakeTimer {
             return String.format("%ds", seconds);
         }
     }
+
+    private static final String KEY = "cakes";
     
     private void loadTimers() {
 
@@ -199,14 +201,21 @@ public class CakeTimer {
         }
         
         try (FileReader reader = new FileReader(TIMER_FILE)) {
-            Map<String, Long> loadedTimers = GSON.fromJson(reader, new TypeToken<Map<String, Long>>(){}.getType());
+            Map<String, Object> data = GSON.fromJson(reader, new TypeToken<Map<String, Object>>(){}.getType());
 
-            if (loadedTimers != null) {
-
+            if (data != null && data.containsKey(KEY)) {
                 activeCakes.clear();
-                activeCakes.putAll(loadedTimers);
-                long now = System.currentTimeMillis();
-                activeCakes.entrySet().removeIf(entry -> entry.getValue() <= now);
+                Object cakesObj = data.get(KEY);
+                Map<String, Long> loadedTimers = GSON.fromJson(
+                    GSON.toJson(cakesObj),
+                    new TypeToken<Map<String, Long>>(){}.getType()
+                );
+
+                if (loadedTimers != null) {
+                    activeCakes.putAll(loadedTimers);
+                    long now = System.currentTimeMillis();
+                    activeCakes.entrySet().removeIf(entry -> entry.getValue() <= now);
+                }
             }
 
         } catch (IOException e) {
@@ -218,8 +227,21 @@ public class CakeTimer {
 
         try {
             TIMER_FILE.getParentFile().mkdirs();
+            Map<String, Object> data = new HashMap<>();
+
+            if (TIMER_FILE.exists()) {
+                try (FileReader reader = new FileReader(TIMER_FILE)) {
+                    Map<String, Object> existing = GSON.fromJson(reader, new TypeToken<Map<String, Object>>(){}.getType());
+                    if (existing != null) {
+                        data.putAll(existing);
+                    }
+                }
+            }
+            
+            data.put(KEY, activeCakes);
+            
             try (FileWriter writer = new FileWriter(TIMER_FILE)) {
-                GSON.toJson(activeCakes, writer);
+                GSON.toJson(data, writer);
             }
 
         } catch (IOException e) {

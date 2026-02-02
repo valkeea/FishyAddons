@@ -1,4 +1,4 @@
-package me.valkeea.fishyaddons.feature.skyblock;
+package me.valkeea.fishyaddons.feature.skyblock.timer;
 
 import me.valkeea.fishyaddons.config.Key;
 import me.valkeea.fishyaddons.hud.ui.FishyToast;

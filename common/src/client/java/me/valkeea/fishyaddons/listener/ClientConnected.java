@@ -2,7 +2,7 @@ package me.valkeea.fishyaddons.listener;
 
 import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.config.ItemConfig;
-import me.valkeea.fishyaddons.feature.skyblock.CakeTimer;
+import me.valkeea.fishyaddons.feature.skyblock.timer.CakeTimer;
 import me.valkeea.fishyaddons.feature.waypoints.ChainConfig;
 import me.valkeea.fishyaddons.feature.waypoints.WaypointChains;
 import me.valkeea.fishyaddons.hud.elements.custom.InfoDisplay;

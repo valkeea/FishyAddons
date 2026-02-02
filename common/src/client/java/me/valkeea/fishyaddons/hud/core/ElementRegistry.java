@@ -12,6 +12,7 @@ import me.valkeea.fishyaddons.hud.elements.custom.SkillXpDisplay;
 import me.valkeea.fishyaddons.hud.elements.custom.TitleDisplay;
 import me.valkeea.fishyaddons.hud.elements.custom.TrackerDisplay;
 import me.valkeea.fishyaddons.hud.elements.segmented.CakeDisplay;
+import me.valkeea.fishyaddons.hud.elements.segmented.EffectDisplay;
 import me.valkeea.fishyaddons.hud.elements.segmented.NetworkDisplay;
 import me.valkeea.fishyaddons.hud.elements.segmented.TimerDisplay;
 import me.valkeea.fishyaddons.hud.elements.simple.PetDisplay;
@@ -52,6 +53,7 @@ public class ElementRegistry {
         register(new TitleDisplay());
         register(new PetDisplay());
         register(new CakeDisplay());
+        register(new EffectDisplay());
         register(new SkillXpDisplay());
         register(new HealthDisplay());
         

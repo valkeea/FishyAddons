@@ -7,7 +7,6 @@ import me.valkeea.fishyaddons.event.EventPhase;
 import me.valkeea.fishyaddons.event.EventPriority;
 import me.valkeea.fishyaddons.event.impl.FaEvents;
 import me.valkeea.fishyaddons.hud.elements.custom.TrackerDisplay;
-import me.valkeea.fishyaddons.tracker.fishing.ScStats;
 import me.valkeea.fishyaddons.ui.VCOverlay;
 import me.valkeea.fishyaddons.ui.VCPopup;
 import me.valkeea.fishyaddons.util.FishyNotis;
@@ -47,8 +46,6 @@ public class TrackerUtils {
 
     public static boolean handleChat(String s, Text originalMessage) { 
         ChatDropParser.ParseResult result = ChatDropParser.parseMessage(s);
-
-        ScStats.getInstance().checkForVial(s);
 
         if (s.startsWith("loot share")) {
             InventoryTracker.onLsDetected();
@@ -120,7 +117,7 @@ public class TrackerUtils {
     }
 
 	public static void createOrSavePopup(float scale) {
-        VCPopup popup = new VCPopup(
+        var popup = new VCPopup(
 			Text.literal("Profile name:"),
             () -> MinecraftClient.getInstance().setScreen(null),
 			"Cancel",
@@ -131,7 +128,7 @@ public class TrackerUtils {
 			"Save",
 			scale
 		);
-        MinecraftClient cl = MinecraftClient.getInstance();
+        var cl = MinecraftClient.getInstance();
         cl.setScreen(new VCOverlay(cl.currentScreen, popup));
 	}
     

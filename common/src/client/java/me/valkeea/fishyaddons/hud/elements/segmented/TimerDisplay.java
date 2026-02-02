@@ -1,7 +1,7 @@
 package me.valkeea.fishyaddons.hud.elements.segmented;
 
 import me.valkeea.fishyaddons.config.Key;
-import me.valkeea.fishyaddons.feature.skyblock.ChatTimers;
+import me.valkeea.fishyaddons.feature.skyblock.timer.ChatTimers;
 import me.valkeea.fishyaddons.hud.base.SegmentedTextElement;
 import net.minecraft.text.Text;
 

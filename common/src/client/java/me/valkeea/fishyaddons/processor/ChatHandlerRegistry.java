@@ -21,6 +21,7 @@ public class ChatHandlerRegistry {
         processor.registerHandler(new XpHandler());
         processor.registerHandler(new CoordinateHandler());
         processor.registerHandler(new ChatFormatHandler());
+        processor.registerHandler(new TimerHandler());
         
         FaEvents.GAME_MESSAGE.register(processor::onMessage);
     }

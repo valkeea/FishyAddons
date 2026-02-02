@@ -9,7 +9,6 @@ import me.valkeea.fishyaddons.processor.ChatHandlerResult;
 import me.valkeea.fishyaddons.processor.ChatMessageContext;
 import me.valkeea.fishyaddons.util.text.ChatButton;
 import me.valkeea.fishyaddons.util.text.Enhancer;
-import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 
 public class ChatFormatHandler implements ChatHandler {

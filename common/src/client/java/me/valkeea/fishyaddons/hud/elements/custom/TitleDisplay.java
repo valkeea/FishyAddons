@@ -14,7 +14,7 @@ import net.minecraft.text.Text;
 public class TitleDisplay implements HudElement {
     private boolean editingMode = false;
     private static String title = null;
-    private static int titlecolor = 0xFFFFFF;
+    private static int titlecolor = 0xFFFFFFFF;
     private static final String HUD_KEY = "titleHud";
     private static long alertStartTime = 0L;
     private static long alertDurationMs = 2000L;
@@ -106,7 +106,7 @@ public class TitleDisplay implements HudElement {
     @Override public void setHudPosition(int x, int y) { FishyConfig.setHudX(HUD_KEY, x); FishyConfig.setHudY(HUD_KEY, y); }
     @Override public int getHudSize() { return FishyConfig.getHudSize(HUD_KEY, 12); }
     @Override public void setHudSize(int size) { FishyConfig.setHudSize(HUD_KEY, size); }
-    @Override public int getHudColor() { return FishyConfig.getHudColor(HUD_KEY, 0xFFFFFF); }
+    @Override public int getHudColor() { return FishyConfig.getHudColor(HUD_KEY, 0xFFFFFFFF); }
     @Override public void setHudColor(int color) { FishyConfig.setHudColor(HUD_KEY, color); }
     @Override public boolean getHudOutline() { return FishyConfig.getHudOutline(HUD_KEY, false); }
     @Override public void setHudOutline(boolean outline) { FishyConfig.setHudOutline(HUD_KEY, outline); }   

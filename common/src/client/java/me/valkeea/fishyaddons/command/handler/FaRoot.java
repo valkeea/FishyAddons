@@ -287,7 +287,7 @@ public class FaRoot implements CommandHandler {
     }
 
     private static LiteralArgumentBuilder<FabricClientCommandSource> skillCommand() {
-        return ClientCommandManager.literal("skilltracker")
+        return ClientCommandManager.literal("skill")
         .then(ClientCommandManager.literal("dt")
         .executes(context -> {
             SkillTracker.getInstance().toggleDownTime();
@@ -313,8 +313,8 @@ public class FaRoot implements CommandHandler {
         }))
         .executes(context -> {
             FishyNotis.themed("Usage:");
-            FishyNotis.alert(Text.literal("§3/fa skilltracker downtime §8- §7Toggle downtime mode. Otherwise, skill XP tracking is paused after 1.5min and wiped after 15min."));
-            FishyNotis.alert(Text.literal("§3/fa skilltracker reset §8- §7Reset all tracked XP for the session."));
+            FishyNotis.alert(Text.literal("§3/fa skill dt §8- §7Toggle downtime mode. Otherwise, skill XP tracking is paused after 1.5min and wiped after 15min."));
+            FishyNotis.alert(Text.literal("§3/fa skill reset §8- §7Reset all tracked XP for the session."));
             return 1;
         });
     }    

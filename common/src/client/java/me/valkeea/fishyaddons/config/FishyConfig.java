@@ -567,7 +567,7 @@ public class FishyConfig {
         private boolean startsWith;
 
         public AlertData() {
-            this("", "", 0x6DE6B5, "", 1.0F, true, false);
+            this("", "", 0xFF6DE6B5, "", 1.0F, true, false);
         }
 
         public AlertData(String msg, String onscreen, int color, String soundId, float volume, boolean toggled, boolean startsWith) {

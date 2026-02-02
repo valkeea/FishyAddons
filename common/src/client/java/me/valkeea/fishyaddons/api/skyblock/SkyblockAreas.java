@@ -22,7 +22,7 @@ public class SkyblockAreas {
         DEN("spiders_den"),
         DEF("default"),
         GAL("galatea"),
-        BAYOU("bayou"),
+        BAYOU("backwater_bayou"),
         JERRY("jerrys_workshop"),
         DUNGEON("dungeon"),
         DG_HUB("dungeon_hub"),

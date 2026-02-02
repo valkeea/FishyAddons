@@ -16,25 +16,23 @@ import net.minecraft.screen.slot.Slot;
 public class FishyKeys {
     private FishyKeys() {}
 
+    private static boolean wasChatOpen = false;
     private static boolean dragging = false;
     private static Slot bindStart = null;
     private static boolean wasPressed = false;
     private static long lastGuiSlotAddTime = 0;
     private static final long GUI_SLOT_ADD_COOLDOWN_MS = 200;
-    
-    private static boolean wasChatOpen = false;
 
     public static void register() {
-        ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            if (client.player == null) return;
 
-            boolean isChatOpen = client.currentScreen instanceof ChatScreen;
+        ClientTickEvents.END_CLIENT_TICK.register(c -> {
+            if (c.player == null) return;
 
-            if (client.currentScreen != null) {
-                if (client.currentScreen instanceof HandledScreen<?> screen) {
-                    ifInventory(client, screen);
-                } else if (isChatOpen) {
-                    resetLockKeyState();
+            boolean chatOpen = c.currentScreen instanceof ChatScreen;
+            if (c.currentScreen != null) {
+
+                if (c.currentScreen instanceof HandledScreen<?> screen) {
+                    ifInventory(c, screen);
                 } else {
                     resetLockKeyState();
                 }
@@ -44,7 +42,7 @@ public class FishyKeys {
                 KeyShortcut.handleShortcuts();
             }
 
-            wasChatOpen = isChatOpen;
+            wasChatOpen = chatOpen;
         });
     }
 

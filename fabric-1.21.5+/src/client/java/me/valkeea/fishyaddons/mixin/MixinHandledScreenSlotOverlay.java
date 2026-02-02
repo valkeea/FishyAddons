@@ -27,7 +27,7 @@ public abstract class MixinHandledScreenSlotOverlay {
         CURRENT_SLOT.set(slot);
     }
 
-    @Inject(method = "drawSlot", at = @At("INVOKE"))
+    @Inject(method = "drawSlot", at = @At("HEAD"))
     private void drawSlotOverlay(DrawContext context, Slot slot, CallbackInfo ci) {
 
         if (!SbGui.isPlayerInventory()) return;

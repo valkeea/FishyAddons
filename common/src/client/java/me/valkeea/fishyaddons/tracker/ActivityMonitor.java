@@ -1,6 +1,8 @@
 package me.valkeea.fishyaddons.tracker;
 
+import java.util.EnumMap;
 import java.util.EnumSet;
+import java.util.Map;
 import java.util.Set;
 
 import me.valkeea.fishyaddons.config.FishyConfig;
@@ -10,6 +12,7 @@ public class ActivityMonitor {
     private static ActivityMonitor instance = null;
 
     private static final long PAUSE_DELAY_MS = 90000;
+    private static final long ACTIVITY_PAUSE_DELAY_MS = 180000;
     private static final long SAVE_INTERVAL_MS = 300000;
     private static final long TICK_INTERVAL = 1000;
     
@@ -17,6 +20,7 @@ public class ActivityMonitor {
     private long lastTickTime = 0;
     
     private final Set<Currently> activeActivities = EnumSet.noneOf(Currently.class);
+    private final Map<Currently, Long> activityTimers = new EnumMap<>(Currently.class);
     
     private static boolean enabled = false;
     
@@ -24,7 +28,8 @@ public class ActivityMonitor {
         FISHING,
         DIANA,
         SPOOKY,
-        SHARK
+        SHARK,
+        SLAYER
     }
     
     private ActivityMonitor() {
@@ -52,6 +57,7 @@ public class ActivityMonitor {
         
         resetActivityTimer();
         activeActivities.add(activity);
+        activityTimers.put(activity, System.currentTimeMillis());
     }
     
     /**
@@ -90,10 +96,11 @@ public class ActivityMonitor {
             clearAllActivities();
             saveAndClearCaches();            
         }
+
+        pauseIfInactive(currentTime);
         
         if (timeSinceActivity >= PAUSE_DELAY_MS) {
             resetActivityTimer();
-            setPauseTimers();
         }
 
         if (currentTime - lastActivityTime >= SAVE_INTERVAL_MS) {
@@ -102,12 +109,35 @@ public class ActivityMonitor {
         }
     }
     
+    private void pauseIfInactive(long currentTime) {
+
+        Long dianaRecorded = activityTimers.get(Currently.DIANA);
+
+        if (dianaRecorded != null && currentTime - dianaRecorded >= ACTIVITY_PAUSE_DELAY_MS) {
+            if (DianaStats.isEnabled()) DianaStats.getInstance().setPaused(true);
+            activityTimers.remove(Currently.DIANA);
+        }
+        
+        Long slayerRecorded = activityTimers.get(Currently.SLAYER);
+
+        if (slayerRecorded != null && currentTime - slayerRecorded >= ACTIVITY_PAUSE_DELAY_MS) {
+            if (SlayerStats.isEnabled()) SlayerStats.getInstance().setPaused(true);
+            activityTimers.remove(Currently.SLAYER);
+        }
+    }
+    
     private void saveAndClearCaches() {
         if (ScStats.isEnabled()) {
             ScStats.getInstance().save();
         }
 
-        DianaStats.getInstance().saveSession();        
+        if (DianaStats.isEnabled()) {
+            DianaStats.getInstance().saveSession();
+        }
+
+        if (SlayerStats.isEnabled()) {
+            SlayerStats.getInstance().saveSession();
+        }
     }
 
     private void saveActive() {
@@ -118,11 +148,9 @@ public class ActivityMonitor {
         if (isActive(Currently.DIANA) && DianaStats.isEnabled()) {
             DianaStats.getInstance().save();
         }
-    }
-
-    private void setPauseTimers() {
-        if (DianaStats.isEnabled()) {
-            DianaStats.getInstance().setPaused(true);
+        
+        if (isActive(Currently.SLAYER) && SlayerStats.isEnabled()) {
+            SlayerStats.getInstance().save();
         }
     }
     
@@ -173,9 +201,12 @@ public class ActivityMonitor {
      */
     public static void refresh() {
         enabled = FishyConfig.getState(me.valkeea.fishyaddons.config.Key.TRACK_SCS, false) ||
-                  FishyConfig.getState(me.valkeea.fishyaddons.config.Key.TRACK_DIANA, false);
+                  FishyConfig.getState(me.valkeea.fishyaddons.config.Key.TRACK_DIANA, false) ||
+                  FishyConfig.getState(me.valkeea.fishyaddons.config.Key.TRACK_SLAYER, false);
+
         ScStats.init();
         DianaStats.refresh();
+        SlayerStats.refresh();
     }
     
     /**

@@ -47,6 +47,7 @@ public class Key {
     public static final String HUD_SKILL_XP_Y = "skillXpHudY";
     public static final String HUD_SKILL_XP_SIZE = "skillXpHudSize";
     public static final String HUD_SKILL_XP_COLOR = "skillXpHudColor";
+    public static final String HUD_EFFECTS_ENABLED = "tempEffectsHud";
 
     // --- Hud Modifiers ---
     public static final String HUD_PETXP = "petXpCheck";    
@@ -116,6 +117,10 @@ public class Key {
     public static final String MOD_KEY_LOCK_GUISLOT = "lockGuiSlotKey";
     public static final String GLOBAL_FA_COLORS = "globalFaColors";
     public static final String CUSTOM_FA_COLORS = "customFaColors";
+    public static final String SB_ONLY_FAC = "sbOnlyFaColors";
+    public static final String ALERT_COCOON = "alertCocoon";    
+    public static final String TRACK_COCOON = "trackCocoon";
+    public static final String TRACK_SLAYER = "trackSlayer";
 
     public static final String CHAT_ALERTS_ENABLED = "chatAlertsOn";
     public static final String ALIASES_ENABLED = "aliasesOn";
@@ -197,6 +202,7 @@ public class Key {
         settings.set(HUD_TIMER_ENABLED, true);
         settings.set(HUD_PET_ENABLED, false);
         settings.set(HUD_PETXP, true);
+        settings.set(HUD_EFFECTS_ENABLED , false);
         settings.set(TRACK_SACK, false);
         settings.set(FILTER_MIN_VALUE, 2.0f);
         settings.set(VALUE_FILTER, true);
@@ -219,6 +225,10 @@ public class Key {
         settings.set(MOD_UI_SCALE, 0.4265625f);
         settings.set(GLOBAL_FA_COLORS, false);
         settings.set(CUSTOM_FA_COLORS, false);
+        settings.set(SB_ONLY_FAC, false);
+        settings.set(ALERT_COCOON, false);        
+        settings.set(TRACK_COCOON, false);
+        settings.set(TRACK_SLAYER, false);
 
         settings.set(CHAT_ALERTS_ENABLED, false);
         settings.set(ALIASES_ENABLED, false);

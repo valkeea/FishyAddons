@@ -91,6 +91,15 @@ public class FishyNotis {
         chat(text);
     }
 
+    /** Send text with current theme color for start and end */
+    public static void themed2(String before, Text middle, String after) {
+        int theme = FishyMode.getCmdColor();
+        var combined = Text.literal(before).styled(style -> style.withColor(theme))
+            .append(middle)
+            .append(Text.literal(after).styled(style -> style.withColor(theme)));
+        chat(combined);
+    }
+
     /** Send text as an overlay message */
     public static void action(Text message) {
         var mc = MinecraftClient.getInstance();

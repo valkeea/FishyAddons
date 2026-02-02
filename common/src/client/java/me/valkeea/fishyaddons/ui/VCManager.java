@@ -15,8 +15,9 @@ import me.valkeea.fishyaddons.feature.qol.CopyChat;
 import me.valkeea.fishyaddons.feature.qol.ItemSearchOverlay;
 import me.valkeea.fishyaddons.feature.qol.KeyShortcut;
 import me.valkeea.fishyaddons.feature.qol.NetworkMetrics;
-import me.valkeea.fishyaddons.feature.skyblock.CakeTimer;
-import me.valkeea.fishyaddons.feature.skyblock.ChatTimers;
+import me.valkeea.fishyaddons.feature.skyblock.timer.CakeTimer;
+import me.valkeea.fishyaddons.feature.skyblock.timer.ChatTimers;
+import me.valkeea.fishyaddons.feature.skyblock.CocoonAlert;
 import me.valkeea.fishyaddons.feature.skyblock.FishingHotspot;
 import me.valkeea.fishyaddons.feature.skyblock.GuiIcons;
 import me.valkeea.fishyaddons.feature.skyblock.PetInfo;
@@ -293,6 +294,14 @@ public class VCManager {
             false,
             FaColors::refresh,
             new ExtraControl(null, false, true)
+        ));
+
+        colorSubEntries.add(VCEntry.toggle(
+            "Skyblock Only",
+            "Enables FA Colors only in Skyblock.",
+            Key.SB_ONLY_FAC,
+            false,
+            FaColors::refresh
         ));
 
         entries.add(VCEntry.toggleExpandable(
@@ -593,7 +602,7 @@ public class VCManager {
             TrackerUtils::refresh
         ));
 
-        trackerEntries.add(VCEntry.header("── Century Cake Tracker ──", ""));
+        trackerEntries.add(VCEntry.header("── Century Cake Timer ──", ""));
 
         trackerEntries.add(VCEntry.toggle(
             "Enable Notifications",
@@ -612,6 +621,17 @@ public class VCManager {
             new ExtraControl("Century Cakes: ", false, false)
         ));
 
+        trackerEntries.add(VCEntry.header("── Temporary Effects ──", ""));
+
+        trackerEntries.add(VCEntry.toggleColorOrHud(
+            "Active Effect Display",
+            "Flask, moby, gummy and truffle duration/cooldown.",
+            Key.HUD_EFFECTS_ENABLED,
+            false,
+            null,
+            new ExtraControl(Key.HUD_EFFECTS_ENABLED, false, false)
+        ));
+
         trackerEntries.add(VCEntry.header("── Diana Tracker ──", ""));
 
         trackerEntries.add(VCEntry.toggle(
@@ -620,6 +640,39 @@ public class VCManager {
             Key.TRACK_DIANA,
             false,
             ActivityMonitor::refresh
+        ));
+
+        trackerEntries.add(VCEntry.header("── Slayer XP Tracker ──", ""));
+
+        trackerEntries.add(VCEntry.toggle(
+            "Track Slayer XP per hour §7(§8/fa slayer§7)",
+            "Adds bosses and XP per hour to the slayer completion messages.",
+            Key.TRACK_SLAYER,
+            false,
+            ActivityMonitor::refresh
+        ));
+
+        trackerEntries.add(VCEntry.header("── Skill XP Tracker ──", ""));
+
+        trackerEntries.add(VCEntry.toggle(
+            "Skill Xp per hour §7(§8Includes catches/hour§7)",
+            "Displays your skill xp gain rate. (Needs tabwidget if skill isn't maxed)",
+            Key.HUD_SKILL_XP_ENABLED,
+            false,
+            SkillTracker::refresh
+        ));
+
+        trackerEntries.add(VCEntry.header("── Cocoon Alert ──", ""));
+
+        trackerEntries.add(VCEntry.toggle2(
+            "Bloodshot/The Primordial Cocoon Alert",
+            "Attempts to detect cocoons if nearby. Default chat alert, toggleable title + audio.",
+            Key.TRACK_COCOON,
+            false,
+            "TITLE",
+            Key.ALERT_COCOON,
+            false,
+            CocoonAlert::refresh
         ));        
 
         trackerEntries.add(VCEntry.header("── Moonglade Minigame Alarm ──", ""));
@@ -639,25 +692,19 @@ public class VCManager {
             false,
             ChatTimers.getInstance()::refresh,
             new ExtraControl("Moonglade: ", false, false)
-        ));
-
-        trackerEntries.add(VCEntry.header("── Skill XP Tracker ──", ""));
-
-        trackerEntries.add(VCEntry.toggle(
-            "Skill Xp per hour §8(§8Includes catches/hour§7)",
-            "Displays your skill xp gain rate. (Needs tabwidget if skill isn't maxed)",
-            Key.HUD_SKILL_XP_ENABLED,
-            false,
-            SkillTracker::refresh
-        ));        
+        ));     
 
         entries.add(VCEntry.expandable(
-            "Trackers and alerts",
+            "Trackers and timers",
             "Configure settings for Century Cake Display and Moonglade Minigame alarm.",
             trackerEntries,
             Arrays.asList(
-                Text.literal("Trackers and alerts:"),
-                Text.literal("- §8Century cake chat alert/display"),
+                Text.literal("Trackers and timers:"),
+                Text.literal("- §8Cakes, consumables"),
+                Text.literal("- §8Diana stats tracker"),
+                Text.literal("- §8Slayer XP per hour"),
+                Text.literal("- §8Skill XP per hour"),
+                Text.literal("- §8Cocoon alert"),
                 Text.literal("- §8Moonglade minigame alarm")
             )
         ));

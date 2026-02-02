@@ -4,6 +4,7 @@ import me.valkeea.fishyaddons.processor.ChatHandler;
 import me.valkeea.fishyaddons.processor.ChatHandlerResult;
 import me.valkeea.fishyaddons.processor.ChatMessageContext;
 import me.valkeea.fishyaddons.tracker.DianaStats;
+import me.valkeea.fishyaddons.tracker.SlayerStats;
 import me.valkeea.fishyaddons.tracker.fishing.ScStats;
 
 public class StatHandler implements ChatHandler {
@@ -28,9 +29,8 @@ public class StatHandler implements ChatHandler {
 
         try {
             
-            if (DianaStats.getInstance().handleChat(context.getLowerCleanString())) {
-                return ChatHandlerResult.STOP;
-            }
+            if (DianaStats.getInstance().handleChat(context.getLowerCleanString())) return ChatHandlerResult.STOP;
+            if (handleSlayer(context.getCleanString())) return ChatHandlerResult.STOP;            
             return ChatHandlerResult.CONTINUE;
 
         } catch (Exception e) {
@@ -38,10 +38,22 @@ public class StatHandler implements ChatHandler {
             e.printStackTrace();
             return ChatHandlerResult.SKIP;
         }
-    }  
+    }
+
+    private boolean handleSlayer(String message) {
+        if (!SlayerStats.isEnabled()) return false;
+        if (SlayerStats.handleSlayerCompletion(message)) return true;
+        
+        String trimmed = message.trim();
+        if (trimmed.startsWith("» Slay ") && trimmed.contains("Combat XP worth of")) {
+            return SlayerStats.getInstance().handleQuestDescription(trimmed);
+        }
+        
+        return false;
+    }
     
     @Override
     public boolean isEnabled() {
-        return ScStats.isEnabled() || DianaStats.isEnabled();
+        return ScStats.isEnabled() || DianaStats.isEnabled() || SlayerStats.isEnabled();
     }
 }

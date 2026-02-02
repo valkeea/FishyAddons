@@ -131,7 +131,7 @@ public class AnalysisCoordinator {
     }
     
     private boolean isDh() {
-        return FilterConfig.MessageContext.hasTriggerWithin(RuleFactory.getDhTriggers(), 50);
+        return FilterConfig.MessageContext.hasTriggerWithin(RuleFactory.getDhTriggers(), 200);
     }
     
     private static class SeaCreatureInfo {

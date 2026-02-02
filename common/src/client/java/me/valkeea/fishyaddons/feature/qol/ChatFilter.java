@@ -36,7 +36,7 @@ public class ChatFilter {
                 return null;
             }
 
-            var replacement = firstMatch.getRule().getContextualReplacement();
+            var replacement = firstMatch.getRule().getContextualReplacement(context.isDoubleHook());
             if (replacement != null) {
                 return replacement;
             }

@@ -113,7 +113,7 @@ public class FilterConfig {
             this.priority = priority;
             this.enabled = enabled;
             this.requireFullMatch = true;
-            this.contextTimeoutMs = 50;
+            this.contextTimeoutMs = 200;
         }
         
         public String getSearchText() { return searchText; }
@@ -129,8 +129,13 @@ public class FilterConfig {
         }
         
         public String getContextualReplacement() {
+            return getContextualReplacement(false);
+        }
+
+        public String getContextualReplacement(boolean isDoubleHook) {
             if (hasAlternativeFormat()) {
-                boolean hasTriggered = MessageContext.hasTriggerWithin(triggerMessages, contextTimeoutMs);
+                boolean hasTriggered = isDoubleHook ||
+                    MessageContext.hasTriggerWithin(triggerMessages, contextTimeoutMs);
                 
                 if (hasTriggered) {
                     String pluralizedReplacement = pluralize(replacement);

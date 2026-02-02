@@ -10,15 +10,15 @@ import me.valkeea.fishyaddons.tracker.SkillTracker;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.text.Text;
+import me.valkeea.fishyaddons.util.text.Color;
 
 public class SkillXpDisplay implements HudElement {
-    private boolean editingMode = false;
     private static final String HUD_KEY = me.valkeea.fishyaddons.config.Key.HUD_SKILL_XP_ENABLED;
-    private HudElementState cachedState = null;
-
-    // Constants for formatting
     private static final String RATE_SUFFIX = "§8/h ";
     private static final String TOTAL_FORMAT = "§8(§7%,d§8) ";
+        
+    private HudElementState cachedState = null;
+    private boolean editingMode = false;
     
     private static class SkillDisplayCache {
         final Text skillLabel;
@@ -102,7 +102,7 @@ public class SkillXpDisplay implements HudElement {
     public void render(DrawContext context, int mouseX, int mouseY) {
         if (!editingMode && !SkillTracker.isEnabled()) return;
         
-        SkillTracker tracker = SkillTracker.getInstance();
+        var tracker = SkillTracker.getInstance();
         if (!editingMode && tracker.getTrackedSkills().isEmpty()) return;
 
         var mc = MinecraftClient.getInstance();
@@ -119,7 +119,8 @@ public class SkillXpDisplay implements HudElement {
 
         skillCaches.clear();
         for (String skillName : tracker.getTrackedSkills()) {
-            SkillData data = new SkillData(
+
+            var data = new SkillData(
                 skillName,
                 tracker.getSkillXp(skillName),
                 tracker.getXpPerHour(skillName),
@@ -137,7 +138,7 @@ public class SkillXpDisplay implements HudElement {
         String skillName = tracker.getTrackedSkill();
         if (skillName == null) return;
         
-        SkillDisplayCache cache = skillCaches.get(skillName);
+        var cache = skillCaches.get(skillName);
         if (cache == null) return;
         
         renderSkillDisplay(context, java.util.List.of(cache), state, mc);
@@ -165,7 +166,7 @@ public class SkillXpDisplay implements HudElement {
         boolean showBg = state.bg;
         float scale = size / 12.0F;
 
-        if (editingMode) {
+        if (editingMode && caches.isEmpty()) {
             context.drawText(
                 mc.textRenderer, 
                 Text.literal("Skill XP Tracker"), 
@@ -174,9 +175,8 @@ public class SkillXpDisplay implements HudElement {
                 state.color, 
                 false
             );
+            return;
         }
-
-        if (caches.isEmpty()) return;
         
         int lineHeight = (int)(size * 1.2F);
         int maxWidth = caches.stream().mapToInt(SkillDisplayCache::getFullWidth).max().orElse(0);
@@ -185,26 +185,28 @@ public class SkillXpDisplay implements HudElement {
         if (showBg) {
             drawBackground(context, hudX, hudY, (int)(maxWidth * scale), totalHeight);
         }
-        
+
         context.getMatrices().push();
         context.getMatrices().translate(hudX, hudY, 0);
         context.getMatrices().scale(scale, scale, 1.0F);
-        
+
         for (int i = 0; i < caches.size(); i++) {
-            SkillDisplayCache cache = caches.get(i);
+            var cache = caches.get(i);
             int yOffset = (int)(i * lineHeight / scale);
             drawSkillLine(context, mc, cache, yOffset, state);
         }
-        
+
+        drawTimeLine(context, mc, caches.size(), lineHeight, scale, state);
+
         context.getMatrices().pop();
     }
     
     private void drawSkillLine(DrawContext context, MinecraftClient mc, SkillDisplayCache cache, 
                                int yOffset, HudElementState state) {
-        int color = SkillTracker.getInstance().isPaused() ? 0xAAAAAA : state.color;
+        int color = SkillTracker.getInstance().isPaused() ? 0xFFAAAAAA : state.color;
 
         if (SkillTracker.getInstance().isDownTiming()) {
-            color = 0xFF5555;
+            color = 0xFFFF5555;
         }
         
         int currentX = 0;
@@ -215,11 +217,11 @@ public class SkillXpDisplay implements HudElement {
         currentX += mc.textRenderer.getWidth(cache.skillLabel);
         
         // Draw rate value
-        drawer.drawText(cache.rateValue, currentX, yOffset, 0xFFFFFF);
+        drawer.drawText(cache.rateValue, currentX, yOffset, 0xFFFFFFFF);
         currentX += mc.textRenderer.getWidth(cache.rateValue);
         
         // Draw XP value
-        drawer.drawText(cache.xpValue, currentX, yOffset, 0xAAAAAA);
+        drawer.drawText(cache.xpValue, currentX, yOffset, 0xFFAAAAAA);
         currentX += mc.textRenderer.getWidth(cache.xpValue);
         
         // Draw fishing stats if available
@@ -227,20 +229,57 @@ public class SkillXpDisplay implements HudElement {
             drawer.drawText(cache.catchLabel, currentX, yOffset, color);
             currentX += mc.textRenderer.getWidth(cache.catchLabel);
 
-            drawer.drawText(cache.catchRateText, currentX, yOffset, 0xFFFFFF);
+            drawer.drawText(cache.catchRateText, currentX, yOffset, 0xFFFFFFFF);
             currentX += mc.textRenderer.getWidth(cache.catchRateText);
             
-            drawer.drawText(cache.catchTotal, currentX, yOffset, 0xAAAAAA);
+            drawer.drawText(cache.catchTotal, currentX, yOffset, 0xFFAAAAAA);
             currentX += mc.textRenderer.getWidth(cache.catchTotal);
 
             drawer.drawText(cache.mobLabel, currentX, yOffset, color);
             currentX += mc.textRenderer.getWidth(cache.mobLabel);
 
-            drawer.drawText(cache.mobRateText, currentX, yOffset, 0xFFFFFF);
+            drawer.drawText(cache.mobRateText, currentX, yOffset, 0xFFFFFFFF);
             currentX += mc.textRenderer.getWidth(cache.mobRateText);
             
-            drawer.drawText(cache.mobTotal, currentX, yOffset, 0xAAAAAA);
+            drawer.drawText(cache.mobTotal, currentX, yOffset, 0xFFAAAAAA);
         }
+    }
+
+    private void drawTimeLine(DrawContext context, MinecraftClient mc, int lineIndex, 
+                                int lineHeight, float scale, HudElementState state) {
+
+        String timeText;
+        int color = Color.brighten(state.color, 0.6f);
+
+
+        if (SkillTracker.getInstance().isDownTiming()) {
+            long downTime = SkillTracker.getInstance().getCurrentPauseDurationMs();
+            timeText = String.format("Downtiming§8: §7%02d:%02d", 
+            (downTime / 60000) % 60, 
+            (downTime / 1000) % 60);
+            color = 0xFFFF5555;
+
+        } else if (SkillTracker.getInstance().isPaused()) {
+                long pausedFor = SkillTracker.getInstance().getCurrentPauseDurationMs();
+                long resetIn = 15 * 60 * 1000 - pausedFor;
+
+                timeText = String.format("Paused for§8: §7%02d:%02d§7, §cReset in§8: §7%02d:%02d", 
+                    (pausedFor / 60000) % 60, 
+                    (pausedFor / 1000) % 60,
+                    (resetIn / 60000) % 60,
+                    (resetIn / 1000) % 60);
+                    color =  0xFFAAAAAA;            
+
+            } else {
+                long elapsed = SkillTracker.getInstance().getTimeElapsedMs();
+                timeText = String.format("Tracked for§8: §7%02d:%02d", 
+                (elapsed / 60000) % 60, 
+                (elapsed / 1000) % 60);
+            }
+        
+        int yOffset = (int)(lineIndex * lineHeight / scale);
+        var drawer = new HudDrawer(mc, context, state);
+        drawer.drawText(Text.literal(timeText), 0, yOffset, color);
     }
 
     @Override
@@ -250,7 +289,7 @@ public class SkillXpDisplay implements HudElement {
         int size = getHudSize();
         float scale = size / 12.0F;
         
-        SkillTracker tracker = SkillTracker.getInstance();
+        var tracker = SkillTracker.getInstance();
         java.util.Set<String> trackedSkills = tracker.getTrackedSkills();
         
         if (trackedSkills.isEmpty()) {
@@ -279,7 +318,7 @@ public class SkillXpDisplay implements HudElement {
                 FishyConfig.getHudX(HUD_KEY, 5),
                 FishyConfig.getHudY(HUD_KEY, 25),
                 FishyConfig.getHudSize(HUD_KEY, 12),
-                FishyConfig.getHudColor(HUD_KEY, 0xFFFFFF),
+                FishyConfig.getHudColor(HUD_KEY, 0xFFFFFFFF),
                 FishyConfig.getHudOutline(HUD_KEY, false),
                 FishyConfig.getHudBg(HUD_KEY, true)
             );
@@ -297,7 +336,7 @@ public class SkillXpDisplay implements HudElement {
     @Override public void setHudPosition(int x, int y) { FishyConfig.setHudX(HUD_KEY, x); FishyConfig.setHudY(HUD_KEY, y); }
     @Override public int getHudSize() { return FishyConfig.getHudSize(HUD_KEY, 12); }
     @Override public void setHudSize(int size) { FishyConfig.setHudSize(HUD_KEY, size); }
-    @Override public int getHudColor() { return FishyConfig.getHudColor(HUD_KEY, 0xEECAEC); }
+    @Override public int getHudColor() { return FishyConfig.getHudColor(HUD_KEY, 0xFFEECAEC); }
     @Override public void setHudColor(int color) { FishyConfig.setHudColor(HUD_KEY, color); }
     @Override public boolean getHudOutline() { return FishyConfig.getHudOutline(HUD_KEY, false); }
     @Override public void setHudOutline(boolean outline) { FishyConfig.setHudOutline(HUD_KEY, outline); }   

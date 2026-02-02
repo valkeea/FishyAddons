@@ -325,6 +325,19 @@ public class SkillTracker {
     public int getSkillXp(String skillName) {
         return trackedSkills.getOrDefault(skillName, 0);
     }
+
+    public long getTimeElapsedMs() {
+        long now = System.currentTimeMillis();
+        long effectiveDuration = now - startTime - totalPausedDuration.get();
+        return Math.max(effectiveDuration, 0);
+    }
+
+    public long getCurrentPauseDurationMs() {
+        if (pausedTime > 0) {
+            return System.currentTimeMillis() - pausedTime;
+        }
+        return 0;
+    }
     
     public boolean hasMultipleSkills() {
         return trackedSkills.size() > 1;

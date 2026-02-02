@@ -10,6 +10,7 @@ import me.valkeea.fishyaddons.tracker.SkillTracker;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.text.Text;
+import me.valkeea.fishyaddons.util.text.Color;
 
 public class SkillXpDisplay implements HudElement {
     private static final String HUD_KEY = me.valkeea.fishyaddons.config.Key.HUD_SKILL_XP_ENABLED;
@@ -165,7 +166,7 @@ public class SkillXpDisplay implements HudElement {
         boolean showBg = state.bg;
         float scale = size / 12.0F;
 
-        if (editingMode) {
+        if (editingMode && caches.isEmpty()) {
             context.drawText(
                 mc.textRenderer, 
                 Text.literal("Skill XP Tracker"), 
@@ -174,9 +175,8 @@ public class SkillXpDisplay implements HudElement {
                 state.color, 
                 false
             );
+            return;
         }
-
-        if (caches.isEmpty()) return;
         
         int lineHeight = (int)(size * 1.2F);
         int maxWidth = caches.stream().mapToInt(SkillDisplayCache::getFullWidth).max().orElse(0);
@@ -196,6 +196,8 @@ public class SkillXpDisplay implements HudElement {
             drawSkillLine(context, mc, cache, yOffset, state);
         }
 
+        drawTimeLine(context, mc, caches.size(), lineHeight, scale, state);
+
         context.getMatrices().popMatrix();
     }
     
@@ -204,7 +206,7 @@ public class SkillXpDisplay implements HudElement {
         int color = SkillTracker.getInstance().isPaused() ? 0xFFAAAAAA : state.color;
 
         if (SkillTracker.getInstance().isDownTiming()) {
-            color = 0xFF5555;
+            color = 0xFFFF5555;
         }
         
         int currentX = 0;
@@ -241,6 +243,43 @@ public class SkillXpDisplay implements HudElement {
             
             drawer.drawText(cache.mobTotal, currentX, yOffset, 0xFFAAAAAA);
         }
+    }
+
+    private void drawTimeLine(DrawContext context, MinecraftClient mc, int lineIndex, 
+                                int lineHeight, float scale, HudElementState state) {
+
+        String timeText;
+        int color = Color.brighten(state.color, 0.6f);
+
+
+        if (SkillTracker.getInstance().isDownTiming()) {
+            long downTime = SkillTracker.getInstance().getCurrentPauseDurationMs();
+            timeText = String.format("Downtiming§8: §7%02d:%02d", 
+            (downTime / 60000) % 60, 
+            (downTime / 1000) % 60);
+            color = 0xFFFF5555;
+
+        } else if (SkillTracker.getInstance().isPaused()) {
+                long pausedFor = SkillTracker.getInstance().getCurrentPauseDurationMs();
+                long resetIn = 15 * 60 * 1000 - pausedFor;
+
+                timeText = String.format("Paused for§8: §7%02d:%02d§7, §cReset in§8: §7%02d:%02d", 
+                    (pausedFor / 60000) % 60, 
+                    (pausedFor / 1000) % 60,
+                    (resetIn / 60000) % 60,
+                    (resetIn / 1000) % 60);
+                    color =  0xFFAAAAAA;            
+
+            } else {
+                long elapsed = SkillTracker.getInstance().getTimeElapsedMs();
+                timeText = String.format("Tracked for§8: §7%02d:%02d", 
+                (elapsed / 60000) % 60, 
+                (elapsed / 1000) % 60);
+            }
+        
+        int yOffset = (int)(lineIndex * lineHeight / scale);
+        var drawer = new HudDrawer(mc, context, state);
+        drawer.drawText(Text.literal(timeText), 0, yOffset, color);
     }
 
     @Override

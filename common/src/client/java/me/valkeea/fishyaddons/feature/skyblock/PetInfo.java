@@ -135,5 +135,9 @@ public class PetInfo {
             clearOverride();
             setNewPet(flattened);
         }
+
+        public static void shutdown() {
+            scheduler.shutdown();
+        }
     }  
 }

@@ -14,9 +14,10 @@ import net.minecraft.text.Text;
 
 public class TabScanner {
     private TabScanner() {}
-    private static final Pattern PET_PATTERN = Pattern.compile("\\[Lvl \\d+\\] .+");
+    
     private static final Pattern XP_PATTERN = Pattern.compile("^[\\d,]+(?:\\.\\d+)?[kM]?/[\\d,]+(?:\\.\\d+)?[kM]? XP \\(\\d{1,3}(?:\\.\\d+)?%\\)$");
-
+    private static final Pattern OF_PATTERN = Pattern.compile("^\\+[\\d,]+(?:\\.\\d+)?[kMBT]? XP$");
+    private static final Pattern PET_PATTERN = Pattern.compile("\\[Lvl \\d+\\] .+");
     private static final short FAIL_LIMIT = 10;
 
     private static int petFails = 0;
@@ -140,7 +141,7 @@ public class TabScanner {
             return true;
         }
 
-        return XP_PATTERN.matcher(targetString).matches();
+        return XP_PATTERN.matcher(targetString).matches() || OF_PATTERN.matcher(targetString).matches();
     }
     
     

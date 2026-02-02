@@ -21,8 +21,8 @@ public class ClientDisconnected {
 
     private static void onClientDisconnected() {
 
-        GameMode.sbEvent(false);
-
+        GameMode.leftSkyblock();
+        
         FishyConfig.saveBackup();
         ItemConfig.saveBackup();
         StatConfig.saveBackup();

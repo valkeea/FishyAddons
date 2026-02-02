@@ -75,6 +75,12 @@ public class GameMode {
         FaEvents.ENVIRONMENT_CHANGE.firePhased(event, listener -> listener.onEnvironmentChange(event));
     }
 
+    public static void leftSkyblock() {
+        sbEvent(false);        
+        INSTANCE.isInSkyblock = false;
+        INSTANCE.bypass = false;
+    }
+
     /**
      * Bypass the manual check when gamemode has already been confirmed.
      */

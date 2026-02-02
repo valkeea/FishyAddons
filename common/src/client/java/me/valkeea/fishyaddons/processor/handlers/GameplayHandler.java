@@ -79,6 +79,11 @@ public class GameplayHandler implements ChatHandler {
             GameMode.confirm();
             return true;
         }
+
+        if (message.equals("You were spawned in Limbo.")) {
+            GameMode.leftSkyblock();
+            return true;
+        }
         return false;
     }
 
@@ -158,19 +163,26 @@ public class GameplayHandler implements ChatHandler {
                     map = jsonObject.get("map").getAsString();
                 }
                 
-                if (gametype != null && gametype.equals("SKYBLOCK")) {
-                    GameMode.confirm();
-                    if (map != null) {
-                        SkyblockAreas.setIslandByMap(map);
-                    }
-                    return true;
-                }
+                if (gametype != null) return checkGameType(gametype, map);
                 
             } catch (JsonSyntaxException | IllegalStateException e) {
                 System.err.println("[FishyAddons] Failed to parse API message: " + e.getMessage());
             }
         }
         return false;
+    }
+
+    private boolean checkGameType(String type, String map) {
+
+        if (type.equals("SKYBLOCK")) {
+            GameMode.confirm();
+            if (map != null) SkyblockAreas.setIslandByMap(map);
+            return true;
+
+        } else {
+            GameMode.leftSkyblock();
+            return true;
+        }
     }
     
     @Override

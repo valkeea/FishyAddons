@@ -9,6 +9,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import me.valkeea.fishyaddons.event.impl.FaEvents;
 import me.valkeea.fishyaddons.event.impl.HudRenderEvent;
 import me.valkeea.fishyaddons.feature.visual.XpColor;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.hud.InGameHud;
 import net.minecraft.client.render.RenderTickCounter;
@@ -18,8 +19,10 @@ public class MixinInGameHud {
     
     @Inject(method = "render", at = @At("TAIL"))
     private void onHudRender(DrawContext context, RenderTickCounter tickCounter, CallbackInfo ci) {
-        HudRenderEvent event = new HudRenderEvent(context, tickCounter);
-        FaEvents.HUD_RENDER.firePhased(event, listener -> listener.onHudRender(event));
+        if (!MinecraftClient.getInstance().options.hudHidden) {
+            var event = new HudRenderEvent(context, tickCounter);
+            FaEvents.HUD_RENDER.firePhased(event, listener -> listener.onHudRender(event));
+        }
     }
     
     @ModifyArg(

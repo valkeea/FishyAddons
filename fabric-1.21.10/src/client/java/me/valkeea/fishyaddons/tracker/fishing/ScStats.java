@@ -2,7 +2,6 @@ package me.valkeea.fishyaddons.tracker.fishing;
 
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.jetbrains.annotations.Nullable;
@@ -14,6 +13,7 @@ import me.valkeea.fishyaddons.config.StatConfig;
 import me.valkeea.fishyaddons.event.impl.EnvironmentChangeEvent;
 import me.valkeea.fishyaddons.event.impl.FaEvents;
 import me.valkeea.fishyaddons.event.impl.ScCatchEvent;
+import me.valkeea.fishyaddons.tool.RunDelayed;
 import me.valkeea.fishyaddons.tracker.ActivityMonitor;
 import me.valkeea.fishyaddons.util.FishyNotis;
 import net.minecraft.client.MinecraftClient;
@@ -56,9 +56,11 @@ public class ScStats {
     private static boolean announce = false;
     private static boolean isPlhlegPool = false;
     private static boolean isHotspot = false;
+    private static boolean registered = false;
 
     private static Island area = Island.NA;
     private static ScStats instance = null;
+    private static final Object COUNTER_LOCK = new Object();
 
     private ScStats() {}
 
@@ -75,11 +77,16 @@ public class ScStats {
         announce = FishyConfig.getState(me.valkeea.fishyaddons.config.Key.SC_SINCE, false);
 
         if (enabled) {
-            ScStats instance = getInstance();            
+            ScStats instance = getInstance();
+            
+            if (!registered) {
+                FaEvents.SEA_CREATURE_CATCH.register(instance::handleMatch);
+                FaEvents.ENVIRONMENT_CHANGE.register(ScStats::setArea);
+                registered = true;
+            }
+            
             instance.load();
             ScData.refresh();
-            FaEvents.SEA_CREATURE_CATCH.register(instance::handleMatch);
-            FaEvents.ENVIRONMENT_CHANGE.register(ScStats::setArea);
         }
     }
 
@@ -170,12 +177,18 @@ public class ScStats {
 
     // --- Chat Handling ---
 
-    public void checkForVial(String s) {
+    public boolean checkForVial(String s) {
         if (s.startsWith("rare drop! radioactive vial")) {
-            sendTookJawbusForVial();            
-            jawbusSinceVial = 0;
-            StatConfig.setSince(JAWBUS_VIAL_KEY, 0);
+            sendTookJawbusForVial();
+            
+            synchronized (COUNTER_LOCK) {
+                jawbusSinceVial = 0;
+            }
+            
+            save(JAWBUS_VIAL_KEY, 0);
+            return true;
         }
+        return false;
     }
 
     public void handleMatch(ScCatchEvent event) {
@@ -206,52 +219,52 @@ public class ScStats {
 
     // --- Increment and get counter values ---
 
-    private void updateCounters(String creatureId, boolean isDoubleHook) {
+    private void updateCounters(String creatureId, boolean isDh) {
         if (!loaded) {
             loadAllCounters();
             loaded = true;
         }
 
-        int increment = isDoubleHook && countDh ? 2 : 1;
+        int increment = isDh && countDh ? 2 : 1;
         
         if (SkyblockAreas.isCrimson()) {
             checkPoolStatus();
         }
 
         Island currentArea = getCurrentAreaKey();
-        processCatch(Sc.genAreaKey(creatureId), currentArea, increment, isDoubleHook);
+        
+        StatConfig.beginBatch();
+        try {
+            processCatch(Sc.genAreaKey(creatureId), currentArea, increment, isDh);
+        } finally {
+            StatConfig.endBatch();
+        }
     }
 
     private void processCatch(String creatureId, Island currentArea, int increment, boolean wasDh) {
         if (Sc.isTracked(creatureId) && Sc.canSpawnIn(creatureId, currentArea)) {
             
-            int counterValue = getCounterFor(creatureId);
+            int counterValue;
             String displayName = Sc.displayName(creatureId);
+            
+            synchronized (COUNTER_LOCK) {
+                counterValue = getCounterFor(creatureId);
+                setCounterFor(creatureId, 0);
+            }
             
             sendTookXScFor(displayName, counterValue, wasDh);
             updateDataOnCatch(creatureId, counterValue);
-            setCounterFor(creatureId, 0);
             
             String finalCreatureId = creatureId;
-            CompletableFuture.runAsync(() -> {
-                try {
-                    StatConfig.setSince(SINCE_PREFIX + finalCreatureId, 0);
-                } catch (Exception e) {
-                    System.err.println("Failed to save counter reset for " + finalCreatureId + ": " + e.getMessage());
-                }
-            });
+            save(SINCE_PREFIX + finalCreatureId, 0);
             
             if (creatureId.contains(Sc.JAWBUS)) {
                 sendJawbusSinceVial();
-                jawbusSinceVial += increment;
                 
-                CompletableFuture.runAsync(() -> {
-                    try {
-                        StatConfig.setSince(JAWBUS_VIAL_KEY, jawbusSinceVial);
-                    } catch (Exception e) {
-                        System.err.println("Failed to save jawbus vial counter: " + e.getMessage());
-                    }
-                });
+                synchronized (COUNTER_LOCK) {
+                    jawbusSinceVial += increment;
+                }
+                save(JAWBUS_VIAL_KEY, jawbusSinceVial);
             }
         }
 
@@ -267,7 +280,7 @@ public class ScStats {
         }
     }
     
-    private int getCounterFor(String creatureId) {
+    protected int getCounterFor(String creatureId) {
         return creatureCounters.getOrDefault(creatureId, 0);
     }
     
@@ -305,10 +318,10 @@ public class ScStats {
         
         try {
             for (Map.Entry<String, Integer> entry : creatureCounters.entrySet()) {
-                StatConfig.setSince(SINCE_PREFIX + entry.getKey(), entry.getValue());
+                save(SINCE_PREFIX + entry.getKey(), entry.getValue());
             }
             
-            StatConfig.setSince(JAWBUS_VIAL_KEY, jawbusSinceVial);
+            save(JAWBUS_VIAL_KEY, jawbusSinceVial);
             
         } catch (Exception e) {
             System.err.println("ScStats: Failed to save data: " + e.getMessage());
@@ -326,6 +339,10 @@ public class ScStats {
 
     public static boolean isEnabled() {
         return enabled;
+    }
+
+    private static void save(String key, int value) {
+        StatConfig.setSince(key, value);
     }
 
     public Island getCurrentAreaKey() {
@@ -346,20 +363,25 @@ public class ScStats {
     private static void sendTookJawbusForVial() {
         if (!announce) return;
         var message = String.format("§7It took §b%d §cJawbus §7 to drop §dRadioactive Vial!", getInstance().jawbusSinceVial);
-        FishyNotis.send(Text.literal(message));
+        announceAfter(message);
     }
 
     private static void sendJawbusSinceVial() {
         if (!announce) return;
         var message = String.format("§cJawbus §8since vial: §b%d", getInstance().jawbusSinceVial);
-        FishyNotis.send(Text.literal(message));
+        announceAfter(message);
     }
 
     private static void sendTookXScFor(String creature, int count, boolean wasDh) {
         if (!announce) return;
         var message = String.format("Took §d%d§7 Sc for %s", count, creature);
         message += wasDh ? " §8(DH)§7!" : "§7!";
-        FishyNotis.send(Text.literal(message));
+        announceAfter(message);
+    }
+
+    private static void announceAfter(String msg) {
+        final String m = msg;
+        RunDelayed.run(() -> FishyNotis.send(Text.literal(m)), 100, null);
     }
 
     public void sendStats() {
@@ -395,60 +417,31 @@ public class ScStats {
     }
     
     private StringBuilder buildAreaStats(StringBuilder sb, Island currentArea) {
-        switch (currentArea) {
-            case Island.JERRY:
-                sb.append("§7, §6Yeti§7: §b").append(getCounterFor(Sc.YETI));
-                sb.append("§7, §dReindrake§7: §b").append(getCounterFor(Sc.DRAKE));
-                break;
-            case Island.GAL:
-                sb.append("§7, §5Ent§7: §b").append(getCounterFor(Sc.ENT));
-                sb.append("§7, §6Loch Emperor§7: §b").append(getCounterFor(Sc.EMP));
-                break;
-            case Island.BAYOU:
-                sb.append("§7, §dTitanoboa§7: §b").append(getCounterFor(Sc.TITANOBOA));
-                break;
-            case Island.CH:
-                sb.append("§7, §6Abyssal Miner§7: §b").append(getCounterFor(Sc.CH_MINER));
-                break;
-            case Island.PARK:
-                sb.append("§7, §5Night Squid§7: §b").append(getCounterFor(Sc.NIGHT_SQUID));
-                break;    
-            default:
-                // No area-specific creatures
-                break;
-        }
-
-        if (isHotspot) {
-            sb.append("§7, §dWiki Tiki§7: §b").append(getCounterFor(Sc.TIKI));
-        }
-
-        if (!Island.GAL.equals(currentArea)) {
-            sb.append("§7, §5Water Hydra§7: §b").append(getCounterFor(Sc.WATER_HYDRA));
-        }
-
-        if (ActivityMonitor.getInstance().isActive(ActivityMonitor.Currently.SPOOKY)) {
-            sb.append("§7, §5Grim Reaper§7: §b").append(getCounterFor(Sc.GRIM_REAPER));
-        }
-
-        if (ActivityMonitor.getInstance().isActive(ActivityMonitor.Currently.SHARK)) {
-            sb.append("§7, §6Great White Shark§7: §b").append(getCounterFor(Sc.GW));
+        List<String> spawnableCreatures = ScRegistry.getInstance().getCreaturesForArea(currentArea);
+        
+        for (String creatureId : spawnableCreatures) {
+            String displayName = ScRegistry.getInstance().getDisplayName(creatureId);
+            int count = getCounterFor(creatureId);
+            sb.append("§7, ").append(displayName).append("§7: §b").append(count);
         }
 
         return sb;
     }
 
     private StringBuilder buildCiStats(StringBuilder sb) {
-        StringBuilder ciSb = new StringBuilder(sb);
+
+        var ciSb = new StringBuilder(sb);
+
         ciSb.append("§8 - §cRagnarok: §b").append(getCounterFor(Sc.RAGNAROK));
         ciSb.append("§7, §cPlhlegblast: §b").append(getCounterFor(Sc.PLHLEG));
         ciSb.append("§7, §cThunder: §b").append(getCounterFor(Sc.genAreaKey(Sc.THUNDER)));
         ciSb.append("§7, §cJawbus: §b").append(getCounterFor(Sc.genAreaKey(Sc.JAWBUS)));
         ciSb.append("§7 (§cJawbus §7since §dVial: §b").append(jawbusSinceVial).append("§7)");
-        if (isHotspot || isPlhlegPool) {
-            ciSb.append("§8 - §7Currently in:");
-        }
+
+        if (isHotspot || isPlhlegPool) ciSb.append("§8 - §7Currently in:");
         if (isHotspot) ciSb.append(" §8[§3Hotspot§8]");
         if (isPlhlegPool) ciSb.append(" §8[§3Pool§8]");
+
         return ciSb;
     }
 }

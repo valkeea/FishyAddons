@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
 import me.valkeea.fishyaddons.config.FishyConfig;
@@ -94,15 +93,12 @@ public class ScData {
                 rebalanceToNewMax(creatureKey, attemptCount);
             } else {
                 addIndividualAttempt(creatureKey, attemptCount);
-                String finalCreatureKey = creatureKey;
                 Map<Integer, Integer> dataToSave = new ConcurrentHashMap<>(catchGraph.get(creatureKey));
-                CompletableFuture.runAsync(() -> {
-                    try {
-                        saveDataFor(finalCreatureKey, dataToSave);
-                    } catch (Exception e) {
-                        System.err.println(SAVE_ERROR_MSG + finalCreatureKey + ": " + e.getMessage());
-                    }
-                });
+                try {
+                    saveDataFor(creatureKey, dataToSave);
+                } catch (Exception e) {
+                    System.err.println(SAVE_ERROR_MSG + creatureKey + ": " + e.getMessage());
+                }
             }
         } else {
             // Not a new max, added normally based on current tracking mode
@@ -112,15 +108,12 @@ public class ScData {
                 addBracketedAttempt(creatureKey, attemptCount);
             }
 
-            String finalCreatureKey = creatureKey;
             Map<Integer, Integer> dataToSave = new ConcurrentHashMap<>(catchGraph.get(creatureKey));
-            CompletableFuture.runAsync(() -> {
-                try {
-                    saveDataFor(finalCreatureKey, dataToSave);
-                } catch (Exception e) {
-                    System.err.println(SAVE_ERROR_MSG + finalCreatureKey + ": " + e.getMessage());
-                }
-            });
+            try {
+                saveDataFor(creatureKey, dataToSave);
+            } catch (Exception e) {
+                System.err.println(SAVE_ERROR_MSG + creatureKey + ": " + e.getMessage());
+            }
         }
         
         notifyHudDataChanged();
@@ -363,7 +356,6 @@ public class ScData {
         if (!newDataToSave.isEmpty()) {
             try {
                 StatConfig.beginBatch();
-                
                 for (Map.Entry<String, Integer> entry : newDataToSave.entrySet()) {
                     StatConfig.setData(entry.getKey(), entry.getValue());
                 }
@@ -483,7 +475,6 @@ public class ScData {
         
         try {
             StatConfig.beginBatch();
-            
             for (Map.Entry<String, Integer> entry : totalAttempts.entrySet()) {
                 StatConfig.setSince(TOTAL_ATTEMPTS + entry.getKey(), entry.getValue());
             }
@@ -670,7 +661,7 @@ public class ScData {
         });
             
         FishyNotis.alert(Text.literal(String.format("§dYou have caught: §b%d §7Sc without ", 
-        StatConfig.getSince(creatureKey)) + dpName));
+        StatConfig.getSince("since_" + creatureKey)) + dpName));
 
         int worstBracket = histogram.entrySet().stream()
         .max((a, b) -> Integer.compare(a.getKey(), b.getKey()))

@@ -2,7 +2,7 @@
 
 Note: Development is focused on 1.21.5+ but Forge-1.8.9 will be maintained.
 
-## **Version 2.1.0:**
+## **Version 2.1.1:**
 
 ### Currently in both versions:
 - Custom Redstone particle color; mainly to enhance Jawbus laser and Flay ability
@@ -13,7 +13,7 @@ Note: Development is focused on 1.21.5+ but Forge-1.8.9 will be maintained.
 ### Qol
 - Configurable keybinds, command aliases and chat-text replacements
 
-### 1.21.5 Only:
+### 1.21 Only:
 - Copy Chat
 - Inventory search
 - Chat filter
@@ -44,9 +44,9 @@ Note: Development is focused on 1.21.5+ but Forge-1.8.9 will be maintained.
 - Pet Display
 - Diana Stats
 - Equipment Display
-- Century Cake Display
+- Active Effects Display (cakes, consumables)
 - Mob health display
-- Skill XP tracker
+- Skill and Slayer XP tracker
 - General Profit Tracker (with profiles)
 - Moonglade Beacon timer and hud display
 - Clean Wither Impact (particles, sound)
@@ -56,3 +56,4 @@ Note: Development is focused on 1.21.5+ but Forge-1.8.9 will be maintained.
 - Click to party (Guild chat)
 - Automatically accept NPC dialogue
 - Spider's Den relic waypoints
+- Cocoon alert

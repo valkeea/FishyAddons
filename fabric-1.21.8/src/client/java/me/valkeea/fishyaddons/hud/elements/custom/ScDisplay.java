@@ -150,72 +150,68 @@ public class ScDisplay implements HudElement {
         }
     }
 
-    private void renderEditMode(DrawContext context, int x, int y) {
-        if (getHudBg()) {
-            context.fill(x - 2, y, x + CHART_WIDTH, y + CHART_HEIGHT + 10, 0x80000000);
-        }
-        context.drawText(MinecraftClient.getInstance().textRenderer,
-            Text.literal("Catch Graph"), x + 5, y + 5, getHudColor(), false);
-        context.drawText(MinecraftClient.getInstance().textRenderer,
-            Text.literal("§8[Edit Mode]"), x + 5, y + 20, getHudColor(), false);
-    }
-
     private void renderDisplays(DrawContext context, int x, int y) {
-        if (!ScStats.isEnabled()) {
-            return;
-        }
+        if (!ScStats.isEnabled()) return;
 
         Island currentArea = ScStats.getInstance().getCurrentAreaKey();
         List<String> creatures = getCreaturesForArea(currentArea);
+        if (creatures.isEmpty()) return;
+
+        int screenWidth = MinecraftClient.getInstance().getWindow().getScaledWidth();
+        int leftThreshold = screenWidth / 3;
+        int rightThreshold = (2 * screenWidth) / 3;
+
+        boolean anchorOnLeft = x < leftThreshold;
+        boolean anchorOnRight = x >= rightThreshold;
         
-        if (creatures.isEmpty()) {
-            return;
-        }
-
-        int currentX = x;
-        boolean hasAnyData = false;
-
-        for (String creatureKey : creatures) {
-            Map<Integer, Integer> histogram = ScData.getInstance().getDataFor(creatureKey, MAX_BARS_PER_CHART);
-            if (histogram != null && !histogram.isEmpty()) {
-                renderBase(context, currentX, y, creatureKey, histogram);
-                boolean moveRight = (currentX < MinecraftClient.getInstance().getWindow().getScaledWidth() / 2);
-                int distance = moveRight ? CHART_WIDTH + 10 : -(CHART_WIDTH + 10);
-                currentX += distance;
-                hasAnyData = true;
-            }
-        }
+        boolean hasAnyData = drawGraphs(context, x, y, creatures, anchorOnLeft, anchorOnRight);
         
         if (!hasAnyData && ActivityMonitor.getInstance().getPrimaryActivity() == ActivityMonitor.Currently.FISHING) {
             renderWaitingForData(context, x, y, currentArea, creatures);
         }
     }
-
-    private void renderWaitingForData(DrawContext context, int x, int y, Island area, List<String> creatures) {
-        if (getHudBg()) {
-            context.fill(x - 2, y, x + CHART_WIDTH, y + 80, 0x80000000);
+    
+    private boolean drawGraphs(DrawContext context, int x, int y, List<String> creatures, 
+                                         boolean anchorOnLeft, boolean anchorOnRight) {
+        boolean hasAnyData = false;
+        int graphIdx = 0;
+        
+        for (String creatureKey : creatures) {
+            Map<Integer, Integer> data = ScData.getInstance().getDataFor(creatureKey, MAX_BARS_PER_CHART);
+            if (data != null && !data.isEmpty()) {
+                int currentX = calcGraphX(x, graphIdx, anchorOnLeft, anchorOnRight);
+                renderBase(context, currentX, y, creatureKey, data);
+                graphIdx++;
+                hasAnyData = true;
+            }
         }
-
-        context.drawText(MinecraftClient.getInstance().textRenderer,
-            Text.literal("RNG Data"), x + 5, y + 5, getHudColor(), false);
-        context.drawText(MinecraftClient.getInstance().textRenderer,
-            Text.literal("§7Area: " + formatAreaName(area)), x + 5, y + 14, 0xFFFFFFFF, false);
-        context.drawText(MinecraftClient.getInstance().textRenderer, 
-            Text.literal("§7Catch rare scs!"), x + 5, y + 23, 0xFFFFFFFF, false);
-
-        StringBuilder creatureList = new StringBuilder("§8");
-        for (int i = 0; i < Math.min(2, creatures.size()); i++) {
-            if (i > 0) creatureList.append(", ");
-            creatureList.append(creatures.get(i).replace("_", " "));
+        
+        return hasAnyData;
+    }
+    
+    private int calcGraphX(int baseX, int graphIdx, boolean anchorOnLeft, boolean anchorOnRight) {
+        if (anchorOnLeft) {
+            return baseX + (graphIdx * (CHART_WIDTH + 10));
+        } else if (anchorOnRight) {
+            return baseX - (graphIdx * (CHART_WIDTH + 10));
+        } else {
+            return calcMidAnchorX(baseX, graphIdx);
         }
-        if (creatures.size() > 2) {
-            creatureList.append(", +").append(creatures.size() - 2);
+    }
+    
+    private int calcMidAnchorX(int baseX, int graphIdx) {
+        if (graphIdx == 0) {
+            return baseX;
+        } else if (graphIdx % 2 == 1) {
+            int expansionLvl = (graphIdx + 1) / 2;
+            return baseX + (expansionLvl * (CHART_WIDTH + 10));
+        } else {
+            int expansionLvl = (graphIdx + 1) / 2;
+            return baseX - (expansionLvl * (CHART_WIDTH + 10));
         }
-        context.drawText(MinecraftClient.getInstance().textRenderer, 
-            Text.literal(creatureList.toString()), x + 5, y + 32, getHudColor(), false);
     }
 
-    private void renderBase(DrawContext context, int x, int y, String creatureKey, Map<Integer, Integer> histogram) {
+    private void renderBase(DrawContext context, int x, int y, String creatureKey, Map<Integer, Integer> data) {
         String displayName = displayNameCache.computeIfAbsent(creatureKey, 
             key -> TextUtils.stripColor(Sc.displayName(key)));
         
@@ -244,38 +240,51 @@ public class ScDisplay implements HudElement {
         context.drawText(MinecraftClient.getInstance().textRenderer, 
             Text.literal(rateText), x + 80, y + 17, 0xFFFFFFFF, false);
 
-        drawHistogram(context, x + CHART_PADDING, y + 35, histogram, creatureKey);
-    }
-    
-    private void clearAllCaches() {
-        displayNameCache.clear();
-        meanTextCache.clear();
-        rateTextCache.clear();
-        histogramCache.clear();
-    }
-    
-    private String getCachedMeanText(String creatureKey) {
-        return meanTextCache.computeIfAbsent(creatureKey, key -> {
-            double meanAttempts = ScData.getInstance().getMeanAttemptsFor(key);
-            return meanAttempts > 0 ? String.format("§7Mean: §f%.1f", meanAttempts) : EMPTY_MEAN_TEXT.getString();
-        });
-    }
-    
-    private String getCachedRateText(String creatureKey) {
-        return rateTextCache.computeIfAbsent(creatureKey, key -> {
-            double catchRate = ScData.getInstance().getCatchChance(key);
-            return catchRate > 0 ? String.format("§7Rate: §f%.1f%%", catchRate) : EMPTY_RATE_TEXT.getString();
-        });
+        drawHistogram(context, x + CHART_PADDING, y + 35, data, creatureKey);
     }
 
-    private void drawHistogram(DrawContext context, int chartX, int chartY, Map<Integer, Integer> histogram, String creatureKey) {
-        if (histogram.isEmpty()) return;
+    private void renderWaitingForData(DrawContext context, int x, int y, Island area, List<String> creatures) {
+        if (getHudBg()) {
+            context.fill(x - 2, y, x + CHART_WIDTH, y + 80, 0x80000000);
+        }
 
-        var cache = histogramCache.computeIfAbsent(creatureKey, 
-            key -> new HistogramCache(histogram, key));
+        context.drawText(MinecraftClient.getInstance().textRenderer,
+            Text.literal("RNG Data"), x + 5, y + 5, getHudColor(), false);
+        context.drawText(MinecraftClient.getInstance().textRenderer,
+            Text.literal("§7Area: " + formatAreaName(area)), x + 5, y + 14, 0xFFFFFFFF, false);
+        context.drawText(MinecraftClient.getInstance().textRenderer, 
+            Text.literal("§7Catch rare scs!"), x + 5, y + 23, 0xFFFFFFFF, false);
+
+        var creatureList = new StringBuilder("§8");
+        for (int i = 0; i < Math.min(2, creatures.size()); i++) {
+            if (i > 0) creatureList.append(", ");
+            creatureList.append(creatures.get(i).replace("_", " "));
+        }
+        if (creatures.size() > 2) {
+            creatureList.append(", +").append(creatures.size() - 2);
+        }
+        context.drawText(MinecraftClient.getInstance().textRenderer, 
+            Text.literal(creatureList.toString()), x + 5, y + 32, getHudColor(), false);
+    }
+
+    private void renderEditMode(DrawContext context, int x, int y) {
+        if (getHudBg()) {
+            context.fill(x - 2, y, x + CHART_WIDTH, y + CHART_HEIGHT + 10, 0x80000000);
+        }
+        context.drawText(MinecraftClient.getInstance().textRenderer,
+            Text.literal("Catch Graph"), x + 5, y + 5, getHudColor(), false);
+        context.drawText(MinecraftClient.getInstance().textRenderer,
+            Text.literal("§8[Edit Mode]"), x + 5, y + 20, getHudColor(), false);
+    }
+
+    private void drawHistogram(DrawContext context, int chartX, int chartY, Map<Integer, Integer> data, String creatureKey) {
+        if (data.isEmpty()) return;
+
+        HistogramCache cache = histogramCache.computeIfAbsent(creatureKey, 
+            key -> new HistogramCache(data, key));
         
-        if (cache.sortedEntries.size() != histogram.size()) {
-            cache = new HistogramCache(histogram, creatureKey);
+        if (cache.sortedEntries.size() != data.size()) {
+            cache = new HistogramCache(data, creatureKey);
             histogramCache.put(creatureKey, cache);
         }
 
@@ -366,6 +375,27 @@ public class ScDisplay implements HudElement {
 
         context.getMatrices().popMatrix();
     }
+    
+    private String getCachedMeanText(String creatureKey) {
+        return meanTextCache.computeIfAbsent(creatureKey, key -> {
+            double meanAttempts = ScData.getInstance().getMeanAttemptsFor(key);
+            return meanAttempts > 0 ? String.format("§7Mean: §f%.1f", meanAttempts) : EMPTY_MEAN_TEXT.getString();
+        });
+    }
+    
+    private String getCachedRateText(String creatureKey) {
+        return rateTextCache.computeIfAbsent(creatureKey, key -> {
+            double catchRate = ScData.getInstance().getCatchChance(key);
+            return catchRate > 0 ? String.format("§7Rate: §f%.1f%%", catchRate) : EMPTY_RATE_TEXT.getString();
+        });
+    }
+
+    private void clearAllCaches() {
+        displayNameCache.clear();
+        meanTextCache.clear();
+        rateTextCache.clear();
+        histogramCache.clear();
+    }    
 
     private String formatBracketLabel(int bracket) {
         int bracketSize = ScData.getInstance().calculateBracketSize(bracket);
@@ -394,10 +424,43 @@ public class ScDisplay implements HudElement {
     public Rectangle getBounds(MinecraftClient mc) {
         Island currentArea = ScStats.getInstance().getCurrentAreaKey();
         List<String> creatures = getCreaturesForArea(currentArea);
-        int totalWidth = Math.max(200, creatures.size() * (CHART_WIDTH + 10) - 10);
-        int height = (int) ((CHART_HEIGHT + 50) * (getHudSize() / 100.0f));
-        int width = (int) (totalWidth * (getHudSize() / 100.0f));
-        return new Rectangle(getHudX(), getHudY(), width, height);
+        int spacing = CHART_WIDTH + 10;
+        int count = creatures.size();
+
+        int x = getHudX();
+        int y = getHudY();
+
+        int screenW = mc.getWindow().getScaledWidth();
+        int leftThreshold = screenW / 3;
+        int rightThreshold = (2 * screenW) / 3;
+
+        boolean anchorOnLeft = x < leftThreshold;
+        boolean anchorOnRight = x >= rightThreshold;
+
+        float scale = getHudSize() / 100.0f;
+        int scaledSpacing = Math.round(spacing * scale);
+        int scaledChartWidth = Math.round(CHART_WIDTH * scale);
+
+        int minX = x;
+        int maxX = x + scaledChartWidth;
+
+        if (count > 1) {
+            if (anchorOnLeft) {
+                maxX = x + (count - 1) * scaledSpacing + scaledChartWidth;
+            } else if (anchorOnRight) {
+                minX = x - (count - 1) * scaledSpacing;
+                maxX = x + scaledChartWidth;
+            } else {
+                int rightCount = (count - 1 + 1) / 2;
+                int leftCount = (count - 1) / 2;
+                maxX = x + rightCount * scaledSpacing + scaledChartWidth;
+                minX = x - leftCount * scaledSpacing;
+            }
+        }
+
+        int totalWidth = Math.max(scaledChartWidth, maxX - minX);
+        int height = Math.round((CHART_HEIGHT + 50) * scale);
+        return new Rectangle(minX, y, totalWidth, height);
     }
 
     @Override

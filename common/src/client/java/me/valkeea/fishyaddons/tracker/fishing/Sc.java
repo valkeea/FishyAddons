@@ -12,6 +12,8 @@ public class Sc {
     public static final String CH_MINER = "abyssal_miner";
     public static final String DRAKE = "reindrake";
     public static final String TIKI = "wiki_tiki";
+    public static final String OCTOPUS = "blue_ringed_octopus";
+    public static final String ALLIGATOR = "alligator";
     public static final String YETI = "yeti";
     public static final String ENT = "ent";
     public static final String EMP = "the_loch_emperor";

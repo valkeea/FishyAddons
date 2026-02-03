@@ -175,6 +175,9 @@ public class ScRegistry {
         // Bayou, Ch, Park
         registerCreature(Sc.TITANOBOA, "§dTitanoboa", 
             Set.of(Island.BAYOU), List.of(always), true);
+
+        registerCreature(Sc.ALLIGATOR, "§6Alligator", 
+            Set.of(Island.BAYOU), List.of(always), true);            
             
         registerCreature(Sc.CH_MINER, "§6Abyssal Miner", 
             Set.of(Island.CH), List.of(always), true);
@@ -182,18 +185,21 @@ public class ScRegistry {
         registerCreature(Sc.NIGHT_SQUID, "§5Night Squid", 
             Set.of(Island.PARK), List.of(always), true);
         
-        // Special conditions
-        registerCreature(Sc.WATER_HYDRA, "§6Water Hydra", 
-            Set.of(ANY), List.of(notGalatea, water), true);
-            
+        // Special conditions 
         registerCreature(Sc.TIKI, "§dWiki Tiki", 
             Set.of(ANY), List.of(inHotspot, water), true);
+
+        registerCreature(Sc.OCTOPUS, "§6Blue-Ringed Octopus", 
+            Set.of(ANY), List.of(inHotspot, water), true); 
             
         registerCreature(Sc.GRIM_REAPER, "§5Grim Reaper", 
             Set.of(ANY), List.of(isSpooky, water), true);
 
         registerCreature(Sc.GW, "§6Great White Shark", 
-            Set.of(ANY), List.of(isShark, water), true);    
+            Set.of(ANY), List.of(isShark, water), true);
+
+        registerCreature(Sc.WATER_HYDRA, "§5Water Hydra", 
+            Set.of(ANY), List.of(notGalatea, water), true);            
     }
 
     private void registerCreature(String id, String displayName, Set<Island> validAreas, 
@@ -204,12 +210,12 @@ public class ScRegistry {
     /**
      * Get all creatures that can spawn in the given area with current conditions
      */
-    public List<String> getCreaturesForArea(Island area) {
+    public List<String> getCreaturesFor(Island area, boolean forceRefresh) {
         ensureInit();
         
         String currentConditionsHash = generateConditionsHash(area.key());
         
-        if (!area.equals(lastArea) || !currentConditionsHash.equals(lastConditionsHash)) {
+        if (forceRefresh || !area.equals(lastArea) || !currentConditionsHash.equals(lastConditionsHash)) {
             lastArea = area;
             lastConditionsHash = currentConditionsHash;
             
@@ -220,6 +226,10 @@ public class ScRegistry {
                 .toList();
         }
         return checked;
+    }
+
+    public List<String> getCreaturesForArea(Island area) {
+        return getCreaturesFor(area, false);
     }
     
     /**

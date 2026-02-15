@@ -1,0 +1,137 @@
+plugins {
+	id 'fabric-loom' version "${loom_version}"
+	id 'maven-publish'
+}
+
+
+version = project.mod_version
+group = project.maven_group
+
+base {
+	archivesName = project.archives_base_name
+}
+
+loom {
+	splitEnvironmentSourceSets()
+
+	mods {
+		"modid" {
+			sourceSet sourceSets.client
+		}
+	}
+
+	mixin {
+		defaultRefmapName = "${project.archives_base_name}.refmap.json"
+	}
+
+}
+
+dependencies {
+	minecraft "com.mojang:minecraft:${project.minecraft_version}"
+	mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
+	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+	implementation("it.unimi.dsi:fastutil:8.5.12")
+}
+
+processResources {
+	inputs.property "version", project.version
+
+	filesMatching("fabric.mod.json") {
+		expand "version": version
+	}
+}
+
+tasks.named('processClientResources') {
+	inputs.property "version", project.version
+
+	filesMatching("fabric.mod.json") {
+		expand "version": version
+	}
+}
+
+tasks.withType(JavaCompile).configureEach {
+	it.options.release = 21
+}
+
+java {
+	withSourcesJar()
+	sourceCompatibility = JavaVersion.VERSION_21
+	targetCompatibility = JavaVersion.VERSION_21
+}
+
+jar {
+	from("../LICENSE") {
+		rename { "${it}_${archiveBaseName.get()}"}
+	}
+}
+
+sourceSets {
+    client {
+        java {
+            srcDirs = ['src/client/java']
+            
+            def commonSrcDir = file('../common/src/client/java')
+            if (commonSrcDir.exists()) {
+
+                def filteredCommonDir = file("${buildDir}/filtered-common/java")
+                
+                copy {
+                    from commonSrcDir
+                    into filteredCommonDir
+                    exclude { details ->
+                        if (details.file.isDirectory()) {
+                            return false
+                        }
+                        def relativePath = details.path
+                        def localFile = new File(file('src/client/java'), relativePath)
+                        def shouldExclude = localFile.exists() && localFile.isFile()
+                        def versionExcludes = [
+                            'me/valkeea/fishyaddons/render/FaLayers.java'
+                        ]
+                        def isVersionExcluded = versionExcludes.contains(relativePath)
+
+                        if (shouldExclude) {
+                            println "\u001B[32mExcluding common file: ${details.path} (local override exists)\u001B[0m"
+                        } else if (isVersionExcluded) {
+                            println "\u001B[93mExcluding common file: ${details.path} (incompatible with 1.21.11)\u001B[0m"
+                        }
+                        
+                        return shouldExclude || isVersionExcluded
+                    }
+                }
+                
+                srcDirs += filteredCommonDir
+            }
+        }
+        resources {
+            srcDirs = ['src/client/resources']
+            
+            def commonResDir = file('../common/src/client/resources')
+            if (commonResDir.exists()) {
+                def filteredCommonResDir = file("${buildDir}/filtered-common/resources")
+                
+                copy {
+                    from commonResDir
+                    into filteredCommonResDir
+                    exclude { details ->
+                        if (details.file.isDirectory()) {
+                            return false
+                        }
+                        def relativePath = details.path
+                        def localFile = new File(file('src/client/resources'), relativePath)
+                        def shouldExclude = localFile.exists() && localFile.isFile()
+                        
+                        return shouldExclude
+                    }
+                }
+                
+                srcDirs += filteredCommonResDir
+            }
+        }
+    }
+}
+
+remapJar {
+    archiveClassifier = 'mc1.21.11'
+}

@@ -13,3 +13,4 @@ rootProject.name = 'fishyaddons'
 
 include 'common'
 include 'fabric-1.21.10'
+include 'fabric-1.21.11'

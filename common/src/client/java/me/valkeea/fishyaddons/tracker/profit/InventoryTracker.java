@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import me.valkeea.fishyaddons.util.FishyNotis;
+import me.valkeea.fishyaddons.util.ItemData;
 import me.valkeea.fishyaddons.util.text.FromText;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.LoreComponent;
@@ -124,11 +125,12 @@ public class InventoryTracker {
             int newItems = (rawIncrease > STACK_INCREASE_THRESHOLD) ? 1 : rawIncrease;
             
             lastKnownStackSizes.put(cleanName, currentStackSize);
-            FishyNotis.trackerNoti(displayName, newItems);
-            ItemTrackerData.addDrop(cleanName, newItems);
-        } else {
-            lastKnownStackSizes.put(cleanName, currentStackSize);
-        }
+            
+            String uuid = extractUUID(stack);
+            var dropResult = ItemTrackerData.addDrop(cleanName, newItems, null, uuid);
+            if (dropResult.shouldNotify) FishyNotis.trackerNoti(displayName, newItems);
+
+        } else lastKnownStackSizes.put(cleanName, currentStackSize);
     }
 
     private static void handleGhastTearAdded(ItemStack stack) {
@@ -136,8 +138,12 @@ public class InventoryTracker {
         var cleanName = displayName.getString().toLowerCase().replaceAll(CLEAN_REGEX, "").trim();
 
         if (TRACKED_GHAST_TEARS.contains(cleanName)) {
-            FishyNotis.trackerNoti(displayName, 1);
-            ItemTrackerData.addDrop(cleanName, 1);
+            String uuid = extractUUID(stack);
+            var dropResult = ItemTrackerData.addDrop(cleanName, 1, null, uuid);
+            
+            if (dropResult.shouldNotify) {
+                FishyNotis.trackerNoti(displayName, 1);
+            }
         }
     }
 
@@ -148,8 +154,13 @@ public class InventoryTracker {
         if (TRACKED_TOOLS.contains(cleanName)) {
             var rarity = getRarityTier(displayName.getSiblings().get(0).getStyle());
             var tieredName = rarity + cleanName;
-            FishyNotis.trackerNoti(displayName, 1);
-            ItemTrackerData.addDrop(tieredName, 1);
+            
+            String uuid = extractUUID(stack);
+            var dropResult = ItemTrackerData.addDrop(tieredName, 1, null, uuid);
+            
+            if (dropResult.shouldNotify) {
+                FishyNotis.trackerNoti(displayName, 1);
+            }
         }
     }
 
@@ -178,12 +189,16 @@ public class InventoryTracker {
         var bookInfo = extractBookInfoFromLore(lore);
         if (bookInfo == null) return;
         
-        if (ItemTrackerData.wasCountedAsBook(bookInfo.name)) {
-            ItemTrackerData.clearSuccessfulBooks();
-        } else {
+        String uuid = extractUUID(stack);
+        var dropResult = ItemTrackerData.addDrop(bookInfo.name, 1, null, uuid);
+        
+        if (!dropResult.alreadyCounted && dropResult.shouldNotify) {
             FishyNotis.bookNoti(bookInfo.styledText);
-            ItemTrackerData.addDrop(bookInfo.name, 1);
         }
+    }
+
+    private static String extractUUID(ItemStack stack) {
+        return ItemData.extractUUID(stack);
     }
 
     private static class BookInfo {

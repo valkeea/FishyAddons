@@ -119,7 +119,7 @@ public class VCButton {
         int borderColor = config.enabled ? VCVisuals.borderHex2(config.hovered) : 0x80404040;
 
         VCRenderUtils.gradient(context, config.x, config.y, config.width, config.height, bgColor);
-        context.drawBorder(config.x, config.y, config.width, config.height, borderColor);
+        VCRenderUtils.border(context, config.x, config.y, config.width, config.height, borderColor);
 
         int textColor = config.enabled ? 0xFFFFFFFF : 0xFFC4FFFF;
         int textX = config.x + config.width / 2;
@@ -134,7 +134,7 @@ public class VCButton {
         int borderColor = VCVisuals.borderHex2(config.hovered);
 
         VCRenderUtils.gradient(context, config.x, config.y, config.width, config.height, bgColor);
-        context.drawBorder(config.x, config.y, config.width, config.height, borderColor);
+        VCRenderUtils.border(context, config.x, config.y, config.width, config.height, borderColor);
 
         int textX = config.x + config.width / 2;
         int textY = config.y + (config.height - (int)(8 * config.uiScale)) / 2;
@@ -148,7 +148,7 @@ public class VCButton {
         VCRenderUtils.gradient(context, config.x, config.y, config.width, config.height, bgColor);
 
         int borderColor = VCVisuals.borderHex(config.hovered, config.enabled);
-        context.drawBorder(config.x, config.y, config.width, config.height, borderColor);
+        VCRenderUtils.border(context, config.x, config.y, config.width, config.height, borderColor);
         
         int textColor;
         if (!config.enabled) {
@@ -174,7 +174,7 @@ public class VCButton {
         int borderColor = VCVisuals.borderHex(config.hovered, config.enabled);
 
         VCRenderUtils.gradient(context, config.x, config.y, config.width, config.height, bgColor);
-        context.drawBorder(config.x, config.y, config.width, config.height, borderColor);
+        VCRenderUtils.border(context, config.x, config.y, config.width, config.height, borderColor);
 
         int textX = config.x + config.width / 2 - (int)(textRenderer.getWidth(text) * Math.min(config.uiScale, 1.0f)) / 2;
         int textY = config.y + (config.height - textRenderer.fontHeight) / 2 + 2;
@@ -190,7 +190,7 @@ public class VCButton {
         int borderColor = VCVisuals.borderHex(config.hovered, config.enabled);
 
         VCRenderUtils.gradient(context, config.x, config.y, config.width, config.height, bgColor);
-        context.drawBorder(config.x, config.y, config.width, config.height, borderColor);
+        VCRenderUtils.border(context, config.x, config.y, config.width, config.height, borderColor);
 
         int textX = config.x + config.width / 2 - (int)(textRenderer.getWidth(text) * Math.min(config.uiScale, 1.0f)) / 2;
         int textY = config.y + (config.height - textRenderer.fontHeight) / 2 + 2;
@@ -213,7 +213,7 @@ public class VCButton {
         int borderColor = VCVisuals.borderHex(config.hovered, enabled);
 
         VCRenderUtils.gradient(context, config.x, config.y, config.width, config.height, bgColor);
-        context.drawBorder(config.x, config.y, config.width, config.height, borderColor);
+        VCRenderUtils.border(context, config.x, config.y, config.width, config.height, borderColor);
 
         int textX = config.x + config.width / 2 - (int)(textRenderer.getWidth(config.text) * Math.min(config.uiScale, 1.0f)) / 2;
         int textY = config.y + (config.height - textRenderer.fontHeight) / 2 + 2;

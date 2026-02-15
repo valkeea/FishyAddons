@@ -309,7 +309,7 @@ public class VCGui {
         int colorSize = (int)(18 * uiScale);
         int currentColor = getCurrentColor(entry);
         context.fill(x, y, x + colorSize, y + colorSize, currentColor);
-        context.drawBorder(x, y, colorSize, colorSize, 0x80FFFFFF);
+        VCRenderUtils.border(context, x, y, colorSize, colorSize, 0x80FFFFFF);
     }
     
     private int getCurrentColor(VCEntry entry) {

@@ -3,29 +3,34 @@ package me.valkeea.fishyaddons.hud.ui;
 import java.awt.Rectangle;
 
 import me.valkeea.fishyaddons.config.FishyConfig;
+import me.valkeea.fishyaddons.feature.qol.ItemSearchOverlay;
 import me.valkeea.fishyaddons.hud.core.HudElement;
 import me.valkeea.fishyaddons.hud.core.HudElementState;
-import me.valkeea.fishyaddons.render.FaLayers;
-import me.valkeea.fishyaddons.ui.widget.FaTextField;
+import me.valkeea.fishyaddons.ui.GuiUtil;
+import me.valkeea.fishyaddons.ui.widget.VCTextField;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.input.KeyInput;
 import net.minecraft.text.Text;
 
 public class SearchHudElement implements HudElement {
-    private boolean editingMode = false;
-    private static final String HUD_KEY = me.valkeea.fishyaddons.config.Key.INV_SEARCH;
     private static final String SEARCH_PLACEHOLDER = "right-click to search...";
     private static final String EDITING_MODE_TEXT = "Search Field";
     private static final String HUD_CONFIG_KEY = "search";
+    
+    private static SearchHudElement instance = null;    
     private HudElementState cachedState = null;
-    private FaTextField searchField;
-    private static SearchHudElement instance = null;
+    private VCTextField searchField;
     private boolean overlayActive = false;
+    private boolean editingMode = false;    
+
+    private static boolean isContainer = false;
     
     public SearchHudElement() {
         var client = MinecraftClient.getInstance();
         if (client != null && client.textRenderer != null) {
-            searchField = new FaTextField(client.textRenderer, 10, 10, 150, 15, Text.literal(SEARCH_PLACEHOLDER), true);
+            searchField = new VCTextField(client.textRenderer, 10, 10, 150, 15, Text.literal(SEARCH_PLACEHOLDER));
             searchField.setVisible(false);
         }
     }
@@ -39,9 +44,7 @@ public class SearchHudElement implements HudElement {
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY) {
-        if (!shouldRender()) {
-            return;
-        }
+        if (!shouldRender()) return;
         
         initIfNeeded();
         if (searchField == null) {
@@ -53,36 +56,20 @@ public class SearchHudElement implements HudElement {
     }
     
     private boolean shouldRender() {
-        MinecraftClient mc = MinecraftClient.getInstance();
-        boolean isInInventory = mc.currentScreen instanceof net.minecraft.client.gui.screen.ingame.HandledScreen;
-        boolean isEnabled = FishyConfig.getState(HUD_KEY, false);
-        
-        if (!isInInventory && searchField != null) {
-            searchField.setFocused(false);
-        }
-        
-        if (!editingMode && (!isEnabled || !isInInventory)) {
-            if (searchField != null) {
-                searchField.setVisible(false);
-                searchField.setFocused(false);
-            }
-            return false;
-        }
-        
-        return true;
+        return ItemSearchOverlay.isEnabled() && isContainer;
     }
     
     private void initIfNeeded() {
         if (searchField == null) {
-            MinecraftClient client = MinecraftClient.getInstance();
+            var client = MinecraftClient.getInstance();
             if (client != null && client.textRenderer != null) {
-                searchField = new FaTextField(client.textRenderer, 10, 10, 150, 15, Text.literal(SEARCH_PLACEHOLDER), true);
+                searchField = new VCTextField(client.textRenderer, 10, 10, 150, 15, Text.literal(SEARCH_PLACEHOLDER));
             }
         }
     }
     
     private void updateDimensions() {
-        HudElementState state = getCachedState();
+        var state = getCachedState();
         int hudX = state.x;
         int hudY = state.y;
         int size = state.size;
@@ -93,9 +80,9 @@ public class SearchHudElement implements HudElement {
         if (searchField.getWidth() != scaledWidth || searchField.getHeight() != scaledHeight) {
             String currentText = searchField.getText();
             boolean wasFocused = searchField.isFocused();
-            searchField = new FaTextField(MinecraftClient.getInstance().textRenderer, 
+            searchField = new VCTextField(MinecraftClient.getInstance().textRenderer, 
                                          hudX, hudY, scaledWidth, scaledHeight, 
-                                         Text.literal(SEARCH_PLACEHOLDER), true);
+                                         Text.literal(SEARCH_PLACEHOLDER));
             searchField.setText(currentText);
             if (wasFocused) {
                 searchField.setFocused(false);
@@ -119,18 +106,17 @@ public class SearchHudElement implements HudElement {
         if (searchField.getText().isEmpty()) {
             String placeholderText = editingMode ? EDITING_MODE_TEXT : SEARCH_PLACEHOLDER;
             int placeholderColor = editingMode ? 0x80FFFFFF : 0x80808080;
-            FaLayers.drawTextAtTopLevel(context, 
+            context.drawText(
                 MinecraftClient.getInstance().textRenderer, 
-                placeholderText, 
+                Text.literal(placeholderText), 
                 hudX + 4, hudY + (scaledHeight - 8) / 2, 
                 placeholderColor, false);
         }
         
-        FaLayers.renderAtTopLevel(context, 
-            () -> searchField.render(context, mouseX, mouseY, 0));
+        searchField.render(context, mouseX, mouseY, 0);
 
         if (overlayActive) {
-            FaLayers.drawBoxAtTopLevel(context, hudX - 1, hudY - 1, scaledWidth + 2, scaledHeight + 2, 0xFF00FFE1);
+            GuiUtil.wireRect(context, hudX - 2, hudY - 2, scaledWidth + 4, scaledHeight + 4, 0xFF00FFE1);
         }
     }
 
@@ -142,7 +128,7 @@ public class SearchHudElement implements HudElement {
 
     @Override
     public Rectangle getBounds(MinecraftClient mc) {
-        HudElementState state = getCachedState();
+        var state = getCachedState();
         float scale = state.size / 15.0F;
         int scaledWidth = (int)(150 * scale);
         int scaledHeight = (int)(15 * scale);
@@ -165,60 +151,62 @@ public class SearchHudElement implements HudElement {
         cachedState = null;
     }
     
-    public FaTextField getSearchField() {
+    public VCTextField getSearchField() {
         return searchField;
     }
     
-    public boolean handleKeyPressed(int keyCode, int scanCode, int modifiers) {
-        MinecraftClient mc = MinecraftClient.getInstance();
-        boolean isInInventory = mc.currentScreen instanceof net.minecraft.client.gui.screen.ingame.HandledScreen;
+    public boolean handleCharTyped(net.minecraft.client.input.CharInput input) {
+        if (!shouldRender()) return false;
         
-        if (!FishyConfig.getState(HUD_KEY, false) || !isInInventory) {
-            return false;
-        }
-        
-        if (searchField != null && searchField.isVisible()) {
-            return searchField.keyPressed(keyCode, scanCode, modifiers);
+        if (searchField != null && searchField.isVisible() && searchField.isFocused()) {
+            return searchField.charTyped(input);
         }
         return false;
     }
-    
-    public boolean handleMouseClick(double mouseX, double mouseY, int button) {
-        var mc = MinecraftClient.getInstance();
-        boolean isInInventory = mc.currentScreen instanceof net.minecraft.client.gui.screen.ingame.HandledScreen;
-        
-        if (!FishyConfig.getState(HUD_KEY, false) || !isInInventory) {
-            return false;
-        }
+
+    public boolean handleKeyPressed(KeyInput keyInput) {
+        if (!shouldRender()) return false;
         
         if (searchField != null && searchField.isVisible()) {
-            HudElementState state = getCachedState();
+            return searchField.keyPressed(keyInput);
+        }
+        return false;
+    }    
+    
+    public boolean handleMouseClick(Click click, boolean doubled) {
+        if (!shouldRender()) return false;
+
+        double mouseX = click.x();
+        double mouseY = click.y();
+        int button = click.button();
+        
+        if (searchField != null && searchField.isVisible()) {
+            var state = getCachedState();
             int hudX = state.x;
             int hudY = state.y;
             float scale = state.size / 15.0F;
             int scaledWidth = (int)(150 * scale);
             int scaledHeight = (int)(15 * scale);
-            
+
             if (mouseX >= hudX && mouseX <= hudX + scaledWidth &&
                 mouseY >= hudY && mouseY <= hudY + scaledHeight) {
-                
-                if (button == 0) {
-                    searchField.setFocused(true);
-                    double relativeX = mouseX - hudX;
-                    double relativeY = mouseY - hudY; 
-                    return searchField.mouseClicked(relativeX, relativeY, button);
-                    
-                } else if (button == 1) {
+
+                if (button == 0) return searchField.mouseClicked(click, doubled);
+
+                else if (button == 1) {
                     overlayActive = !overlayActive;
+                    searchField.setFocused(overlayActive);
                     return true;
                 }
-                
+
                 return false;
+
             } else {
                 searchField.setFocused(false);
                 return false;
             }
         }
+
         return false;
     }
     
@@ -240,14 +228,23 @@ public class SearchHudElement implements HudElement {
         }
     }
 
-    public void onScreenChange() {
-        if (searchField != null) {
-            MinecraftClient mc = MinecraftClient.getInstance();
-            boolean isInInventory = mc.currentScreen instanceof net.minecraft.client.gui.screen.ingame.HandledScreen;
-            searchField.setFocused(false);
-            
-            if (!isInInventory) {
+    public static void onScreenChange(boolean opened) {
+        if (instance != null) {
+            instance.toggleField(opened, isContainer);
+            isContainer = opened;
+        }
+    }
+
+    private void toggleField(boolean opened, boolean waContainer) {
+
+        if (opened) {
+            if (searchField == null) initIfNeeded();
+            if (searchField != null && !waContainer) searchField.setVisible(true);
+
+        } else {
+            if (searchField != null) {
                 searchField.setVisible(false);
+                searchField.setFocused(false);
             }
         }
     }
@@ -255,7 +252,7 @@ public class SearchHudElement implements HudElement {
     @Override public int getHudX() { return FishyConfig.getHudX(HUD_CONFIG_KEY, 100); }
     @Override public int getHudY() { return FishyConfig.getHudY(HUD_CONFIG_KEY, 10); }
     @Override public int getHudSize() { return FishyConfig.getHudSize(HUD_CONFIG_KEY, 20); }
-    @Override public int getHudColor() { return FishyConfig.getHudColor(HUD_CONFIG_KEY, 0xFFFFFF); }    
+    @Override public int getHudColor() { return FishyConfig.getHudColor(HUD_CONFIG_KEY, 0xFFFFFFFF); }    
     @Override public boolean getHudOutline() { return FishyConfig.getHudOutline(HUD_CONFIG_KEY, false); }
     @Override public boolean getHudBg() { return FishyConfig.getHudBg(HUD_CONFIG_KEY, true); }
     @Override public String getDisplayName() { return "Item Search"; }    

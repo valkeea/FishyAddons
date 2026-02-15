@@ -50,18 +50,18 @@ public class TitleDisplay implements HudElement {
                 "Alert Title",
                 hudX - bounds.width / 2,
                 hudY + 2,
-                0xFFFFFF,
+                0xFFFFFFFF,
                 false
             );
         }        
 
-        context.getMatrices().push();
-        context.getMatrices().translate(hudX, hudY, 0);
-        context.getMatrices().scale(scale, scale, 1.0F);
+        context.getMatrices().pushMatrix();
+        context.getMatrices().translate(hudX, hudY);
+        context.getMatrices().scale(scale, scale);
 
         HudDrawer.drawText(context, formatted, -textWidth / 2, 0, titlecolor, getHudOutline());
 
-        context.getMatrices().pop();
+        context.getMatrices().popMatrix();
     }
 
     public static String getTitle() {

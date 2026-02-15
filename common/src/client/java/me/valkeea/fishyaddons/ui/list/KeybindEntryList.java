@@ -7,20 +7,24 @@ import me.valkeea.fishyaddons.feature.qol.KeyShortcut;
 import me.valkeea.fishyaddons.util.Keyboard;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
+import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
+import net.minecraft.client.input.KeyInput;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.text.Text;
 
 public class KeybindEntryList extends GenericEntryList {
+    private static final String PROMPT = "> Press a Key <";
+
     public KeybindEntryList(MinecraftClient client, int width, int height, int y, int itemHeight, TabbedListScreen parentScreen) {
         super(client, width, height, y, itemHeight, parentScreen);
     }
 
     @Override
     public String getDefaultInput() {
-        return "> Press a Key <";
+        return PROMPT;
     }
 
     @Override
@@ -88,7 +92,7 @@ public class KeybindEntryList extends GenericEntryList {
 
     @Override
     public boolean isValidEntry(String key, String value) {
-        return !key.contains("> Press a Key <") && !key.isEmpty() && !value.isEmpty();
+        return !key.contains(PROMPT) && !key.isEmpty() && !value.isEmpty();
     }
 
 
@@ -120,18 +124,20 @@ public class KeybindEntryList extends GenericEntryList {
             this.customPress = b -> {
                 this.setFocused(true);
                 listening = true;
-                this.setMessage(Text.literal("> Press a Key <"));
+                this.setMessage(Text.literal(PROMPT));
             };
         }
 
         @Override
-        public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        public boolean keyPressed(KeyInput input) {
+
             if (listening) {
-                String keyName = Keyboard.getGlfwKeyName(keyCode);
+                String keyName = Keyboard.getGlfwKeyName(input.key());
                 if (keyName != null) {
                     keyValue = keyName;
                 } else {
-                    String translationKey = InputUtil.fromKeyCode(keyCode, scanCode).getTranslationKey();
+
+                    String translationKey = InputUtil.fromKeyCode(input).getTranslationKey();
                     if (translationKey.startsWith("key.keyboard.")) {
                         keyValue = translationKey.substring("key.keyboard.".length()).toUpperCase();
                     } else {
@@ -145,18 +151,18 @@ public class KeybindEntryList extends GenericEntryList {
                 this.setFocused(false);
                 return true;
             }
-            return super.keyPressed(keyCode, scanCode, modifiers);
+            return super.keyPressed(input);
         }
 
         @Override
-        public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        public boolean mouseClicked(Click click, boolean doubled) {
             if (listening) {
-                keyValue = "MOUSE" + button;
+                keyValue = "MOUSE" + click.button();
                 handleKeyChange();
                 listening = false;
                 return true;
             }
-            if (this.isMouseOver(mouseX, mouseY)) {
+            if (this.isMouseOver(click.x(), click.y())) {
                 customPress.onPress(this);
                 return true;
             }
@@ -177,7 +183,10 @@ public class KeybindEntryList extends GenericEntryList {
                     Text.literal("Overwrite Existing"), () -> {
 
                         entryList.removeEntry(keyValue);
-                        entryList.children().removeIf(e -> e instanceof GenericEntryList.GenericEntry ge && !ge.isNew && ge.input.equals(keyValue));
+                        entryList.children().stream()
+                            .filter(e -> e instanceof GenericEntryList.GenericEntry ge && !ge.isNew && ge.input.equals(keyValue))
+                            .findFirst()
+                            .ifPresent(entryList::removeEntry);
                         updateEntryAndConfig();
                         parentScreen.fishyPopup = null;
 
@@ -186,7 +195,7 @@ public class KeybindEntryList extends GenericEntryList {
                         }
                     },
                     Text.literal("Discard Change"), () -> {
-                        entryList.children().remove(entry);
+                        entryList.removeEntry(entry);
                         parentScreen.addingNewEntry = false;
                         parentScreen.fishyPopup = null;
                         parentScreen.refreshEntryList();
@@ -219,30 +228,31 @@ public class KeybindEntryList extends GenericEntryList {
         }
     }
 
-    public boolean handleMouseClicked(double mouseX, double mouseY, int button, TabbedListScreen screen) {
+    public boolean handleMouseClicked(Click click, TabbedListScreen screen) {
         GenericEntryList.GenericEntry entry = getHoveredKeybindEntry();
+
         if (entry == null) return false;
         if (entry.inputWidget instanceof TextFieldWidget field) {
-            if (field.mouseClicked(mouseX, mouseY, button)) {
+            if (field.mouseClicked(click, false)) {
                 field.setFocused(true);
                 screen.setFocused(field);
                 return true;
             }
-        } else if (entry.inputWidget instanceof ButtonWidget btn) {
-            if (btn.mouseClicked(mouseX, mouseY, button)) {
-                btn.setFocused(true);
-                screen.setFocused(btn);
-                return true;
-            }
+
+        } else if (entry.inputWidget instanceof ButtonWidget btn && btn.mouseClicked(click, false)) {
+            btn.setFocused(true);
+            screen.setFocused(btn);
+            return true;
         }
-        if (entry.outputField.mouseClicked(mouseX, mouseY, button)) {
+
+        if (entry.outputField.mouseClicked(click, false)) {
             entry.outputField.setFocused(true);
             screen.setFocused(entry.outputField);
             return true;
         }
-        if (entry.saveButton.mouseClicked(mouseX, mouseY, button)) return true;
-        if (entry.deleteButton.mouseClicked(mouseX, mouseY, button)) return true;
-        if (entry.toggleButton.mouseClicked(mouseX, mouseY, button)) return true;
-        return false;
+        
+        if (entry.saveButton.mouseClicked(click, false)) return true;
+        if (entry.deleteButton.mouseClicked(click, false)) return true;
+        return entry.toggleButton.mouseClicked(click, false);
     }
 }

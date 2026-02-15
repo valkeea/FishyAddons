@@ -583,7 +583,14 @@ public class FishyConfig {
         public void setMsg(String msg) { this.msg = msg; }        
         public String getMsg() { return msg; }
         public String getOnscreen() { return onscreen; }
-        public int getColor() { return color; }
+
+        public int getColor() { 
+            if ((color & 0xFF000000) == 0) {
+                color |= 0xFF000000;
+            }
+            return color; 
+        }
+        
         public String getSoundId() { return soundId; }
         public float getVolume() { return volume; }
         public boolean isToggled() { return toggled; }  

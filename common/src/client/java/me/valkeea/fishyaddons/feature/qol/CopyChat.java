@@ -22,25 +22,36 @@ public class CopyChat {
         isNotiOn = FishyConfig.getState(Key.COPY_NOTI, true);
     }
 
-    public static void tryCopyChat(double mouseX, double mouseY) {
-        var client = MinecraftClient.getInstance();
-        var chatHud = client.inGameHud.getChatHud();
-        var accessor = (ChatHudAccessor) chatHud;
-        int lineIdx = getLineIndex(accessor, mouseX, mouseY);
+    public static void tryCopyChat(MinecraftClient client, double mouseX, double mouseY) {
 
-        if (isValid(lineIdx, accessor)) {
-            ChatHudLine.Visible line = accessor.getVisibleMessages().get(lineIdx);
-            List<ChatHudLine.Visible> visible = accessor.getVisibleMessages();
+        if (!(client.inGameHud.getChatHud() instanceof ChatHudAccessor chat)) return;
+
+        int lineIdx = getLineIndex(chat, mouseX, mouseY);
+
+        if (isValid(lineIdx, chat)) {
+
+            var line = chat.getVisibleMessages().get(lineIdx);
             String text = extractVisible(line);
+            List<ChatHudLine.Visible> visible = chat.getVisibleMessages();
 
             if (shouldCopyLine(client)) {
-                client.keyboard.setClipboard(text);
-                FishyNotis.ccNoti();
+                toClipboard(client, text);
             } else {
-                String fullVisible = extractFull(visible, lineIdx);
-                client.keyboard.setClipboard(fullVisible);
-                FishyNotis.ccNoti();
+                toClipboard(client, extractFull(visible, lineIdx));
             }
+        }
+    }
+
+    public static void toClipboard(MinecraftClient client, String text) {
+        client.keyboard.setClipboard(text);
+        FishyNotis.ccNoti();
+    }
+
+    public static void toClipboard(String text) {
+        var client = MinecraftClient.getInstance();
+        if (client != null) {
+            client.keyboard.setClipboard(text);
+            FishyNotis.ccNoti();
         }
     }
 
@@ -69,11 +80,10 @@ public class CopyChat {
 
     private static boolean shouldCopyLine(MinecraftClient client) {
         if (client.options == null) return false;
-        long handle = client.getWindow().getHandle();
+        var window = client.getWindow();
         int keyCode = client.options.sneakKey.getDefaultKey().getCode();
-        return InputUtil.isKeyPressed(handle, keyCode);
+        return InputUtil.isKeyPressed(window, keyCode);
     }
-
 
     private static String extractFull(List<ChatHudLine.Visible> visible, int lineIdx) {
         if (visible.isEmpty() || lineIdx < 0 || lineIdx >= visible.size()) return "";
@@ -86,13 +96,11 @@ public class CopyChat {
 
         var sb = new StringBuilder();
         for (int i = start; i >= end; i--) {
-
             var ordered = visible.get(i).content();
             ordered.accept((index, style, codePoint) -> {
                 sb.appendCodePoint(codePoint);
                 return true;
             });
-
             if (i != end) sb.append('\n');
         }
 

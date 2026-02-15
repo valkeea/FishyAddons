@@ -1,7 +1,6 @@
 package me.valkeea.fishyaddons.render;
 
 import me.valkeea.fishyaddons.util.text.TextUtils;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.text.Text;
@@ -17,7 +16,7 @@ public class OutlinedText {
         DrawContext context,
         TextRenderer textRenderer,
         Text text,
-        float x, float y,
+        int x, int y,
         int textColor
     ) {
         Text clean = TextUtils.stripColor(text);
@@ -33,7 +32,7 @@ public class OutlinedText {
         DrawContext context,
         TextRenderer textRenderer,
         Text text,
-        float x, float y,
+        int x, int y,
         int textColor
     ) {
         Text clean = TextUtils.stripFormatting(text);
@@ -45,45 +44,34 @@ public class OutlinedText {
         TextRenderer textRenderer,
         Text text,
         Text clean,
-        float x, float y,
+        int x, int y,
         int textColor
     ) {
-        var matrix = context.getMatrices().peek().getPositionMatrix();
-        var vertices = MinecraftClient.getInstance().getBufferBuilders().getEntityVertexConsumers();
-        var layer = net.minecraft.client.font.TextRenderer.TextLayerType.NORMAL;
 
         for (int dx = -1; dx <= 1; dx++) {
             for (int dy = -1; dy <= 1; dy++) {
                 if (dx != 0 || dy != 0) {
-                    textRenderer.draw(
+                    context.drawText(
+                        textRenderer,
                         clean,
                         x + dx,
                         y + dy,
                         0xFF000000,
-                        false,
-                        matrix,
-                        vertices,
-                        layer,
-                        0,
-                        0xF000F0
+                        false
                     );
                 }
             }
         }
 
-        textRenderer.draw(
+        context.drawText(
+            textRenderer,
             text,
             x,
             y,
             textColor,
-            false,
-            matrix,
-            vertices,
-            layer,
-            0,
-            0xF000F0
+            false
         );
-    }    
+    }   
 
     private OutlinedText() {}
 }

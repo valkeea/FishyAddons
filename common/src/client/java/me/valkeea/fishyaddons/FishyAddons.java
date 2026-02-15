@@ -17,15 +17,16 @@ import me.valkeea.fishyaddons.feature.qol.FishyKeys;
 import me.valkeea.fishyaddons.feature.qol.ItemSearchOverlay;
 import me.valkeea.fishyaddons.feature.qol.KeyShortcut;
 import me.valkeea.fishyaddons.feature.qol.NetworkMetrics;
-import me.valkeea.fishyaddons.feature.skyblock.timer.CakeTimer;
-import me.valkeea.fishyaddons.feature.skyblock.timer.ChatTimers;
 import me.valkeea.fishyaddons.feature.skyblock.CocoonAlert;
-import me.valkeea.fishyaddons.feature.skyblock.timer.EffectTimers;
+import me.valkeea.fishyaddons.feature.skyblock.EqDetector;
 import me.valkeea.fishyaddons.feature.skyblock.FishingHotspot;
 import me.valkeea.fishyaddons.feature.skyblock.GuiIcons;
 import me.valkeea.fishyaddons.feature.skyblock.PetInfo;
 import me.valkeea.fishyaddons.feature.skyblock.SkyblockCleaner;
 import me.valkeea.fishyaddons.feature.skyblock.TransLava;
+import me.valkeea.fishyaddons.feature.skyblock.timer.CakeTimer;
+import me.valkeea.fishyaddons.feature.skyblock.timer.ChatTimers;
+import me.valkeea.fishyaddons.feature.skyblock.timer.EffectTimers;
 import me.valkeea.fishyaddons.feature.visual.FaColors;
 import me.valkeea.fishyaddons.feature.visual.MobAnimations;
 import me.valkeea.fishyaddons.feature.visual.ParticleVisuals;
@@ -52,7 +53,7 @@ import me.valkeea.fishyaddons.tracker.SkillTracker;
 import me.valkeea.fishyaddons.tracker.fishing.ScData;
 import me.valkeea.fishyaddons.tracker.profit.ItemTrackerData;
 import me.valkeea.fishyaddons.tracker.profit.SackDropParser;
-import me.valkeea.fishyaddons.tracker.profit.TrackerUtils;
+import me.valkeea.fishyaddons.tracker.profit.ProfitTracker;
 import me.valkeea.fishyaddons.tracker.profit.ValuableMobs;
 import me.valkeea.fishyaddons.util.CustomSounds;
 import me.valkeea.fishyaddons.util.text.GradientRenderer;
@@ -64,6 +65,7 @@ import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
+import net.minecraft.util.Identifier;
 
 public class FishyAddons implements ClientModInitializer {
 
@@ -100,7 +102,7 @@ public class FishyAddons implements ClientModInitializer {
         ChatTimers.getInstance().refresh();
 
         CocoonAlert.init();        
-        TrackerUtils.init();  
+        ProfitTracker.init(); 
         TransLava.init();      
         HeldItems.init();        
         CustomSounds.init();
@@ -132,10 +134,14 @@ public class FishyAddons implements ClientModInitializer {
         GuiScheduler.register();
         CmdManager.register();  
         ResourceHandler.register();
-        Registry.register(Registries.SOUND_EVENT, PlaySound.PROTECT_TRIGGER_ID, PlaySound.PROTECT_TRIGGER_EVENT);
+        
+        Registry.register(Registries.SOUND_EVENT,
+            PlaySound.PROTECT_TRIGGER_ID,
+            PlaySound.PROTECT_TRIGGER_EVENT
+        );
 
-        KeyBinding mainKey = KeyBindingHelper.registerKeyBinding(
-            new KeyBinding("Open Config", InputUtil.Type.KEYSYM, 240, "FishyAddons")
+        var mainKey = KeyBindingHelper.registerKeyBinding(
+            new KeyBinding("Open Config", InputUtil.Type.KEYSYM, 240, KeyBinding.Category.create(Identifier.of("fishyaddons", "mod_keybinds")))
         );
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {

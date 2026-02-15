@@ -14,8 +14,8 @@ import me.valkeea.fishyaddons.render.Beacon;
 import me.valkeea.fishyaddons.tool.FishyMode;
 import me.valkeea.fishyaddons.util.FishyNotis;
 import me.valkeea.fishyaddons.util.text.Color;
-import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
-import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
+import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderContext;
+import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
@@ -48,27 +48,27 @@ public class WaypointChains {
     
     public static void init() {
         refresh();
-        
-        WorldRenderEvents.AFTER_TRANSLUCENT.register(context -> {
+
+        WorldRenderEvents.END_MAIN.register(context -> {
             if (!enabled) return;
             
             Island currentArea = SkyblockAreas.getIsland();
             if (currentArea == null) return;
             
             List<WaypointChain> presetChains = getCachedPresetChains(currentArea.key());
-            for (WaypointChain presetChain : presetChains) {
-                renderChain(context, presetChain, true);
+            for (WaypointChain pc : presetChains) {
+                renderChain(context, pc, true);
             }
             
             List<WaypointChain> userChains = getCachedUserChains(currentArea.key());
-            for (WaypointChain userChain : userChains) {
-                renderChain(context, userChain, false);
+            for (WaypointChain uc : userChains) {
+                renderChain(context, uc, false);
             }
         });
     }
 
     public static void onConnect() {
-        clearCaches();
+        clearAllCaches();
         
         if (!presetsLoaded && MinecraftClient.getInstance().getResourceManager() != null) {
             try {
@@ -99,15 +99,21 @@ public class WaypointChains {
         
         if (!enabledPresets.equals(newEnabledPresets)) {
             enabledPresets = newEnabledPresets;
-            clearCaches();
+            clearPresetCache();
         }
+    }
+    
+    private static void clearPresetCache() {
+        CACHED_PRESET_CHAINS.clear();
+        CACHED_USER_CHAINS.clear();
+        lastArea = null;
     }
     
     public static void clearUserChainCache() {
         CACHED_USER_CHAINS.clear();
     }
     
-    public static void clearCaches() {
+    public static void clearAllCaches() {
         CACHED_PRESET_CHAINS.clear();
         CACHED_USER_CHAINS.clear();
         lastArea = null;
@@ -120,7 +126,7 @@ public class WaypointChains {
         
         List<WaypointChain> chains = new ArrayList<>();
         for (String presetKey : enabledPresets) {
-            WaypointChain presetChain = ChainConfig.getPresetChain(presetKey, area);
+            var presetChain = ChainConfig.getPresetChain(presetKey, area);
             if (presetChain != null) {
                 chains.add(presetChain);
             }
@@ -137,7 +143,7 @@ public class WaypointChains {
         }
         
         List<WaypointChain> chains = new ArrayList<>();
-        for (WaypointChain userChain : ChainConfig.getUserChains()) {
+        for (var userChain : ChainConfig.getUserChains()) {
             if (userChain != null && userChain.area.equals(area) && ChainConfig.isChainVisible(userChain.name(), userChain.area)) {
                 chains.add(userChain);
             }
@@ -152,9 +158,9 @@ public class WaypointChains {
     private static void renderChain(WorldRenderContext context, WaypointChain chain, boolean isPreset) {
         var client = MinecraftClient.getInstance();
         if (client.player == null) return;
-        
-        Vec3d playerPos = client.player.getPos();
-        
+
+        Vec3d playerPos = client.player.getEntityPos();
+
         if (!isPreset && chain.type == ChainType.USER_DEFINED) {
             checkForCompletion(chain);
             startChainTimingIfNeeded(chain);
@@ -262,7 +268,7 @@ public class WaypointChains {
     private static void checkForCompletion(WaypointChain chain) {
 
         boolean allCompleted = true;
-        for (Waypoint waypoint : chain.waypoints) {
+        for (var waypoint : chain.waypoints) {
             if (!waypoint.visited()) {
                 allCompleted = false;
                 break;
@@ -303,7 +309,7 @@ public class WaypointChains {
 
     private static void resetProgress(WaypointChain chain) {
 
-        for (Waypoint waypoint : chain.waypoints) {
+        for (var waypoint : chain.waypoints) {
             if (chain.type == ChainType.USER_DEFINED) {
                 waypoint.setVisited(false);
 
@@ -321,7 +327,7 @@ public class WaypointChains {
             var chain = ChainConfig.getPresetChain(Key.WAYPOINT_CHAINS_SHOW_RELICS, currentArea.key());
 
             if (chain != null) {
-                Vec3d playerPos = client.player.getPos();
+                Vec3d playerPos = client.player.getEntityPos();
                 BlockPos nearest = findNearest(chain, playerPos);
 
                 if (nearest != null) {
@@ -337,7 +343,7 @@ public class WaypointChains {
         double minDistance = Double.MAX_VALUE;
         boolean isPreset = chain.type != ChainType.USER_DEFINED;
 
-        for (Waypoint wp : chain.waypoints) {
+        for (var wp : chain.waypoints) {
 
             boolean wasVisited = isPreset 
                 ? ChainConfig.wasVisited(wp.position, chain.name()) 
@@ -431,11 +437,6 @@ public class WaypointChains {
         
         public boolean wasVisited() {
             return visited;
-        }
-
-        @Override
-        public boolean noDepth() {
-            return false;
         }
 
         @Override

@@ -9,7 +9,9 @@ import me.valkeea.fishyaddons.util.SbGui;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ChatScreen;
+import net.minecraft.client.gui.screen.ingame.GenericContainerScreen;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
+import net.minecraft.client.gui.screen.ingame.InventoryScreen;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.screen.slot.Slot;
 
@@ -52,25 +54,20 @@ public class FishyKeys {
     }
 
     private static void configureIcons(MinecraftClient client, HandledScreen<?> screen) {
-        String guiKey = FishyConfig.getKeyString(Key.MOD_KEY_LOCK_GUISLOT);
 
-        if (guiKey == null || "NONE".equals(guiKey)) {
-            return;
-        }
+        var guiKey = FishyConfig.getKeyString(Key.MOD_KEY_LOCK_GUISLOT);
+        if (guiKey == null || "NONE".equals(guiKey)) return;
 
         int guiKeyCode = Keyboard.getKeyCodeFromString(guiKey);
+        if (guiKeyCode == -1) return;
 
-        if (guiKeyCode == -1) {
-            return;
-        }
-
-        boolean isPressed = InputUtil.isKeyPressed(
-            MinecraftClient.getInstance().getWindow().getHandle(), 
+        var isPressed = InputUtil.isKeyPressed(
+            MinecraftClient.getInstance().getWindow(), 
             guiKeyCode
         );
         
-        Slot hovered = ((HandledScreenAccessor) screen).getFocusedSlot();
-        String title = screen.getTitle().getString();
+        var hovered = ((HandledScreenAccessor) screen).getFocusedSlot();
+        var title = screen.getTitle().getString();
 
         long now = System.currentTimeMillis();
         if (isPressed && hovered != null && hovered.inventory != client.player.getInventory()) {
@@ -78,32 +75,32 @@ public class FishyKeys {
                 me.valkeea.fishyaddons.feature.skyblock.GuiIcons.addGuiSlot(title, hovered.id);
                 lastGuiSlotAddTime = now;
             }
+
         } else if (!isPressed) {
             lastGuiSlotAddTime = 0;
         }
     }
 
     private static void slotLocking(MinecraftClient client, HandledScreen<?> screen) {
-        String lockKey = FishyConfig.getKeyString(Key.MOD_KEY_LOCK);
 
+        var lockKey = FishyConfig.getKeyString(Key.MOD_KEY_LOCK);
         if (lockKey == null || "NONE".equals(lockKey)) {
             resetLockKeyState();
             return;
         }
 
         int lockKeyCode = Keyboard.getKeyCodeFromString(lockKey);
-        
         if (lockKeyCode == -1) {
             resetLockKeyState();
             return;
         }
 
-        boolean isPressed = InputUtil.isKeyPressed(
-            MinecraftClient.getInstance().getWindow().getHandle(), 
+        var isPressed = InputUtil.isKeyPressed(
+            MinecraftClient.getInstance().getWindow(), 
             lockKeyCode
         );
         
-        Slot hovered = ((HandledScreenAccessor) screen).getFocusedSlot();
+        var hovered = ((HandledScreenAccessor) screen).getFocusedSlot();
 
         lockKeyPress(client, hovered, isPressed);
         lockKeyRelease(screen, hovered, isPressed);
@@ -119,26 +116,32 @@ public class FishyKeys {
     }
 
     private static void lockKeyRelease(HandledScreen<?> screen, Slot hovered, boolean isPressed) {
+
         if (!isPressed && wasPressed && dragging && 
             bindStart != null && SbGui.isPlayerInventory() && hovered != null) {
+
             if (hovered == bindStart) {
                 singleSlotAction(screen, hovered);
             } else {
                 slotBinding(screen, hovered);
             }
+
             resetDragState();
         }
     }
 
     private static void singleSlotAction(HandledScreen<?> screen, Slot hovered) {
+
         int slotId = SlotHandler.remap(screen, hovered.id);
-        if (!isValidSlot(slotId)) return;
+        if (!isValidSlot(screen, slotId)) return;
 
         if (SlotHandler.isSlotLocked(slotId)) {
             SlotHandler.unlockSlot(slotId);
+
         } else if (SlotHandler.isSlotBound(slotId)) {
             int other = SlotHandler.getBoundSlot(slotId);
             SlotHandler.unbindSlots(slotId, other);
+
         } else {
             SlotHandler.lockSlot(slotId);
         }
@@ -147,10 +150,7 @@ public class FishyKeys {
     private static void slotBinding(HandledScreen<?> screen, Slot hovered) {
         int startId = SlotHandler.remap(screen, bindStart.id);
         int endId = SlotHandler.remap(screen, hovered.id);
-        
-        if (isValidSlot(startId) && isValidSlot(endId)) {
-            SlotHandler.bindSlots(startId, endId);
-        }
+        if (isValidSlot(screen, startId) && isValidSlot(screen, endId)) SlotHandler.bindSlots(startId, endId);
     }
 
     private static void resetLockKeyState() {
@@ -163,12 +163,12 @@ public class FishyKeys {
         bindStart = null;
     }
 
-    private static boolean isValidSlot(int remapId) {
-        HandledScreen<?> screen = MinecraftClient.getInstance().currentScreen instanceof HandledScreen<?> ? 
-            (HandledScreen<?>) MinecraftClient.getInstance().currentScreen : null;
-        return (screen instanceof net.minecraft.client.gui.screen.ingame.InventoryScreen && 
-            remapId >= 5 && remapId <= 43) ||
-            (screen instanceof net.minecraft.client.gui.screen.ingame.GenericContainerScreen && 
-            remapId >= 9 && remapId <= 43);
+    private static boolean isValidSlot(HandledScreen<?> s, int id) {
+
+        boolean inventory = s instanceof InventoryScreen;
+        boolean container = s instanceof GenericContainerScreen;
+
+        if (inventory) return id >= 5 && id <= 43;
+        return container && id >= 9 && id <= 43;
     }
 }

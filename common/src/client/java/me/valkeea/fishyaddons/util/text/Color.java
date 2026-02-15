@@ -87,6 +87,21 @@ public class Color {
 
         return (a << 24) | (r << 16) | (g << 8) | b;
     }
+
+    public static int desaturate(int color, float factor) {
+        int a = (color >> 24) & 0xFF;
+        int r = (color >> 16) & 0xFF;
+        int g = (color >> 8) & 0xFF;
+        int b = color & 0xFF;
+
+        int gray = (r + g + b) / 3;
+
+        r = (int)(gray + (r - gray) * (1 - factor));
+        g = (int)(gray + (g - gray) * (1 - factor));
+        b = (int)(gray + (b - gray) * (1 - factor));
+
+        return (a << 24) | (r << 16) | (g << 8) | b;
+    }
     
     /**
      * Create a gradient color between the base color and a brighter version

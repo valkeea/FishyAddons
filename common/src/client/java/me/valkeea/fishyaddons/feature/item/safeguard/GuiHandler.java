@@ -10,6 +10,7 @@ import me.valkeea.fishyaddons.event.impl.FaEvents;
 import me.valkeea.fishyaddons.event.impl.ScreenClickEvent;
 import me.valkeea.fishyaddons.tool.PlaySound;
 import me.valkeea.fishyaddons.util.FishyNotis;
+import me.valkeea.fishyaddons.util.ItemData;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.item.ItemStack;
 
@@ -59,7 +60,7 @@ public class GuiHandler {
 
         return protectionCache.computeIfAbsent(stack, s -> {
             try {
-                String uuid = ItemHandler.extractUUID(s);
+                String uuid = ItemData.extractUUID(s);
                 if (uuid.isEmpty()) return false;
                 
                 return ItemConfig.isProtected(uuid);

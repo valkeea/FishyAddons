@@ -24,7 +24,7 @@ public class MixinInGameHudFireOverlay {
 
         int tint = RenderTweaks.tryColorFire();
         if (tint != 0) {
-            var sprite = SpriteUtil.getModBlockSprite("fishyaddons", "block/fire");
+            var sprite = SpriteUtil.getModBlockSprite("block/fire");
             if (sprite != null) return sprite;
         }
         return originalSprite;

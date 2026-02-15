@@ -33,7 +33,9 @@ public class NearbyEntities {
     }
 
     private static void checkClosest() {
+
         if (!GameMode.skyblock()) return;
+
         var client = MinecraftClient.getInstance();
         if (client.world == null || client.player == null) return;
         
@@ -91,6 +93,7 @@ public class NearbyEntities {
      * Checks view based on camera direction
      */
     public static boolean lookingAt(ArmorStandEntity armorStand) {
+        
         var mc = MinecraftClient.getInstance();
         if (mc.player == null || mc.world == null) return false;
 
@@ -110,7 +113,7 @@ public class NearbyEntities {
             Math.cos(yawRad) * Math.cos(pitchRad)
         ).normalize();
         
-        Vec3d toEntity = armorStand.getPos().subtract(cameraPos).normalize();
+        Vec3d toEntity = armorStand.getEntityPos().subtract(cameraPos).normalize();
         double dot = cameraDirection.dotProduct(toEntity);
         double fovCos = Math.cos(Math.toRadians(60.0));
         

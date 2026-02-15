@@ -8,8 +8,8 @@ import org.jetbrains.annotations.Nullable;
 import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.config.Key;
 import me.valkeea.fishyaddons.render.Beacon;
-import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
-import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
+import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderContext;
+import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
@@ -31,7 +31,8 @@ public class TempWaypoint {
 
     public static void init() {
         refresh();
-        WorldRenderEvents.AFTER_TRANSLUCENT.register(context -> {
+
+        WorldRenderEvents.END_MAIN.register(context -> {
             if (beacons.isEmpty()) return;
 
             long now = System.currentTimeMillis();
@@ -48,8 +49,8 @@ public class TempWaypoint {
     private static void renderFar(WorldRenderContext context) {
         var client = MinecraftClient.getInstance();
         if (client.player == null) return;
-        
-        Vec3d playerPos = client.player.getPos();
+
+        Vec3d playerPos = client.player.getEntityPos();
         long now = System.currentTimeMillis();
         
         beacons.removeIf(beacon -> {
@@ -100,7 +101,7 @@ public class TempWaypoint {
     }
     
     public static void setBeacon(BlockPos pos, int colorARGB, String displayLabel, long customDuration) {
-        BeaconData beacon = new BeaconData(getActualPos(new Vec3d(pos)), colorARGB, displayLabel);
+        var beacon = new BeaconData(getActualPos(new Vec3d(pos)), colorARGB, displayLabel);
         beacon.setDuration(customDuration);
         beacons.add(beacon);
         lastBeacon = beacons.get(beacons.size() - 1);
@@ -125,7 +126,7 @@ public class TempWaypoint {
     }
 
     public static void redraw(BlockPos pos, String title) {
-        BlockPos actualPos = getActualPos(new Vec3d(pos));
+        var actualPos = getActualPos(new Vec3d(pos));
         
         beacons.removeIf(beacon -> beacon.getPos().equals(actualPos));
         
@@ -169,6 +170,11 @@ public class TempWaypoint {
 
         public void setDuration(long duration) {
             this.duration = duration;
+        }
+
+        @Override
+        public boolean fillBlock() {
+            return false;
         }
     }
 }

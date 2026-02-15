@@ -46,7 +46,7 @@ public class ElementRegistry {
         var searchOverlay = ItemSearchOverlay.getInstance();
 
         register(searchHudElement);
-        searchOverlay.setSearchHudElement(searchHudElement);
+        searchOverlay.setSearchField(searchHudElement);
 
         register(new NetworkDisplay());
         register(new TimerDisplay());
@@ -56,7 +56,7 @@ public class ElementRegistry {
         register(new EffectDisplay());
         register(new SkillXpDisplay());
         register(new HealthDisplay());
-        
+
         register(TrackerDisplay.getInstance());
         register(ScDisplay.getInstance());
         register(InfoDisplay.getInstance());

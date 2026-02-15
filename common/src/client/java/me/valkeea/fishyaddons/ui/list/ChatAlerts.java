@@ -21,6 +21,7 @@ import me.valkeea.fishyaddons.ui.widget.VCTextField;
 import me.valkeea.fishyaddons.ui.widget.VCVisuals;
 import me.valkeea.fishyaddons.ui.widget.dropdown.DropdownMenu;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ButtonWidget;
@@ -65,21 +66,26 @@ public class ChatAlerts extends Screen {
 
     @Override
     protected void init() {
-    entries.clear();        
-    this.clearChildren();
-    calcDimensions(FishyConfig.getFloat(Key.MOD_UI_SCALE, 0.4265625f));
+
+        entries.clear();        
+        this.clearChildren();
+        calcDimensions(FishyConfig.getFloat(Key.MOD_UI_SCALE, 0.4265625f));
+
         for (Map.Entry<String, AlertData> entry : FishyConfig.getChatAlerts().entrySet()) {
             Entry e = new Entry(entry.getKey());
             entries.add(e);
             e.addToScreen();
         }
+
         int totalEntries = entries.size() + (addMode ? 1 : 0);
         int listTop = 40;
         int listBottom = this.height - 60;
         int listHeight = listBottom - listTop;
+
         maxVisibleEntries = Math.max(1, listHeight / entryH);
         int maxScroll = Math.max(0, totalEntries - maxVisibleEntries);
         scrollOffset = Math.clamp(scrollOffset, 0, maxScroll);
+
         if (scrollOffset > maxScroll || (addMode && scrollOffset < totalEntries - maxVisibleEntries)) scrollOffset = maxScroll;
         if (scrollOffset < 0) scrollOffset = 0;
         if (!addMode) {
@@ -103,7 +109,7 @@ public class ChatAlerts extends Screen {
             this.addDrawableChild(addBtn);
         }      
 
-        FaButton backButton = new FaButton(
+        var backButton = new FaButton(
             this.width / 2 - entryW / 2 + btnW, this.height - 40, btnW, btnH,
             Text.literal("Back").styled(style -> style.withColor(0xFF808080)),
             btn -> {
@@ -117,7 +123,7 @@ public class ChatAlerts extends Screen {
         backButton.setUIScale(uiScale);
         this.addDrawableChild(backButton);
 
-        FaButton closeButton = new FaButton(
+        var closeButton = new FaButton(
             this.width / 2 - entryW / 2 + btnW * 2, this.height - 40, btnW, btnH,
             Text.literal("Close").styled(style -> style.withColor(0xFF808080)),
             btn -> this.close()
@@ -155,7 +161,6 @@ public class ChatAlerts extends Screen {
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        this.renderBackground(context, mouseX, mouseY, delta);
         super.render(context, mouseX, mouseY, delta);
 
         if (entries.isEmpty()) {
@@ -171,12 +176,9 @@ public class ChatAlerts extends Screen {
                 " -§dIf you add a chat filter, the original message should be used as a trigger!",
             };
             for (String instruction : instructions) {
-                context.getMatrices().push();
-                context.getMatrices().translate(0,0, 300);      
                 Text text = Text.literal(instruction);
                 VCText.drawScaledCenteredText(context, this.textRenderer, text.getString(),
                     x, y, 0xFF55FFFF, uiScale - 0.1f);
-                context.getMatrices().pop();
                 y += lineHeight;
             }
         } else {
@@ -189,17 +191,13 @@ public class ChatAlerts extends Screen {
         }        
         addList(context);
 
-        if (popup != null) {
-            this.renderBackground(context, mouseX, mouseY, delta);            
+        if (popup != null) {          
             popup.render(context, this.textRenderer, mouseX, mouseY, delta);
         }
 
         if (popup != null && presetNameField != null) {
-            context.getMatrices().push();
-            context.getMatrices().translate(0, 0, 700);
             presetNameField.setY(popup.getY() + 30);
             presetNameField.render(context, mouseX, mouseY, delta);
-            context.getMatrices().pop();
         }
 
         if (isInside(downloadBtnX, downloadBtnY, btnW, btnH, mouseX, mouseY)) {
@@ -229,6 +227,7 @@ public class ChatAlerts extends Screen {
         int y = listTop;
         int startIdx = scrollOffset;
         int endIdx = Math.min(startIdx + maxVisibleEntries, entries.size());
+
         for (int i = 0; i < entries.size(); i++) {
             if (i >= startIdx && i < endIdx) {
                 entries.get(i).setPosition(this.width / 2 - entryW / 2, y);
@@ -291,7 +290,7 @@ public class ChatAlerts extends Screen {
 
             this.saveBtn = new FaButton(
                 0, offScreenY, delBtnW, fieldH,
-                Text.literal("✔").styled(s -> s.withColor(0xFFCCFFCC)),
+                Text.literal("✔").styled(s -> s.withColor(0xCCFFCC)),
                 btn -> {
                     String key = this.keyField.getText().trim();
                     if (!checkForDupes(key)) {
@@ -430,20 +429,24 @@ public class ChatAlerts extends Screen {
             ChatAlerts.this.addDrawableChild(this.toggleBtn);
         }
 
-        public boolean mouseClicked(double mouseX, double mouseY) {
+        public boolean mouseClicked(Click click) {
+
+            double mouseX = click.x();
+            double mouseY = click.y();
+            
             if (isInside(keyField.getX(), keyField.getY(), keyField.getWidth(), keyField.getHeight(), mouseX, mouseY)) {
                 return true;
             }
             if (isInside(editBtn.getX(), editBtn.getY(), editBtn.getWidth(), editBtn.getHeight(), mouseX, mouseY)) {
-                editBtn.onPress();
+                editBtn.onPress(click);
                 return true;
             }
             if (isInside(delBtn.getX(), delBtn.getY(), delBtn.getWidth(), delBtn.getHeight(), mouseX, mouseY)) {
-                delBtn.onPress();
+                delBtn.onPress(click);
                 return true;
             }
             if (isInside(toggleBtn.getX(), toggleBtn.getY(), toggleBtn.getWidth(), toggleBtn.getHeight(), mouseX, mouseY)) {
-                toggleBtn.onPress();
+                toggleBtn.onPress(click);
                 return true;
             }
             return false;
@@ -451,40 +454,44 @@ public class ChatAlerts extends Screen {
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (popup != null && presetNameField != null && presetNameField.mouseClicked(mouseX, mouseY, button)) {
+    public boolean mouseClicked(Click click, boolean doubled) {
+        if (popup != null && presetNameField != null && presetNameField.mouseClicked(click, doubled)) {
             presetNameField.setFocused(true);
             this.setFocused(presetNameField);
             return true;
         }
         if (presetDropdown != null && presetDropdown.isVisible()) {
-            if (presetDropdown.mouseClicked(mouseX, mouseY)) return true;
+            if (presetDropdown.mouseClicked(click)) return true;
             int x = presetDropdown.getX(); 
             int y = presetDropdown.getY(); 
             int w = presetDropdown.getWidth();
             int h = presetDropdown.getEntryHeight() * presetDropdown.getEntries().size();
-            if (!(mouseX >= x && mouseX <= x + w && mouseY >= y && mouseY <= y + h)) {
+            if (!(click.x() >= x && click.x() <= x + w && click.y() >= y && click.y() <= y + h)) {
                 presetDropdown.setVisible(false);
                 return true;
             }
         }
+
         if (popup != null) {
-            return popup.mouseClicked(mouseX, mouseY, button);
+            return popup.mouseClicked(click);
         }
 
-        if (handleScrollbar(mouseX, mouseY)) return true;
+        if (handleScrollbar(click.x(), click.y())) {
+            return true;
+        }
 
         int startIdx = scrollOffset;
         int endIdx = Math.min(startIdx + maxVisibleEntries, entries.size());
         for (int i = startIdx; i < endIdx; i++) {
-            if (entries.get(i).mouseClicked(mouseX, mouseY)) {
+            if (entries.get(i).mouseClicked(click)) {
                 return false;
             }
         }
-        return super.mouseClicked(mouseX, mouseY, button);
+        return super.mouseClicked(click, doubled);
     }
 
     private boolean handleScrollbar(double mouseX, double mouseY) {
+
         int listTop = 40;
         int listBottom = this.height - 60;
         int listHeight = listBottom - listTop;
@@ -492,14 +499,16 @@ public class ChatAlerts extends Screen {
         int scrollbarWidth = Math.max(4, (int)(8 * uiScale));
         int totalEntries = entries.size() + (addMode ? 1 : 0);
 
-        if (totalEntries > maxVisibleEntries
-            && mouseX >= scrollbarX && mouseX <= scrollbarX + scrollbarWidth
+        if (totalEntries > maxVisibleEntries && mouseX >= scrollbarX && mouseX <= scrollbarX + scrollbarWidth
             && mouseY >= listTop && mouseY <= listTop + listHeight) {
+
             int thumbHeight = Math.max((int)(10 * uiScale), (maxVisibleEntries * listHeight) / totalEntries);
             int thumbY = listTop + (scrollOffset * (listHeight - thumbHeight)) / (totalEntries - maxVisibleEntries);
+
             if (mouseY >= thumbY && mouseY <= thumbY + thumbHeight) {
                 isDraggingScrollbar = true;
                 scrollbarThumbOffset = (int)mouseY - thumbY;
+
             } else {
                 isDraggingScrollbar = true;
                 scrollbarThumbOffset = thumbHeight / 2;
@@ -508,32 +517,34 @@ public class ChatAlerts extends Screen {
                 int newScrollOffset = (int)(scrollPercent * (totalEntries - maxVisibleEntries));
                 scrollOffset = Math.clamp(newScrollOffset, 0, totalEntries - maxVisibleEntries);
             }
+
             return true;
         }
+
         return false;
     }        
 
     @Override
-    public boolean mouseReleased(double mouseX, double mouseY, int button) {
+    public boolean mouseReleased(Click click) {
         isDraggingScrollbar = false;
-        return super.mouseReleased(mouseX, mouseY, button);
+        return super.mouseReleased(click);
     }
 
     @Override
-    public boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
+    public boolean mouseDragged(Click click, double offsetX, double offsetY) {
         if (isDraggingScrollbar) {
             int listTop = 40;
             int listBottom = this.height - 60;
             int listHeight = listBottom - listTop;
             int totalEntries = entries.size() + (addMode ? 1 : 0);
             int thumbHeight = Math.max((int)(10 * uiScale), (maxVisibleEntries * listHeight) / totalEntries);
-            int mouseThumbY = (int)mouseY - listTop - scrollbarThumbOffset;
+            int mouseThumbY = (int)click.y() - listTop - scrollbarThumbOffset;
             double scrollPercent = mouseThumbY / (double)(listHeight - thumbHeight);
             int newScrollOffset = (int)(scrollPercent * (totalEntries - maxVisibleEntries));
             scrollOffset = Math.clamp(newScrollOffset, 0, totalEntries - maxVisibleEntries);
             return true;
         }
-        return super.mouseDragged(mouseX, mouseY, button, deltaX, deltaY);
+        return super.mouseDragged(click, offsetX, offsetY);
     }
 
     @Override
@@ -558,6 +569,7 @@ public class ChatAlerts extends Screen {
         int entryHeight = (int)(uiScale * 18);
         int dropdownX = btnX;
         int dropdownY = btnY - btnH - (suffixes.size() * entryHeight) / 2;
+
         presetDropdown = new DropdownMenu(
             suffixes, dropdownX, dropdownY, 100, entryHeight,
             suffix -> {
@@ -591,10 +603,12 @@ public class ChatAlerts extends Screen {
 
     private void presetPopup() {
         presetNameField = new VCTextField(this.textRenderer, this.width / 2 - 60,
-        this.height / 2 - 35, 120, 20, Text.literal("Preset Name"));
+            this.height / 2 - 35, 120, 20, Text.literal("Preset Name"));
+
         presetNameField.setMaxLength(15);
         presetNameField.setText("");
-        this.setFocused(presetNameField);        
+        this.setFocused(presetNameField);
+
         this.popup = new VCPopup(
             Text.literal("Enter preset name:"),
             "Cancel", () -> {
@@ -617,7 +631,9 @@ public class ChatAlerts extends Screen {
     }
 
     public void dupePopup(String input) {
-        String truncated = input.length() > 7 ? input.substring(0, 7) + "..." : input;        
+
+        String truncated = input.length() > 7 ? input.substring(0, 7) + "..." : input;
+
         this.popup = new VCPopup(
             Text.literal("Entry with key '" + truncated + "' already exists!"),
             "Continue Editing", () -> this.popup = null,

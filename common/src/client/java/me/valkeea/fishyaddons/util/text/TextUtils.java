@@ -75,5 +75,30 @@ public class TextUtils {
                 combineToFlat(sibling, target);
             }
         }
-    }   
+    }
+    
+    /**
+     * Recursively recolor text while preserving bold/italic formatting
+     */
+    public static MutableText recolorText(Text text, int color) {
+        if (text == null) return Text.literal("");
+        
+        var style = text.getStyle();
+        boolean wasBold = style != null && style.isBold();
+        boolean wasItalic = style != null && style.isItalic();
+        
+        var newStyle = Style.EMPTY.withColor(color);
+        if (wasBold) newStyle = newStyle.withBold(true);
+        if (wasItalic) newStyle = newStyle.withItalic(true);
+        
+        MutableText base = text.getSiblings().isEmpty() 
+            ? Text.literal(text.getString()).setStyle(newStyle)
+            : Text.empty().setStyle(newStyle);
+        
+        for (Text sibling : text.getSiblings()) {
+            base.append(recolorText(sibling, color));
+        }
+        
+        return base;
+    }
 }

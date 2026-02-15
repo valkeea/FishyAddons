@@ -5,18 +5,14 @@ import java.util.function.Consumer;
 
 import me.valkeea.fishyaddons.tool.FishyMode;
 import me.valkeea.fishyaddons.util.text.Color;
+import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 
 public class DropdownMenu {
-
-    private final int x;
-    private final int y;
-    private final int width;
-    private final int entryHeight;
     private final List<String> entries;
+    private final int x, y, width, entryHeight;
     private final Consumer<String> onSelect;
-
     private int hoveredIndex = -1;
     private boolean visible = true;
 
@@ -31,29 +27,29 @@ public class DropdownMenu {
 
     public void render(DrawContext context, Screen screen, int mouseX, int mouseY) {
         if (!visible) return;
+        context.createNewRootLayer();
         for (int i = 0; i < entries.size(); i++) {
             int entryY = y + i * entryHeight;
             boolean hovered = mouseX >= x && mouseX <= x + width && mouseY >= entryY && mouseY <= entryY + entryHeight;
-            int themeColor = Color.dim(FishyMode.getThemeColor(), 0.3f);
+            int themeColor = Color.darken(FishyMode.getThemeColor(), 0.3f);
             int bgColor = hovered ? themeColor : 0xEE121212;
             int textColor = hovered ? 0xFF000000 : themeColor;
 
-            context.getMatrices().push();
-            context.getMatrices().translate(0, 0, 400);       
+            context.getMatrices().pushMatrix();      
             context.fill(x, entryY, x + width, entryY + entryHeight, bgColor);
             context.drawText(screen.getTextRenderer(), entries.get(i), x + 6, entryY + (entryHeight - 8) / 2, textColor, false);
-            context.getMatrices().pop();
+            context.getMatrices().popMatrix();
 
             if (hovered) hoveredIndex = i;
         }
     }
 
-    public boolean mouseClicked(double mouseX, double mouseY) {
+    public boolean mouseClicked(Click click) {
         if (!visible) return false;
         for (int i = 0; i < entries.size(); i++) {
             int entryY = y + i * entryHeight;
 
-            if (mouseX >= x && mouseX < x + width && mouseY >= entryY && mouseY < entryY + entryHeight) {
+            if (click.x() >= x && click.x() < x + width && click.y() >= entryY && click.y() < entryY + entryHeight) {
                 onSelect.accept(entries.get(i));
                 visible = false;
                 return true;

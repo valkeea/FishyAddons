@@ -1,6 +1,5 @@
 package me.valkeea.fishyaddons.feature.qol;
 
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -8,16 +7,15 @@ import java.util.Set;
 import org.lwjgl.glfw.GLFW;
 
 import me.valkeea.fishyaddons.config.FishyConfig;
+import me.valkeea.fishyaddons.util.ServerCommand;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.util.InputUtil;
 
 public class KeyShortcut {
     private KeyShortcut() {}
 
-    private static final long COOLDOWN_MS = 500;
     private static final long GRACE_PERIOD_MS = 300;
     private static final Set<String> keysHeld = new HashSet<>();
-    private static final Map<String, Long> lastExecutionTime = new HashMap<>();  
 
     private static Map<String, String> cachedKeybinds = Map.of();
     private static boolean enabled = false;
@@ -55,7 +53,7 @@ public class KeyShortcut {
             } else {
                 int keyCode = parseKeyCode(key);
                 if (keyCode != -1) {
-                    isPressed = InputUtil.isKeyPressed(MinecraftClient.getInstance().getWindow().getHandle(), keyCode);
+                    isPressed = InputUtil.isKeyPressed(MinecraftClient.getInstance().getWindow(), keyCode);
                 }
             }
 
@@ -92,7 +90,7 @@ public class KeyShortcut {
     private static void handleKeyInput(String key, String command, boolean isPressed) {
         if (isPressed) {
             if (!keysHeld.contains(key)) {
-                execute(key, command);
+                execute(command);
                 keysHeld.add(key);
             }
         } else {
@@ -100,14 +98,10 @@ public class KeyShortcut {
         }
     }
 
-    private static void execute(String key, String command) {
-        long currentTime = System.currentTimeMillis();
-        if ((command != null && !command.isEmpty()) && (!lastExecutionTime.containsKey(key) || currentTime - lastExecutionTime.get(key) >= COOLDOWN_MS)) {
-            if (command.startsWith("/")) {
-                command = command.substring(1);
-            }
-            MinecraftClient.getInstance().player.networkHandler.sendChatCommand(command);
-            lastExecutionTime.put(key, currentTime);
+    private static void execute(String command) {
+        if (command != null && !command.isEmpty()) {
+            if (command.startsWith("/")) command = command.substring(1);
+            ServerCommand.send(command);
         }
     }
 }

@@ -12,6 +12,7 @@ public class Key {
     public static final String HUD_CATCH_GRAPH_ENABLED = "scGraphHud";
     public static final String HUD_SKILL_XP_ENABLED = "skillXpHud";
     public static final String HUD_HEALTH_ENABLED = "healthHud";
+    public static final String HUD_EFFECTS_ENABLED = "tempEffectsHud";
 
     // --- Hud State ---
     public static final String HUD_PING_X = "pingHudX";
@@ -47,7 +48,6 @@ public class Key {
     public static final String HUD_SKILL_XP_Y = "skillXpHudY";
     public static final String HUD_SKILL_XP_SIZE = "skillXpHudSize";
     public static final String HUD_SKILL_XP_COLOR = "skillXpHudColor";
-    public static final String HUD_EFFECTS_ENABLED = "tempEffectsHud";
 
     // --- Hud Modifiers ---
     public static final String HUD_PETXP = "petXpCheck";    

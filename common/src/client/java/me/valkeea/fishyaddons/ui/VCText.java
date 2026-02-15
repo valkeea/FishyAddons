@@ -13,12 +13,12 @@ public class VCText {
     public static void drawScaledText(DrawContext context, TextRenderer textRenderer, String text, 
                                     int x, int y, int color, float uiScale) {
         if (uiScale != 1.0f) {
-            context.getMatrices().push();
-            context.getMatrices().scale(uiScale, uiScale, 1.0f);
+            context.getMatrices().pushMatrix();
+            context.getMatrices().scale(uiScale, uiScale);
             int scaledX = (int)(x / uiScale);
             int scaledY = (int)(y / uiScale);
             context.drawText(textRenderer, text, scaledX, scaledY, color, false);
-            context.getMatrices().pop();
+            context.getMatrices().popMatrix();
         } else {
             context.drawText(textRenderer, text, x, y, color, false);
         }
@@ -27,12 +27,12 @@ public class VCText {
     public static void drawScaledText(DrawContext context, TextRenderer textRenderer, Text text, 
                                     int x, int y, int color, float uiScale) {
         if (uiScale != 1.0f) {
-            context.getMatrices().push();
-            context.getMatrices().scale(uiScale, uiScale, 1.0f);
+            context.getMatrices().pushMatrix();
+            context.getMatrices().scale(uiScale, uiScale);
             int scaledX = (int)(x / uiScale);
             int scaledY = (int)(y / uiScale);
             context.drawText(textRenderer, text, scaledX, scaledY, color, false);
-            context.getMatrices().pop();
+            context.getMatrices().popMatrix();
         } else {
             context.drawText(textRenderer, text, x, y, color, false);
         }
@@ -41,12 +41,12 @@ public class VCText {
     public static void drawScaledButtonText(DrawContext context, TextRenderer textRenderer, String text, 
                                     int x, int y, int color, float uiScale) {
         if (uiScale < 1.2f) {
-            context.getMatrices().push();
-            context.getMatrices().scale(uiScale, uiScale, 1.0f);
+            context.getMatrices().pushMatrix();
+            context.getMatrices().scale(uiScale, uiScale);
             int scaledX = (int)(x / uiScale);
             int scaledY = (int)(y / uiScale);
                 context.drawText(textRenderer, text, scaledX, scaledY, color, false);
-            context.getMatrices().pop();
+            context.getMatrices().popMatrix();
         } else {
             context.drawText(textRenderer, text, x, y, color, false);
         }
@@ -55,12 +55,12 @@ public class VCText {
     public static void drawScaledCenteredButtonText(DrawContext context, TextRenderer textRenderer, String text, 
                                             int centerX, int y, int color, float uiScale) {
         if (uiScale < 1.2f) {
-            context.getMatrices().push();
-            context.getMatrices().scale(uiScale, uiScale, 1.0f);
+            context.getMatrices().pushMatrix();
+            context.getMatrices().scale(uiScale, uiScale);
             int scaledCenterX = (int)(centerX / uiScale);
             int scaledY = (int)(y / uiScale);
             context.drawText(textRenderer, text, scaledCenterX, scaledY, color, false);
-            context.getMatrices().pop();
+            context.getMatrices().popMatrix();
         } else {
             context.drawText(textRenderer, text, centerX, y, color, false);
         }
@@ -69,12 +69,12 @@ public class VCText {
     public static void drawScaledCenteredText(DrawContext context, TextRenderer textRenderer, String text, 
                                             int centerX, int y, int color, float uiScale) {
         if (uiScale != 1.0f) {
-            context.getMatrices().push();
-            context.getMatrices().scale(uiScale, uiScale, 1.0f);
+            context.getMatrices().pushMatrix();
+            context.getMatrices().scale(uiScale, uiScale);
             int scaledCenterX = (int)(centerX / uiScale);
             int scaledY = (int)(y / uiScale);
             context.drawCenteredTextWithShadow(textRenderer, text, scaledCenterX, scaledY, color);
-            context.getMatrices().pop();
+            context.getMatrices().popMatrix();
         } else {
             context.drawCenteredTextWithShadow(textRenderer, text, centerX, y, color);
         }
@@ -83,12 +83,12 @@ public class VCText {
     public static void drawScaledCenteredText(DrawContext context, TextRenderer textRenderer, net.minecraft.text.Text text, 
                                             int centerX, int y, int color, float uiScale) {
         if (uiScale != 1.0f) {
-            context.getMatrices().push();
-            context.getMatrices().scale(uiScale, uiScale, 1.0f);
+            context.getMatrices().pushMatrix();
+            context.getMatrices().scale(uiScale, uiScale);
             int scaledCenterX = (int)(centerX / uiScale);
             int scaledY = (int)(y / uiScale);
             context.drawCenteredTextWithShadow(textRenderer, text, scaledCenterX, scaledY, color);
-            context.getMatrices().pop();
+            context.getMatrices().popMatrix();
         } else {
             context.drawCenteredTextWithShadow(textRenderer, text, centerX, y, color);
         }

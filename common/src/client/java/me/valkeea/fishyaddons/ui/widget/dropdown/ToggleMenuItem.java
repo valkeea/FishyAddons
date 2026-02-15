@@ -42,12 +42,12 @@ public interface ToggleMenuItem {
     }
     
     default Text getEnabledSuffix() {
-        Text checkMark = Text.literal("✓").styled(style -> style.withColor(0xFFCCFFCC).withBold(true));
+        var checkMark = Text.literal("✓").styled(style -> style.withColor(0xFFCCFFCC).withBold(true));
         return Text.literal(" §8[").append(checkMark).append(Text.literal("§8]"));
     }
     
     default Text getDisabledSuffix() {
-        Text crossMark = Text.literal("✗").styled(style -> style.withColor(0xFFFF8080).withBold(true));
+        var crossMark = Text.literal("✗").styled(style -> style.withColor(0xFFFF8080).withBold(true));
         return Text.literal(" §8[").append(crossMark).append(Text.literal("§8]"));
     }
 }

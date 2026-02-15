@@ -10,8 +10,10 @@ import me.valkeea.fishyaddons.ui.widget.VCTextField;
 import me.valkeea.fishyaddons.ui.widget.dropdown.TextFormatMenu;
 import me.valkeea.fishyaddons.util.text.Enhancer;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.input.KeyInput;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
@@ -125,19 +127,18 @@ public class FilterEditScreen extends Screen {
     }
 
 	public void warn() {
-        MinecraftClient cl = MinecraftClient.getInstance();        
-        VCPopup popup = new VCPopup(
+        var client = MinecraftClient.getInstance();        
+        var popup = new VCPopup(
             Text.literal("Empty field detected! Would you like to restore it?"),
-            "No", () -> cl.setScreen(parent),
+            "No", () -> client.setScreen(parent),
             "Yes", () -> keyField.setText(filterKey),
             1.0f
             );
-        cl.setScreen(new VCOverlay(cl.currentScreen, popup));
+        client.setScreen(new VCOverlay(client.currentScreen, popup));
 	}    
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        this.renderBackground(context, mouseX, mouseY, delta);
         super.render(context, mouseX, mouseY, delta);
         renderGuideText(context);
 
@@ -228,10 +229,7 @@ public class FilterEditScreen extends Screen {
 
         Text title = VCText.header("FishyAddons Chat Filters and Overrides", Style.EMPTY.withBold(true));
 
-        context.getMatrices().push();
-        context.getMatrices().translate(0,0, 300);
         context.drawTextWithShadow(this.textRenderer, title, x, y, 0xFFFFFFFF);            
-        context.getMatrices().pop();
 
         y += lineHeight * 2;
                 
@@ -255,7 +253,7 @@ public class FilterEditScreen extends Screen {
                 continue;
             }
 
-            Formatting format = Formatting.GRAY;
+            var format = Formatting.GRAY;
             if (instruction.startsWith(" •") || instruction.matches("\\d+\\..*")) {
                 format = Formatting.AQUA;
             } else if (instruction.contains("-")) {
@@ -263,25 +261,26 @@ public class FilterEditScreen extends Screen {
             } else if (instruction.startsWith(" The")) {
                 format = Formatting.DARK_GRAY;
             }
-
-            context.getMatrices().push();
-            context.getMatrices().translate(0,0, 300);      
+     
             Text text = Text.literal(instruction).formatted(format);
             context.drawTextWithShadow(this.textRenderer, text, x, y, 0xFFFFFFFF);
-            context.getMatrices().pop();
             y += lineHeight;
         }              
     }   
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (searchMenu != null && searchMenu.isVisible() && searchMenu.mouseClicked(mouseX, mouseY)) {
+    public boolean mouseClicked(Click click, boolean doubled) {
+        if (searchMenu != null && searchMenu.isVisible() && searchMenu.mouseClicked(click)) {
             return true;
         }
-        if (formatField.isFocused() && (!formatField.isMouseOver(mouseX, mouseY) || button != 0)) {
+
+        double mouseX = click.x();
+        double mouseY = click.y();
+
+        if (formatField.isFocused() && (!formatField.isMouseOver(mouseX, mouseY) || click.button() != 0)) {
             formatField.setFocused(false);
         }
-        if (overrideField.isFocused() && (!overrideField.isMouseOver(mouseX, mouseY) || button != 0)) {
+        if (overrideField.isFocused() && (!overrideField.isMouseOver(mouseX, mouseY) || click.button() != 0)) {
             overrideField.setFocused(false);
         }
 
@@ -296,25 +295,25 @@ public class FilterEditScreen extends Screen {
             }
         }
         
-        return super.mouseClicked(mouseX, mouseY, button);
+        return super.mouseClicked(click, doubled);
     }
 
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        if (keyCode == 256) {
+    public boolean keyPressed(KeyInput input) {
+        if (input.key() == 256) {
             menuInteractionActive = false;
         }
-        if (searchMenu != null && formatField.isFocused() && searchMenu.keyPressed(keyCode)) {
+        if (searchMenu != null && formatField.isFocused() && searchMenu.keyPressed(input)) {
             return true;
         }
         if (overrideField.isFocused()) {
-            return overrideField.keyPressed(keyCode, scanCode, modifiers);
+            return overrideField.keyPressed(input);
         }        
-        if (formatField.isFocused() && formatField.keyPressed(keyCode, scanCode, modifiers)) {
+        if (formatField.isFocused() && formatField.keyPressed(input)) {
             return true;
         }
-        return super.keyPressed(keyCode, scanCode, modifiers);
-    }    
+        return super.keyPressed(input);
+    }
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
@@ -325,19 +324,19 @@ public class FilterEditScreen extends Screen {
     }
 
     @Override 
-    public boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
-        if (searchMenu != null && searchMenu.isVisible() && searchMenu.mouseDragged(mouseY)) {
+    public boolean mouseDragged(Click click, double offsetX, double offsetY) {
+        if (searchMenu != null && searchMenu.isVisible() && searchMenu.mouseDragged(click)) {
             return true;
         }
-        return super.mouseDragged(mouseX, mouseY, button, deltaX, deltaY);
+        return super.mouseDragged(click, offsetX, offsetY);
     }
 
     @Override
-    public boolean mouseReleased(double mouseX, double mouseY, int button) {
+    public boolean mouseReleased(Click click) {
         if (searchMenu != null && searchMenu.isVisible()) {
             searchMenu.mouseReleased();
         }
-        return super.mouseReleased(mouseX, mouseY, button);
+        return super.mouseReleased(click);
     }
 
     @Override

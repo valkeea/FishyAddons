@@ -7,15 +7,13 @@ import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.config.Key;
 import me.valkeea.fishyaddons.event.impl.FaEvents;
 import me.valkeea.fishyaddons.impl.LavaRenderHandler;
-import net.fabricmc.fabric.api.blockrenderlayer.v1.BlockRenderLayerMap;
 import net.fabricmc.fabric.api.client.render.fluid.v1.FluidRenderHandler;
 import net.fabricmc.fabric.api.client.render.fluid.v1.FluidRenderHandlerRegistry;
+import net.fabricmc.fabric.api.client.rendering.v1.BlockRenderLayerMap;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.render.RenderLayer;
+import net.minecraft.client.render.BlockRenderLayer;
 import net.minecraft.client.render.WorldRenderer;
-import net.minecraft.client.texture.SpriteAtlasTexture;
 import net.minecraft.fluid.Fluids;
-import net.minecraft.util.Identifier;
 
 public class TransLava {
     private TransLava() {}
@@ -53,20 +51,15 @@ public class TransLava {
 
     private static void reloadRenderHandler() {
         if (isEnabled) {
-            FluidRenderHandler handler = LavaRenderHandler.coloredFluid(color);
-            
-            var atlasId = Identifier.ofVanilla("textures/atlas/blocks.png");
-            SpriteAtlasTexture texture = MinecraftClient.getInstance().getBakedModelManager().getAtlas(atlasId);
-            handler.reloadTextures(texture);
-
+            FluidRenderHandler handler = LavaRenderHandler.customFluid("block/water", color);
             FluidRenderHandlerRegistry.INSTANCE.register(Fluids.LAVA, handler);
             FluidRenderHandlerRegistry.INSTANCE.register(Fluids.FLOWING_LAVA, handler);
-            BlockRenderLayerMap.INSTANCE.putFluids(RenderLayer.getTranslucent(), Fluids.LAVA, Fluids.FLOWING_LAVA);
+            BlockRenderLayerMap.putFluids(BlockRenderLayer.TRANSLUCENT, Fluids.LAVA, Fluids.FLOWING_LAVA);
             
         } else {
             FluidRenderHandlerRegistry.INSTANCE.register(Fluids.LAVA, originalLavaHandler);
             FluidRenderHandlerRegistry.INSTANCE.register(Fluids.FLOWING_LAVA, originalFlowingLavaHandler);
-            BlockRenderLayerMap.INSTANCE.putFluids(RenderLayer.getSolid(), Fluids.LAVA, Fluids.FLOWING_LAVA);
+            BlockRenderLayerMap.putFluids(BlockRenderLayer.SOLID, Fluids.LAVA, Fluids.FLOWING_LAVA);
         }
 
         WorldRenderer renderer = MinecraftClient.getInstance().worldRenderer;

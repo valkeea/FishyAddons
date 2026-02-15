@@ -2,9 +2,9 @@ package me.valkeea.fishyaddons.ui.widget;
 
 import me.valkeea.fishyaddons.tool.FishyMode;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.render.RenderLayer;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 
@@ -35,7 +35,7 @@ public class FaButton extends ButtonWidget {
         }
 
         context.drawTexture(
-            RenderLayer::getGuiTextured,
+            RenderPipelines.GUI_TEXTURED,
             texture,
             this.getX(), this.getY(),
             0.0F, 0.0F,
@@ -46,22 +46,22 @@ public class FaButton extends ButtonWidget {
 
         int color = this.active ? 0xFFFFFFFF : 0xFFA0A0A0;
         if (uiScale != 1.0f) {
-            context.getMatrices().push();
-            context.getMatrices().scale(uiScale, uiScale, 1.0f);
+            context.getMatrices().pushMatrix();
+            context.getMatrices().scale(uiScale, uiScale);
             context.drawCenteredTextWithShadow(
                 MinecraftClient.getInstance().textRenderer,
                 this.getMessage(),
                 (int) ((this.getX() + ((double)this.width / 2)) / uiScale),
-                (int) ((this.getY() + ((double)this.height / 2) - 3) / uiScale),
+                (int) ((this.getY() + ((double)this.height / 2) - 3) / uiScale) + 1,
                 color
             );
-            context.getMatrices().pop();
+            context.getMatrices().popMatrix();
         } else {
             context.drawCenteredTextWithShadow(
                 MinecraftClient.getInstance().textRenderer,
                 this.getMessage(),
                 this.getX() + this.width / 2,
-                this.getY() + (this.height - 8) / 2,
+                this.getY() + (this.height - 8) / 2 + 1,
                 color
             );
         }

@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.lwjgl.glfw.GLFW;
 
+import net.minecraft.client.input.KeyInput;
 import net.minecraft.client.util.InputUtil;
 
 public class Keyboard {
@@ -15,7 +16,7 @@ public class Keyboard {
         GLFW_KEY_NAMES.put(GLFW.GLFW_KEY_A, "GLFW_KEY_A");
         GLFW_KEY_NAMES.put(GLFW.GLFW_KEY_B, "GLFW_KEY_B");
 
-        for (java.lang.reflect.Field field : GLFW.class.getFields()) {
+        for (var field : GLFW.class.getFields()) {
             if (field.getType() == int.class && field.getName().startsWith("GLFW_KEY_")) {
                 try {
                     GLFW_KEY_NAMES.put(field.getInt(null), field.getName());
@@ -45,29 +46,29 @@ public class Keyboard {
             return key.replace("GLFW_KEY_KP_", "Num ");
         }
 
-        String uiName = uiName(key);
+        var uiName = uiName(key);
         if (uiName != null) {
             return uiName;
         }
 
-        String minecraftDisplayName = getMcName(key);
-        if (minecraftDisplayName != null && !minecraftDisplayName.isEmpty()) {
-            return minecraftDisplayName;
+        var mcName = getMcName(key);
+        if (mcName != null && !mcName.isEmpty()) {
+            return mcName;
         }
 
         return key.substring(0, 1).toUpperCase() + key.substring(1).toLowerCase();
     }
 
     private static String getMcName(String key) {
+
         try {
             int keyCode = getKeyCodeFromString(key);
             if (keyCode == -1) return null;
             
-            InputUtil.Key inputKey = InputUtil.fromKeyCode(keyCode, 0);
-
+            var inputKey = InputUtil.fromKeyCode(new KeyInput(keyCode, 0, 0));
             if (inputKey != null) {
-                net.minecraft.text.Text displayText = inputKey.getLocalizedText();
 
+                var displayText = inputKey.getLocalizedText();
                 if (displayText != null) {
                     String displayName = displayText.getString();
                     if (displayName != null && !displayName.isEmpty()) {
@@ -79,7 +80,7 @@ public class Keyboard {
             // Not able to get name via Minecraft's InputUtil
         }
         return null;
-    }    
+    }
 
     private static String uiName(String key) {
         switch (key) {

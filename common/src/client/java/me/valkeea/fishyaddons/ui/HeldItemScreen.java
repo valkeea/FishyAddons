@@ -9,6 +9,7 @@ import me.valkeea.fishyaddons.feature.item.animations.HeldItems;
 import me.valkeea.fishyaddons.tool.FishyMode;
 import me.valkeea.fishyaddons.ui.widget.FaButton;
 import me.valkeea.fishyaddons.ui.widget.VCSlider;
+import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.text.Text;
@@ -258,7 +259,7 @@ public class HeldItemScreen extends Screen {
         int sliderX = center ? columnCenterX - sliderW / 2 + centerOffset / 2 : columnCenterX - sliderW / 2;
         int labelX = columnCenterX - labelWidth - sliderW / 2 - gap;
 
-        VCSlider slider = new VCSlider(sliderX, currentY, currentValue, minValue, maxValue, format, setter::accept);
+        var slider = new VCSlider(sliderX, currentY, currentValue, minValue, maxValue, format, setter::accept);
         slider.setUIScale(scale);
 
         sliders.add(new TransformSlider(slider, label, labelX, currentY, center));
@@ -268,7 +269,6 @@ public class HeldItemScreen extends Screen {
     
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        this.renderBackground(context, mouseX, mouseY, delta);
 
         int bgBottom = doneBtn.getY() + doneBtn.getHeight() + spacing;
         short bgTop = 15;
@@ -281,7 +281,7 @@ public class HeldItemScreen extends Screen {
         super.render(context, mouseX, mouseY, delta);
 
         var title = VCText.header("Held Item Animations", null);
-        VCText.drawScaledCenteredText(context, this.textRenderer, title, this.width / 2, 20, 0xFFFFFF, scale);
+        VCText.drawScaledCenteredText(context, this.textRenderer, title, this.width / 2, 20, 0xFFFFFFFF, scale);
 
 
         for (TransformSlider tfs : sliders) {
@@ -301,36 +301,36 @@ public class HeldItemScreen extends Screen {
     }
     
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+    public boolean mouseClicked(Click click, boolean doubled) {
         for (TransformSlider tfs : sliders) {
-            if (tfs.slider.mouseClicked(mouseX, mouseY, button)) {
+            if (tfs.slider.mouseClicked(click)) {
                 return true;
             }
         }
         
-        return super.mouseClicked(mouseX, mouseY, button);
+        return super.mouseClicked(click, doubled);
     }
     
     @Override
-    public boolean mouseReleased(double mouseX, double mouseY, int button) {
+    public boolean mouseReleased(Click click) {
         for (TransformSlider tfs : sliders) {
-            if (tfs.slider.mouseReleased(button)) {
+            if (tfs.slider.mouseReleased(click)) {
                 return true;
             }
         }
         
-        return super.mouseReleased(mouseX, mouseY, button);
+        return super.mouseReleased(click);
     }
     
     @Override
-    public boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
+    public boolean mouseDragged(Click click, double offsetX, double offsetY) {
         for (TransformSlider tfs : sliders) {
-            if (tfs.slider.mouseDragged(mouseX, button)) {
+            if (tfs.slider.mouseDragged(click)) {
                 return true;
             }
         }
-        
-        return super.mouseDragged(mouseX, mouseY, button, deltaX, deltaY);
+
+        return super.mouseDragged(click, offsetX, offsetY);
     }
     
     @Override

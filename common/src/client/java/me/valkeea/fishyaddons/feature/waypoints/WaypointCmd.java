@@ -5,6 +5,7 @@ import static me.valkeea.fishyaddons.feature.waypoints.ChainConfig.USER_CHAINS;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.stream.IntStream;
 
 import me.valkeea.fishyaddons.api.skyblock.SkyblockAreas;
 import me.valkeea.fishyaddons.api.skyblock.SkyblockAreas.Island;
@@ -49,7 +50,7 @@ public class WaypointCmd {
 
         int nextOrder = 1;
         WaypointChain targetChain = null;
-        for (WaypointChain chain : USER_CHAINS) {
+        for (var chain : USER_CHAINS) {
             if (chain.name().equals(lastModified) && chain.area.equals(currentArea.key())) {
                 targetChain = chain;
                 break;
@@ -58,7 +59,7 @@ public class WaypointCmd {
 
         if (targetChain != null) {
             List<Integer> existingOrders = new ArrayList<>();
-            for (Waypoint wp : targetChain.waypoints) {
+            for (var wp : targetChain.waypoints) {
                 existingOrders.add(extractOrderNumber(wp.label()));
             }
 
@@ -90,7 +91,7 @@ public class WaypointCmd {
 
     public static int addUserWaypoint(String chainName, int orderNumber, Island area, BlockPos position) {
         WaypointChain existingChain = null;
-        for (WaypointChain chain : USER_CHAINS) {
+        for (var chain : USER_CHAINS) {
             if (chain.name().equals(chainName) && chain.area.equals(area.key())) {
                 existingChain = chain;
                 break;
@@ -98,7 +99,7 @@ public class WaypointCmd {
         }
 
         if (existingChain != null) {
-            for (Waypoint waypoint : existingChain.waypoints) {
+            for (var waypoint : existingChain.waypoints) {
                 if (waypoint.label().endsWith(" " + orderNumber)) {
                     FishyNotis.alert(Text.literal("§cWaypoint §3" + orderNumber + " §calready exists in chain '§3" + chainName + "§c'!"));
                     FishyNotis.alert(Text.literal("§8Use '§3/fwp remove " + chainName + " " + orderNumber + "§8' first to replace it."));
@@ -137,7 +138,7 @@ public class WaypointCmd {
             return 0;
         }
 
-        for (WaypointChain chain : USER_CHAINS) {
+        for (var chain : USER_CHAINS) {
             if (chain.name().equals(chainName) && chain.area.equals(area.key()) && chain.type == ChainType.USER_DEFINED) {
 
                 setLastModified(chainName);
@@ -173,7 +174,7 @@ public class WaypointCmd {
         }
 
         List<WaypointChain> areaChains = new ArrayList<>();
-        for (WaypointChain chain : USER_CHAINS) {
+        for (var chain : USER_CHAINS) {
             if (chain.area.equals(area.key())) {
                 areaChains.add(chain);
             }
@@ -185,7 +186,7 @@ public class WaypointCmd {
         }
 
         FishyNotis.themed("Waypoint Chains in " + area + ": ");
-        for (WaypointChain chain : areaChains) {
+        for (var chain : areaChains) {
 
             boolean isVisible = ChainConfig.isChainVisible(chain.name(), area.key());
             String visibilityStatus = isVisible ? "§aVisible" : "§7Hidden";
@@ -213,7 +214,7 @@ public class WaypointCmd {
     }    
 
     private static int showChainInfo(String chainName, Island area) {
-        for (WaypointChain chain : USER_CHAINS) {
+        for (var chain : USER_CHAINS) {
             String areaKey = area.key();
 
             if (chain.name().equals(chainName) && chain.area.equals(areaKey) && chain.type == ChainType.USER_DEFINED) {
@@ -228,15 +229,12 @@ public class WaypointCmd {
                 
                 int nextWaypoint = -1;
                 var mc = MinecraftClient.getInstance();
-                Vec3d playerPos = mc.player != null ? mc.player.getPos() : new Vec3d(0, 0, 0);
+                Vec3d playerPos = mc.player != null ? mc.player.getEntityPos() : new Vec3d(0, 0, 0);
                 
-                for (int i = 0; i < chain.waypoints.size(); i++) {
-                    Waypoint waypoint = chain.waypoints.get(i);
-                    if (!waypoint.visited()) {
-                        nextWaypoint = i;
-                        break;
-                    }
-                }
+                nextWaypoint = IntStream.range(0, chain.waypoints.size())
+                    .filter(i -> !chain.waypoints.get(i).visited())
+                    .findFirst()
+                    .orElse(-1);
 
                 String avgRunTime = WaypointChains.getAvgRunTime(chainName, areaKey);
                 boolean isActive = WaypointChains.isChainActive(chainName, areaKey);
@@ -272,7 +270,7 @@ public class WaypointCmd {
                 
                 FishyNotis.alert(Text.literal("§7Waypoints:"));
                 for (int i = 0; i < chain.waypoints.size(); i++) {
-                    Waypoint waypoint = chain.waypoints.get(i);
+                    var waypoint = chain.waypoints.get(i);
                     boolean wasVisited = waypoint.visited();
                     
                     String status = wasVisited ? "§a✓" : (i == nextWaypoint ? "§p→" : "§8○");
@@ -313,7 +311,7 @@ public class WaypointCmd {
         }
 
         ChainConfig.save();
-        WaypointChains.clearUserChainCache(); // Clear cache after renaming chain
+        WaypointChains.clearUserChainCache();
         FishyNotis.alert(Text.literal("§7Renamed chain '§3" + oldName + "§7' to '§3" + newName + "§7' in §b" + area.displayName() + "§7!"));
         return 1;
     }
@@ -346,12 +344,12 @@ public class WaypointCmd {
             return 0;
         }
 
-        for (WaypointChain chain : USER_CHAINS) {
+        for (var chain : USER_CHAINS) {
             if (chain.name().equals(chainName) && chain.area.equals(area.key()) && chain.type == ChainType.USER_DEFINED) {
 
                 setLastModified(chainName);
 
-                for (Waypoint waypoint : chain.waypoints) {
+                for (var waypoint : chain.waypoints) {
                     waypoint.setVisited(false);
                     ChainConfig.saveUserProgress();
                 }
@@ -476,7 +474,7 @@ public class WaypointCmd {
         }
 
         return mc.player.getBlockPos().down();
-    }    
+    }
 
     private static void setLastModified(String chainName) {
         if (lastModified.isEmpty() || !lastModified.equals(chainName)) {

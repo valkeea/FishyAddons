@@ -11,6 +11,7 @@ public final class VCConstants {
 
     // Known UI Position Constants
     public static final int SEARCH_Y = 40;
+    public static final int HEADER_Y = 20;
 
     // Base entry dimensions
     public static final int BASE_ENTRY_HEIGHT = 65;

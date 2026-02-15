@@ -4,10 +4,12 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 import me.valkeea.fishyaddons.util.Keyboard;
+import net.minecraft.client.gui.Click;
+import net.minecraft.client.input.KeyInput;
 import net.minecraft.text.Text;
 
 public class ListeningWidget extends FaButton {
-    private boolean listening = true;
+    private boolean listening = false;
     private final Consumer<String> onKeySet;
     private String keyName;
     private final Function<String, Text> labelProvider;
@@ -25,9 +27,9 @@ public class ListeningWidget extends FaButton {
     }
     
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+    public boolean keyPressed(KeyInput input) {
         if (listening) {
-            String newKey = Keyboard.getGlfwKeyName(keyCode);
+            String newKey = Keyboard.getGlfwKeyName(input.key());
             if (newKey != null) {
                 keyName = newKey;
                 onKeySet.accept(keyName);
@@ -38,18 +40,18 @@ public class ListeningWidget extends FaButton {
             listening = false;
             return true;
         }
-        return super.keyPressed(keyCode, scanCode, modifiers);
+        return super.keyPressed(input);
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (listening && button == 0 && this.isMouseOver(mouseX, mouseY)) {
+    public boolean mouseClicked(Click click, boolean doubled) {
+        if (listening && click.button() == 0 && this.isMouseOver(click.x(), click.y())) {
             keyName = "NONE";
             onKeySet.accept(keyName);
             this.setMessage(labelProvider.apply(keyName));
             listening = false;
             return true;
         }
-        return super.mouseClicked(mouseX, mouseY, button);
+        return super.mouseClicked(click, doubled);
     }
 }

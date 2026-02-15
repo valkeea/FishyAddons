@@ -39,7 +39,7 @@ import me.valkeea.fishyaddons.tracker.ActivityMonitor;
 import me.valkeea.fishyaddons.tracker.SkillTracker;
 import me.valkeea.fishyaddons.tracker.fishing.ScData;
 import me.valkeea.fishyaddons.tracker.profit.SackDropParser;
-import me.valkeea.fishyaddons.tracker.profit.TrackerUtils;
+import me.valkeea.fishyaddons.tracker.profit.ProfitTracker;
 import me.valkeea.fishyaddons.tracker.profit.ValuableMobs;
 import me.valkeea.fishyaddons.ui.VCScreen.ExtraControl;
 import net.minecraft.client.MinecraftClient;
@@ -210,19 +210,7 @@ public class VCManager {
             "Uses a less intrusive texture for fire matching the configured lava color.",
             Key.FISHY_FIRE_OVERLAY,
             false,
-            () -> { 
-                ResourceHandler.updateFirePack();
-                MinecraftClient client = MinecraftClient.getInstance();
-                if (client.currentScreen instanceof VCScreen currentScreen) {
-                    VCState.preservePersistentState(
-                        currentScreen.getScrollOffset(),
-                        currentScreen.getLastSearchText(),
-                        currentScreen.getExpandedEntries()
-                    );
-                }
-                RenderTweaks.refresh();
-                client.setScreen(new VCScreen());
-            }
+            RenderTweaks::refresh
         ));
 
         entries.add(VCEntry.expandable(
@@ -552,7 +540,7 @@ public class VCManager {
             "Adds additional price data to the display.",
             Key.PER_ITEM,
             false,
-            TrackerUtils::refresh
+            ProfitTracker::refresh
         ));
 
         profitEntries.add(VCEntry.toggle(
@@ -599,7 +587,7 @@ public class VCManager {
             ),
             Key.HUD_TRACKER_ENABLED,
             false,
-            TrackerUtils::refresh
+            ProfitTracker::refresh
         ));
 
         trackerEntries.add(VCEntry.header("── Century Cake Timer ──", ""));
@@ -617,7 +605,7 @@ public class VCManager {
             "Enables a HUD timer.",
             Key.HUD_CENTURY_CAKE_ENABLED,
             false,
-            TrackerUtils::refresh,
+            ProfitTracker::refresh,
             new ExtraControl("Century Cakes: ", false, false)
         ));
 

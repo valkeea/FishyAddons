@@ -117,7 +117,7 @@ public class CocoonAlert {
      * the current cluster if it meets size and profile criteria
      */
     private static List<ArmorStandEntity> addToClusterAndGet(ArmorStandEntity armorStand, long currentTime) {
-        var pos = armorStand.getPos();
+        var pos = armorStand.getEntityPos();
         double xRounded = Math.round(pos.x / X_ROUNDING) * X_ROUNDING;
         
         recentStandsByX.computeIfAbsent(xRounded, k -> new ArrayList<>())
@@ -150,7 +150,7 @@ public class CocoonAlert {
         double sumZ = 0;
         
         for (var stand : recentCluster) {
-            var p = stand.getPos();
+            var p = stand.getEntityPos();
             double y = p.y;
             double z = p.z;
             if (y < minY) minY = y;
@@ -220,10 +220,10 @@ public class CocoonAlert {
             var profile = headSlot.getOrDefault(DataComponentTypes.PROFILE, null);
             if (profile == null) return false;
             
-            var gameProfile = profile.gameProfile();
+            var gameProfile = profile.getGameProfile();
             if (gameProfile == null) return false;
 
-            return TARGET_UUID.equals(gameProfile.getId());
+            return TARGET_UUID.equals(gameProfile.id());
             
         } catch (Exception e) {
             return false;

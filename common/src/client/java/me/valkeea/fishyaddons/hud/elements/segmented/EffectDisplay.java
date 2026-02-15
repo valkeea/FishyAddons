@@ -11,8 +11,8 @@ import me.valkeea.fishyaddons.hud.core.HudDrawer;
 import me.valkeea.fishyaddons.hud.core.HudElement;
 import me.valkeea.fishyaddons.hud.core.HudElementState;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.render.RenderLayer;
 import net.minecraft.text.Text;
 
 public class EffectDisplay implements HudElement {
@@ -41,9 +41,9 @@ public class EffectDisplay implements HudElement {
 
         if (editingMode && empty) {
 
-            context.getMatrices().push();
-            context.getMatrices().translate(hudX, hudY, 0);
-            context.getMatrices().scale(scale, scale, 1.0F);
+            context.getMatrices().pushMatrix();
+            context.getMatrices().translate(hudX, hudY);
+            context.getMatrices().scale(scale, scale); 
 
             int y = 0;
 
@@ -55,7 +55,7 @@ public class EffectDisplay implements HudElement {
             context.fill(0, y, 16, y + 16, 0xFF3A3A3A);
             HudDrawer.drawText(context, Text.literal("1h 12m"), 18, y + 4, color, state.outlined);
 
-            context.getMatrices().pop();
+            context.getMatrices().popMatrix();
             return;
         }
 
@@ -79,9 +79,9 @@ public class EffectDisplay implements HudElement {
             context.fill(shadowX1, shadowY1, shadowX2, shadowY2, 0x80000000);
         }
 
-        context.getMatrices().push();
-        context.getMatrices().translate(hudX, hudY, 0);
-        context.getMatrices().scale(scale, scale, 1.0F);
+        context.getMatrices().pushMatrix();
+        context.getMatrices().translate(hudX, hudY);
+        context.getMatrices().scale(scale, scale); 
 
         int y = 0;
 
@@ -89,7 +89,7 @@ public class EffectDisplay implements HudElement {
 
             if (e.textureId != null) {
                 context.drawTexture(
-                    RenderLayer::getGuiTextured,
+                    RenderPipelines.GUI_TEXTURED,
                     e.textureId,
                     0, y, 0, 0, 16, 16, 16, 16
                 );
@@ -101,7 +101,7 @@ public class EffectDisplay implements HudElement {
             y += intersects ? -20 : 20;
         }
 
-        context.getMatrices().pop();
+        context.getMatrices().popMatrix();
     }
 
     public void updateSpace() {

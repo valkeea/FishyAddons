@@ -11,8 +11,4 @@ public interface IBeaconData {
     default boolean fillBlock() {
         return true;
     }
-
-    default boolean noDepth() {
-        return true;
-    }
 }

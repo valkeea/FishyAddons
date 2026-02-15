@@ -42,11 +42,14 @@ public class WaypointChainItem implements ToggleMenuItem {
     
     @Override
     public boolean onRightClick() {
+
         if (configKey != null) {
+
             ChainConfig.clearPresetFor(configKey);
-            me.valkeea.fishyaddons.util.FishyNotis.notice("Reset waypoint completion for " + displayName);
+            me.valkeea.fishyaddons.util.FishyNotis.send("§aReset waypoint completion for " + displayName);
             return true;
         }
+
         return false;
     }
     

@@ -3,13 +3,16 @@ package me.valkeea.fishyaddons.ui.widget.dropdown;
 import java.util.List;
 import java.util.function.Consumer;
 
+import me.valkeea.fishyaddons.ui.VCRenderUtils;
 import me.valkeea.fishyaddons.ui.widget.VCVisuals;
 import me.valkeea.fishyaddons.util.text.Enhancer;
 import me.valkeea.fishyaddons.util.text.GradientRenderer;
 import net.minecraft.client.font.TextRenderer;
+import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.TextFieldWidget;
+import net.minecraft.client.input.KeyInput;
 
 public class TextFormatMenu {
     private final List<FormatEntry> formatEntries;
@@ -130,7 +133,9 @@ public class TextFormatMenu {
     public void render(DrawContext context, Screen screen, int mouseX, int mouseY) {
         if (!visible || filteredEntries.isEmpty()) return;
         
-        TextRenderer textRenderer = screen.getTextRenderer();
+        context.createNewRootLayer();
+        
+        var textRenderer = screen.getTextRenderer();
         
         int totalEntries = filteredEntries.size();
         int visibleEntries = Math.min(totalEntries, maxEntries);
@@ -149,7 +154,7 @@ public class TextFormatMenu {
             int entryIndex = i + scrollOffset;
             if (entryIndex >= filteredEntries.size()) break;
             
-            FormatEntry entry = filteredEntries.get(entryIndex);
+            var entry = filteredEntries.get(entryIndex);
             
             boolean hovered = mouseX >= x && mouseX <= x + width && 
                             mouseY >= currentY && mouseY <= currentY + scaledEntryHeight;
@@ -189,14 +194,14 @@ public class TextFormatMenu {
         } else if (entry.color != null) {
             context.fill(entryX, entryY + (int)(2 * uiScale), entryX + colorPreviewSize, entryY + (int)(2 * uiScale) + colorPreviewSize, 
                         0xFF000000 | entry.color);
-            context.drawBorder(entryX, entryY + (int)(2 * uiScale), colorPreviewSize, colorPreviewSize, 0xFF666666);
+            VCRenderUtils.border(context, entryX, entryY + (int)(2 * uiScale), colorPreviewSize, colorPreviewSize, 0xFF666666);
 
         } else {
             context.fill(entryX, entryY + (int)(2 * uiScale), entryX + colorPreviewSize, entryY + (int)(2 * uiScale) + colorPreviewSize, 
                         0xFF333333);
-            context.drawBorder(entryX, entryY + (int)(2 * uiScale), colorPreviewSize, colorPreviewSize, 0xFF666666);
+            VCRenderUtils.border(context, entryX, entryY + (int)(2 * uiScale), colorPreviewSize, colorPreviewSize, 0xFF666666);
             
-            String indicator = getFormatIndicator(entry.code);
+            var indicator = getFormatIndicator(entry.code);
             int indicatorWidth = textRenderer.getWidth(indicator);
             context.drawText(textRenderer, indicator, 
                 entryX + (colorPreviewSize - indicatorWidth) / 2, 
@@ -205,14 +210,14 @@ public class TextFormatMenu {
         }
         
         float textScale = uiScale * 0.9f;
-        context.getMatrices().push();
-        context.getMatrices().scale(textScale, textScale, 1.0f);
+        context.getMatrices().pushMatrix();
+        context.getMatrices().scale(textScale, textScale);
         
         int scaledTextX = (int)(textX / textScale);
         int scaledTextY = (int)((entryY + height / 2.0 - 4) / textScale);
         
         context.drawText(textRenderer, entry.displayName, scaledTextX, scaledTextY, textColor, false);
-        context.getMatrices().pop();
+        context.getMatrices().popMatrix();
     }
     
     private void renderGradientPreview(DrawContext context, int x, int y, int width, int height, String gradientName) {
@@ -228,9 +233,9 @@ public class TextFormatMenu {
         } else {
             context.fill(x, y, x + width, y + height, 0xFF888888);
         }
-        
-        context.drawBorder(x, y, width, height, 0xFF666666);
-    } 
+
+        VCRenderUtils.border(context, x, y, width, height, 0xFF666666);
+    }
     
     public void updateFilter(String query) {
 
@@ -253,9 +258,10 @@ public class TextFormatMenu {
         }
     }
     
-    public boolean mouseClicked(double mouseX, double mouseY) {
+    public boolean mouseClicked(Click click) {
         if (!visible) return false;
-        
+        double mouseX = click.x();
+        double mouseY = click.y();
         int totalEntries = filteredEntries.size();
         int visibleEntries = Math.min(totalEntries, maxEntries);
         int scaledEntryHeight = (int)(entryH * uiScale);
@@ -305,8 +311,10 @@ public class TextFormatMenu {
         onSelect.accept(text);
     }
     
-    public boolean keyPressed(int keyCode) {
+    public boolean keyPressed(KeyInput input) {
         if (!visible) return false;
+        
+        int keyCode = input.key();
         
         if (keyCode == 256) {
             setVisible(false);
@@ -350,7 +358,7 @@ public class TextFormatMenu {
         }
     }
 
-    public boolean mouseDragged(double mouseY) {
+    public boolean mouseDragged(Click click) {
         if (!visible) return false;
         if (isDraggingScrollbar) {
             int totalEntries = filteredEntries.size();
@@ -362,7 +370,7 @@ public class TextFormatMenu {
                 int startY = y;
                 int maxScroll = Math.max(0, totalEntries - actualMaxVisible);
                 int thumbHeight = Math.max((int)(10 * uiScale), (visibleEntries * menuHeight) / totalEntries);
-                double thumbTopY = mouseY - startY - scrollbarThumbOffset;
+                double thumbTopY = click.y() - startY - scrollbarThumbOffset;
 
                 thumbTopY = Math.clamp(thumbTopY, 0.0, (double)menuHeight - thumbHeight);
 
@@ -374,8 +382,7 @@ public class TextFormatMenu {
             }
         }
         return false;
-    }        
-
+    }
 
     public void setVisible(boolean visible) {
         this.visible = visible;

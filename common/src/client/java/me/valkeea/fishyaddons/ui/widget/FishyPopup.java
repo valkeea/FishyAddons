@@ -1,5 +1,7 @@
 package me.valkeea.fishyaddons.ui.widget;
 
+import me.valkeea.fishyaddons.tool.FishyMode;
+import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.text.Text;
@@ -12,7 +14,10 @@ public class FishyPopup {
     private final Text discardButtonText;
     private ButtonWidget continueButton;
     private ButtonWidget discardButton;
-    private int x, y, width, height;
+    private int x;
+    private int y;
+    private int width;
+    private int height;
 
     public FishyPopup(Text title, Text continueButtonText, Runnable onContinue, Text discardButtonText, Runnable onDiscard) {
         this.title = title;
@@ -36,27 +41,24 @@ public class FishyPopup {
     public void render(DrawContext context, net.minecraft.client.font.TextRenderer textRenderer, int mouseX, int mouseY, float delta) {
         int color = 0xFFE2CAE9;
 
-        me.valkeea.fishyaddons.render.FaLayers.renderAboveOverlay(context, () -> {
-            context.fill(x, y, x + width, y + height, 0x80FF20);
-            context.fill(x - 1, y - 1, x + width + 1, y, color);
-            context.fill(x - 1, y + height, x + width + 1, y + height + 1, color);
-            context.fill(x - 1, y, x, y + height, color);
-            context.fill(x + width, y, x + width + 1, y + height, color);
+        context.fill(x, y, x + width, y + height, FishyMode.getThemeColor());
+        context.fill(x - 1, y - 1, x + width + 1, y, color);
+        context.fill(x - 1, y + height, x + width + 1, y + height + 1, color);
+        context.fill(x - 1, y, x, y + height, color);
+        context.fill(x + width, y, x + width + 1, y + height, color);
 
-            // draw light aqua title text
-            context.drawCenteredTextWithShadow(
-                textRenderer,
-                title,
-                x + width / 2, y + 15, 0xE2CAE9
-            );
-            continueButton.render(context, mouseX, mouseY, delta);
-            discardButton.render(context, mouseX, mouseY, delta);
-        });
+        context.drawCenteredTextWithShadow(
+            textRenderer,
+            title,
+            x + width / 2, y + 15, 0xFFE2CAE9
+        );
+        continueButton.render(context, mouseX, mouseY, delta);
+        discardButton.render(context, mouseX, mouseY, delta);
     }
 
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        return continueButton.mouseClicked(mouseX, mouseY, button) ||
-               discardButton.mouseClicked(mouseX, mouseY, button);
+    public boolean mouseClicked(Click click, boolean doubled) {
+        return continueButton.mouseClicked(click, doubled) ||
+               discardButton.mouseClicked(click, doubled);
     }
 
     public int getX() { return x; }

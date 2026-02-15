@@ -11,7 +11,7 @@ import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.config.TrackerProfiles;
 import me.valkeea.fishyaddons.hud.elements.custom.TrackerDisplay;
 import me.valkeea.fishyaddons.tracker.profit.ItemTrackerData;
-import me.valkeea.fishyaddons.tracker.profit.TrackerUtils;
+import me.valkeea.fishyaddons.tracker.profit.ProfitTracker;
 import me.valkeea.fishyaddons.util.FishyNotis;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
@@ -153,7 +153,7 @@ public class FpRoot implements CommandHandler {
         FishyConfig.enable(KEY, newState);
         String status = newState ? "§aenabled" : "§cdisabled";
         String msgStart = "§3Profit Tracker " + status;        
-        me.valkeea.fishyaddons.tracker.profit.TrackerUtils.refresh();
+        me.valkeea.fishyaddons.tracker.profit.ProfitTracker.refresh();
         
         if (newState && TrackerProfiles.hasJsonFile()) {
             if (TrackerProfiles.loadFromJson()) {
@@ -345,7 +345,7 @@ public class FpRoot implements CommandHandler {
 
         String profileToDelete = args.get(2);
         if (TrackerProfiles.deleteProfile(profileToDelete)) {
-            TrackerUtils.onDelete(profileToDelete);
+            ProfitTracker.onDelete(profileToDelete);
         } else {
             FishyNotis.alert(Text.literal("§cProfile '" + profileToDelete + "' not found or cannot be deleted"));
         }
@@ -609,7 +609,7 @@ public class FpRoot implements CommandHandler {
     }
 
     public static void profitPerHour() {
-        if (TrackerUtils.isEnabled()) {
+        if (ProfitTracker.isEnabled()) {
             double profitPerHour = ItemTrackerData.getTotalSessionValue() / Math.max(1, ItemTrackerData.getTotalDurationMinutes()) * 60.0;
             FishyNotis.alert(Text.literal(String.format("§7Per hour: §e%s", formatCoins(profitPerHour))));
         }

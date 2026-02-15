@@ -10,6 +10,7 @@ import net.minecraft.util.Identifier;
 
 public class SpriteUtil {
     private SpriteUtil() {}
+    private static final String MODID = "fishyaddons";
 
     @Nullable
     private static SpriteAtlasTexture getBlockAtlas() {
@@ -45,12 +46,15 @@ public class SpriteUtil {
     
     /**
      * Get a sprite from the block atlas using direct atlas access
-     * @param spriteId The identifier of the sprite (e.g., "minecraft:block/water_still" or "fishyaddons:block/custom_water")
+     * 
+     * @param spriteId The identifier of the sprite
+     * (e.g., "minecraft:block/water_still" or "fishyaddons:block/custom_water")
+     * 
      * @return The sprite, or null if not found
      */
     @Nullable
     public static Sprite getBlockSprite(Identifier spriteId) {
-
+        
         var blockAtlas = getBlockAtlas();
         if (blockAtlas == null) {
             return null;
@@ -69,6 +73,7 @@ public class SpriteUtil {
     
     /**
      * Get a sprite from the block atlas, with fallback to missing sprite
+     * 
      * @param spriteId The identifier of the sprite
      * @param atlas The atlas to use for fallback (can be null)
      * @return The sprite, or missing sprite as fallback
@@ -106,22 +111,22 @@ public class SpriteUtil {
     
     /**
      * Create a sprite identifier for custom mod textures
-     * @param modId The mod ID (e.g., "fishyaddons")
-     * @param texturePath The path relative to mod textures (e.g., "block/water")
+     * 
+     * @param texturePath The path relative to mod textures/ (e.g., "block/water") without extension
      * @return The sprite identifier
      */
-    public static Identifier createModSprite(String modId, String texturePath) {
-        return Identifier.of(modId, texturePath);
-    }
+    public static Identifier createModSprite(String texturePath) {
+        return Identifier.of(MODID, "/textures/" + texturePath + ".png");
+    }  
     
     /**
      * Get a custom mod sprite from the block atlas
-     * @param modId The mod ID
-     * @param texturePath The texture path
+     * 
+     * @param texturePath The path relative to mod textures/ without extension
      * @return The sprite, or null if not found
      */
     @Nullable
-    public static Sprite getModBlockSprite(String modId, String texturePath) {
-        return getBlockSprite(createModSprite(modId, texturePath));
+    public static Sprite getModBlockSprite(String texturePath) {
+        return getBlockSprite(Identifier.of(MODID, texturePath));
     }
 }

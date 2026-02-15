@@ -4,16 +4,14 @@ import java.util.List;
 
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.text.Text;
 
 public class VCRenderUtils {
 
-    // Tooltip for expandable
+    /** Tooltip for expandable entries */
     public static void preview(DrawContext context, TextRenderer textRenderer, List<Text> lines, int x, int y, int themeColor, float uiScale) {
         if (lines == null || lines.isEmpty()) return;
 
-        // Calculate width once
         int width = 0;
         for (Text line : lines) {
             int lineWidth = textRenderer.getWidth(line);
@@ -22,12 +20,10 @@ public class VCRenderUtils {
             }
         }
 
-        MatrixStack matrices = context.getMatrices();
-        matrices.push();
-        matrices.translate(0, 0, 400);
-        matrices.scale(uiScale, uiScale, 1);
+        var matrices = context.getMatrices();
+        matrices.pushMatrix();
+        matrices.scale(uiScale, uiScale);
 
-        // Apply scaling to mouse coordinates and add slight offset to the right
         int tooltipX = (int)(x / uiScale) + 8;
         int tooltipY = (int)(y / uiScale);
         int height = lines.size() * 10 + 5;
@@ -38,10 +34,10 @@ public class VCRenderUtils {
         for (int i = 0; i < lines.size(); i++) {
             context.drawTextWithShadow(textRenderer, lines.get(i), tooltipX, tooltipY + i * 10, themeColor);
         }
-        matrices.pop();
+        matrices.popMatrix();
     }
 
-    // Orientation-aware gradient triangle
+    /** Orientation-aware gradient triangle */
     public static void gradientTriangle(DrawContext context, int x, int y, int width, int height, int color, boolean isNorth) {
         for (int i = 0; i < height; i++) {
             int lineY = isNorth ? y + i : y + height - i - 1;
@@ -52,6 +48,7 @@ public class VCRenderUtils {
         }
     }
 
+    /** Simple border */
     public static void border(DrawContext context, int x, int y, int width, int height, int color) {
         context.fill(x, y, x + width, y + 1, color);
         context.fill(x, y + height - 1, x + width, y + height, color);
@@ -59,19 +56,20 @@ public class VCRenderUtils {
         context.fill(x + width - 1, y + 1, x + width, y + height - 1, color);
     }
 
-    // Rectangular, vertical gradient fills
+    /** Rectangular, vertical gradient from slight alpha to transparent */
     public static void gradient(DrawContext context, int x, int y, int width, int height, int color) {
-        for (int i = 0; i < height; i++) {
-            int gradientColor = (color & 0x00FFFFFF) | ((255 - (255 * i / height)) * 0x1000000);
-            context.fill(x, y + i, x + width, y + i + 1, gradientColor);
-        }
+        int topColor = color | 0xF5000000;
+        int bottomColor = color | 0x05000000;
+        
+        context.fillGradient(x, y, x + width, y + height, topColor, bottomColor);
     }
 
+    /** Rectangular, vertical opaque gradient  color -> black */
     public static void opaqueGradient(DrawContext context, int x, int y, int width, int height, int color) {
-        for (int i = 0; i < height; i++) {
-            int gradientColor = (color & 0x00FFFFFF) | (255 * 0x1000000);
-            context.fill(x, y + i, x + width, y + i + 1, gradientColor);
-        }
+        int topColor = color | 0xFF000000;
+        int bottomColor = 0xFF000000;
+        
+        context.fillGradient(x, y, x + width, y + height, topColor, bottomColor);
     }
 
     private VCRenderUtils() {

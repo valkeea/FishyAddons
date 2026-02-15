@@ -43,8 +43,8 @@ public class ModInfo {
                     throw new IllegalStateException("Invalid gist data");
                 }
 
-                Object idObj = info.get("infoId");
-                Object msgObj = info.get("infoMessage");
+                var idObj = info.get("infoId");
+                var msgObj = info.get("infoMessage");
                 infoId = idObj != null ? String.valueOf(idObj) : "";
                 infoMessage = msgObj != null ? String.valueOf(msgObj) : "";
                 check();
@@ -57,21 +57,22 @@ public class ModInfo {
     public static void tick() {
         if (shouldShowInfo()) {
             var client = MinecraftClient.getInstance();
-            var handle = client.getWindow().getHandle();
+            var window = client.getWindow();
 
             if (displayStartTime > 0 && System.currentTimeMillis() - displayStartTime > MAX_DISPLAY_TIME) {
                 hideInfo();
                 return;
             }
 
-            boolean closeKeyDown = InputUtil.isKeyPressed(handle, CLOSE_KEY);
+            boolean closeKeyDown = InputUtil.isKeyPressed(window, CLOSE_KEY);
             if (closeKeyDown && !wasClosePressed) {
                 hideInfo();
                 return;
             }
+
             wasClosePressed = closeKeyDown;
 
-            boolean copyKeyDown = InputUtil.isKeyPressed(handle, COPY_LINK_KEY);
+            boolean copyKeyDown = InputUtil.isKeyPressed(window, COPY_LINK_KEY);
             if (wasPressed && !copyKeyDown) {
                 client.keyboard.setClipboard("https://modrinth.com/project/QOUIa2cU");
                 FishyNotis.ccNoti();
@@ -130,9 +131,6 @@ public class ModInfo {
         return showInfo;
     }
 
-    /**
-     * Force hide the display
-     */
     public static void forceHide() {
         hideInfo();
     }

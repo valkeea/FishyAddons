@@ -14,16 +14,13 @@ This module (common) holds all base sources, which can be modified depending on 
    - Local sources (highest priority)
    - Filtered common sources (automatically included)
 
-_Clearing the cache is required after modifying common sources_  
+_Clearing the cache is required after editing overrides_  
 
 ### Current Exclusions
 
 All modules host /mixin for clarity.
 
-#### fabric-1.21.10, 1.21.8
-- **`render/FaLayers.java`**: No longer in use due to DrawContext changes
-
-#### fabric-1.21.5+
-- Current reference version (no exclusions)
+#### fabric-1.21.10
+- Current reference version
 
 **Overrides are shown in build output**

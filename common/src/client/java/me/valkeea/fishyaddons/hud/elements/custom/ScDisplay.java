@@ -117,8 +117,8 @@ public class ScDisplay implements HudElement {
         int size = getHudSize();
         float scale = size / 100.0f;
 
-        context.getMatrices().push();
-        context.getMatrices().scale(scale, scale, 1.0f);
+        context.getMatrices().pushMatrix();
+        context.getMatrices().scale(scale, scale);
 
         int scaledX = (int) (x / scale);
         int scaledY = (int) (y / scale);
@@ -129,7 +129,7 @@ public class ScDisplay implements HudElement {
             renderDisplays(context, scaledX, scaledY);
         }
 
-        context.getMatrices().pop();
+        context.getMatrices().popMatrix();
     }
 
     private void checkAreaChange(Island currentArea) {
@@ -327,10 +327,10 @@ public class ScDisplay implements HudElement {
 
         int availableWidth = CHART_WIDTH - CHART_PADDING_X2;
         int availableHeight = CHART_HEIGHT_MINUS_35;    
-        
-        context.getMatrices().push();
-        context.getMatrices().scale(AXIS_FONT_SCALE, AXIS_FONT_SCALE, 1.0f);
-        
+
+        context.getMatrices().pushMatrix();
+        context.getMatrices().scale(AXIS_FONT_SCALE, AXIS_FONT_SCALE);
+
         int scaledChartX = (int) (chartX / AXIS_FONT_SCALE);
         int scaledChartY = (int) (chartY / AXIS_FONT_SCALE);
         int scaledAvailableHeight = (int) (availableHeight / AXIS_FONT_SCALE);
@@ -373,7 +373,7 @@ public class ScDisplay implements HudElement {
                 scaledChartY + scaledAvailableHeight + 5, 0xFFAAAAAA, false);
         }
 
-        context.getMatrices().pop();
+        context.getMatrices().popMatrix();
     }
     
     private String getCachedMeanText(String creatureKey) {

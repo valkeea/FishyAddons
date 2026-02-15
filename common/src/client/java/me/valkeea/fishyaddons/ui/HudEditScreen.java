@@ -6,15 +6,16 @@ import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.config.Key;
 import me.valkeea.fishyaddons.hud.core.ElementRegistry;
 import me.valkeea.fishyaddons.hud.core.HudElement;
-import me.valkeea.fishyaddons.hud.elements.custom.TitleDisplay;
-import me.valkeea.fishyaddons.hud.elements.custom.TrackerDisplay;
 import me.valkeea.fishyaddons.hud.elements.simple.PetDisplay;
+import me.valkeea.fishyaddons.hud.elements.custom.TitleDisplay;
 import me.valkeea.fishyaddons.tool.FishyMode;
 import me.valkeea.fishyaddons.ui.list.ChatAlerts;
 import me.valkeea.fishyaddons.ui.widget.FaButton;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.input.KeyInput;
 import net.minecraft.text.Text;
 
 public class HudEditScreen extends Screen {
@@ -68,7 +69,7 @@ public class HudEditScreen extends Screen {
             GuiUtil.onOffLabel(OUTLINE, selectedElement != null && selectedElement.getHudOutline()),
             btn -> {
                 HudElement element = selectedElement;
-                if (element != null && !(element instanceof TrackerDisplay)) {
+                if (element != null) {
                     boolean outlined = element.getHudOutline();
                     element.setHudOutline(!outlined);
                     element.invalidateCache();
@@ -147,54 +148,58 @@ public class HudEditScreen extends Screen {
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (popup != null && popup.mouseClicked(mouseX, mouseY, button)) return true;
+    public boolean mouseClicked(Click click, boolean doubled) {
+        if (popup != null && popup.mouseClicked(click)) return true;
 
         var mc = MinecraftClient.getInstance();
         for (HudElement element : ElementRegistry.getConfigurable()) {
             Rectangle bounds = element.getBounds(mc);
-            if (bounds.contains(mouseX, mouseY)) {
+            if (bounds.contains(click.x(), click.y())) {
                 dragging = element;
                 selectedElement = element;
-                dragOffsetX = (int)mouseX - bounds.x;
-                dragOffsetY = (int)mouseY - bounds.y;
+                dragOffsetX = (int)click.x() - bounds.x;
+                dragOffsetY = (int)click.y() - bounds.y;
                 return true;
             }
         }
         
-        return super.mouseClicked(mouseX, mouseY, button);
+        return super.mouseClicked(click, doubled);
     }
 
     @Override
-    public boolean mouseReleased(double mouseX, double mouseY, int button) {
+    public boolean mouseReleased(Click click) {
         if (dragging != null) {
-            dragging.setHudPosition((int)mouseX - dragOffsetX, (int)mouseY - dragOffsetY);
+            int newX = (int)click.x() - dragOffsetX;
+            int newY = (int)click.y() - dragOffsetY;
+            dragging.setHudPosition(newX, newY);
             dragging.invalidateCache();
             dragging = null;
             return true;
         }
-        return super.mouseReleased(mouseX, mouseY, button);
+        return super.mouseReleased(click);
     }
 
     @Override
-    public boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
+    public boolean mouseDragged(Click click, double offsetX, double offsetY) {
         if (dragging != null) {
-            dragging.setHudPosition((int)mouseX - dragOffsetX, (int)mouseY - dragOffsetY);
+            int newX = (int)click.x() - dragOffsetX;
+            int newY = (int)click.y() - dragOffsetY;
+            dragging.setHudPosition(newX, newY);
             dragging.invalidateCache();
             return true;
         }
-        return super.mouseDragged(mouseX, mouseY, button, deltaX, deltaY);
+        return super.mouseDragged(click, offsetX, offsetY);
     }
 
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        if (popup != null && popup.keyPressed(keyCode, scanCode, modifiers)) return true;
-        return super.keyPressed(keyCode, scanCode, modifiers);
+    public boolean keyPressed(KeyInput input) {
+        if (popup != null && popup.keyPressed(input)) return true;
+        return super.keyPressed(input);
     }
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        this.renderBackground(context, mouseX, mouseY, delta);
+
         for (HudElement element : ElementRegistry.getConfigurable()) {
             element.setEditingMode(true);
             element.render(context, mouseX, mouseY);
@@ -239,9 +244,9 @@ public class HudEditScreen extends Screen {
         }
 
         if (colorBtn != null && (selectedElement instanceof PetDisplay)) {
-            colorBtn.setMessage(Text.literal("-").styled(s -> s.withColor(0x848484)));
+            colorBtn.setMessage(Text.literal("-").styled(s -> s.withColor(0x84848484)));
         } else if (colorBtn != null) {
-            int color = selectedElement != null ? selectedElement.getHudColor() : 0xFFFFFF;
+            int color = selectedElement != null ? selectedElement.getHudColor() : 0xFFFFFFFF;
             colorBtn.setMessage(Text.literal("Color").styled(s -> s.withColor(color)));
         }
 

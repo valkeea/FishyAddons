@@ -9,18 +9,24 @@ import java.util.function.Consumer;
 import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.config.Key;
 import me.valkeea.fishyaddons.tool.FishyMode;
+import me.valkeea.fishyaddons.ui.VCEntry.EntryType;
 import me.valkeea.fishyaddons.ui.widget.VCButton;
 import me.valkeea.fishyaddons.ui.widget.VCSlider;
 import me.valkeea.fishyaddons.ui.widget.VCTextField;
 import me.valkeea.fishyaddons.ui.widget.dropdown.VCToggleMenu;
+import me.valkeea.fishyaddons.util.SpriteUtil;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gl.RenderPipelines;
+import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.input.KeyInput;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
+import net.minecraft.util.Identifier;
 
 public class VCScreen extends Screen {
-    // Scaled dimensions (calculated in init())
+
     private int entryHeight;
     private int subEntryHeight;
     private int headerHeight;
@@ -49,12 +55,14 @@ public class VCScreen extends Screen {
     
     private VCEntry activeDropdownEntry = null;
     private VCToggleMenu activeDropdown = null;
+
+    private final Identifier icon = SpriteUtil.createModSprite("hud/icon");    
     
     // Renderer for config entries
     private VCGui renderer;
     
     public VCScreen() {
-        super(Text.literal("─ α FishyAddons Configuration α ─"));
+        super(Text.literal("FishyAddons Configuration"));
         this.configEntries = new ArrayList<>();
         this.filteredEntries = new ArrayList<>();
         this.tabs = VCCategory.createTabs();
@@ -320,13 +328,30 @@ public class VCScreen extends Screen {
     
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        this.renderBackground(context, mouseX, mouseY, delta);
         VCRenderUtils.gradient(context, 0, 0, width, height, 0x08000000);
-
         super.render(context, mouseX, mouseY, delta);
 
-        var title = VCText.header("FishyAddons Configuration", null);
-        VCText.drawScaledCenteredText(context, textRenderer, title, width / 2, 20, 0xFF55FFFF, uiScale);
+        int y = VCConstants.HEADER_Y;
+
+        var header = this.title.getString();
+        var styled = VCText.header(header, null);
+
+        VCText.drawScaledCenteredText(
+            context, textRenderer, styled, width / 2, y, 0xFF55FFFF, uiScale
+        );
+
+        int side = VCText.getScaledFontHeight(textRenderer, uiScale) * 2;
+        int headerW = VCText.getScaledTextWidth(textRenderer, header, uiScale);
+        int scaledSide = Math.clamp((int)(side * uiScale), 8, 36);
+        int ix = (width / 2) - (headerW / 2) - (int)(scaledSide * 1.5);
+        int iy = y - (side / 3);
+
+        context.drawTexture(
+            RenderPipelines.GUI_TEXTURED,
+            icon, ix, iy,
+            0, 0, scaledSide, scaledSide,
+            scaledSide, scaledSide
+        );     
         
         renderTabs(context, mouseX, mouseY);
         renderConfigEntries(context, mouseX, mouseY);
@@ -335,18 +360,18 @@ public class VCScreen extends Screen {
             activeDropdown.render(context, this, mouseX, mouseY, uiScale);
         }
     }
-    
+
     private void renderTabs(DrawContext context, int mouseX, int mouseY) {
         if (tabs.isEmpty()) return;
 
+        int edge = (width / 2) - (entryWidth / 2) - scaling.getTabWidth() - 10;
         int startY = VCConstants.SEARCH_Y;
-        int tabStartX = (width / 2) - (entryWidth / 2) - scaling.getTabWidth() - 10;
         int tabHeight = scaling.getTabHeight();
         int tabWidth = scaling.getTabWidth();
         
-        updateTabCoordinates(tabStartX, startY, tabWidth, tabHeight);
+        updateTabCoordinates(edge, startY, tabWidth, tabHeight);
         
-        VCContext renderCtx = new VCContext(context, mouseX, mouseY, tabStartX, tabAreaWidth);
+        VCContext renderCtx = new VCContext(context, mouseX, mouseY, edge, tabAreaWidth);
         VCCategory.renderTabsWithCoordinates(renderCtx, this, tabs, activeTabIndex, getThemeColor(), uiScale);
     }
     
@@ -619,11 +644,12 @@ public class VCScreen extends Screen {
         
         int currentColor = getCurrentColor(entry);
         Consumer<Integer> onColorSelected = color -> ConfigUIResolver.setColor(entry, color);
-        MinecraftClient.getInstance().setScreen(new ColorWheel(this, currentColor, onColorSelected));
+        boolean reset = entry.type == EntryType.TOGGLE;
+        var screen = new ColorWheel(this, currentColor, onColorSelected, reset);
+        MinecraftClient.getInstance().setScreen(screen);
     }
     
     private void renderScrollIndicator(DrawContext context, int x, int y) {
-        // Use actualMaxVisible for correct scrollbar sizing
         List<VCEntry> visibleEntries = getVisibleEntries();
         int actualMaxVisible = calculateActualMaxVisibleEntries(visibleEntries);
         int indicatorHeight =  actualMaxVisible * entryHeight;
@@ -643,8 +669,11 @@ public class VCScreen extends Screen {
     }
     
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (super.mouseClicked(mouseX, mouseY, button)) {
+    public boolean mouseClicked(Click click, boolean doubled) {
+        double mouseX = click.x();
+        double mouseY = click.y();
+
+        if (super.mouseClicked(click, doubled)) {
             return true;
         }
         
@@ -653,7 +682,7 @@ public class VCScreen extends Screen {
         }
         
         if (activeDropdown != null) {
-            if (activeDropdown.mouseClicked(mouseX, mouseY, uiScale, button)) {
+            if (activeDropdown.mouseClicked(mouseX, mouseY, uiScale)) {
                 return true;
             } else {
                 activeDropdown = null;
@@ -667,11 +696,11 @@ public class VCScreen extends Screen {
             return true;
         }
 
-        if (searchField.mouseClicked(mouseX, mouseY, button)) {
+        if (searchField.mouseClicked(click, doubled)) {
             return true;
         }
 
-        return handleEntryClicks(mouseX, mouseY, visibleEntries);
+        return handleEntryClicks(click, visibleEntries);
     }
 
     private boolean scrollBarClick(double mouseX, double mouseY, List<VCEntry> visibleEntries) {
@@ -718,11 +747,13 @@ public class VCScreen extends Screen {
 
             if (tab.isDropdownVisible() && tab.isPointInDropdown(mouseX, mouseY)) {
                 handleTabDropdownArea(tab, mouseY);
+                activeDropdown = null;
                 return true;
             }
 
             if (tab.isPointInTab(mouseX, mouseY)) {
                 handleTabPress(i, tab);
+                activeDropdown = null;
                 return true;
             }
         }
@@ -765,7 +796,7 @@ public class VCScreen extends Screen {
         }
     }
 
-    private boolean handleEntryClicks(double mouseX, double mouseY, List<VCEntry> visibleEntries) {
+    private boolean handleEntryClicks(Click click, List<VCEntry> visibleEntries) {
         int centerX = width / 2;
         int entryX = centerX - entryWidth / 2;
         int currentY = scaling.getListStartY();
@@ -784,9 +815,9 @@ public class VCScreen extends Screen {
             if (currentY + currentEntryHeight > endY) {
                 break;
             }
-            
-            if (isMouseOverEntry(mouseX, mouseY, entryX, currentY, currentEntryHeight) &&
-                entryClick(mouseX, mouseY, entry, entryX, currentY)) {
+
+            if (isMouseOverEntry(click.x(), click.y(), entryX, currentY, currentEntryHeight) &&
+                entryClick(click, entry, entryX, currentY)) {
                 return true;
             }
             
@@ -875,16 +906,18 @@ public class VCScreen extends Screen {
                mouseY >= currentY && mouseY <= currentY + currentEntryHeight;
     }
     
-    private boolean entryClick(double mouseX, double mouseY, VCEntry entry, int entryX, int currentY) {
+    private boolean entryClick(Click click, VCEntry entry, int entryX, int currentY) {
+        double mouseX = click.x();
+        double mouseY = click.y();
         return switch (entry.type) {
             case EXPANDABLE -> expandableClick(mouseX, mouseY, entry, entryX, currentY);
             case TOGGLE, ITEM_CONFIG_TOGGLE, BLACKLIST_TOGGLE -> handleToggleClick(mouseX, mouseY, entry, entryX, currentY);
             case SIMPLE_BUTTON -> simpleButtonClick(mouseX, mouseY, entry, entryX, currentY);
             case BUTTON -> buttonClick(entry);
             case KEYBIND -> keybindClick(mouseX, mouseY, entry, entryX, currentY);
-            case SLIDER -> sliderClick(mouseX, mouseY, entry, entryX, currentY);
-            case TOGGLE_WITH_SLIDER -> toggleSliderClick(mouseX, mouseY, entry, entryX, currentY);
-            case TOGGLE_WITH_DROPDOWN, DROPDOWN -> toggleDropdownClick(mouseX, mouseY, entry, entryX, currentY, entry.type);
+            case SLIDER -> sliderClick(click, entry, entryX, currentY);
+            case TOGGLE_WITH_SLIDER -> toggleSliderClick(click, entry, entryX, currentY);
+            case TOGGLE_WITH_DROPDOWN, DROPDOWN -> toggleDropdownClick(click, entry, entryX, currentY, entry.type);
             default -> false;
         };
     }
@@ -1003,7 +1036,7 @@ public class VCScreen extends Screen {
         return false;
     }
 
-    private boolean sliderClick(double mouseX, double mouseY, VCEntry entry, int entryX, int currentY) {
+    private boolean sliderClick(Click click, VCEntry entry, int entryX, int currentY) {
         ControlClickArea area = calculateControlArea(entry, entryX, currentY);
         
         if (entry.hasColorControl()) {
@@ -1016,9 +1049,9 @@ public class VCScreen extends Screen {
                 int buttonGap = uiScale < 0.7f ? Math.max(1, (int)(2 * uiScale)) : (int)(3 * uiScale);
                 int colorButtonX = valueTextX + valueTextWidth + buttonGap;
                 int colorSize = (int)(18 * uiScale);
-                
-                if (mouseX >= colorButtonX && mouseX <= colorButtonX + colorSize &&
-                    mouseY >= area.controlY && mouseY <= area.controlY + colorSize) {
+
+                if (click.x() >= colorButtonX && click.x() <= colorButtonX + colorSize &&
+                    click.y() >= area.controlY && click.y() <= area.controlY + colorSize) {
                     openColorWheel(entry);
                     return true;
                 }
@@ -1030,19 +1063,19 @@ public class VCScreen extends Screen {
         if (slider == null) return false;
         slider.setPosition(area.controlX, area.controlY + 3);
         
-        return slider.mouseClicked(mouseX, mouseY, 0);
+        return slider.mouseClicked(click);
     }
     
-    private boolean toggleSliderClick(double mouseX, double mouseY, VCEntry entry, int entryX, int currentY) {
+    private boolean toggleSliderClick(Click click, VCEntry entry, int entryX, int currentY) {
         ControlClickArea area = calculateControlArea(entry, entryX, currentY);
         
         int toggleButtonX = area.controlX;
         int toggleButtonY = area.controlY;
         int toggleButtonWidth = (int)(30 * uiScale);
         int toggleButtonHeight = (int)(20 * uiScale);
-        
-        if (mouseX >= toggleButtonX && mouseX <= toggleButtonX + toggleButtonWidth &&
-            mouseY >= toggleButtonY && mouseY <= toggleButtonY + toggleButtonHeight) {
+
+        if (click.x() >= toggleButtonX && click.x() <= toggleButtonX + toggleButtonWidth &&
+            click.y() >= toggleButtonY && click.y() <= toggleButtonY + toggleButtonHeight) {
             entry.toggleSetting();
             return true;
         }
@@ -1052,18 +1085,20 @@ public class VCScreen extends Screen {
         VCSlider slider = getOrCreateSlider(entry);
         if (slider != null) {
             slider.setPosition(sliderX, sliderY);
-            return slider.mouseClicked(mouseX, mouseY, 0);
+            return slider.mouseClicked(click);
         }
         
         return false;
     }
 
-    private boolean toggleDropdownClick(double mouseX, double mouseY, VCEntry entry, int entryX, int currentY, VCEntry.EntryType type) {
+    private boolean toggleDropdownClick(Click click, VCEntry entry, int entryX, int currentY, VCEntry.EntryType type) {
         ControlClickArea area = calculateControlArea(entry, entryX, currentY);
         int toggleButtonX = area.controlX;
         int toggleButtonY = area.controlY;
         int toggleButtonWidth = (int)(30 * uiScale);
         int toggleButtonHeight = (int)(18 * uiScale);
+        double mouseX = click.x();
+        double mouseY = click.y();
         
         if (type == VCEntry.EntryType.TOGGLE_WITH_DROPDOWN &&
             mouseX >= toggleButtonX && mouseX <= toggleButtonX + toggleButtonWidth &&
@@ -1087,7 +1122,7 @@ public class VCScreen extends Screen {
         }
         
         if (activeDropdown != null && entry == activeDropdownEntry) {
-            if (activeDropdown.mouseClicked(mouseX, mouseY, uiScale, 0)) {
+            if (activeDropdown.mouseClicked(mouseX, mouseY, uiScale, click.button())) {
                 return true;
             } else {
                 activeDropdown = null;
@@ -1204,29 +1239,29 @@ public class VCScreen extends Screen {
     }
 
     @Override
-    public boolean mouseReleased(double mouseX, double mouseY, int button) {
+    public boolean mouseReleased(Click click) {
         isDraggingScrollbar = false;
 
         for (VCSlider slider : sliderRegistry.values()) {
-            slider.mouseReleased(button);
+            slider.mouseReleased(click);
         }
 
         if (activeDropdown != null && activeDropdown.mouseReleased()) {
             return true;
         }
         
-        return super.mouseReleased(mouseX, mouseY, button);
+        return super.mouseReleased(click);
     }
     
     @Override
-    public boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
+    public boolean mouseDragged(Click click, double offsetX, double offsetY) {
         for (VCSlider slider : sliderRegistry.values()) {
-            if (slider.mouseDragged(mouseX, button)) {
+            if (slider.mouseDragged(click)) {
                 return true;
             }
         }
 
-        if (activeDropdown != null && activeDropdown.mouseDragged(mouseY, uiScale)) {
+        if (activeDropdown != null && activeDropdown.mouseDragged(click, uiScale)) {
             return true;
         }
         
@@ -1239,7 +1274,7 @@ public class VCScreen extends Screen {
                 int totalEntries = visibleEntries.size();
                 int maxScroll = Math.max(0, totalEntries - actualMaxVisible);
                 int thumbHeight = Math.max((int)(10 * uiScale), (actualMaxVisible * indicatorHeight) / totalEntries);
-                double thumbTopY = mouseY - startY - scrollbarThumbOffset;
+                double thumbTopY = click.y() - startY - scrollbarThumbOffset;
                 
                 double scrollPercent = (maxScroll > 0 && (indicatorHeight - thumbHeight) != 0)
                     ? thumbTopY / (indicatorHeight - thumbHeight)
@@ -1250,8 +1285,8 @@ public class VCScreen extends Screen {
                 return true;
             }
         }
-        
-        return super.mouseDragged(mouseX, mouseY, button, deltaX, deltaY);
+
+        return super.mouseDragged(click, offsetX, offsetY);
     }
     
     @Override
@@ -1271,7 +1306,8 @@ public class VCScreen extends Screen {
     }
     
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+    public boolean keyPressed(KeyInput input) {
+        int keyCode = input.key();
         if (keyCode == 256 && activeDropdown != null) {
             activeDropdown = null;
             activeDropdownEntry = null;
@@ -1296,7 +1332,7 @@ public class VCScreen extends Screen {
             return true;
         }
 
-        return super.keyPressed(keyCode, scanCode, modifiers);
+        return super.keyPressed(input);
     }
     
     private boolean handleKeybindInput(int keyCode) {

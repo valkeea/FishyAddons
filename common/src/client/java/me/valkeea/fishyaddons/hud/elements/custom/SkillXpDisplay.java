@@ -186,9 +186,9 @@ public class SkillXpDisplay implements HudElement {
             drawBackground(context, hudX, hudY, (int)(maxWidth * scale), totalHeight);
         }
 
-        context.getMatrices().push();
-        context.getMatrices().translate(hudX, hudY, 0);
-        context.getMatrices().scale(scale, scale, 1.0F);
+        context.getMatrices().pushMatrix();
+        context.getMatrices().translate(hudX, hudY);
+        context.getMatrices().scale(scale, scale);
 
         for (int i = 0; i < caches.size(); i++) {
             var cache = caches.get(i);
@@ -198,7 +198,7 @@ public class SkillXpDisplay implements HudElement {
 
         drawTimeLine(context, mc, caches.size(), lineHeight, scale, state);
 
-        context.getMatrices().pop();
+        context.getMatrices().popMatrix();
     }
     
     private void drawSkillLine(DrawContext context, MinecraftClient mc, SkillDisplayCache cache, 

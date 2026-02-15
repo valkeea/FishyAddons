@@ -8,6 +8,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import me.valkeea.fishyaddons.hud.ui.SearchHudElement;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.screen.ingame.GenericContainerScreen;
+import net.minecraft.client.gui.screen.ingame.InventoryScreen;
 
 @Mixin(MinecraftClient.class)
 public class MixinMinecraftClientScreenChange {
@@ -15,9 +17,10 @@ public class MixinMinecraftClientScreenChange {
     @Inject(method = "setScreen", at = @At("HEAD"))
     private void onScreenChange(Screen screen, CallbackInfo ci) {
         
-        var searchElement = SearchHudElement.getInstance();
-        if (searchElement != null) {
-            searchElement.onScreenChange();
+        if (SearchHudElement.getInstance() != null) {
+            boolean isInv = screen instanceof InventoryScreen;
+            boolean isContainer = screen instanceof GenericContainerScreen;
+            SearchHudElement.onScreenChange(isInv || isContainer);
         }
     }
 }

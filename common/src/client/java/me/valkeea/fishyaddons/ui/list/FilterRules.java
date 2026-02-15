@@ -16,6 +16,7 @@ import me.valkeea.fishyaddons.ui.widget.VCLabelField;
 import me.valkeea.fishyaddons.ui.widget.VCTextField;
 import me.valkeea.fishyaddons.ui.widget.VCVisuals;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ButtonWidget;
@@ -55,14 +56,16 @@ public class FilterRules extends Screen {
 
     @Override
     protected void init() {
-    entries.clear();        
-    this.clearChildren();
-    calcDimensions(FishyConfig.getFloat(Key.MOD_UI_SCALE, 0.4265625f));
+        entries.clear();        
+        this.clearChildren();
+        calcDimensions(FishyConfig.getFloat(Key.MOD_UI_SCALE, 0.4265625f));
+
         for (Map.Entry<String, Rule> entry : FilterConfig.getUserCreatedRules().entrySet()) {
             Entry e = new Entry(entry.getKey());
             entries.add(e);
             e.addToScreen();
         }
+
         int totalEntries = entries.size() + (addMode ? 1 : 0);
         int listTop = 40;
         int listBottom = this.height - 60;
@@ -72,6 +75,7 @@ public class FilterRules extends Screen {
         scrollOffset = Math.clamp(scrollOffset, 0, maxScroll);
         if (scrollOffset > maxScroll || (addMode && scrollOffset < totalEntries - maxVisibleEntries)) scrollOffset = maxScroll;
         if (scrollOffset < 0) scrollOffset = 0;
+
         if (!addMode) {
             int addBtnY = this.height - 40;
             addBtn = new FaButton(
@@ -90,7 +94,7 @@ public class FilterRules extends Screen {
             this.addDrawableChild(addBtn);
         }      
 
-        FaButton backButton = new FaButton(
+        var backButton = new FaButton(
             this.width / 2 - entryW / 2 + btnW, this.height - 40, btnW, btnH,
             Text.literal("Back").styled(style -> style.withColor(0xFF808080)),
             btn -> client.setScreen(parent)
@@ -98,7 +102,7 @@ public class FilterRules extends Screen {
         backButton.setUIScale(uiScale);
         this.addDrawableChild(backButton);
 
-        FaButton closeButton = new FaButton(
+        var closeButton = new FaButton(
             this.width / 2 - entryW / 2 + btnW * 2, this.height - 40, btnW, btnH,
             Text.literal("Close").styled(style -> style.withColor(0xFF808080)),
             btn -> this.close()
@@ -121,7 +125,6 @@ public class FilterRules extends Screen {
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        this.renderBackground(context, mouseX, mouseY, delta);
         super.render(context, mouseX, mouseY, delta);
 
         var title = VCText.header(TITLE_TEXT, null);
@@ -139,13 +142,10 @@ public class FilterRules extends Screen {
                 "§b  • §8'Anywhere' will match any phrase containing the input and fully replace the message.",                
                 " -§d If you wish to filter sea creature messages, please use §bCustom Sea Creature Messages §dinstead.",
             };
-            for (String instruction : instructions) {
-                context.getMatrices().push();
-                context.getMatrices().translate(0,0, 300);      
+            for (String instruction : instructions) {     
                 Text text = Text.literal(instruction);
                 VCText.drawScaledCenteredText(context, this.textRenderer, text.getString(),
                     x, y, 0xFF55FFFF, uiScale - 0.1f);
-                context.getMatrices().pop();
                 y += lineHeight;
             }
         } else {
@@ -155,8 +155,7 @@ public class FilterRules extends Screen {
        
         addList(context);
 
-        if (popup != null) {
-            this.renderBackground(context, mouseX, mouseY, delta);            
+        if (popup != null) {          
             popup.render(context, this.textRenderer, mouseX, mouseY, delta);
         }
     }
@@ -311,7 +310,9 @@ public class FilterRules extends Screen {
             this.keyField.setText(key);
             this.keyField.setUIScale(uiScale);
             this.keyField.setFocused(false);
-            Rule rule = FilterConfig.getUserCreatedRules().get(key);
+
+            var rule = FilterConfig.getUserCreatedRules().get(key);
+
             this.editBtn = VCButton.createNavigationButton(
                 0, offScreenY, btnW, fieldH,
                 Text.literal("Edit").styled(s -> s.withColor(0xFFE2CAE9)),
@@ -390,24 +391,28 @@ public class FilterRules extends Screen {
             FilterRules.this.addDrawableChild(this.toggleBtn);
         }
 
-        public boolean mouseClicked(double mouseX, double mouseY) {
+        public boolean mouseClicked(Click click) {
+
+            double mouseX = click.x();
+            double mouseY = click.y();
+
             if (isInside(keyField.getX(), keyField.getY(), keyField.getWidth(), keyField.getHeight(), mouseX, mouseY)) {
                 return true;
             }
             if (isInside(editBtn.getX(), editBtn.getY(), editBtn.getWidth(), editBtn.getHeight(), mouseX, mouseY)) {
-                editBtn.onPress();
+                editBtn.onPress(click);
                 return true;
             }
             if (isInside(modeBtn.getX(), modeBtn.getY(), modeBtn.getWidth(), modeBtn.getHeight(), mouseX, mouseY)) {
-                modeBtn.onPress();
+                modeBtn.onPress(click);
                 return true;
             }
             if (isInside(toggleBtn.getX(), toggleBtn.getY(), toggleBtn.getWidth(), toggleBtn.getHeight(), mouseX, mouseY)) {
-                toggleBtn.onPress();
+                toggleBtn.onPress(click);
                 return true;
             }            
             if (isInside(delBtn.getX(), delBtn.getY(), delBtn.getWidth(), delBtn.getHeight(), mouseX, mouseY)) {
-                delBtn.onPress();
+                delBtn.onPress(click);
                 return true;
             }
             return false;
@@ -415,21 +420,21 @@ public class FilterRules extends Screen {
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+    public boolean mouseClicked(Click click, boolean doubled) {
         if (popup != null) {
-            return popup.mouseClicked(mouseX, mouseY, button);
+            return popup.mouseClicked(click);
         }
 
-        if (handleScrollbar(mouseX, mouseY)) return true;
+        if (handleScrollbar(click.x(), click.y())) return true;
 
         int startIdx = scrollOffset;
         int endIdx = Math.min(startIdx + maxVisibleEntries, entries.size());
         for (int i = startIdx; i < endIdx; i++) {
-            if (entries.get(i).mouseClicked(mouseX, mouseY)) {
+            if (entries.get(i).mouseClicked(click)) {
                 return false;
             }
         }
-        return super.mouseClicked(mouseX, mouseY, button);
+        return super.mouseClicked(click, doubled);
     }
 
     private boolean handleScrollbar(double mouseX, double mouseY) {
@@ -462,26 +467,26 @@ public class FilterRules extends Screen {
     }        
 
     @Override
-    public boolean mouseReleased(double mouseX, double mouseY, int button) {
+    public boolean mouseReleased(Click click) {
         isDraggingScrollbar = false;
-        return super.mouseReleased(mouseX, mouseY, button);
+        return super.mouseReleased(click);
     }
 
     @Override
-    public boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
+    public boolean mouseDragged(Click click, double offsetX, double offsetY) {
         if (isDraggingScrollbar) {
             int listTop = 40;
             int listBottom = this.height - 60;
             int listHeight = listBottom - listTop;
             int totalEntries = entries.size() + (addMode ? 1 : 0);
             int thumbHeight = Math.max((int)(10 * uiScale), (maxVisibleEntries * listHeight) / totalEntries);
-            int mouseThumbY = (int)mouseY - listTop - scrollbarThumbOffset;
+            int mouseThumbY = (int)click.y() - listTop - scrollbarThumbOffset;
             double scrollPercent = mouseThumbY / (double)(listHeight - thumbHeight);
             int newScrollOffset = (int)(scrollPercent * (totalEntries - maxVisibleEntries));
             scrollOffset = Math.clamp(newScrollOffset, 0, totalEntries - maxVisibleEntries);
             return true;
         }
-        return super.mouseDragged(mouseX, mouseY, button, deltaX, deltaY);
+        return super.mouseDragged(click, offsetX, offsetY);
     }
 
     @Override

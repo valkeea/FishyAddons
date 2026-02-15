@@ -4,13 +4,12 @@ import java.util.List;
 
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 
 public class GuiUtil {
-
+    
     public static void drawBox(DrawContext context, int x, int y, int width, int height, int color) {
         context.fill(x, y, x + width, y + height, 0x80000000);
         context.fill(x - 1, y - 1, x + width + 1, y, color);
@@ -44,10 +43,6 @@ public class GuiUtil {
             }
         }
 
-        MatrixStack matrices = context.getMatrices();
-        matrices.push();
-        matrices.translate(0, 0, 400);
-
         int height = lines.size() * 10 + 5;
 
         context.fill(tooltipX - 3, tooltipY - 3, tooltipX + width + 3, tooltipY + height + 3, 0x90000000);
@@ -56,7 +51,6 @@ public class GuiUtil {
         for (int i = 0; i < lines.size(); i++) {
             context.drawTextWithShadow(textRenderer, lines.get(i), tooltipX, tooltipY + i * 10, 0xFFE2CAE9);
         }
-        matrices.pop();
     }
 
     public static Text onOffLabel(String label, boolean enabled) {

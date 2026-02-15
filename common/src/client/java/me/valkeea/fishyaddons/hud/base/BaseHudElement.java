@@ -49,14 +49,14 @@ public abstract class BaseHudElement implements HudElement {
                         bounds.x + bounds.width + 2, bounds.y + bounds.height - 1, 0x80000000);
         }
 
-        context.getMatrices().push();
-        context.getMatrices().translate(state.x, state.y, 0);
-        context.getMatrices().scale(state.size / 12.0F, state.size / 12.0F, 1.0F);
+        context.getMatrices().pushMatrix();
+        context.getMatrices().translate(state.x, state.y);
+        context.getMatrices().scale(state.size / 12.0F, state.size / 12.0F);
 
         HudDrawer drawer = new HudDrawer(mc, context, state);
         renderContent(drawer, mc, state);
 
-        context.getMatrices().pop();
+        context.getMatrices().popMatrix();
         
         if (editingMode) {
             renderEditingMode(drawer, mc, state);

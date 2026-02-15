@@ -98,9 +98,9 @@ public class ChatDropParser {
             -1, 1
         ));
 
-        // Pattern 5a: X DROP! Enchanted Book ItemName (+x ✯ Magic Find)
+        // Pattern 5a: X DROP! Enchanted Book (itemName) (+X ✯ Magic Find)
         DROP_PATTERNS.add(new DropPattern(
-            Pattern.compile("(?:rare drop|very rare drop|crazy rare drop|extremely rare drop|insane drop)!\\s*Enchanted Book \\(([^)]+)\\)\\s*\\(\\+\\d+ ✯ Magic Find\\)", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("(?:rare drop|very rare drop|crazy rare drop|extremely rare drop|insane drop)!\\s*Enchanted Book\\s*\\(([^)]+?)\\)(?:\\s*\\([^)]*\\))?.*?$", Pattern.CASE_INSENSITIVE),
             -1, 1
         ));
 
@@ -372,7 +372,7 @@ public class ChatDropParser {
         String lowerMessage = originalMessage.toLowerCase();
         String lowerItem = itemName.toLowerCase();
         boolean isShardMessage = lowerMessage.contains(SHARD_KEYWORD) || 
-                                lowerMessage.contains(CHARM_KEYWORD) || 
+                                lowerMessage.startsWith(CHARM_KEYWORD) || 
                                 lowerMessage.contains(NAGA_KEYWORD) ||
                                 lowerMessage.contains(SALT_YOU_CHARMED) ||
                                 lowerMessage.contains(LOOT_SHARE);

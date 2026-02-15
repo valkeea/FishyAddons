@@ -31,7 +31,7 @@ public class GuiIcons {
 
     public static void init() {
         FaEvents.SCREEN_MOUSE_CLICK.register(event -> {
-            if (checkClick(event.hoveredSlot, event.button, event.screen)) {
+            if (checkClick(event.hoveredSlot, event.click.button(), event.screen)) {
                 event.setConsumed(true);
             }
         }, EventPriority.NORMAL, EventPhase.PRE);
@@ -44,11 +44,12 @@ public class GuiIcons {
         if (handleShift(hovered.id)) {
             int keyCode = 340;
             var cl = MinecraftClient.getInstance();
+            
             if (cl.options != null) {
                 keyCode = cl.options.sneakKey.getDefaultKey().getCode();
             }
-            long handle = cl.getWindow().getHandle();
-            boolean shiftDown = InputUtil.isKeyPressed(handle, keyCode);
+
+            boolean shiftDown = InputUtil.isKeyPressed(cl.getWindow(), keyCode);
 
             if (shiftDown) {
                 ((HandledScreenAccessor) screen).callOnMouseClick(hovered, hovered.id, button, SlotActionType.PICKUP);
@@ -97,12 +98,11 @@ public class GuiIcons {
         return getSlotsForScreen(SbGui.getInstance().current()).contains(slotIndex);
     }    
 
-    private static boolean isShiftDown(MinecraftClient client) {
-        if (client.options == null) return false;
-        long handle = client.getWindow().getHandle();
-        int keyCode = client.options.sneakKey.getDefaultKey().getCode();
-        return InputUtil.isKeyPressed(handle, keyCode);
-    }    
+    private static boolean isShiftDown(MinecraftClient cl) {
+        if (cl.options == null) return false;
+        int keyCode = cl.options.sneakKey.getDefaultKey().getCode();
+        return InputUtil.isKeyPressed(cl.getWindow(), keyCode);
+    }   
 
     /**
      * Add a slot to the map for the given screen name.

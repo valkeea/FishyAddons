@@ -3,7 +3,7 @@ package me.valkeea.fishyaddons.processor.handlers;
 import me.valkeea.fishyaddons.processor.ChatHandler;
 import me.valkeea.fishyaddons.processor.ChatHandlerResult;
 import me.valkeea.fishyaddons.processor.ChatMessageContext;
-import me.valkeea.fishyaddons.tracker.profit.TrackerUtils;
+import me.valkeea.fishyaddons.tracker.profit.ProfitTracker;
 
 public class TrackerHandler implements ChatHandler {
     
@@ -27,7 +27,7 @@ public class TrackerHandler implements ChatHandler {
         try {
             String unfilteredText = context.getLowerCleanString();
             var originalText = context.getOriginalText();
-            if (TrackerUtils.handleChat(unfilteredText, originalText)) return ChatHandlerResult.STOP;
+            if (ProfitTracker.handleChat(unfilteredText, originalText)) return ChatHandlerResult.STOP;
             return ChatHandlerResult.CONTINUE;
 
         } catch (Exception e) {
@@ -39,6 +39,6 @@ public class TrackerHandler implements ChatHandler {
     
     @Override
     public boolean isEnabled() {
-        return TrackerUtils.isEnabled();
+        return ProfitTracker.isEnabled();
     }
 }

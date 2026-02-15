@@ -3,7 +3,7 @@ package me.valkeea.fishyaddons.render;
 import org.joml.Matrix4f;
 
 import me.valkeea.fishyaddons.util.text.Enhancer;
-import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
+import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderContext;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.render.VertexConsumer;
@@ -22,9 +22,11 @@ public class WorldElements {
      MatrixStack matrices, String text, double x, double y, double z, int color) {
 
         var client = MinecraftClient.getInstance();
-        var textRenderer = client.textRenderer;
+        if (client.textRenderer == null || text == null || text.isEmpty()) return;
         
-        Vec3d playerPos = context.camera().getPos();
+        var textRenderer = client.textRenderer;
+        Vec3d playerPos = client.player.getEntityPos();
+        
         double distance = Math.sqrt(
             Math.pow(x - playerPos.x, 2) + 
             Math.pow(y - playerPos.y, 2) + 
@@ -34,33 +36,62 @@ public class WorldElements {
         float baseScale = 0.08f;
         float distanceScale = Math.max(1.0f, (float)(distance / 20.0f));
         float finalScale = baseScale * distanceScale;
+        var rotation = client.gameRenderer.getCamera().getRotation();
         
         matrices.push();
         matrices.translate(x, y, z);
-        matrices.multiply(context.camera().getRotation());
+        matrices.multiply(rotation);
         matrices.scale(finalScale, -finalScale, finalScale);
 
+        org.lwjgl.opengl.GL11.glEnable(org.lwjgl.opengl.GL11.GL_BLEND);
+        org.lwjgl.opengl.GL11.glBlendFunc(org.lwjgl.opengl.GL11.GL_SRC_ALPHA, org.lwjgl.opengl.GL11.GL_ONE_MINUS_SRC_ALPHA);
+
         Text parsed = Enhancer.parseFormattedText(text);
-        float width = textRenderer.getWidth(parsed.getString());
         
-        textRenderer.draw(
-            parsed,
-            -width / 2f,
-            0,
-            color,
-            false,
-            matrices.peek().getPositionMatrix(),
-            context.consumers(),
-            TextRenderer.TextLayerType.NORMAL,
-            0x80000000,
-            0xF000F0
-        );
+        if ((color & 0xFF000000) == 0) color = color | 0xFF000000;
+        
+        var commandQueue = context.commandQueue();
+        if (commandQueue != null) {
+            try {
+
+                float width = textRenderer.getWidth(parsed.getString());
+                
+                commandQueue.submitText(
+                    matrices,
+                    -width / 2f,
+                    0.0f,
+                    parsed.asOrderedText(),
+                    false,
+                    TextRenderer.TextLayerType.SEE_THROUGH,
+                    0xF000F000,
+                    color,
+                    0x80000000,
+                    0
+                );
+            } catch (Exception e) {
+                System.err.println("[FishyAddons] Failed to submit text to command queue: " + e.getMessage());
+                var consumers = context.consumers();
+                float textWidth = textRenderer.getWidth(parsed.getString());
+                
+                textRenderer.draw(
+                    parsed,
+                    -textWidth / 2f,
+                    0,
+                    color,
+                    false,
+                    matrices.peek().getPositionMatrix(),
+                    consumers,
+                    TextRenderer.TextLayerType.SEE_THROUGH,
+                    0x80000000,
+                    0xF000F0
+                );
+            }
+        }
         
         matrices.pop();
     }
 
     protected static void boxOutline(MatrixStack matrices, Box box, VertexConsumer consumer, float r, float g, float b, float a) {
-
         Matrix4f matrix = matrices.peek().getPositionMatrix();
         float[] color = {r, g, b, a};
 
@@ -96,7 +127,6 @@ public class WorldElements {
     }
 
     protected static void boxFill(MatrixStack matrices, Box box, VertexConsumer consumer, float r, float g, float b, float a) {
-
         Matrix4f matrix = matrices.peek().getPositionMatrix();
         float[] color = {r, g, b, a};
 

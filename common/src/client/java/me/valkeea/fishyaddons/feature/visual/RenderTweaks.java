@@ -21,15 +21,23 @@ public class RenderTweaks {
         fireFov = FishyConfig.getState(Key.FISHY_FIRE_OVERLAY, false);
     }
 
-    public static CameraSubmersionType modifyFogSubmersionType(CameraSubmersionType originalType) {
-        if (!GameMode.skyblock()) return originalType;
-        if (TransLava.isEnabled() && originalType == CameraSubmersionType.LAVA) {
-            return CameraSubmersionType.WATER;
-        }
+    public static boolean shouldRemoveWaterFog(Camera camera) {
+        if (!waterOn) return false;
+        if (MinecraftClient.getInstance().player == null) return false;
+        if (!GameMode.skyblock()) return false;
+        if (camera.getSubmersionType() != CameraSubmersionType.WATER) return false;
+        
+        var pos = camera.getPos();
+        var bp = BlockPos.ofFloored(pos);
 
-        return originalType;
+        return camera.getFocusedEntity().getEntityWorld().getBlockState(bp).isOf(Blocks.WATER);
     }    
 
+    /**
+     * Determines if lava fog should be removed or tinted.
+     * @param camera The camera instance.
+     * @return 0 if no change, 1 for removal, or the tint color integer.
+     */
     public static int shouldRemoveLavaFog(Camera camera) {
         if (!lavaOn && !TransLava.isEnabled()) { return 0; }
         if (MinecraftClient.getInstance().player == null) return 0;
@@ -41,22 +49,14 @@ public class RenderTweaks {
         var pos = camera.getPos();
         var bp = BlockPos.ofFloored(pos);
         int ifColor = lavaOn ? 1 : TransLava.getColor();
-        
-        return camera.getFocusedEntity().getWorld().getBlockState(bp).isOf(Blocks.LAVA) ? ifColor : 0;
+
+        return camera.getFocusedEntity().getEntityWorld().getBlockState(bp).isOf(Blocks.LAVA) ? ifColor : 0;
     }
 
-    public static boolean shouldRemoveWaterFog(Camera camera) {
-        if (!waterOn) return false;
-        if (MinecraftClient.getInstance().player == null) return false;
-        if (!GameMode.skyblock()) return false;
-        if (camera.getSubmersionType() != CameraSubmersionType.WATER) return false;
-        
-        var pos = camera.getPos();
-        var bp = BlockPos.ofFloored(pos);
-
-        return camera.getFocusedEntity().getWorld().getBlockState(bp).isOf(Blocks.WATER);
-    }
-
+    /**
+     * Determines the fire overlay color.
+     * @return 0 for default, or the tint color integer.
+     */
     public static int tryColorFire() {
         if (MinecraftClient.getInstance().player == null) return 0;
         return GameMode.skyblock() && fireFov

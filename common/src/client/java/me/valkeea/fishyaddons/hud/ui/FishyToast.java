@@ -1,12 +1,12 @@
 package me.valkeea.fishyaddons.hud.ui;
 
+import me.valkeea.fishyaddons.event.impl.FaEvents;
+import me.valkeea.fishyaddons.event.impl.HudRenderEvent;
 import me.valkeea.fishyaddons.tool.FishyMode;
-import net.fabricmc.fabric.api.client.rendering.v1.HudLayerRegistrationCallback;
-import net.fabricmc.fabric.api.client.rendering.v1.IdentifiedLayer;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
+import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.toast.Toast;
 import net.minecraft.client.toast.ToastManager;
 import net.minecraft.text.Text;
@@ -22,6 +22,10 @@ public class FishyToast implements Toast {
         this.title = title;
         this.message = message;
     }
+
+    public static void init() {
+        FaEvents.HUD_RENDER.register(FishyToast::render);
+    }    
 
     @Override
     public void draw(DrawContext context, TextRenderer textRenderer, long startTime) {}
@@ -42,37 +46,35 @@ public class FishyToast implements Toast {
         currentToast.startTime = System.currentTimeMillis();
     }
 
-    public static void init() {
-        HudLayerRegistrationCallback.EVENT.register(layeredDrawer -> 
-            layeredDrawer.attachLayerAfter(
-                IdentifiedLayer.MISC_OVERLAYS,
-                Identifier.of("fishyaddons", "fatoast"),
-                (context, tickCounter) -> {
-                    if (currentToast != null) {
-                        long elapsed = System.currentTimeMillis() - currentToast.startTime;
-                        if (elapsed < 4000L) {
-                            MinecraftClient mc = MinecraftClient.getInstance();
-                            int screenWidth = mc.getWindow().getScaledWidth();
-                            int toastWidth = 160;
-                            int toastHeight = 32;
-                            int x = (screenWidth - toastWidth) / 2;
-                            int y = 20;
-                            context.drawTexture(
-                                RenderLayer::getGuiTextured,
-                                Identifier.of("fishyaddons", "textures/gui/" + FishyMode.getTheme() + "/fatoast.png"),
-                                x, y, 0, 0, toastWidth, toastHeight, 160, 32
-                            );
-                            TextRenderer tr = mc.textRenderer;
-                            int titleWidth = tr.getWidth(currentToast.title);
-                            int msgWidth = tr.getWidth(currentToast.message);                           
-                            context.drawText(tr, Text.literal(currentToast.title), x + toastWidth / 2 - titleWidth / 2, y + 7, 0xFFFFFF, true);
-                            context.drawText(tr, Text.literal(currentToast.message), x + toastWidth / 2 - msgWidth / 2, y + 18, 0xAAAAAA, false);
-                        } else {
-                            currentToast = null;
-                        }
-                    }
-                }
-            )
-        );
+    public static void render(HudRenderEvent event) {
+        if (currentToast != null) {
+            long elapsed = System.currentTimeMillis() - currentToast.startTime;
+
+            if (elapsed < 4000L) {
+
+                var mc = MinecraftClient.getInstance();
+                int screenWidth = mc.getWindow().getScaledWidth();
+                int toastWidth = 160;
+                int toastHeight = 32;
+                int x = (screenWidth - toastWidth) / 2;
+                int y = 20;
+
+                event.getContext().drawTexture(
+                    RenderPipelines.GUI_TEXTURED,
+                    Identifier.of("fishyaddons", "textures/gui/" + FishyMode.getTheme() + "/fatoast.png"),
+                    x, y, 0, 0, toastWidth, toastHeight, 160, 32
+                );
+
+                var tr = mc.textRenderer;
+                int titleWidth = tr.getWidth(currentToast.title);
+                int msgWidth = tr.getWidth(currentToast.message);
+
+                event.getContext().drawText(tr, Text.literal(currentToast.title), x + toastWidth / 2 - titleWidth / 2, y + 7, 0xFFFFFFFF, true);
+                event.getContext().drawText(tr, Text.literal(currentToast.message), x + toastWidth / 2 - msgWidth / 2, y + 18, 0xFFAAAAAA, false);
+
+            } else {
+                currentToast = null;
+            }
+        }
     }
 }

@@ -10,6 +10,7 @@ import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.config.Key;
 import me.valkeea.fishyaddons.feature.skyblock.EqTextures;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ingame.InventoryScreen;
 import net.minecraft.item.ItemStack;
@@ -64,7 +65,7 @@ public class EqDisplay {
      * Force a refresh of cached data on next render
      */
     public static void requestRefresh() {
-        lastEquipmentCheck = 0;
+        lastEquipmentCheck = 0; // Force refresh on next render
         LOGGER.debug("Equipment display refresh requested");
     }
 
@@ -102,15 +103,17 @@ public class EqDisplay {
                 int slotY = vanillaSlotY - 1;
                 renderedPositions.put(i, new Integer[]{slotX, slotY});
             }
+
             renderedPositionsComputed = true;
+
         } else {
-            // Fallback
             LOGGER.warn("Using fallback positions");
             for (int i = 0; i < 4; i++) {
                 int slotX = -50;
                 int slotY = 10 + (i * 20);
                 renderedPositions.put(i, new Integer[]{slotX, slotY});
             }
+
             renderedPositionsComputed = true;
         }
     }
@@ -123,7 +126,7 @@ public class EqDisplay {
             return;
         }
         
-        MinecraftClient client = MinecraftClient.getInstance();
+        var client = MinecraftClient.getInstance();
         if (client.player == null) return;
         
         computePos(screen);
@@ -187,13 +190,13 @@ public class EqDisplay {
     }
     
     private static void renderSlotBg(DrawContext context, int x, int y) {
-        context.drawTexture(net.minecraft.client.render.RenderLayer::getGuiTextured, 
+        context.drawTexture(RenderPipelines.GUI_TEXTURED,
                            SLOT_TEXTURE, x, y, 7, 83, SLOT_SIZE, SLOT_SIZE, 256, 256);
     }
     
     private static void renderSkull(DrawContext context, int x, int y, int slotIndex) {
         try {
-            ItemStack skullStack = EqTextures.getSlotItemStack(slotIndex);
+            var skullStack = EqTextures.getSlotItemStack(slotIndex);
             if (skullStack != null && !skullStack.isEmpty()) {
                 context.drawItem(skullStack, x, y);
             } else {
@@ -227,12 +230,13 @@ public class EqDisplay {
         }
 
         if (button == 0) {
-            MinecraftClient client = MinecraftClient.getInstance();
+            var client = MinecraftClient.getInstance();
             if (client.player != null) {
                 client.player.networkHandler.sendChatMessage("/equipment");
                 return true;
             }
         }
+
         return false;
     }
 }

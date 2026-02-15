@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
+import me.valkeea.fishyaddons.util.SpriteUtil;
 import net.minecraft.util.Identifier;
 
 public class EffectRegistry {
@@ -18,7 +19,7 @@ public class EffectRegistry {
 
         public EffectConfig(String displayName, String textureName, boolean pauseOffline) {
             this.displayName = displayName;
-            this.texture = Identifier.of("fishyaddons", "textures/hud/" + textureName + ".png");
+            this.texture = SpriteUtil.createModSprite("hud/" + textureName);
             this.pauseOffline = pauseOffline;
         }
     }

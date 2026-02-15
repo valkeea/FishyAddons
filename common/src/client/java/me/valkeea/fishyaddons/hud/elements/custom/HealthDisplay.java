@@ -49,9 +49,9 @@ public class HealthDisplay implements HudElement {
             drawBackground(context, hudX, hudY, maxWidth, totalHeight);
         }
 
-        context.getMatrices().push();
-        context.getMatrices().translate(hudX, hudY, 0);
-        context.getMatrices().scale(scale, scale, 1.0F);
+        context.getMatrices().pushMatrix();
+        context.getMatrices().translate(hudX, hudY);
+        context.getMatrices().scale(scale, scale);
 
         int currentY = 0;
 
@@ -76,7 +76,7 @@ public class HealthDisplay implements HudElement {
             }
         }
 
-        context.getMatrices().pop();
+        context.getMatrices().popMatrix();
     }
 
     @SuppressWarnings("squid:S107")    

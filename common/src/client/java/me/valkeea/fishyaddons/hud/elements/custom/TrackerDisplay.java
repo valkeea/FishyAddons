@@ -13,15 +13,18 @@ import me.valkeea.fishyaddons.config.Key;
 import me.valkeea.fishyaddons.config.TrackerProfiles;
 import me.valkeea.fishyaddons.hud.core.HudDisplayCache;
 import me.valkeea.fishyaddons.hud.core.HudDisplayCache.CachedHudData;
+import me.valkeea.fishyaddons.tool.FishyMode;
 import me.valkeea.fishyaddons.hud.core.HudElement;
 import me.valkeea.fishyaddons.hud.core.HudElementState;
 import me.valkeea.fishyaddons.tracker.profit.ItemTrackerData;
 import me.valkeea.fishyaddons.tracker.profit.SackDropParser;
-import me.valkeea.fishyaddons.tracker.profit.TrackerUtils;
+import me.valkeea.fishyaddons.tracker.profit.ProfitTracker;
 import me.valkeea.fishyaddons.ui.widget.VCButton;
 import me.valkeea.fishyaddons.util.FishyNotis;
+import me.valkeea.fishyaddons.util.text.Color;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
+import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 
 public class TrackerDisplay implements HudElement {
@@ -52,12 +55,12 @@ public class TrackerDisplay implements HudElement {
 
     private boolean isTrackerVisible() {
         return !HudDisplayCache.getInstance().getDisplayData().isEmpty() &&
-                TrackerUtils.isEnabled();
+                ProfitTracker.isEnabled();
     }
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY) {
-        if (!editingMode && !TrackerUtils.isEnabled()) return;
+        if (!editingMode && !ProfitTracker.isEnabled()) return;
 
         var mc = MinecraftClient.getInstance();
         var state = getCachedState();
@@ -71,7 +74,7 @@ public class TrackerDisplay implements HudElement {
 
         if (!editingMode && displayData.isEmpty()) return;
 
-        List<Text> lines = getDisplayLines(editingMode, displayData);
+        List<Text> lines = getDisplayLines(editingMode, displayData, color);
 
         int maxWidth = getMaxLineWidth(mc, lines);
         int totalHeight = lines.size() * size;
@@ -98,10 +101,9 @@ public class TrackerDisplay implements HudElement {
         }
 
         if (!editingMode && isInventoryOpen(mc)) {
-            me.valkeea.fishyaddons.render.FaLayers.renderAtTopLevel(context, () -> {
-                int buttonY = Math.max(10, hudY - 30);
-                drawButtons(context, hudX, buttonY);
-            });
+            int buttonY = Math.max(10, hudY - 30);
+            drawButtons(context, hudX, buttonY);
+
         }
     }
 
@@ -142,31 +144,38 @@ public class TrackerDisplay implements HudElement {
     }
 
     // Tracker lines and formatting 
-    private List<Text> getDisplayLines(boolean editingMode, CachedHudData displayData) {
+    private List<Text> getDisplayLines(boolean editingMode, CachedHudData displayData, int color) {
 
         List<Text> lines = new ArrayList<>();
 
         if (editingMode) {
             lines.add(Text.literal("Profit Tracker (5m)"));
             lines.add(Text.literal("§b+3 §fRecombobulator 3000"));
-            lines.add(Text.literal("Total: §3 items"));
-            lines.add(Text.literal("Value: §b~27m coins"));
+            lines.add(Text.literal("Items: §3"));
+            lines.add(Text.literal("Value: §b~27m"));
 
         } else if (!displayData.isEmpty()) {
             String currentProfile = TrackerProfiles.getCurrentProfile();
             String profileSuffix = "default".equals(currentProfile) ? "" : " (" + currentProfile + ")";
 
-            lines.add(Text.literal("Profit Tracker" + displayData.timeString + profileSuffix));
+            int themeColor = FishyMode.getCmdColor();
+            lines.add(Text.literal("Profit Tracker").styled(style -> style.withColor(themeColor))
+                .append(Text.literal(displayData.timeString + profileSuffix)));
 
             List<ItemValueData> allItems = getSortedItemValues(displayData);
 
             allItems.stream()
                 .limit(15)
-                .forEach(data -> lines.add(Text.literal(getItemLine(data))));
-            lines.add(Text.literal(String.format("Total: §3%d items", displayData.totalItems)));
+                .forEach(data -> lines.add(getItemLine(data, color)));
+            lines.add(
+                Text.literal(("Items: ")).styled(style -> style.withColor(themeColor).withBold(true))
+                    .append(Text.literal(String.valueOf(displayData.totalItems))
+                    .styled(style -> style.withColor(Color.brighten(color, 0.6f)))));
 
             if (displayData.totalValue > 0) {
-                lines.add(Text.literal(String.format("Value: §b%s%s", displayData.formattedValue, displayData.apiIndicator)));
+                lines.add(Text.literal("Value: ").styled(style -> style.withColor(themeColor).withBold(true))
+                    .append(Text.literal(formatCoins(displayData.totalValue))
+                    .styled(style -> style.withColor(Color.brighten(color, 0.6f)))));
             }
 
         } else {
@@ -177,19 +186,20 @@ public class TrackerDisplay implements HudElement {
     }
 
     // Format item line for display
-    private String getItemLine(ItemValueData data) {
+    private Text getItemLine(ItemValueData data, int color) {
 
         String itemName = enhance(data.itemName);
         int quantity = data.quantity;
-        StringBuilder lineBuilder = new StringBuilder();
+        MutableText lineText = Text.literal(String.format("+%d ", quantity)).styled(style -> style.withColor(color))
+            .append(Text.literal(itemName).styled(style -> style.withColor(Color.desaturate(color, 0.8f))));
 
-        lineBuilder.append(String.format("§3+%d §7%s", quantity, itemName));
-
-        if (TrackerUtils.isOn() && data.totalValue > 0) {
-            lineBuilder.append(String.format(" §7(§b%s§7)", formatCoins(data.totalValue)));
+        if (ProfitTracker.isOn() && data.totalValue > 0) {
+            lineText.append(Text.literal(" §7("))
+                .append(Text.literal(formatCoins(data.totalValue)).styled(style -> style.withColor(Color.brighten(color, 0.6f))))
+                .append("§7)");
         }
 
-        return lineBuilder.toString();
+        return lineText;
     }
 
     private int getMaxLineWidth(MinecraftClient mc, List<Text> lines) {
@@ -213,9 +223,9 @@ public class TrackerDisplay implements HudElement {
 
         var mc = MinecraftClient.getInstance();
 
-        context.getMatrices().push();
-        context.getMatrices().translate(hudX, hudY, 0);
-        context.getMatrices().scale(scale, scale, 1.0F);
+        context.getMatrices().pushMatrix();
+        context.getMatrices().translate(hudX, hudY);
+        context.getMatrices().scale(scale, scale);
 
         for (int i = 0; i < lines.size(); i++) {
             Text line = lines.get(i);
@@ -223,7 +233,7 @@ public class TrackerDisplay implements HudElement {
             context.drawText(mc.textRenderer, line, 0, yOffset, color, false);
         }
 
-        context.getMatrices().pop();
+        context.getMatrices().popMatrix();
     }
     
     private boolean isInventoryOpen(MinecraftClient mc) {
@@ -353,7 +363,7 @@ public class TrackerDisplay implements HudElement {
                 HudDisplayCache.getInstance().invalidateCache();
                 break;
             case 1:
-                TrackerUtils.save();
+                ProfitTracker.save();
                 break;
             case 2:
                 String profileName = TrackerProfiles.getCurrentProfile();
@@ -361,7 +371,7 @@ public class TrackerDisplay implements HudElement {
                     FishyNotis.warn("§cCannot delete the default profile!");
                     FishyNotis.alert(Text.literal("§7Use §3/fp clear §7if you wish to reset the session."));
                 } else if (TrackerProfiles.deleteProfile(profileName)) {
-                    TrackerUtils.onDelete(profileName);
+                    ProfitTracker.onDelete(profileName);
                 } else {
                     FishyNotis.notice("§7No file to delete");
                 }

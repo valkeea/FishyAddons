@@ -1,5 +1,6 @@
 package me.valkeea.fishyaddons.ui.widget.dropdown;
 
+import java.awt.Rectangle;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -9,6 +10,7 @@ import me.valkeea.fishyaddons.ui.widget.VCVisuals;
 import me.valkeea.fishyaddons.util.text.Color;
 import me.valkeea.fishyaddons.util.text.TextUtils;
 import net.minecraft.client.font.TextRenderer;
+import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.text.Text;
@@ -16,8 +18,8 @@ import net.minecraft.text.Text;
 public class VCToggleMenu {
     private final Supplier<List<ToggleMenuItem>> itemSupplier;
 
-    private final int baseX;
-    private final int baseY;
+    private int baseX;
+    private int baseY;
     private final int baseWidth;
     private final int baseEntryHeight;
     private final Runnable onRefresh;
@@ -33,7 +35,7 @@ public class VCToggleMenu {
     private int scaledWidth;
     private int scaledEntryHeight;
     
-    private static final int MAX_VISIBLE_ENTRIES = 6;
+    private int maxVisible = 6;
 
     public VCToggleMenu(Supplier<List<ToggleMenuItem>> itemSupplier, int x, int y, int width, int entryHeight, Runnable onRefresh) {
         this.itemSupplier = itemSupplier;
@@ -44,6 +46,11 @@ public class VCToggleMenu {
         this.onRefresh = onRefresh;
     }
 
+    public void setPosition(int x, int y) {
+        this.baseX = x;
+        this.baseY = y;
+    }
+
     public void render(DrawContext context, Screen screen, int mouseX, int mouseY, float uiScale) {
         if (!visible) return;
 
@@ -52,14 +59,14 @@ public class VCToggleMenu {
         scaledEntryHeight = (int)(baseEntryHeight * uiScale);
         int scaledPadding = Math.max(1, (int)(6 * uiScale));
 
-        List<ToggleMenuItem> items = itemSupplier.get();
+        var items = itemSupplier.get();
         if (items.isEmpty()) return;
 
-        TextRenderer textRenderer = screen.getTextRenderer();
+        var textRenderer = screen.getTextRenderer();
         int totalEntries = items.size();
-        int visibleEntries = Math.min(totalEntries, MAX_VISIBLE_ENTRIES);
+        int visibleEntries = Math.min(totalEntries, maxVisible);
 
-        for (ToggleMenuItem item : items) {
+        for (var item : items) {
             String displayName = TextUtils.stripColor(item.getDisplayName() + "[✓]");
             scaledWidth = Math.max(scaledWidth, (int)(textRenderer.getWidth(displayName) * uiScale) + scaledPadding * 2);
         }
@@ -75,7 +82,7 @@ public class VCToggleMenu {
             int itemIndex = i + scrollOffset;
             if (itemIndex >= items.size()) break;
             
-            ToggleMenuItem item = items.get(itemIndex);
+            var item = items.get(itemIndex);
             boolean hovered = mouseX >= scaledX && mouseX <= scaledX + scaledWidth && 
                              mouseY >= currentY && mouseY <= currentY + scaledEntryHeight;
 
@@ -85,7 +92,7 @@ public class VCToggleMenu {
             currentY += scaledEntryHeight;
         }
 
-        if (totalEntries > MAX_VISIBLE_ENTRIES) {
+        if (totalEntries > maxVisible) {
             renderScrollable(context, textRenderer, uiScale, totalEntries, visibleEntries);
         }
     }
@@ -100,9 +107,7 @@ public class VCToggleMenu {
         var name = Text.literal(item.getDisplayName());
         var displayText = name.append(item.isEnabled() ? item.getEnabledSuffix() : item.getDisabledSuffix());            
 
-        context.getMatrices().push();
-        context.getMatrices().translate(0, 0, 500);
-
+        context.getMatrices().pushMatrix();
         context.fill(scaledX, currentY, scaledX + scaledWidth, currentY + scaledEntryHeight, bgColor);
 
         VCText.drawScaledText(
@@ -110,7 +115,7 @@ public class VCToggleMenu {
             scaledX + scaledPadding, currentY + textPadding, textColor, uiScale
         );
 
-        context.getMatrices().pop();
+        context.getMatrices().popMatrix();
     }
 
     private void renderScrollable(DrawContext context, TextRenderer textRenderer, float uiScale, int totalEntries, int visibleEntries) {
@@ -122,8 +127,7 @@ public class VCToggleMenu {
         int thumbHeight = Math.max((int)(8 * uiScale), (visibleEntries * menuHeight) / totalEntries);
         int thumbY = scaledY + (scrollOffset * (menuHeight - thumbHeight)) / (totalEntries - visibleEntries);
             
-        context.getMatrices().push();
-        context.getMatrices().translate(0, 0, 600);
+        context.getMatrices().pushMatrix();
         context.fill(scrollbarX, scaledY, scrollbarX + scrollbarWidth, scaledY + menuHeight, 0x44000000);
             
         context.fill(scrollbarX + 1, thumbY, scrollbarX + scrollbarWidth - 1, thumbY + thumbHeight, VCVisuals.getThemeColor());
@@ -133,7 +137,7 @@ public class VCToggleMenu {
             context, textRenderer, Text.literal(". . ."), 
             scaledX + scaledPadding, scaledY + menuHeight + textPadding, 0xFFBBAACC, uiScale
         );
-        context.getMatrices().pop();
+        context.getMatrices().popMatrix();
     }
 
     public boolean mouseClicked(double mouseX, double mouseY, float uiScale) {
@@ -143,9 +147,9 @@ public class VCToggleMenu {
     public boolean mouseClicked(double mouseX, double mouseY, float uiScale, int button) {
         if (!visible) return false;
 
-        List<ToggleMenuItem> items = itemSupplier.get();
+        var items = itemSupplier.get();
         int totalEntries = items.size();
-        int visibleEntries = Math.min(totalEntries, MAX_VISIBLE_ENTRIES);
+        int visibleEntries = Math.min(totalEntries, maxVisible);
 
         if (totalEntries > visibleEntries) {
             int menuHeight = visibleEntries * scaledEntryHeight;
@@ -153,7 +157,7 @@ public class VCToggleMenu {
             int scrollbarWidth = (int)(6 * uiScale);
             if (mouseX >= scrollbarX && mouseX <= scrollbarX + scrollbarWidth && 
                 mouseY >= scaledY && mouseY <= scaledY + menuHeight) {
-                
+
                 int thumbHeight = Math.max((int)(8 * uiScale), (visibleEntries * menuHeight) / totalEntries);
                 int thumbY = scaledY + (scrollOffset * (menuHeight - thumbHeight)) / (totalEntries - visibleEntries);
                 scrollbarThumbOffset = mouseY - thumbY;
@@ -192,33 +196,30 @@ public class VCToggleMenu {
     public boolean mouseScrolled(double amount) {
         if (!visible) return false;
         
-        List<ToggleMenuItem> items = itemSupplier.get();
-        int totalEntries = items.size();
-        int visibleEntries = Math.min(totalEntries, MAX_VISIBLE_ENTRIES);
-        
-        if (totalEntries > visibleEntries) {
-            scrollOffset -= (int) amount;
-            int maxOffset = totalEntries - visibleEntries;
-            if (scrollOffset < 0) scrollOffset = 0;
-            if (scrollOffset > maxOffset) scrollOffset = maxOffset;
-            return true;
-        }
+        if (amount > 0) scrollOffset--;
+        else if (amount < 0) scrollOffset++;
 
-        setVisible(false);
-        return false;
+        int totalEntries = itemSupplier.get().size();
+        int visibleEntries = Math.min(totalEntries, maxVisible);
+        int maxOffset = Math.max(0, totalEntries - visibleEntries);
+
+        if (scrollOffset < 0) scrollOffset = 0;
+        if (scrollOffset > maxOffset) scrollOffset = maxOffset;
+
+        return true;
     }
 
-    public boolean mouseDragged(double mouseY, float uiScale) {
+    public boolean mouseDragged(Click click, float uiScale) {
         if (!visible || !isDraggingScrollbar) return false;
 
-        List<ToggleMenuItem> items = itemSupplier.get();
+        var items = itemSupplier.get();
         int totalEntries = items.size();
-        int visibleEntries = Math.min(totalEntries, MAX_VISIBLE_ENTRIES);
+        int visibleEntries = Math.min(totalEntries, maxVisible);
         int menuHeight = visibleEntries * scaledEntryHeight;
         int maxScroll = Math.max(0, totalEntries - visibleEntries);
         int thumbHeight = Math.max((int)(8 * uiScale), (visibleEntries * menuHeight) / totalEntries);
 
-        double thumbTopY = mouseY - scaledY - scrollbarThumbOffset;
+        double thumbTopY = click.y() - scaledY - scrollbarThumbOffset;
         thumbTopY = Math.clamp(thumbTopY, 0.0, (double)menuHeight - thumbHeight);
 
         double scrollPercent = maxScroll > 0 ? thumbTopY / (menuHeight - thumbHeight) : 0;
@@ -240,11 +241,25 @@ public class VCToggleMenu {
         this.visible = visible; 
     }
 
+    public void setMaxVisibleEntries(float scale, int verticalSpace) {
+        this.maxVisible = verticalSpace / (int)(baseEntryHeight * scale);
+    }
+
+    public boolean isMouseOver(double mouseX, double mouseY) {
+        if (!visible) return false;
+        return mouseX >= scaledX && mouseX <= scaledX + scaledWidth && 
+               mouseY >= scaledY && mouseY <= scaledY + maxVisible * scaledEntryHeight;
+    }
+
+    public Rectangle getBounds() {
+        return new Rectangle(scaledX, scaledY, scaledWidth, maxVisible * scaledEntryHeight);
+    }
+
     public int getX() { return baseX; }
     public int getY() { return baseY; }
     public int getWidth() { return baseWidth; }
     public int getEntryHeight() { return baseEntryHeight;  }
-    public int getMaxVisibleEntries() { return MAX_VISIBLE_ENTRIES; }
+    public int getMaxVisibleEntries() { return maxVisible; }
     public int getScrollOffset() { return scrollOffset; }
     public int getHoveredIndex() { return hoveredIndex;  }
     public boolean isVisible() {  return visible; }    

@@ -9,6 +9,7 @@ import me.valkeea.fishyaddons.tool.GuiScheduler;
 import me.valkeea.fishyaddons.ui.VCScreen;
 import me.valkeea.fishyaddons.ui.VCState;
 import me.valkeea.fishyaddons.util.FishyNotis;
+import me.valkeea.fishyaddons.util.ItemData;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.MinecraftClient;
@@ -56,7 +57,7 @@ public class FgRoot implements CommandHandler {
                 return 1;
             }
 
-            var uuid = ItemHandler.extractUUID(held);
+            var uuid = ItemData.extractUUID(held);
             if (uuid.isEmpty()) {
                 FishyNotis.warn("Held item doesn't have a UUID.");
                 return 1;
@@ -86,7 +87,7 @@ public class FgRoot implements CommandHandler {
                 return 1;
             }
 
-            var uuid = ItemHandler.extractUUID(held);
+            var uuid = ItemData.extractUUID(held);
             if (!uuid.isEmpty() && ItemHandler.isProtected(held)) {
 
                 ItemConfig.removeUUID(uuid);

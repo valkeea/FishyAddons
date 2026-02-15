@@ -7,14 +7,15 @@ import me.valkeea.fishyaddons.config.Key;
 import me.valkeea.fishyaddons.ui.widget.FaButton;
 import me.valkeea.fishyaddons.ui.widget.VCTextField;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gl.RenderPipelines;
+import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.texture.NativeImage;
 import net.minecraft.client.texture.NativeImageBackedTexture;
-import net.minecraft.util.Identifier;
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.text.Text;
 import net.minecraft.text.Style;
+import net.minecraft.text.Text;
+import net.minecraft.util.Identifier;
 
 public class ColorWheel extends Screen {
 
@@ -50,11 +51,20 @@ public class ColorWheel extends Screen {
     private boolean thick;
     private boolean draggingWheel = false;
     private boolean draggingBar = false;
+    private boolean hasReset = false;
 
     public ColorWheel(Screen parent, int initialColor, Consumer<Integer> onColorSelected) {
+        this(parent, initialColor, onColorSelected, false);
+    }
+
+    public ColorWheel(Screen parent, int initialColor,
+                        Consumer<Integer> onColorSelected,
+                        boolean hasReset) {
+
         super(Text.literal("Color Picker"));
         this.parent = parent;
         this.onColorSelected = onColorSelected;
+        this.hasReset = hasReset;
         float[] rgb = intToRGB(initialColor);
 
         if (rgb.length == 3) {
@@ -85,8 +95,7 @@ public class ColorWheel extends Screen {
         barWidth = (int)(140 * uiScale);
         barHeight = (int)(10 * uiScale); 
         widgetHeight = (int)(20 * uiScale);
-        fieldWidth = (int)(150 * uiScale);
-        btnWidth = (int)(70 * uiScale);               
+        fieldWidth = (int)(150 * uiScale);              
         barX = wheelCenterX - barWidth / 2;
         barY = wheelCenterY + wheelRadius + (int)(25 * uiScale);
     }
@@ -103,20 +112,51 @@ public class ColorWheel extends Screen {
         hexField = new VCTextField(tr, wheelCenterX - fieldWidth / 2, fieldY, fieldWidth, widgetHeight, Text.literal("Hex (e.g. #FF00FF)"));
         hexField.setMaxLength(9);
         hexField.setUIScale(uiScale);
+        hexField.setTextShadow(false);
         updateHexField();
         this.addDrawableChild(hexField);
 
         btnY = fieldY + 30;
+        int cancelX = wheelCenterX - fieldWidth  / 2;
+
+        if (hasReset) {
+            btnWidth = (int)(45 * uiScale); 
+            addCancelBtn(cancelX, btnY);
+            addResetBtn(cancelX + btnWidth + 5, btnY);
+            addConfirmBtn(cancelX + (btnWidth + 5) * 2, btnY);
+        } else {
+            btnWidth = (int)(70 * uiScale);
+            addCancelBtn(cancelX, btnY);
+            addConfirmBtn(wheelCenterX + 5, btnY);
+         }
+    }
+
+    private void addCancelBtn(int x, int y) {
         var cancelBtn = new FaButton(
-            wheelCenterX - fieldWidth  / 2, btnY, btnWidth, widgetHeight,
-            Text.literal("Cancel").setStyle(Style.EMPTY.withColor(0xFFFF8080)),
+            x, y, btnWidth, widgetHeight,
+            Text.literal("Cancel").setStyle(Style.EMPTY.withColor(0xFFAAAAAA)),
             btn -> this.client.setScreen(parent)
         );
         cancelBtn.setUIScale(uiScale);
         this.addDrawableChild(cancelBtn);
+    }
 
+    private void addResetBtn(int x, int y) {
+        var resetBtn = new FaButton(
+            x, y, btnWidth, widgetHeight,
+            Text.literal("Reset").setStyle(Style.EMPTY.withColor(0xFFFF8080)),
+            btn -> {
+                onColorSelected.accept(0);
+                this.client.setScreen(parent);
+            }
+        );
+        resetBtn.setUIScale(uiScale);
+        this.addDrawableChild(resetBtn);  
+    }
+
+    private void addConfirmBtn(int x, int y) {
         var confirmBtn = new FaButton(
-            wheelCenterX + 5, btnY, btnWidth, widgetHeight,
+            x, y, btnWidth, widgetHeight,
             Text.literal("Confirm").setStyle(Style.EMPTY.withColor(0xFFCCFFCC)),
             btn -> {
                 String hex = hexField.getText().trim();
@@ -137,7 +177,7 @@ public class ColorWheel extends Screen {
         );
         confirmBtn.setUIScale(uiScale);
         this.addDrawableChild(confirmBtn);
-    }
+    }  
 
     // --- Color wheel texture generation ---
 
@@ -248,9 +288,7 @@ public class ColorWheel extends Screen {
             false
         );
       
-        context.drawTexture(RenderLayer::getGuiTextured, wheelId, wheelCenterX - wheelRadius,
-            wheelCenterY - wheelRadius, 0, 0, wheelRadius * 2, wheelRadius * 2, wheelRadius * 2, wheelRadius * 2);
-
+        context.drawTexture(RenderPipelines.GUI_TEXTURED, wheelId, wheelCenterX - wheelRadius, wheelCenterY - wheelRadius, 0, 0, wheelRadius * 2, wheelRadius * 2, wheelRadius * 2, wheelRadius * 2);
         lightnessBar(context);
         selectionIndicators(context);
     }
@@ -259,12 +297,12 @@ public class ColorWheel extends Screen {
         for (int x = 0; x < barWidth; x++) {
             float currentLightness = x / (float) barWidth;
             float[] rgb = hslToRgb(hue * 360, saturation, currentLightness);
-            int color = 0xFF000000 | 
+            int c = 0xFF000000 | 
                 ((int)(rgb[0] * 255) << 16) | 
                 ((int)(rgb[1] * 255) << 8) | 
                 (int)(rgb[2] * 255);
             
-            context.fill(barX + x, barY, barX + x + 1, barY + barHeight, color);
+            context.fill(barX + x, barY, barX + x + 1, barY + barHeight, c);
         }
         VCRenderUtils.border(context, barX, barY, barWidth, barHeight, 0x95000000);
     }
@@ -280,9 +318,9 @@ public class ColorWheel extends Screen {
         float indicatorX = wheelCenterX + (float)(Math.cos(angle) * saturation * wheelRadius);
         float indicatorY = wheelCenterY + (float)(-Math.sin(angle) * saturation * wheelRadius);
         float indicatorRadius = Math.max(6.0f, 8.0f * uiScale);
-        int color = 0xFF000000 | (int)(red * 255) << 16 | (int)(green * 255) << 8 | (int)(blue * 255);
+        int c = 0xFF000000 | (int)(red * 255) << 16 | (int)(green * 255) << 8 | (int)(blue * 255);
         
-        renderCircle(context, indicatorX, indicatorY, indicatorRadius, color);
+        renderCircle(context, indicatorX, indicatorY, indicatorRadius, c);
     }
     
     private void renderCircle(DrawContext context, float centerX, float centerY, float radius, int fillColor) {
@@ -295,8 +333,8 @@ public class ColorWheel extends Screen {
         
         for (int y = minY; y <= maxY; y++) {
             for (int x = minX; x <= maxX; x++) {
-                float dx = (float)x + 0.5f - centerX;
-                float dy = (float)y + 0.5f - centerY;
+                float dx = x + 0.5f - centerX;
+                float dy = y + 0.5f - centerY;
                 float distance = (float)Math.sqrt(dx * dx + dy * dy);
                 int pixelColor = calcCirclePixel(distance, radius, borderWidth, fillColor);
                 if (pixelColor != 0) {
@@ -503,7 +541,11 @@ public class ColorWheel extends Screen {
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+    public boolean mouseClicked(Click click, boolean doubled) {
+        double mouseX = click.x();
+        double mouseY = click.y();
+        int button = click.button();
+
         if (button == 0) {
             double dx = mouseX - wheelCenterX;
             double dy = mouseY - wheelCenterY;
@@ -522,29 +564,29 @@ public class ColorWheel extends Screen {
                 return true;
             }
         }
-        return super.mouseClicked(mouseX, mouseY, button);
+        return super.mouseClicked(click, doubled);
     }
     
     @Override
-    public boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
+    public boolean mouseDragged(Click click, double offsetX, double offsetY) {
         if (draggingWheel) {
-            updateColorFromWheel(mouseX, mouseY);
+            updateColorFromWheel(click.x(), click.y());
             return true;
         }
 
         if (draggingBar) {
-            updateLightnessFromBar(mouseX);
+            updateLightnessFromBar(click.x());
             return true;
         }
 
-        return super.mouseDragged(mouseX, mouseY, button, deltaX, deltaY);
+        return super.mouseDragged(click, offsetX, offsetY);
     }
     
     @Override
-    public boolean mouseReleased(double mouseX, double mouseY, int button) {
+    public boolean mouseReleased(Click click) {
         draggingWheel = false;
         draggingBar = false;
-        return super.mouseReleased(mouseX, mouseY, button);
+        return super.mouseReleased(click);
     }
     
     @Override

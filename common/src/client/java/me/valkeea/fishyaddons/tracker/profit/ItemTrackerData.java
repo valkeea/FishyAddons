@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.jetbrains.annotations.Nullable;
 
@@ -14,10 +15,32 @@ import net.minecraft.text.Text;
 public class ItemTrackerData {
     private static final Map<String, Integer> itemCounts = new ConcurrentHashMap<>();
     private static final Map<String, Double> itemValues = new ConcurrentHashMap<>();
-    private static final List<String> successfulBooks = new java.util.concurrent.CopyOnWriteArrayList<>();
+    private static final List<String> seenUUIDs = new CopyOnWriteArrayList<>();
+    private static final List<PendingDrop> pendingChatDrops = new CopyOnWriteArrayList<>();
+    private static final long PENDING_DROP_WINDOW = 2000;
 
     private static final String ENCHANTED_BOOK = "enchanted book";
     private static final String REGEX = "[^a-zA-Z0-9]";
+    
+    private static class PendingDrop {
+        final String itemName;
+        final long timestamp;
+        int quantity;
+
+        PendingDrop(String itemName, int quantity) {
+            this.itemName = itemName;
+            this.quantity = quantity;
+            this.timestamp = System.currentTimeMillis();
+        }
+        
+        boolean isExpired() {
+            return System.currentTimeMillis() - timestamp > PENDING_DROP_WINDOW;
+        }
+
+        void updateQuantity(int newQuantity) {
+            this.quantity = newQuantity;
+        }
+    }
 
     private static long sessionStartTime = System.currentTimeMillis();
     private static long lastActivityTime = System.currentTimeMillis();
@@ -39,22 +62,48 @@ public class ItemTrackerData {
             priceClient = null;
         }
     }
-
-    public static boolean wasCountedAsBook(String itemName) {
-        if (itemName == null || itemName.trim().isEmpty()) return false;
-        return successfulBooks.contains(itemName);
-    }
-
-    public static void clearSuccessfulBooks() {
-        successfulBooks.clear();
-    }
-
-    public static void addDrop(String itemName, int quantity) {
-        addDrop(itemName, quantity, null);
-    }
-
-    public static void addDrop(String itemName, int quantity, @Nullable Text originalMessage) {
+    
+    /**
+     * Register a drop detected from chat. This creates a pending drop that will be
+     * matched with inventory tracking to avoid duplicates.
+     * 
+     * @param itemName The normalized item name
+     * @param quantity The quantity dropped
+     * @param isBook Whether this is a book drop (noti styling)
+     */
+    public static void registerPendingDrop(String itemName, int quantity) {
         if (itemName == null || itemName.trim().isEmpty()) return;
+        String normalizedName = normalizeItemName(itemName);
+        pendingChatDrops.add(new PendingDrop(normalizedName, quantity));
+        cleanupExpiredPendingDrops();
+    }
+    
+    private static void cleanupExpiredPendingDrops() {
+        pendingChatDrops.removeIf(PendingDrop::isExpired);
+    }
+
+    /** Overload for non-book chat drops */
+    public static void addDrop(String itemName, int quantity) {
+        addDrop(itemName, quantity, null, null);
+    }
+
+    /** Overload for book chat drops */
+    public static void addDrop(String itemName, int quantity, @Nullable Text originalMessage) {
+        addDrop(itemName, quantity, originalMessage, null);
+    }
+    
+    /**
+     * Add a drop to tracking.
+     * 
+     * @param itemName The item name
+     * @param quantity The quantity
+     * @param originalMessage Original chat message (for book rarity detection)
+     * @param uuid The UUID of the item from inventory (null for chat-only drops)
+     * 
+     * @return DropResult indicating if already counted and if notification should be sent
+     */
+    public static DropResult addDrop(String itemName, int quantity, @Nullable Text originalMessage, @Nullable String uuid) {
+        if (itemName == null || itemName.trim().isEmpty()) return new DropResult(false, false);
 
         long currentTime = System.currentTimeMillis();
         long timeSinceLastActivity = currentTime - lastActivityTime;
@@ -69,24 +118,57 @@ public class ItemTrackerData {
         if (originalMessage != null) {
             boolean isUltimate = extractBookRarity(itemName, originalMessage);
             normalizedName = isUltimate ? "ultimate_" + itemName : itemName;
-            successfulBooks.add(normalizedName);
         } else {
             normalizedName = normalizeItemName(itemName);
         }
+        
+        if (uuid != null && seenUUIDs.contains(uuid)) {
+            return new DropResult(true, false);
+        }
+
+        return potentialNewDrop(normalizedName, quantity, uuid);
+    }
+
+    private static DropResult potentialNewDrop(String normalizedName, int quantity, @Nullable String uuid) {
+
+        PendingDrop matchingPending = null;
+        for (PendingDrop pending : pendingChatDrops) {
+            if (pending.itemName.equals(normalizedName) && !pending.isExpired()) {
+                matchingPending = pending;
+                break;
+            }
+        }
+        
+        boolean wasPending = matchingPending != null;
+        
+        if (wasPending) {
+
+            if (quantity < matchingPending.quantity) {
+                matchingPending.updateQuantity(matchingPending.quantity - quantity);
+            } else pendingChatDrops.remove(matchingPending);
+        }
+        
+        if (uuid != null) seenUUIDs.add(uuid);
 
         itemCounts.merge(normalizedName, quantity, Integer::sum);
 
         if (priceClient != null && !itemValues.containsKey(normalizedName)) {
-            new Thread(() -> {
-                try {
-                    double price = priceClient.getBestPrice(normalizedName);
-                    if (price > 0) {
-                        itemValues.put(normalizedName, price);
-                    }
-                } catch (Exception e) {
-                    System.err.println("Error fetching price for " + normalizedName + ": " + e.getMessage());
-                }
-            }, "AutoPriceLookup-" + normalizedName.replaceAll(REGEX, "")).start();
+            getPrice(normalizedName);
+        }
+
+        return new DropResult(false, !wasPending);
+    }
+    
+    /**
+     * Result of adding a drop
+     */
+    public static class DropResult {
+        public final boolean alreadyCounted;
+        public final boolean shouldNotify;
+        
+        public DropResult(boolean alreadyCounted, boolean shouldNotify) {
+            this.alreadyCounted = alreadyCounted;
+            this.shouldNotify = shouldNotify;
         }
     }
 
@@ -132,6 +214,8 @@ public class ItemTrackerData {
         sessionStartTime = System.currentTimeMillis();
         lastActivityTime = System.currentTimeMillis();
         totalPausedTime = 0;
+        pendingChatDrops.clear();
+        seenUUIDs.clear();
         ApiCache.cleanupExpiredEntries();
     }
     
@@ -252,17 +336,12 @@ public class ItemTrackerData {
         return estimatedValue;
     }
     
-    // Get the estimated value of an item, used when no bazaar or auction data is available
     public static double getItemValue(String itemName) {
         String normalizedName = normalizeItemName(itemName);
-        
-        // Check if we have a cached value
         Double cachedValue = itemValues.get(normalizedName);
-        if (cachedValue != null) {
-            return cachedValue;
-        }
+
+        if (cachedValue != null)  return cachedValue;
         
-        // Try to fetch from API if client is initialized
         if (priceClient != null) {
             double apiValue = priceClient.getBestPrice(itemName);
             if (apiValue > 0) {
@@ -271,26 +350,20 @@ public class ItemTrackerData {
             }
         }
         
-        // Fallback to estimated values for items not on bazaar
         double estimatedValue = getEstimatedValue(normalizedName);
         itemValues.put(normalizedName, estimatedValue);
         return estimatedValue;
     }
     
     private static double getEstimatedValue(String itemName) {
-        // Fallback shard value
-        if (itemName.contains("shard")) {
-            return 1000.0;
-        }
+        if (itemName.contains("shard")) return 1000.0;
 
-        // Npc prices/ah stack estimates
+        // Npc prices
         switch (itemName.toLowerCase()) {
             case ENCHANTED_BOOK:
                 return 1.0;
             case "ender chestplate", "ender leggings", "ender boots", "ender helmet":
                 return 10000.0;
-            case "lushlilac":
-                return 15000.0;
             case "crown of greed":
                 return 1000000.0;
             default:
@@ -340,7 +413,19 @@ public class ItemTrackerData {
         }
     }
 
-    // Returns the price client instance for direct access (used by commands)
+    private static void getPrice(String item) {
+        new Thread(() -> {
+            try {
+                double price = priceClient.getBestPrice(item);
+                if (price > 0) {
+                    itemValues.put(item, price);
+                }
+            } catch (Exception e) {
+                System.err.println("Error fetching price for " + item + ": " + e.getMessage());
+            }
+        }, "AutoPriceLookup-" + item.replaceAll(REGEX, "")).start();
+    }
+
     public static HypixelPriceClient getPriceClient() {
         return priceClient;
     }
@@ -380,7 +465,6 @@ public class ItemTrackerData {
             }
         }
         
-        // If no cached data, do async lookup
         new Thread(() -> {
             try {
                 double value = getItemValue(itemName);
@@ -425,7 +509,6 @@ public class ItemTrackerData {
         }, "BackgroundPriceUpdate").start();
     }
     
-    // Force refresh from the hud buttons
     public static void forceRefreshAuctionCache() {
         if (priceClient == null) return;
         

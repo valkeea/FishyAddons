@@ -7,24 +7,25 @@ import me.valkeea.fishyaddons.tool.FishyMode;
 import me.valkeea.fishyaddons.ui.VCRenderUtils;
 import me.valkeea.fishyaddons.ui.widget.VCTextField;
 import me.valkeea.fishyaddons.util.text.Color;
-import net.minecraft.client.font.TextRenderer;
+import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.TextFieldWidget;
+import net.minecraft.client.input.KeyInput;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 
 public class SearchMenu {
-    private final List<SearchEntry> allEntries;
-    private List<SearchEntry> filteredEntries;
-    private final int x, y, width, entryHeight;
-    private final Consumer<SearchEntry> onSelect;
-    private int hoveredIndex = -1;
-    private boolean visible = true;
+    private static final int MAX_VISIBLE_ENTRIES = 8;
     private final TextFieldWidget searchField;
     private final boolean usesExternalField;
+    private final int x, y, width, entryHeight;
+    private final Consumer<SearchEntry> onSelect;    
+    private final List<SearchEntry> allEntries;
+    private List<SearchEntry> filteredEntries;    
+    private int hoveredIndex = -1;
     private int scrollOffset = 0;
-    private static final int MAX_VISIBLE_ENTRIES = 8;
+    private boolean visible = true;
 
     public SearchMenu(List<SearchEntry> entries, int x, int y, int width, int entryHeight,
         Consumer<SearchEntry> onSelect, Screen screen) {
@@ -40,6 +41,7 @@ public class SearchMenu {
         this.width = width;
         this.entryHeight = entryHeight;
         this.onSelect = onSelect;
+
         if (externalField != null) {
             this.searchField = externalField;
             this.usesExternalField = true;
@@ -78,19 +80,17 @@ public class SearchMenu {
 
         if (!searchField.isFocused() && !usesExternalField) return;
 
-        TextRenderer textRenderer = screen.getTextRenderer();
+        var textRenderer = screen.getTextRenderer();
 
         int totalEntries = filteredEntries.size();
         int visibleEntries = Math.min(totalEntries, MAX_VISIBLE_ENTRIES);
 
-        // Clamp scrollOffset to valid range
         int maxOffset = Math.max(0, totalEntries - visibleEntries);
         if (scrollOffset > maxOffset) scrollOffset = maxOffset;
         if (scrollOffset < 0) scrollOffset = 0;
 
-        // Calculate dynamic entry heights
         int[] entryHeights = new int[visibleEntries];
-        int[][] lineCounts = new int[visibleEntries][2]; // [nameLines, descLines]
+        int[][] lineCounts = new int[visibleEntries][2];
         for (int i = 0; i < visibleEntries; i++) {
             int entryIndex = i + scrollOffset;
             if (entryIndex >= filteredEntries.size()) break;
@@ -119,11 +119,10 @@ public class SearchMenu {
             int textColor = hovered ? 0xFFFFFFFF : themeColor;
             String text = entry.displayName != null ? entry.displayName : entry.name;
             
-            context.getMatrices().push();
-            context.getMatrices().translate(0, 0, 500);
+            context.getMatrices().pushMatrix();
             VCRenderUtils.opaqueGradient(context, x, currentY, width, entryH, bgColor);
             context.drawText(textRenderer, text, x + 6, currentY + 2, textColor, false);
-            context.getMatrices().pop();
+            context.getMatrices().popMatrix();
 
             if (entry.description != null && !entry.description.isEmpty()) {
                 String[] lines = entry.description.split("\n");
@@ -143,8 +142,8 @@ public class SearchMenu {
         }
     }
 
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        if (keyCode == 256) {
+    public boolean keyPressed(KeyInput input) {
+        if (input.key() == 256) {
             if (searchField.isFocused()) {
                 searchField.setFocused(false);
                 return true;
@@ -155,24 +154,23 @@ public class SearchMenu {
         int totalEntries = filteredEntries.size();
         int visibleEntries = Math.min(totalEntries, MAX_VISIBLE_ENTRIES);
 
-        // Clamp to valid range
         int maxOffset = Math.max(0, totalEntries - visibleEntries);
         if (scrollOffset > maxOffset) scrollOffset = maxOffset;
         if (scrollOffset < 0) scrollOffset = 0;
 
-        if (keyCode == 264) {
+        if (input.key() == 264) {
             if (scrollOffset < maxOffset) {
                 scrollOffset++;
                 return true;
             }
-        } else if (keyCode == 265 && scrollOffset > 0) {
+        } else if (input.key() == 265 && scrollOffset > 0) {
             scrollOffset--;
             return true;
         }
-        return searchField.keyPressed(keyCode, scanCode, modifiers);
+        return searchField.keyPressed(input);
     }
 
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+    public boolean mouseClicked(Click click, boolean doubled) {
         if (!visible) return false;
 
         int totalEntries = filteredEntries.size();
@@ -194,7 +192,7 @@ public class SearchMenu {
             int entryIndex = i + scrollOffset;
             int entryH = entryHeights[i];
             int entryBottom = entryTop + entryH;
-            if (mouseX >= x && mouseX <= x + width && mouseY >= entryTop && mouseY <= entryBottom) {
+            if (click.x() >= x && click.x() <= x + width && click.y() >= entryTop && click.y() <= entryBottom) {
                 onSelect.accept(filteredEntries.get(entryIndex));
                 searchField.setFocused(false);
                 return true;
@@ -202,8 +200,8 @@ public class SearchMenu {
             entryTop = entryBottom;
         }
 
-        if (!(mouseX >= x && mouseX <= x + width && mouseY >= searchField.getY() &&
-            mouseY <= searchField.getY() + searchField.getHeight())) {
+        if (!(click.x() >= x && click.x() <= x + width && click.y() >= searchField.getY() &&
+            click.y() <= searchField.getY() + searchField.getHeight())) {
             searchField.setFocused(false);
         }
         return false;

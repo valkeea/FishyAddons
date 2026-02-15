@@ -1,5 +1,6 @@
 package me.valkeea.fishyaddons.ui.widget;
 
+import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
 
 public class VCSlider {
@@ -88,7 +89,10 @@ public class VCSlider {
         context.fill(knobX + knobWidth - 1, knobY, knobX + knobWidth, knobY + knobHeight, 0xC0666666);
     }
     
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+    public boolean mouseClicked(Click click) {
+        double mouseX = click.x();
+        double mouseY = click.y();
+        int button = click.button();
         if (button == 0 && isMouseOver(mouseX, mouseY)) {
             isDragging = true;
             updateValue(mouseX);
@@ -97,17 +101,17 @@ public class VCSlider {
         return false;
     }
     
-    public boolean mouseReleased(int button) {
-        if (button == 0 && isDragging) {
+    public boolean mouseReleased(Click click) {
+        if (click.button() == 0 && isDragging) {
             isDragging = false;
             return true;
         }
         return false;
     }
     
-    public boolean mouseDragged(double mouseX, int button) {
-        if (isDragging && button == 0) {
-            updateValue(mouseX);
+    public boolean mouseDragged(Click click) {
+        if (isDragging && click.button() == 0) {
+            updateValue(click.x());
             return true;
         }
         return false;

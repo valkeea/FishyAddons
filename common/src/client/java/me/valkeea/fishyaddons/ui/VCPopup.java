@@ -4,7 +4,10 @@ import me.valkeea.fishyaddons.ui.widget.VCButton;
 import me.valkeea.fishyaddons.ui.widget.VCTextField;
 import me.valkeea.fishyaddons.ui.widget.VCVisuals;
 import net.minecraft.client.font.TextRenderer;
+import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.input.CharInput;
+import net.minecraft.client.input.KeyInput;
 import net.minecraft.text.Text;
 
 /**
@@ -106,33 +109,35 @@ public class VCPopup {
 
 	public void render(DrawContext context, TextRenderer textRenderer, int mouseX, int mouseY, float delta) {
 		
-		me.valkeea.fishyaddons.render.FaLayers.renderAboveOverlay(context, () -> {
-			VCRenderUtils.opaqueGradient(context, x - width / 2, y, width, height, 0xFF252525);
-            VCRenderUtils.border(context, x - width / 2, y, width, height, 0xFF000000);
-			VCText.drawScaledCenteredText(context, textRenderer, title.getString(), x, startY + (int)(10 * uiScale), VCVisuals.getThemeColor(), uiScale);
-		});
+		VCRenderUtils.opaqueGradient(context, x - width / 2, y, width, height, 0xFF252525);
+		VCRenderUtils.border(context, x - width / 2, y, width, height, 0xFF000000);
+		VCText.drawScaledCenteredText(context, textRenderer, title.getString(), x, startY + (int)(10 * uiScale), VCVisuals.getThemeColor(), uiScale);
 
-			if (leftButtonConfig != null && rightButtonConfig != null) {
-				leftButtonConfig.withHovered(VCButton.isHovered(
-					leftBtnX, buttonY, buttonW, buttonH, mouseX, mouseY));
-				rightButtonConfig.withHovered(VCButton.isHovered(
-					rightBtnX, buttonY, buttonW, buttonH, mouseX, mouseY));
+		if (leftButtonConfig != null && rightButtonConfig != null) {
+			leftButtonConfig.withHovered(VCButton.isHovered(
+				leftBtnX, buttonY, buttonW, buttonH, mouseX, mouseY));
+			rightButtonConfig.withHovered(VCButton.isHovered(
+				rightBtnX, buttonY, buttonW, buttonH, mouseX, mouseY));
 
-                me.valkeea.fishyaddons.render.FaLayers.renderAboveOverlay(context, () -> {
-				VCButton.render(context, textRenderer, leftButtonConfig);
-				VCButton.render(context, textRenderer, rightButtonConfig);
-				if (hasTextField && textField != null) {
-					textField.renderWidget(context, mouseX, mouseY, delta);
-				}				
-			});
+
+			VCButton.render(context, textRenderer, leftButtonConfig);
+			VCButton.render(context, textRenderer, rightButtonConfig);
+			if (hasTextField && textField != null) {
+				textField.renderWidget(context, mouseX, mouseY, delta);
+			}				
+
         }
 	}
 
-	public boolean mouseClicked(double mouseX, double mouseY, int button) {
+	public boolean mouseClicked(Click click) {
+
+		double mouseX = click.x();
+		double mouseY = click.y();
+
 		if (hasTextField && textField != null
 				&& mouseX >= textField.getX() && mouseX < textField.getX() + textField.getWidth()
 				&& mouseY >= textField.getY() && mouseY < textField.getY() + textField.getHeight()
-				&& textField.mouseClicked(mouseX, mouseY, button)) {
+				&& textField.mouseClicked(click, false)) {
 			return true;
 		}
 		return buttonClick(mouseX, mouseY);
@@ -159,16 +164,16 @@ public class VCPopup {
 		return false;
 	}    
 
-	public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+	public boolean keyPressed(KeyInput input) {
 		if (hasTextField && textField != null) {
-			return textField.keyPressed(keyCode, scanCode, modifiers);
+			return textField.keyPressed(input);
 		}
 		return false;
 	}
 
-	public boolean charTyped(char chr, int modifiers) {
+	public boolean charTyped(CharInput chr) {
 		if (hasTextField && textField != null) {
-			return textField.charTyped(chr, modifiers);
+			return textField.charTyped(chr);
 		}
 		return false;
 	}

@@ -4,7 +4,7 @@ import me.valkeea.fishyaddons.processor.ChatHandler;
 import me.valkeea.fishyaddons.processor.ChatHandlerResult;
 import me.valkeea.fishyaddons.processor.ChatMessageContext;
 import me.valkeea.fishyaddons.tracker.profit.SackDropParser;
-import me.valkeea.fishyaddons.tracker.profit.TrackerUtils;
+import me.valkeea.fishyaddons.tracker.profit.ProfitTracker;
 
 public class HoverEventHandler implements ChatHandler {
     
@@ -32,7 +32,7 @@ public class HoverEventHandler implements ChatHandler {
     public ChatHandlerResult handle(ChatMessageContext context) {
         
         try {
-            if (TrackerUtils.checkForHoverEvents(context.getOriginalText())) {
+            if (ProfitTracker.checkForHoverEvents(context.getOriginalText())) {
                 return ChatHandlerResult.STOP;
             }
             return ChatHandlerResult.CONTINUE;
@@ -46,6 +46,6 @@ public class HoverEventHandler implements ChatHandler {
     
     @Override
     public boolean isEnabled() {
-        return SackDropParser.isOn() || TrackerUtils.isEnabled();
+        return SackDropParser.isOn() || ProfitTracker.isEnabled();
     }
 }

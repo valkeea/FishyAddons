@@ -45,6 +45,8 @@ public class StringUtils {
         String[] desiredWords = desired.toLowerCase().split("[ _]");
         String[] inputWords = input.toLowerCase().split("[ _]");
 
+        if (desiredWords.length == 0 || inputWords.length == 0) return false;
+        
         for (String dWord : desiredWords) {
             for (String iWord : inputWords) {
                 int distance = levenshteinDistance(dWord, iWord);

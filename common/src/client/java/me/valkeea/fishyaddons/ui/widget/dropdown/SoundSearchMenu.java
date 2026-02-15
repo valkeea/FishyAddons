@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 import me.valkeea.fishyaddons.ui.widget.VCTextField;
+import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.registry.Registries;
 import net.minecraft.util.Identifier;
@@ -46,26 +47,23 @@ public class SoundSearchMenu extends SearchMenu {
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+    public boolean mouseClicked(Click click, boolean doubled) {
         if (!isVisible()) return false;
 
-        // Handle right-click for sound preview
-        if (button == 1) {
-            return handleRightClick(mouseX, mouseY);
+        if (click.button() == 1) {
+            return handleRightClick(click.x(), click.y());
         }
-        
-        // For left clicks and everything else, use the base class implementation
-        return super.mouseClicked(mouseX, mouseY, button);
+
+        return super.mouseClicked(click, doubled);
     }
     
     private boolean handleRightClick(double mouseX, double mouseY) {
+
         int totalEntries = getFilteredEntries().size();
         int visibleEntries = Math.min(totalEntries, getMaxVisibleEntries());
-        
-        // Calculate entry heights and positions
         int[] entryHeights = calculateEntryHeights(visibleEntries);
-        
         int entryTop = getY();
+
         for (int i = 0; i < visibleEntries; i++) {
             int entryIndex = i + getScrollOffset();
             if (entryIndex >= getFilteredEntries().size()) break;
@@ -84,15 +82,18 @@ public class SoundSearchMenu extends SearchMenu {
     }
     
     private int[] calculateEntryHeights(int visibleEntries) {
+
         int[] entryHeights = new int[visibleEntries];
+
         for (int i = 0; i < visibleEntries; i++) {
             int entryIndex = i + getScrollOffset();
             if (entryIndex >= getFilteredEntries().size()) break;
-            SearchEntry entry = getFilteredEntries().get(entryIndex);
+            var entry = getFilteredEntries().get(entryIndex);
             int descLines = 0;
             if (entry.description != null && !entry.description.isEmpty()) {
                 descLines = entry.description.split("\n").length;
             }
+
             entryHeights[i] = 14 + descLines * 12 + 4;
         }
         return entryHeights;

@@ -17,8 +17,10 @@ import me.valkeea.fishyaddons.ui.widget.dropdown.SoundSearchMenu;
 import me.valkeea.fishyaddons.ui.widget.dropdown.TextFormatMenu;
 import me.valkeea.fishyaddons.util.text.Enhancer;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.input.KeyInput;
 import net.minecraft.registry.Registries;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
@@ -232,7 +234,8 @@ public class AlertEditScreen extends Screen {
             warn();
             return;
         }
-        FishyConfig.AlertData newData = new FishyConfig.AlertData(
+
+        var newData = new FishyConfig.AlertData(
             msgField.getText(),
             alertTextField.getText(),
             alertColor,
@@ -245,23 +248,23 @@ public class AlertEditScreen extends Screen {
         if (!newKey.equals(alertKey)) {
             FishyConfig.removeChatAlert(alertKey);
         }
+
         FishyConfig.setChatAlert(newKey, newData);
     }
 
 	public void warn() {
-        MinecraftClient cl = MinecraftClient.getInstance();        
-        VCPopup popup = new VCPopup(
+        var client = MinecraftClient.getInstance();        
+        var popup = new VCPopup(
             Text.literal("Empty field detected! Would you like to restore it?"),
-            "No", () -> cl.setScreen(parent),
+            "No", () -> client.setScreen(parent),
             "Yes", () -> keyField.setText(alertKey),
             1.0f
             );
-        cl.setScreen(new VCOverlay(cl.currentScreen, popup));
+        client.setScreen(new VCOverlay(client.currentScreen, popup));
 	}    
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        this.renderBackground(context, mouseX, mouseY, delta);
         super.render(context, mouseX, mouseY, delta);
         renderGuideText(context);
 
@@ -277,8 +280,6 @@ public class AlertEditScreen extends Screen {
         int x = centerX - 380;
         int y = centerY - 90;
         int w = 300;
-        
-        checkTooltip(context, mouseX, mouseY);
 
         context.drawText(this.textRenderer, "Detected String", x, y, 0xFF808080, false);
         context.drawText(this.textRenderer, "Location", x + w + 10, y, 0xFF808080, false);
@@ -294,11 +295,14 @@ public class AlertEditScreen extends Screen {
         }
 
         if (formatMenu != null && formatMenu.isVisible()) {
-            context.getMatrices().push();
-            context.getMatrices().translate(0, 0, 300);
+            context.createNewRootLayer();
+            context.getMatrices().pushMatrix();
+            context.getMatrices().translate(0, 0);
             formatMenu.render(context, this, mouseX, mouseY);
-            context.getMatrices().pop();
-        }        
+            context.getMatrices().popMatrix();
+        }
+
+        checkTooltip(context, mouseX, mouseY);        
     }
 
     private void checkTooltip(DrawContext context, int mouseX, int mouseY) {
@@ -321,15 +325,13 @@ public class AlertEditScreen extends Screen {
                         tooltipY = mouseY + 20;
                     }
 
-                    context.getMatrices().push();
-                    context.getMatrices().translate(0, 0, 300);
+                    context.createNewRootLayer();
                     context.fill(tooltipX, tooltipY, 
                                tooltipX + tooltipWidth + 6, tooltipY + tooltipHeight + 4, 
                                0xFF171717);
                     
                     context.drawText(this.textRenderer, formattedPreview, 
                                    tooltipX + 3, tooltipY + tooltipHeight / 3, 0xFFFFFFFF, true);
-                    context.getMatrices().pop();
                                    
                 } catch (Exception e) {
                     System.err.println("[FishyAddons] Error rendering tooltip: " + e.getMessage());
@@ -353,14 +355,11 @@ public class AlertEditScreen extends Screen {
             tooltipY = mouseY + 20;
         }
                     
-        context.getMatrices().push();
-        context.getMatrices().translate(0, 0, 300);
         context.fill(tooltipX - 5, tooltipY - 5, 
                     tooltipX + tooltipWidth + 5, tooltipY + tooltipHeight + 5, 
                     0xFF171717);
         context.drawText(this.textRenderer, Text.literal(errorText), 
                     tooltipX + 5, tooltipY + 10, 0xFFFF8080, true);
-        context.getMatrices().pop();
     }    
 
     public void renderGuideText(DrawContext context) {       
@@ -409,7 +408,7 @@ public class AlertEditScreen extends Screen {
                 continue;
             }
 
-            Formatting format = Formatting.GRAY;
+            var format = Formatting.GRAY;
             if (instruction.startsWith(" •") || instruction.matches("\\d+\\..*")) {
                 format = Formatting.AQUA;
             } else if (instruction.contains("-")) {
@@ -418,7 +417,7 @@ public class AlertEditScreen extends Screen {
                 format = Formatting.DARK_GRAY;
             }
     
-            Text text = Text.literal(instruction).formatted(format);
+            var text = Text.literal(instruction).formatted(format);
             context.drawTextWithShadow(this.textRenderer, text, x, y, 0xFFFFFFFF);
             y += lineHeight;
         }              
@@ -432,9 +431,9 @@ public class AlertEditScreen extends Screen {
         }
     }
     
-    private boolean handleMenu(double mouseX, double mouseY) {
+    private boolean handleMenu(Click click) {
         if (formatMenu != null && formatMenu.isVisible()) {
-            if (formatMenu.mouseClicked(mouseX, mouseY)) {
+            if (formatMenu.mouseClicked(click)) {
                 return true;
             }
             formatMenu.setVisible(false);
@@ -444,18 +443,22 @@ public class AlertEditScreen extends Screen {
     }    
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (handleMenu(mouseX, mouseY)) {
+    public boolean mouseClicked(Click click, boolean doubled) {
+
+        double mouseX = click.x();
+        double mouseY = click.y();
+
+        if (handleMenu(click)) {
             return true;
         }
 
-        if (volumeSlider != null && volumeSlider.mouseClicked(mouseX, mouseY, button)) {
+        // Handle volume slider clicks
+        if (volumeSlider != null && volumeSlider.mouseClicked(click)) {
             return true;
         }
 
-        List<VCTextField> fields = List.of(msgField, alertTextField, soundIdField, keyField);
         boolean clickedField = false;
-        for (VCTextField field : fields) {
+        for (var field : List.of(msgField, alertTextField, soundIdField, keyField)) {
             if (field.isMouseOver(mouseX, mouseY)) {
                 lastFocusedField = field;
                 clickedField = true;
@@ -468,25 +471,25 @@ public class AlertEditScreen extends Screen {
             toggleFormatMenu(false);
         }
 
-        if (searchMenu != null && searchMenu.mouseClicked(mouseX, mouseY, button)) {
+        if (searchMenu != null && searchMenu.mouseClicked(click, doubled)) {
             return true;
         }
-        return super.mouseClicked(mouseX, mouseY, button);
+        return super.mouseClicked(click, doubled);
     }
 
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        if (searchMenu != null && soundIdField.isFocused() && searchMenu.keyPressed(keyCode, scanCode, modifiers)) {
+    public boolean keyPressed(KeyInput input) {
+        if (searchMenu != null && soundIdField.isFocused() && searchMenu.keyPressed(input)) {
             return true;
         }
 
-        if (keyCode == 292) {
+        if (input.key() == 292) {
             toggleFormatMenu(true);
             return true;
         }        
 
-        return super.keyPressed(keyCode, scanCode, modifiers);
-    }    
+        return super.keyPressed(input);
+    }     
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
@@ -500,23 +503,23 @@ public class AlertEditScreen extends Screen {
     }
 
     @Override
-    public boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
-        if (volumeSlider != null && volumeSlider.mouseDragged(mouseX, button)) {
+    public boolean mouseDragged(Click click, double offsetX, double offsetY) {
+        if (volumeSlider != null && volumeSlider.mouseDragged(click)) {
             return true;
         }
-        
-        if (formatMenu != null && formatMenu.isVisible() && formatMenu.mouseDragged(mouseY)) {
+
+        if (formatMenu != null && formatMenu.isVisible() && formatMenu.mouseDragged(click)) {
             return true;
         }
-        return super.mouseDragged(mouseX, mouseY, button, deltaX, deltaY);
+        return super.mouseDragged(click, offsetX, offsetY);
     }
 
     @Override
-    public boolean mouseReleased(double mouseX, double mouseY, int button) {
-        if (volumeSlider != null && volumeSlider.mouseReleased(button)) {
+    public boolean mouseReleased(Click click) {
+        if (volumeSlider != null && volumeSlider.mouseReleased(click)) {
             return true;
         }
-        return super.mouseReleased(mouseX, mouseY, button);
+        return super.mouseReleased(click);
     }
 
     @Override

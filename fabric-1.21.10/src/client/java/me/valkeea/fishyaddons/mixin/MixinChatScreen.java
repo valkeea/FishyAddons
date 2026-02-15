@@ -18,12 +18,12 @@ public class MixinChatScreen {
     private void onMouseClicked(Click click, boolean doubled, CallbackInfoReturnable<Boolean> cir) {
         
         if (click.button() == 1 && CopyChat.isOn()) {
-            MinecraftClient client = MinecraftClient.getInstance();
+            var c = MinecraftClient.getInstance();
 
-            if (client.currentScreen instanceof ChatScreenAccessor accessor) {
-                Style style = accessor.invokeGetTextStyleAt(click.x(), click.y());
+            if (c != null && c.currentScreen instanceof ChatScreenAccessor cs) {
+                Style style = cs.invokeGetTextStyleAt(click.x(), click.y());
                 if (style == null) return;
-                CopyChat.tryCopyChat(click.x(), click.y());
+                CopyChat.tryCopyChat(c, click.x(), click.y());
                 cir.setReturnValue(true);
             }  
         }

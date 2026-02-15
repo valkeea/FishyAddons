@@ -5,6 +5,7 @@ import java.util.Map;
 import me.valkeea.fishyaddons.config.FishyConfig;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
+import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
@@ -84,30 +85,32 @@ public class AliasEntryList extends GenericEntryList {
         return !key.isEmpty() && !value.isEmpty() && key.startsWith("/") && value.startsWith("/");
     }
 
-    public boolean handleMouseClicked(double mouseX, double mouseY, int button, TabbedListScreen screen) {
-        GenericEntryList.GenericEntry entry = getHoveredCommandEntry();
+    public boolean handleMouseClicked(Click click, TabbedListScreen screen) {
+        
+        var entry = getHoveredCommandEntry();
+
         if (entry == null) return false;
         if (entry.inputWidget instanceof TextFieldWidget field) {
-            if (field.mouseClicked(mouseX, mouseY, button)) {
+            if (field.mouseClicked(click, false)) {
                 field.setFocused(true);
                 screen.setFocused(field);
                 return true;
             }
-        } else if (entry.inputWidget instanceof ButtonWidget btn) {
-            if (btn.mouseClicked(mouseX, mouseY, button)) {
-                btn.setFocused(true);
-                screen.setFocused(btn);
-                return true;
-            }
+
+        } else if (entry.inputWidget instanceof ButtonWidget btn && btn.mouseClicked(click, false)) {
+            btn.setFocused(true);
+            screen.setFocused(btn);
+            return true;
         }
-        if (entry.outputField.mouseClicked(mouseX, mouseY, button)) {
+
+        if (entry.outputField.mouseClicked(click, false)) {
             entry.outputField.setFocused(true);
             screen.setFocused(entry.outputField);
             return true;
         }
-        if (entry.saveButton.mouseClicked(mouseX, mouseY, button)) return true;
-        if (entry.deleteButton.mouseClicked(mouseX, mouseY, button)) return true;
-        if (entry.toggleButton.mouseClicked(mouseX, mouseY, button)) return true;
-        return false;
+
+        if (entry.saveButton.mouseClicked(click, false)) return true;
+        if (entry.deleteButton.mouseClicked(click, false)) return true;
+        return entry.toggleButton.mouseClicked(click, false);
     }
 }

@@ -10,8 +10,8 @@ import me.valkeea.fishyaddons.hud.core.HudElement;
 import me.valkeea.fishyaddons.hud.core.HudElementState;
 import me.valkeea.fishyaddons.tool.FishyMode;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.render.RenderLayer;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 
@@ -73,27 +73,27 @@ public class CakeDisplay implements HudElement {
             context.fill(shadowX1, shadowY1, shadowX2, shadowY2, 0x80000000);
         }
 
-        context.getMatrices().push();
-        context.getMatrices().translate(hudX, hudY, 0);
-        context.getMatrices().scale(scale, scale, 1.0F);    
+        context.getMatrices().pushMatrix();
+        context.getMatrices().translate(hudX, hudY);
+        context.getMatrices().scale(scale, scale);
 
         var cakeTexture = Identifier.of("fishyaddons", "textures/gui/" + FishyMode.getTheme() + "/cake.png");
         context.drawTexture(
-            RenderLayer::getGuiTextured,
+            RenderPipelines.GUI_TEXTURED,
             cakeTexture,
             0, -3, 0, 0, 12, 12, 12, 12
-        );
+        ); 
 
         int textX = iconSize + 2;
 
         var drawer = new HudDrawer(mc, context, state);
         if (!symbolText.isEmpty()) {
-            drawer.drawText(symbolTextComponent, textX, 0, 0x808080);
+            drawer.drawText(symbolTextComponent, textX, 0, 0xFF808080);
             textX += symbolWidth + symbolPadding;
         }
 
         drawer.drawText(timerText, textX, 0, color);
-        context.getMatrices().pop();
+        context.getMatrices().popMatrix();
     }
 
     @Override

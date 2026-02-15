@@ -111,8 +111,8 @@ public class ScStats {
                 return;
             }
 
-            var playerPos = MinecraftClient.getInstance().player.getPos();
-            var hsptPos = hspt.getPos();
+            var playerPos = MinecraftClient.getInstance().player.getEntityPos();
+            var hsptPos = hspt.getEntityPos();
             var horizontalDistance = Math.sqrt(Math.pow(playerPos.x - hsptPos.x, 2) + Math.pow(playerPos.z - hsptPos.z, 2));
 
             if (horizontalDistance <= 13.0 && !isHotspot) {
@@ -149,7 +149,7 @@ public class ScStats {
             return false;
         }
         
-        var currentPos = client.player.getPos();
+        var currentPos = client.player.getEntityPos();
         if (lastCheckedPosition != null) {
 
             var distanceMoved = currentPos.distanceTo(lastCheckedPosition);

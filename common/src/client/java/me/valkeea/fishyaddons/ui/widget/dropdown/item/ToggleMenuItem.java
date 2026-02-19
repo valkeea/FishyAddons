@@ -1,4 +1,4 @@
-package me.valkeea.fishyaddons.ui.widget.dropdown;
+package me.valkeea.fishyaddons.ui.widget.dropdown.item;
 
 import net.minecraft.text.Text;
 
@@ -25,7 +25,7 @@ public interface ToggleMenuItem {
      * Toggle the enabled state of this item
      */
     void toggle();
-    
+
     /**
      * Handle right-click on this item. Default implementation does nothing.
      * @return true if the right-click was handled, false otherwise
@@ -35,9 +35,16 @@ public interface ToggleMenuItem {
     }
     
     /**
-     * @return true if this item supports right-click actions
+     * @return true if this item supports right-click actions.
      */
     default boolean supportsRightClick() {
+        return false;
+    }
+    
+    /**
+     * @return true if this item should use fixed width with scrolling text overflow.
+     */
+    default boolean useFixedWidth() {
         return false;
     }
     

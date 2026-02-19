@@ -1,6 +1,7 @@
-package me.valkeea.fishyaddons.ui.widget.dropdown;
+package me.valkeea.fishyaddons.ui.widget.dropdown.item;
 
 import me.valkeea.fishyaddons.config.FishyConfig;
+import me.valkeea.fishyaddons.ui.widget.dropdown.item.ToggleMenuItem;
 
 public class NetworkDisplayItem implements ToggleMenuItem {
     private final String displayKey;

@@ -19,6 +19,7 @@ public final class VCConstants {
     public static final int BASE_HEADER_HEIGHT = 35;
     public static final int BASE_ENTRY_WIDTH = 800;
     public static final int BASE_SEARCH_HEIGHT = 24;
+    public static final int BASE_FIELD_WIDTH = 80;
     
     // Minimum dimensions to ensure usability at very small scales
     public static final int MIN_ENTRY_HEIGHT = 35;
@@ -40,6 +41,7 @@ public final class VCConstants {
     // Entry width calculations
     public static final int MIN_DYNAMIC_WIDTH_SMALL = 200;
     public static final int MIN_DYNAMIC_WIDTH_NORMAL = 300;
+    public static final int MAX_ENTRY_WIDTH = 1000;
     
     // Utility methods for dimension calculations
     public static int getEntryHeight(float uiScale) {
@@ -64,7 +66,7 @@ public final class VCConstants {
         float scale = Math.min(uiScale, 1.0f);
         int scaledWidth = (int) (BASE_ENTRY_WIDTH * scale);
         int dynamicMinWidth = uiScale < SMALL_SCALE_THRESHOLD ? MIN_DYNAMIC_WIDTH_SMALL : MIN_DYNAMIC_WIDTH_NORMAL;
-        return Math.max(dynamicMinWidth, scaledWidth);
+        return Math.clamp(scaledWidth, dynamicMinWidth, MAX_ENTRY_WIDTH);
     }
     
     public static int getSearchHeight(float uiScale) {

@@ -10,8 +10,7 @@ import me.valkeea.fishyaddons.config.ItemConfig;
 import me.valkeea.fishyaddons.config.Key;
 import me.valkeea.fishyaddons.feature.item.safeguard.BlacklistManager;
 import me.valkeea.fishyaddons.tool.FishyMode;
-import me.valkeea.fishyaddons.ui.VCScreen.ExtraControl;
-import me.valkeea.fishyaddons.ui.widget.dropdown.ToggleMenuItem;
+import me.valkeea.fishyaddons.ui.widget.dropdown.item.ToggleMenuItem;
 import net.minecraft.text.Text;
 
 /**
@@ -31,7 +30,8 @@ public class VCEntry {
         SLIDER,
         TOGGLE_WITH_SLIDER,
         TOGGLE_WITH_DROPDOWN,
-        DROPDOWN
+        DROPDOWN,
+        FIELD_WITH_DROPDOWN
     }
     
     public final String name;
@@ -54,6 +54,9 @@ public class VCEntry {
     protected final String hudElementName;
     protected final boolean hasColorControl;
     protected final boolean hasAdd;
+
+    // Text field
+    public final String fieldValue;
 
     // Keybind entries
     private boolean isListening = false;
@@ -95,6 +98,7 @@ public class VCEntry {
         this.hudElementName = builder.hudElementName;
         this.hasColorControl = builder.hasColorControl;
         this.hasAdd = builder.hasAdd;
+        this.fieldValue = builder.fieldValue;
         this.buttonText = builder.buttonText;
         this.simpleButtonConfigKey = builder.simpleButtonConfigKey;
         this.simpleButtonDefault = builder.simpleButtonDefault;
@@ -124,6 +128,7 @@ public class VCEntry {
         private String hudElementName = null;
         private boolean hasColorControl = false;
         private boolean hasAdd = false;
+        private String fieldValue = null;
         private String buttonText = null;
         private String simpleButtonConfigKey = null;
         private boolean simpleButtonDefault = false;
@@ -183,6 +188,11 @@ public class VCEntry {
 
         public Builder hasAdd(boolean hasAdd) {
             this.hasAdd = hasAdd;
+            return this;
+        }
+
+        public Builder fieldValue(String fieldValue) {
+            this.fieldValue = fieldValue;
             return this;
         }
 
@@ -333,6 +343,16 @@ public class VCEntry {
         return new Builder(name, description, EntryType.DROPDOWN)
             .dropdownButtonText(dropdownButtonText)
             .dropdownItemSupplier(itemSupplier)
+            .refreshAction(refreshAction)
+            .build();
+    }
+
+    // Field + dropdown
+    public static VCEntry fieldDropdown(String name, String description, String configKey, String fieldValue, Supplier<List<ToggleMenuItem>> itemSupplier, Runnable refreshAction) {
+        return new Builder(name, description, EntryType.FIELD_WITH_DROPDOWN)
+            .dropdownItemSupplier(itemSupplier)
+            .configKey(configKey)
+            .fieldValue(fieldValue)
             .refreshAction(refreshAction)
             .build();
     }
@@ -533,6 +553,10 @@ public class VCEntry {
     public String getHudElementName() {
         return hudElementName;
     }
+
+    public String fieldValue() {
+        return fieldValue;
+    }    
     
     public boolean hasColorControl() {
         return hasColorControl;
@@ -583,7 +607,7 @@ public class VCEntry {
     }
 
     private float uiScaleValue() {
-        return FishyConfig.getFloat(Key.MOD_UI_SCALE, 0.4265625f);
+        return FishyConfig.getFloat(Key.MOD_UI_SCALE, 0.8f);
     }
 
     private float themeValue() {
@@ -644,7 +668,8 @@ public class VCEntry {
     
     // Dropdown entry methods
     public boolean hasDropdown() {
-        return (type == EntryType.TOGGLE_WITH_DROPDOWN || type == EntryType.DROPDOWN) && dropdownItemSupplier != null;
+        return (type == EntryType.TOGGLE_WITH_DROPDOWN || type == EntryType.DROPDOWN ||
+            type == EntryType.FIELD_WITH_DROPDOWN) && dropdownItemSupplier != null;
     }
 
     public List<ToggleMenuItem> getDropdownItems() {
@@ -657,4 +682,32 @@ public class VCEntry {
     public String getDropdownButtonText() {
         return dropdownButtonText != null ? dropdownButtonText : "Configure";
     }
+
+    /**
+    * Optional redirection button for hud/colorwheel/gui redirect with autofocus,
+    * always last in reading order
+    */
+    public static class ExtraControl {
+        private final String elementName;
+        private final boolean hasColorControl;
+        private final boolean hasAdd;
+
+        public ExtraControl(String elementName, boolean hasColorControl, boolean hasAdd) {
+            this.elementName = elementName;
+            this.hasColorControl = hasColorControl;
+            this.hasAdd = hasAdd;
+        }
+        
+        public String getElementName() {
+            return elementName;
+        }
+        
+        public boolean hasColorControl() {
+            return hasColorControl;
+        }
+
+        public boolean hasAdd() {
+            return hasAdd;
+        }
+    }    
 }

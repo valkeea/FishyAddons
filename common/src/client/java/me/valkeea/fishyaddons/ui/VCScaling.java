@@ -71,6 +71,19 @@ public class VCScaling {
             return Math.max(95, scale(85)); //
         }
     }
+
+    /**
+     * Calculate textfield width
+     */
+    public int getFieldWidth() {
+        if (uiScale < 0.5f) {
+            return Math.max(40, (int)(VCConstants.BASE_FIELD_WIDTH * uiScale * 0.5f));
+        } else if (uiScale < 0.7f) {
+            return Math.max(50, (int)(VCConstants.BASE_FIELD_WIDTH * uiScale * 0.6f));
+        } else {
+            return scale(VCConstants.BASE_FIELD_WIDTH);
+        }
+    }
     
     /**
      * Calculate standard tab height
@@ -124,11 +137,11 @@ public class VCScaling {
      * Calculate background bounds for sub-entries
      */
     public Bounds getSubEntryBgBounds(int x, int y, int entryWidth, int entryHeight) {
-        int subBgWidth = (int)(entryWidth * 0.95f);
         int bgX = x + scale(5);
+        int subBgWidth = entryWidth - scale(10);
         return new Bounds(bgX, y, subBgWidth, entryHeight);
     }
-    
+
     /**
      * Represents a rectangular area with consistent scaling
      */

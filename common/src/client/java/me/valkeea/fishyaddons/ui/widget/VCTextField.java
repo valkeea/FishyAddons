@@ -1,6 +1,7 @@
 package me.valkeea.fishyaddons.ui.widget;
 
 import me.valkeea.fishyaddons.tool.FishyMode;
+import me.valkeea.fishyaddons.util.SpriteUtil;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gl.RenderPipelines;
@@ -13,7 +14,7 @@ import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 
 public class VCTextField extends TextFieldWidget {
-    private static final Identifier BG_TEXTURE = Identifier.of("fishyaddons", "textures/gui/default/textbg.png");
+    private static final Identifier BG_TEXTURE = SpriteUtil.createModSprite("gui/default/textbg");
 
     private boolean isDragging = false;    
     private boolean drawsBg = true;
@@ -42,7 +43,7 @@ public class VCTextField extends TextFieldWidget {
     @Override
     public void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
         
-        var focusedBg = Identifier.of("fishyaddons", "textures/gui/" + FishyMode.getTheme() + "/textbg_highlighted.png");        
+        var focusedBg = SpriteUtil.createModSprite("gui/" + FishyMode.getTheme() + "/textbg_highlighted");
         var texture = this.isFocused() ? focusedBg : BG_TEXTURE;
 
         if (drawsBg) {
@@ -71,12 +72,8 @@ public class VCTextField extends TextFieldWidget {
         this.setY(adjustedY);
         this.setX(adjustedX);
         
-        if (uiScale != 1.0f) {
-            this.setX(adjustedX + MinecraftClient.getInstance().textRenderer.fontHeight / 4);           
-            renderScaledText(context, mouseX, mouseY, delta);
-        } else {
-            super.renderWidget(context, mouseX, mouseY, delta);
-        }
+        this.setX(adjustedX + MinecraftClient.getInstance().textRenderer.fontHeight / 4);           
+        renderScaledText(context, mouseX, mouseY, delta);
         
         this.setDrawsBackground(oldDrawsBackground);        
         this.setY(originalY);

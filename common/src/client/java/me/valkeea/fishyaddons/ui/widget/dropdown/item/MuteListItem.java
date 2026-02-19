@@ -1,4 +1,4 @@
-package me.valkeea.fishyaddons.ui.widget.dropdown;
+package me.valkeea.fishyaddons.ui.widget.dropdown.item;
 
 import me.valkeea.fishyaddons.config.FishyConfig;
 

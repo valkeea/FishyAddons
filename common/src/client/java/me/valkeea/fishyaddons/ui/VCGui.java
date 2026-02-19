@@ -1,6 +1,5 @@
 package me.valkeea.fishyaddons.ui;
 
-import java.util.Map;
 import java.util.function.Supplier;
 
 import me.valkeea.fishyaddons.config.Key;
@@ -17,16 +16,13 @@ public class VCGui {
     private final VCScreen screen;
     private final Supplier<Integer> themeColorSupplier;
     private final Supplier<Float> uiScaleSupplier;
-    private final Supplier<Map<String, VCSlider>> sliderRegistrySupplier;
     
     public VCGui(VCScreen screen, 
                               Supplier<Integer> themeColorSupplier,
-                              Supplier<Float> uiScaleSupplier,
-                              Supplier<Map<String, VCSlider>> sliderRegistrySupplier) {
+                              Supplier<Float> uiScaleSupplier) {
         this.screen = screen;
         this.themeColorSupplier = themeColorSupplier;
         this.uiScaleSupplier = uiScaleSupplier;
-        this.sliderRegistrySupplier = sliderRegistrySupplier;
     }
     
     protected VCScaling getScaling() {
@@ -58,7 +54,7 @@ public class VCGui {
         int contentY = scaling.getContentY(y);
 
         // Name
-        int nameColor = isSubEntry ? Color.darken(themeColorSupplier.get(), 0.8f) : themeColorSupplier.get();
+        int nameColor = isSubEntry ? Color.mulRGB(themeColorSupplier.get(), 0.8f) : themeColorSupplier.get();
         String displayName = entry.name;
         VCText.drawScaledText(renderCtx.context, screen.getTextRenderer(), displayName, contentX, contentY, nameColor, uiScale);
 
@@ -247,7 +243,7 @@ public class VCGui {
             case SLIDER:
                 renderSliderControl(context, entry, x, y, mouseX, mouseY);
                 break;
-            case TOGGLE_WITH_DROPDOWN, DROPDOWN:
+            case TOGGLE_WITH_DROPDOWN, DROPDOWN, FIELD_WITH_DROPDOWN:
                 renderToggleWithDropdownControl(context, entry, x, y, mouseX, mouseY, entry.type);
                 break;
             case HEADER, EXPANDABLE:
@@ -400,7 +396,7 @@ public class VCGui {
 
     public void renderSliderControl(DrawContext context, VCEntry entry, int x, int y, int mouseX, int mouseY) {
         // Get or create persistent slider for this entry
-        VCSlider slider = getOrCreateSlider(entry);
+        VCSlider slider = screen.getOrCreateSlider(entry);
         if (slider == null) return;
 
         // Update slider position and value pre render if changed externally
@@ -440,7 +436,7 @@ public class VCGui {
         int toggleSliderGap = uiScale < 0.7f ? Math.max(2, (int)(4 * uiScale)) : (int)(6 * uiScale);
         currentX += toggleWidth + toggleSliderGap;
 
-        VCSlider slider = getOrCreateSlider(entry);
+        VCSlider slider = screen.getOrCreateSlider(entry);
         if (slider != null) {
             slider.setPosition(currentX, y + (buttonHeight - slider.getHeight()) / 2);
             slider.setValue(entry.getSliderValue());
@@ -448,13 +444,8 @@ public class VCGui {
             
             currentX += slider.getWidth() + (int)(8 * uiScale);
             
-            float value = entry.getSliderValue();
             String valueText;
-            if (value <= 0.0f) {
-                valueText = "Always";
-            } else {
-                valueText = String.format(entry.getFormatString(), value);
-            }
+            valueText = formatSliderValue(entry);
             int textColor = getSliderTextColor(entry);
             VCText.drawScaledText(context, screen.getTextRenderer(), valueText, currentX, y + (int)(7 * uiScale), textColor, uiScale);
         }
@@ -463,54 +454,45 @@ public class VCGui {
     private void renderToggleWithDropdownControl(DrawContext context, VCEntry entry, int x, int y, int mouseX, int mouseY, VCEntry.EntryType type) {
         int currentX = x;
         float uiScale = uiScaleSupplier.get();
-        int buttonHeight = (int)(18 * uiScale);
+        int buttonH = (int)(18 * uiScale);
         boolean enabled = entry.getToggleState();
-        int toggleWidth = (int)(30 * uiScale);
-        boolean toggleHovered = VCButton.isHovered(currentX, y, toggleWidth, buttonHeight, mouseX, mouseY);
+        int toggleW = (int)(30 * uiScale);
+        boolean toggleHovered = VCButton.isHovered(currentX, y, toggleW, buttonH, mouseX, mouseY);
         
         if (type == VCEntry.EntryType.TOGGLE_WITH_DROPDOWN) {
             VCButton.render(context, screen.getTextRenderer(),
-                VCButton.toggle(x, y, toggleWidth, buttonHeight, enabled)
+                VCButton.toggle(x, y, toggleW, buttonH, enabled)
                     .withHovered(toggleHovered)
                     .withScale(uiScale)
             );
         }
 
         int toggleDropdownGap = uiScale < 0.7f ? Math.max(2, (int)(4 * uiScale)) : (int)(6 * uiScale);
-        currentX += type == VCEntry.EntryType.TOGGLE_WITH_DROPDOWN ? (toggleWidth + toggleDropdownGap) : 0;
+        currentX += type == VCEntry.EntryType.TOGGLE_WITH_DROPDOWN ? (toggleW + toggleDropdownGap) : 0;
 
         String buttonText = entry.dropdownButtonText != null ? entry.dropdownButtonText : "CONF";
         int textWidth = screen.getTextRenderer().getWidth(buttonText);
-        int dropdownButtonWidth = Math.max((int)(40 * uiScale), (int)(textWidth * uiScale) + (int)(10 * uiScale));
+        int ddBtnW = Math.max((int)(40 * uiScale), (int)(textWidth * uiScale) + (int)(10 * uiScale));
         
-        boolean dropdownHovered = VCButton.isHovered(currentX, y, dropdownButtonWidth, buttonHeight, mouseX, mouseY);
+        boolean dropdownHovered = VCButton.isHovered(currentX, y, ddBtnW, buttonH, mouseX, mouseY);
         
+        if (type == VCEntry.EntryType.FIELD_WITH_DROPDOWN) {
+
+            var vctf = screen.getOrCreateTextField(entry, x, y, buttonH);
+            vctf.setPosition(currentX, y);
+            // Only set text if the field is not focused (to prevent overwriting user input)
+            if (!vctf.isFocused() && vctf.getText().isEmpty()) {
+                vctf.setText(entry.fieldValue());
+            }
+            vctf.render(context, mouseX, mouseY, uiScale);
+            return;
+        }
+
         VCButton.render(context, screen.getTextRenderer(),
-            VCButton.standard(currentX, y, dropdownButtonWidth, buttonHeight, buttonText)
+            VCButton.standard(currentX, y, ddBtnW, buttonH, buttonText)
                 .withHovered(dropdownHovered)
                 .withScale(uiScale)
         );
-    }
-
-    private VCSlider getOrCreateSlider(VCEntry entry) {
-        Map<String, VCSlider> sliderRegistry = sliderRegistrySupplier.get();
-        if (entry.configKey == null) return null;
-        
-        return sliderRegistry.computeIfAbsent(entry.configKey, key -> {
-            float uiScale = uiScaleSupplier.get();
-            
-            VCSlider slider = new VCSlider(0, 0, entry.getSliderValue(), entry.getMinValue(), 
-                entry.getMaxValue(), entry.getFormatString(), value -> {
-                entry.setSliderValue(value);
-                if (entry.valueChangeAction != null) {
-                    entry.valueChangeAction.accept(value);
-                }
-            });
-            
-            slider.setUIScale(uiScale);
-            
-            return slider;
-        });
     }
 
     public String formatSliderValue(VCEntry entry) {

@@ -7,9 +7,10 @@ import me.valkeea.fishyaddons.event.EventPhase;
 import me.valkeea.fishyaddons.event.EventPriority;
 import me.valkeea.fishyaddons.event.impl.FaEvents;
 import me.valkeea.fishyaddons.tool.PlaySound;
-import me.valkeea.fishyaddons.util.SbGui;
+import me.valkeea.fishyaddons.util.ContainerScanner;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
+import net.minecraft.client.gui.screen.ingame.InventoryScreen;
 import net.minecraft.item.ItemStack;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.slot.Slot;
@@ -30,13 +31,13 @@ public class SlotHandler {
 
     private static boolean isLockedClick(HandledScreen<?> screen, Slot hovered) {
         int index = hovered.id;
-        int invIndex = SlotHandler.remap(screen, index);
+        int invIndex = remap(screen, index);
         if (invIndex <= 8 || invIndex >= 44) return false;
         return isSlotLocked(invIndex);
     }
 
     private static boolean isBoundClick(HandledScreen<?> screen, Slot hovered, int index, int invIndex) {
-        if (!SlotHandler.isSlotBound(invIndex) || !SbGui.isPlayerInventory()) {
+        if (!isSlotBound(invIndex) || !ContainerScanner.isGuiOrInv()) {
             return false;
         }
 
@@ -143,28 +144,43 @@ public class SlotHandler {
         }
     }
 
+    /**
+     * Remap screen slot ids to normalize player inventory
+     * (5-8 armor, 9-35 main inventory, 36-43 hotbar, 44 / 9th hotbar slot is invalid).
+     * 
+     * @return Remapped slot id, or -1 if invalid
+     */
     public static int remap(HandledScreen<?> screen, int slotId) {
-        String guiClass = screen.getClass().getSimpleName();
-        if (guiClass.equals("class_490") && slotId >= 5 && slotId <= 43) {
-            return slotId;
-
-        } else if (guiClass.equals("class_476")) {
-            int s = slotId - 45;
-            if (s >= 9 && s <= 43) {
-                return s;
-
-            } else {
-                return -1;
-            }
-
-        } else {
-            return -1;
-        }
+        ScreenHandler handler = screen.getScreenHandler();
+        if (handler == null) return -1;
+        
+        int totalSlots = handler.slots.size();
+        
+        return screen instanceof InventoryScreen 
+            ? remapInventory(slotId)
+            : remapContainer(slotId, totalSlots);
     }
 
-    public static int indexToSlotId(HandledScreen<?> screen, int playerInvIndex) {
-        String guiClass = screen.getClass().getSimpleName();
-        if (!guiClass.equals("class_475")) return -1;
-        return playerInvIndex + 45;
+    /** Inventory is 1:1, slots 5-43 belong to the accessible player section */
+    private static int remapInventory(int slotId) {
+        return (slotId >= 5 && slotId <= 43)
+            ? slotId
+            : -1;
+    }
+
+    /** From the last 46 slots: 4-8 armor, 9-35 main inventory, 36-43 accessible hotbar */
+    private static int remapContainer(int slotId, int totalSlots) {
+        int playerStart = totalSlots - 36;
+        if (slotId < playerStart || slotId >= totalSlots) return -1;
+        
+        int relativeSlot = slotId - playerStart;
+        
+        if (relativeSlot < 27) {
+            return 9 + relativeSlot;
+
+        } else {
+            int hotbarIndex = relativeSlot - 27;
+            return hotbarIndex >= 8 ? -1 : 36 + hotbarIndex;
+        }
     }
 }

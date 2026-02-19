@@ -1,12 +1,14 @@
 package me.valkeea.fishyaddons.feature.skyblock;
 
-import me.valkeea.fishyaddons.config.FishyConfig;
-import me.valkeea.fishyaddons.config.Key;
-import net.minecraft.client.gui.screen.ingame.HandledScreen;
-import net.minecraft.item.ItemStack;
-import net.minecraft.screen.slot.Slot;
 import java.util.HashMap;
 import java.util.Map;
+
+import me.valkeea.fishyaddons.config.FishyConfig;
+import me.valkeea.fishyaddons.config.Key;
+import me.valkeea.fishyaddons.event.impl.FaEvents;
+import net.minecraft.client.gui.screen.ingame.GenericContainerScreen;
+import net.minecraft.item.ItemStack;
+import net.minecraft.screen.slot.Slot;
 
 /**
  * Detects init (changes) in equipment screen and updates EqTextures accordingly
@@ -14,14 +16,19 @@ import java.util.Map;
 public class EqDetector {
     
     private static boolean isEqScreen = false;
-    private static HandledScreen<?> currentEqScreen = null;
+    private static GenericContainerScreen currentEqScreen = null;
     private static final int[] EQUIPMENT_SLOTS = {10, 19, 28, 37};
     private static final Map<Integer, ItemStack> lastSeenStacks = new HashMap<>();
 
     private EqDetector() {}
 
-    public static void onScreen(HandledScreen<?> screen) {
-        if (!FishyConfig.getState(Key.EQ_DISPLAY, false)) return;
+    public static void init() {
+        FaEvents.SCREEN_OPEN.register(event -> onScreen(event.screen, event.titleString));
+        FaEvents.SCREEN_CLOSE.register(event -> onScreenClosed(event.titleString));
+    }
+
+    public static void onScreen(GenericContainerScreen screen, String title) {
+        if (!FishyConfig.getState(Key.EQ_DISPLAY, false) || !isEqScreen(title)) return;
         
         isEqScreen = true;
         currentEqScreen = screen;
@@ -32,16 +39,18 @@ public class EqDetector {
                 scanEquipmentSlots(screen, true);
             }
         }, 200L, taskName);
-    }
+    } 
     
-    public static boolean isEqScreen() {
-        return isEqScreen;
+    public static boolean isEqScreen(String title) {
+        return title.contains("Your Equipment and Stats");
     }
 
-    public static void onScreenClosed() {
-        isEqScreen = false;
-        currentEqScreen = null;
-        lastSeenStacks.clear();
+    public static void onScreenClosed(String title) {
+        if (isEqScreen(title)) {
+            isEqScreen = false;
+            currentEqScreen = null;
+            lastSeenStacks.clear();
+        }
     }
     
     public static void triggerRescan() {
@@ -50,7 +59,7 @@ public class EqDetector {
         }
     }
     
-    private static void scanEquipmentSlots(HandledScreen<?> screen, boolean forceUpdate) {
+    private static void scanEquipmentSlots(GenericContainerScreen screen, boolean forceUpdate) {
         if (!FishyConfig.getState(Key.EQ_DISPLAY, false)) return;
 
         var handler = screen.getScreenHandler();

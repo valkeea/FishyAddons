@@ -43,6 +43,8 @@ public class ItemSearchOverlay {
             event -> getInstance().handleMouseClicked(event.click, event.doubled),
             EventPriority.HIGH, EventPhase.PRE
         );
+
+        FaEvents.GUI_CHANGE.register(event -> getInstance().invalidateCache());
     }
 
     public static ItemSearchOverlay getInstance() {

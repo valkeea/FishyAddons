@@ -26,35 +26,50 @@ public class SpawnData {
         new SpawnZone(Island.HUB, 41, 43, null, null, 68, 70),
         new SpawnZone(Island.HUB, -251, -249, null, null, 44, 46),
         new SpawnZone(Island.HUB, -162, -160, null, null, -100, -99),
+        // New Hub
+        new SpawnZone(Island.HUB, -2, 1, 70, 80, -2, 2), // hub main
+        new SpawnZone(Island.HUB, 28, 31, 70, 80, 0, 3), // museum
+        new SpawnZone(Island.HUB, -221, -220, 73, 74, -16, -15), // hub park
+        new SpawnZone(Island.HUB, -145, -141, 76, 74, -185, -183), // hub den
+        new SpawnZone(Island.HUB, -1, 0, 64, 65, -188, -187), // hub mines
+        new SpawnZone(Island.HUB, 83, 86, 70, 75, -151, -149), // hub barn
         // Dungeon Hub
         new SpawnZone(Island.DH, -32, -29, 120, 122, -2, 2),
         // Crystal Hollows
         new SpawnZone(Island.CH, 500, 530, null, null, 500, 550),
         new SpawnZone(Island.CH, 200, 230, null, null, 400, 440),
         // Dwarven Mines
-        new SpawnZone(Island.DM, -60, -30, null, null, -130, -100),
-        new SpawnZone(Island.DM, 0, 1, null, null, -69, -68),
+        new SpawnZone(Island.DM, -50, -47, 198, 202, -125, -119),
+        new SpawnZone(Island.DM, -1, 2, 147, 149, -70, -67),
         // The End
         new SpawnZone(Island.END, -503, -501, null, null, -276, -274),
         new SpawnZone(Island.END, -570, -569, null, null, -319, -317),
         new SpawnZone(Island.END, -607, -605, null, null, -276, -274),
+        // New End: -503 10 -275, -569.9 7 -318, -606.5 22 -275
+        new SpawnZone(Island.END, -504, -502, 7, 12, -277, -273),
+        new SpawnZone(Island.END, -572, -567, 6, 9, -320, -316),
+        new SpawnZone(Island.END, -608, -605, 20, 24, -277, -273),
         // Farming Islands
         new SpawnZone(Island.FI, 100, 130, null, null, -230, -180),
         new SpawnZone(Island.FI, 140, 160, null, null, -320, -290),
-        new SpawnZone(Island.FI, 150, -170, null, null, -390, -350),
+        // New Farming Islands: 160.5 77 -370, 160.5 77 -370
+        new SpawnZone(Island.FI, 111, 115, 69, 73, -210, -205),
+        new SpawnZone(Island.FI, 158, 162, 75, 78, -372, -368),
         // Glacite Tunnels
-        new SpawnZone(Island.GT, -10, 10, null, null, 190, 210),
+        new SpawnZone(Island.GT, -1, 1, 127, 129, 198, 202),
         // Park
         new SpawnZone(Island.PARK, -485, -481, null, null, -43, -40),
         new SpawnZone(Island.PARK, -266, -264, null, null, -19, -16),
         new SpawnZone(Island.PARK, -468, -465, null, null, -34, -32),
         // Galatea
-        new SpawnZone(Island.GAL, -549, -546, null, null, -24, -21),
+        new SpawnZone(Island.GAL, -549, -541, 106, 110, -28, -21),
         new SpawnZone(Island.GAL, -645, -643, null, null, 1, 3),
         // Spider's Den
         new SpawnZone(Island.DEN, -357, -353, 85, 90, -349, -345),
         new SpawnZone(Island.DEN, -203, -200, 82, 84, -235, -231),
         new SpawnZone(Island.DEN, -190, -188, null, null, -311, -309),
+        // New den: 378 118.5 -261
+        new SpawnZone(Island.DEN, -380, -375, 117, 120, -263, -258),
         // Bayou
         new SpawnZone(Island.BAYOU, -14, -10, 72, 76, -13, -9),
         // Jerry

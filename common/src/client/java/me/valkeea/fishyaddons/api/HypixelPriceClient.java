@@ -18,13 +18,14 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
-import me.valkeea.fishyaddons.cache.ApiCache;
+import me.valkeea.fishyaddons.api.cache.PriceLookupCache;
+import me.valkeea.fishyaddons.api.cache.PriceLookupCache.PriceType;
 import net.minecraft.text.Text;
 
 public class HypixelPriceClient {
     private static final String BZ_API_URL = "https://api.hypixel.net/v2/skyblock/bazaar";
     private static final String AUCTIONS_API_URL = "https://api.hypixel.net/v2/skyblock/auctions";
-    private static final int BZ_CACHE_EXPIRY_MINUTES = 60;
+    private static final int BZ_CACHE_EXPIRY_MINUTES = 180;
     private static final String SELL_PRICE = "sellPrice";
     private static final String BUY_PRICE = "buyPrice";
 
@@ -32,6 +33,7 @@ public class HypixelPriceClient {
     private final Gson gson;
     private final Map<String, PriceData> bazaarCache;
     private final Map<String, PriceData> auctionCache;
+    private final Map<String, CompletableFuture<Double>> pendingAuctionSearches;
     private final ScheduledExecutorService scheduler;
     private volatile long lastBazaarUpdate = 0;
     private volatile long lastAuctionUpdate = 0;
@@ -45,13 +47,13 @@ public class HypixelPriceClient {
         this.gson = new Gson();
         this.bazaarCache = new ConcurrentHashMap<>();
         this.auctionCache = new ConcurrentHashMap<>();
+        this.pendingAuctionSearches = new ConcurrentHashMap<>();
         this.scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
             Thread t = new Thread(r, "HypixelPriceClient-Scheduler");
             t.setDaemon(true);
             return t;
         });
         
-        // Schedule periodic cache refresh - only for bazaar (1 hour), auctions are session-cached and on-demand
         this.scheduler.scheduleAtFixedRate(this::refreshBazaarAsync, 0, BZ_CACHE_EXPIRY_MINUTES, TimeUnit.MINUTES);
     }
     
@@ -66,7 +68,7 @@ public class HypixelPriceClient {
 
         // Clear cache when price type changes
         if (!newType.equals(type)) {
-            ApiCache.clearAllCaches();
+            PriceLookupCache.clearAllCaches();
         }
 
         type = newType;
@@ -80,7 +82,7 @@ public class HypixelPriceClient {
     // Check cache, bazaar, ah or fallback, in that order
     public double getBestPrice(String itemName) {
         String apiId = convertToApiId(itemName);
-        Double cachedPrice = ApiCache.getCachedPrice(apiId, ApiCache.PriceType.BEST_PRICE);
+        Double cachedPrice = PriceLookupCache.getCachedPrice(apiId, PriceType.BEST_PRICE);
         if (cachedPrice != null) {
             return cachedPrice;
         }
@@ -88,7 +90,7 @@ public class HypixelPriceClient {
         if (isTieredDrop(itemName)) {
             double tieredPrice = getTieredPrice(itemName);
             if (tieredPrice > 0) {
-                ApiCache.cachePrice(apiId, ApiCache.PriceType.BEST_PRICE, tieredPrice);
+                PriceLookupCache.cachePrice(apiId, PriceType.BEST_PRICE, tieredPrice);
                 return tieredPrice;
             }
         }
@@ -100,7 +102,7 @@ public class HypixelPriceClient {
         } else {
             bestPrice = getLowestBinPrice(itemName);
         }
-        ApiCache.cachePrice(apiId, ApiCache.PriceType.BEST_PRICE, bestPrice);
+        PriceLookupCache.cachePrice(apiId, PriceType.BEST_PRICE, bestPrice);
         return bestPrice;
     }
     
@@ -108,7 +110,7 @@ public class HypixelPriceClient {
     public double getBazaarBuyPrice(String itemName) {
         String apiId = convertToApiId(itemName);
         
-        Double cachedPrice = ApiCache.getCachedPrice(apiId, ApiCache.PriceType.BZ_BUY);
+        Double cachedPrice = PriceLookupCache.getCachedPrice(apiId, PriceType.BZ_BUY);
         if (cachedPrice != null) {
             return cachedPrice;
         }
@@ -120,31 +122,83 @@ public class HypixelPriceClient {
             price = priceData.getPrice(type);
         }
         
-        ApiCache.cachePrice(apiId, ApiCache.PriceType.BZ_BUY, price);
+        PriceLookupCache.cachePrice(apiId, PriceType.BZ_BUY, price);
         return price;
     }
     
     // On-demand lookup for auction BIN prices
     public double getLowestBinPrice(String itemName) {
         String apiId = convertToApiId(itemName);
-        Double cachedPrice = ApiCache.getCachedPrice(apiId, ApiCache.PriceType.AH_BIN);
+        Double cachedPrice = PriceLookupCache.getCachedPrice(apiId, PriceType.AH_BIN);
         if (cachedPrice != null) {
             return cachedPrice;
         }
         
-        String cleanedItemName = convertDisplayNameToApiId(itemName);
-        PriceData priceData = auctionCache.get(cleanedItemName);
-        double price;
-        
-        if (priceData != null) {
-            price = priceData.buyPrice;
-        } else {
-            price = searchAuctionForItem(cleanedItemName);
-            auctionCache.put(cleanedItemName, new PriceData(price, price, System.currentTimeMillis()));
+        if (PriceLookupCache.isNegativelyCached(apiId)) {
+            return 0.0;
         }
         
-        ApiCache.cachePrice(apiId, ApiCache.PriceType.AH_BIN, price);
-        return price;
+        String cleanedItemName = convertDisplayNameToApiId(itemName);
+        
+        Double cachedAuctionPrice = PriceLookupCache.getCachedAuctionPrice(apiId);
+        if (cachedAuctionPrice != null) {
+            return cachedAuctionPrice;
+        }
+        
+        PriceData priceData = auctionCache.get(cleanedItemName);
+        if (priceData != null && !priceData.isExpired(120)) {  // 2 hour TTL
+            PriceLookupCache.cacheAuctionPrice(apiId, priceData.buyPrice);
+            PriceLookupCache.cachePrice(apiId, PriceType.AH_BIN, priceData.buyPrice);
+            return priceData.buyPrice;
+        }
+        
+        CompletableFuture<Double> pendingSearch = pendingAuctionSearches.get(apiId);
+        if (pendingSearch != null) {
+            try {
+                return pendingSearch.get();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                System.err.println("Interrupted waiting for pending auction search: " + e.getMessage());
+                PriceLookupCache.cacheNegativeLookup(apiId);
+                return 0.0;
+            } catch (Exception e) {
+                System.err.println("Error waiting for pending auction search: " + e.getMessage());
+                PriceLookupCache.cacheNegativeLookup(apiId);
+                return 0.0;
+            }
+        }
+        
+        // Start new search and register it for deduplication
+        CompletableFuture<Double> searchFuture = CompletableFuture.supplyAsync(() -> {
+            try {
+                double price = searchAuctionForItem(cleanedItemName);
+                if (price > 0) {
+                    auctionCache.put(cleanedItemName, new PriceData(price, price, System.currentTimeMillis()));
+                    PriceLookupCache.cacheAuctionPrice(apiId, price);
+                    PriceLookupCache.cachePrice(apiId, PriceType.AH_BIN, price);
+                } else {
+                    PriceLookupCache.cacheNegativeLookup(apiId);
+                }
+                return price;
+            } finally {
+                pendingAuctionSearches.remove(apiId);
+            }
+        });
+        
+        pendingAuctionSearches.put(apiId, searchFuture);
+        
+        try {
+            return searchFuture.get();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            System.err.println("Interrupted during auction search: " + e.getMessage());
+            PriceLookupCache.cacheNegativeLookup(apiId);
+            return 0.0;
+        } catch (Exception e) {
+            System.err.println("Error during auction search: " + e.getMessage());
+            PriceLookupCache.cacheNegativeLookup(apiId);
+            return 0.0;
+        }
     }
     
     /**
@@ -163,19 +217,26 @@ public class HypixelPriceClient {
     }
 
     public double getTieredPrice(String tieredDropName) {
+
         String[] parts = getNameAndRarity(tieredDropName);
         if (parts.length != 2) return 0.0;
 
         String itemName = parts[0];
         String rarity = parts[1];
         String cacheKey = rarity.toLowerCase() + "_" + itemName.toLowerCase().replace(" ", "_");
-        Double cachedPrice = ApiCache.getCachedPrice(cacheKey, ApiCache.PriceType.AH_BIN);
-        if (cachedPrice != null) {
-            return cachedPrice;
-        }
+        
+        if (PriceLookupCache.isNegativelyCached(cacheKey)) return 0.0;
+        
+        Double cachedPrice = PriceLookupCache.getCachedPrice(cacheKey, PriceType.AH_BIN);
+        if (cachedPrice != null) return cachedPrice;
 
         double price = searchForTiered(itemName, rarity);
-        ApiCache.cachePrice(cacheKey, ApiCache.PriceType.AH_BIN, price);
+        if (price > 0) {
+            PriceLookupCache.cachePrice(cacheKey, PriceType.AH_BIN, price);
+        } else {
+            PriceLookupCache.cacheNegativeLookup(cacheKey);
+        }
+        
         return price;
     }
 
@@ -197,7 +258,7 @@ public class HypixelPriceClient {
 
     private double searchForTiered(String itemName, String rarity) {
         try {
-            int maxPagesToSearch = 15;
+            int maxPagesToSearch = 10;
             double lowestPrice = 0.0;
             int foundCount = 0;
             int emptyPageCount = 0;
@@ -443,7 +504,7 @@ public class HypixelPriceClient {
     }
     
     private String convertToApiId(String itemName) {
-        String cachedApiId = ApiCache.getCachedApiId(itemName);
+        String cachedApiId = PriceLookupCache.getCachedApiId(itemName);
         if (cachedApiId != null) {
             return cachedApiId;
         }
@@ -466,11 +527,10 @@ public class HypixelPriceClient {
                 apiId = convertEnchantmentToApiId(normalized);
             }
             else {
-                // Generic ids
-                apiId = normalized.replaceAll("\\s+", "_").toUpperCase();
+                apiId = normalized.replaceAll("[-\\s]+", "_").toUpperCase();
             }
         }
-        ApiCache.cacheApiId(itemName, apiId);
+        PriceLookupCache.cacheApiId(itemName, apiId);
         return apiId;
     }
     
@@ -513,7 +573,7 @@ public class HypixelPriceClient {
 
     public double getEnchantmentPrice(String enchantmentName) {
         String apiId = convertEnchantmentToApiId(enchantmentName);
-        Double cachedPrice = ApiCache.getCachedPrice(apiId, ApiCache.PriceType.BZ_BUY);
+        Double cachedPrice = PriceLookupCache.getCachedPrice(apiId, PriceType.BZ_BUY);
         if (cachedPrice != null) {
             return cachedPrice;
         }
@@ -530,7 +590,7 @@ public class HypixelPriceClient {
             }
         }
         
-        ApiCache.cachePrice(apiId, ApiCache.PriceType.BZ_BUY, price);
+        PriceLookupCache.cachePrice(apiId, PriceType.BZ_BUY, price);
         return price;
     }
 
@@ -577,7 +637,7 @@ public class HypixelPriceClient {
      */
     private double searchAuctionForItem(String cleanedItemName) {
         try {
-            int maxPagesToSearch = 25; 
+            int maxPagesToSearch = 15;
             double lowestPrice = 0.0;
             int foundCount = 0;
             int emptyPageCount = 0;

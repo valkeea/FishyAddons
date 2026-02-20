@@ -7,7 +7,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import me.valkeea.fishyaddons.cache.ApiCache;
+import me.valkeea.fishyaddons.api.cache.PriceLookupCache;
 
 public class ChatDropParser {
     private static final String SHARD_KEYWORD = "shard";
@@ -215,9 +215,9 @@ public class ChatDropParser {
         if (message == null || message.trim().isEmpty()) return null;
         
         // Check cache first for previously parsed messages
-        Object cachedResult = ApiCache.getCachedMessageParse(message);
+        Object cachedResult = PriceLookupCache.getCachedMessageParse(message);
         if (cachedResult != null) {
-            if (ApiCache.isNullParseResult(cachedResult)) {
+            if (PriceLookupCache.isNullParseResult(cachedResult)) {
                 return null;
             }
             return (ParseResult) cachedResult;
@@ -225,13 +225,13 @@ public class ChatDropParser {
         
         // Filter out annoying cases (mostly fishing) 
         if (ignore(message)) {
-            ApiCache.cacheMessageParse(message, null);
+            PriceLookupCache.cacheMessageParse(message, null);
             return null;
         }
         
         // Quick pre-filter to check for common drop indicators
         if (!isDrop(message)) {
-            ApiCache.cacheMessageParse(message, null);
+            PriceLookupCache.cacheMessageParse(message, null);
             return null;
         }
         
@@ -240,12 +240,12 @@ public class ChatDropParser {
             ParseResult result = tryPattern(pattern, message);
             if (result != null) {
                 // Cache the successful parse result
-                ApiCache.cacheMessageParse(message, result);
+                PriceLookupCache.cacheMessageParse(message, result);
                 return result;
             }
         }
         
-        ApiCache.cacheMessageParse(message, null);
+        PriceLookupCache.cacheMessageParse(message, null);
         return null;
     }
 
@@ -408,7 +408,7 @@ public class ChatDropParser {
     
     private static String cleanItemName(String itemName) {
         // Check cache first
-        String cachedResult = ApiCache.getCachedNormalization(itemName);
+        String cachedResult = PriceLookupCache.getCachedNormalization(itemName);
         if (cachedResult != null) {
             return cachedResult;
         }
@@ -422,7 +422,7 @@ public class ChatDropParser {
                 .toLowerCase();
         
         String normalized = normalizePlural(cleaned);
-        ApiCache.cacheNormalization(itemName, normalized);
+        PriceLookupCache.cacheNormalization(itemName, normalized);
         
         return normalized;
     }

@@ -3,9 +3,10 @@ package me.valkeea.fishyaddons.hud.base;
 import java.awt.Rectangle;
 
 import me.valkeea.fishyaddons.config.FishyConfig;
+import me.valkeea.fishyaddons.hud.core.HudDrawer;
 import me.valkeea.fishyaddons.hud.core.HudElement;
 import me.valkeea.fishyaddons.hud.core.HudElementState;
-import me.valkeea.fishyaddons.hud.core.HudDrawer;
+import me.valkeea.fishyaddons.hud.core.HudUtils;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 
@@ -42,32 +43,34 @@ public abstract class BaseHudElement implements HudElement {
 
         var mc = MinecraftClient.getInstance();
         var state = getCachedState();
+        float scale = state.size / 12.0F;
 
         if (state.bg) {
-            Rectangle bounds = calculateContentBounds(mc, state);
-            context.fill(bounds.x + 1, bounds.y + 2, 
-                        bounds.x + bounds.width + 2, bounds.y + bounds.height - 1, 0x80000000);
+            int bgWidth = (int)(calculateContentWidth(mc) * scale);
+            int bgHeight = (int)(calculateContentHeight(mc) * scale);
+            HudUtils.drawBackground(context, state.x, state.y, bgWidth, bgHeight);
         }
 
         context.getMatrices().pushMatrix();
         context.getMatrices().translate(state.x, state.y);
-        context.getMatrices().scale(state.size / 12.0F, state.size / 12.0F);
+        context.getMatrices().scale(scale, scale);
 
-        HudDrawer drawer = new HudDrawer(mc, context, state);
+        var drawer = new HudDrawer(mc, context, state);
         renderContent(drawer, mc, state);
 
         context.getMatrices().popMatrix();
+
+        postRender(context, mc, state, mouseX, mouseY);
         
         if (editingMode) {
             renderEditingMode(drawer, mc, state);
         }
     }
 
-    protected Rectangle calculateContentBounds(MinecraftClient mc, HudElementState state) {
-        Rectangle bounds = getBounds(mc);
-        return new Rectangle(state.x, state.y, 
-                           (int)(bounds.width / (state.size / 12.0F)), 
-                           (int)(bounds.height / (state.size / 12.0F)));
+    protected final boolean isMouseOver(double mouseX, double mouseY) {
+        var bounds = getBounds(MinecraftClient.getInstance());
+        return bounds.contains(mouseX, mouseY);
+
     }
 
     protected abstract boolean shouldRender();
@@ -75,21 +78,30 @@ public abstract class BaseHudElement implements HudElement {
     protected abstract int calculateContentWidth(MinecraftClient mc);
     protected abstract int calculateContentHeight(MinecraftClient mc);
     
-    protected void renderEditingMode(HudDrawer drawer, MinecraftClient mc, HudElementState state) {
-        // Custom editing mode rendering
-    }
+    /**
+     * Special rendering in editing mode
+     */
+    protected void renderEditingMode(HudDrawer drawer, MinecraftClient mc, HudElementState state) {}
+
+    /**
+     * Rendering after matrix pop
+     */
+    protected void postRender(DrawContext context, MinecraftClient mc, HudElementState state, int mouseX, int mouseY) {}
+
+    /**
+     * Perform actions after cache refresh
+     */
+    protected void onCacheRefresh() {}
 
     @Override
     public Rectangle getBounds(MinecraftClient mc) {
-        int hudX = getHudX();
-        int hudY = getHudY();
-        int size = getHudSize();
-        float scale = size / 12.0F;
+        var state = getCachedState();
+        float scale = state.size / 12.0F;
         
         int width = (int)(calculateContentWidth(mc) * scale);
         int height = (int)(calculateContentHeight(mc) * scale);
         
-        return new Rectangle(hudX, hudY, width, height);
+        return new Rectangle(state.x, state.y, width, height);
     }
 
     @Override
@@ -103,6 +115,7 @@ public abstract class BaseHudElement implements HudElement {
                 FishyConfig.getHudOutline(hudKey, defaultOutline),
                 FishyConfig.getHudBg(hudKey, defaultBg)
             );
+            onCacheRefresh();
         }
         return cachedState;
     }

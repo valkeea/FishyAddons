@@ -6,6 +6,7 @@ import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.hud.core.HudDrawer;
 import me.valkeea.fishyaddons.hud.core.HudElement;
 import me.valkeea.fishyaddons.hud.core.HudElementState;
+import me.valkeea.fishyaddons.hud.core.HudUtils;
 import me.valkeea.fishyaddons.tracker.SkillTracker;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
@@ -36,8 +37,8 @@ public class SkillXpDisplay implements HudElement {
         
         SkillDisplayCache(SkillData data, MinecraftClient mc) {
 
-            String formattedXp = String.format("%,d", data.xp);
-            String formattedRate = String.format("%,d", data.rate);
+            String formattedXp = HudUtils.formatNum(data.xp);
+            String formattedRate = HudUtils.formatNum(data.rate);
             
             this.skillLabel = Text.literal(data.skillName + "§7: ");
             this.rateValue = Text.literal(formattedRate + RATE_SUFFIX);
@@ -53,8 +54,8 @@ public class SkillXpDisplay implements HudElement {
             if (hasFishingData) {
                 this.catchLabel = Text.literal(" Catches: ");
                 this.mobLabel = Text.literal("Mobs: ");
-                this.catchRateText = Text.literal(String.format("%,d", data.catchRate) + RATE_SUFFIX);
-                this.mobRateText = Text.literal(String.format("%,d", data.mobRate) + RATE_SUFFIX);
+                this.catchRateText = Text.literal(HudUtils.formatNum(data.catchRate) + RATE_SUFFIX);
+                this.mobRateText = Text.literal(HudUtils.formatNum(data.mobRate) + RATE_SUFFIX);
                 this.catchTotal = Text.literal(String.format(TOTAL_FORMAT, data.catches));
                 this.mobTotal = Text.literal(String.format(TOTAL_FORMAT, data.mobs));
                 
@@ -103,7 +104,21 @@ public class SkillXpDisplay implements HudElement {
         if (!editingMode && !SkillTracker.isEnabled()) return;
         
         var tracker = SkillTracker.getInstance();
-        if (!editingMode && tracker.getTrackedSkills().isEmpty()) return;
+        if (tracker.getTrackedSkills().isEmpty()) {
+
+            if (editingMode) {
+                context.drawText(
+                    MinecraftClient.getInstance().textRenderer,
+                    Text.literal("Skill Tracker"),
+                    getHudX(),
+                    getHudY(),
+                    getHudColor(),
+                    false
+                );
+            }
+
+            return;
+        }
 
         var mc = MinecraftClient.getInstance();
         var state = getCachedState();
@@ -180,7 +195,7 @@ public class SkillXpDisplay implements HudElement {
         
         int lineHeight = (int)(size * 1.2F);
         int maxWidth = caches.stream().mapToInt(SkillDisplayCache::getFullWidth).max().orElse(0);
-        int totalHeight = caches.size() * lineHeight;       
+        int totalHeight = (1 + caches.size()) * lineHeight;       
         
         if (showBg) {
             drawBackground(context, hudX, hudY, (int)(maxWidth * scale), totalHeight);
@@ -203,17 +218,11 @@ public class SkillXpDisplay implements HudElement {
     
     private void drawSkillLine(DrawContext context, MinecraftClient mc, SkillDisplayCache cache, 
                                int yOffset, HudElementState state) {
-        int color = SkillTracker.getInstance().isPaused() ? 0xFFAAAAAA : state.color;
-
-        if (SkillTracker.getInstance().isDownTiming()) {
-            color = 0xFFFF5555;
-        }
-        
         int currentX = 0;
         
         var drawer = new HudDrawer(mc, context, state);
         // Draw skill label
-        drawer.drawText(cache.skillLabel, currentX, yOffset, color);
+        drawer.drawText(cache.skillLabel, currentX, yOffset, state.color);
         currentX += mc.textRenderer.getWidth(cache.skillLabel);
         
         // Draw rate value
@@ -226,7 +235,7 @@ public class SkillXpDisplay implements HudElement {
         
         // Draw fishing stats if available
         if (cache.hasFishingData) {
-            drawer.drawText(cache.catchLabel, currentX, yOffset, color);
+            drawer.drawText(cache.catchLabel, currentX, yOffset, state.color);
             currentX += mc.textRenderer.getWidth(cache.catchLabel);
 
             drawer.drawText(cache.catchRateText, currentX, yOffset, 0xFFFFFFFF);
@@ -235,7 +244,7 @@ public class SkillXpDisplay implements HudElement {
             drawer.drawText(cache.catchTotal, currentX, yOffset, 0xFFAAAAAA);
             currentX += mc.textRenderer.getWidth(cache.catchTotal);
 
-            drawer.drawText(cache.mobLabel, currentX, yOffset, color);
+            drawer.drawText(cache.mobLabel, currentX, yOffset, state.color);
             currentX += mc.textRenderer.getWidth(cache.mobLabel);
 
             drawer.drawText(cache.mobRateText, currentX, yOffset, 0xFFFFFFFF);
@@ -263,7 +272,7 @@ public class SkillXpDisplay implements HudElement {
                 long pausedFor = SkillTracker.getInstance().getCurrentPauseDurationMs();
                 long resetIn = 15 * 60 * 1000 - pausedFor;
 
-                timeText = String.format("Paused for§8: §7%02d:%02d§7, §cReset in§8: §7%02d:%02d", 
+                timeText = String.format("Paused for§8: §7%02d:%02d§7, §8Reset in§8: §7%02d:%02d", 
                     (pausedFor / 60000) % 60, 
                     (pausedFor / 1000) % 60,
                     (resetIn / 60000) % 60,

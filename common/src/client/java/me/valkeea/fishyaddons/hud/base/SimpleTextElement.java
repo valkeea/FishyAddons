@@ -1,12 +1,15 @@
 package me.valkeea.fishyaddons.hud.base;
 
-import me.valkeea.fishyaddons.hud.core.HudElementState;
+import java.awt.Rectangle;
+
 import me.valkeea.fishyaddons.hud.core.HudDrawer;
+import me.valkeea.fishyaddons.hud.core.HudElementState;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.text.Text;
 
 /**
- * Elements with one text component
+ * Elements with one text component and predefined styling.
+ * 3 alignment options: left, center, right.
  */
 public abstract class SimpleTextElement extends BaseHudElement {
     private final String placeholderText;
@@ -21,6 +24,7 @@ public abstract class SimpleTextElement extends BaseHudElement {
 
     @Override
     protected final void renderContent(HudDrawer drawer, MinecraftClient mc, HudElementState state) {
+
         Text text = getText();
         if (text == null || text.getString().isEmpty()) {
             if (isEditingMode()) {
@@ -30,7 +34,15 @@ public abstract class SimpleTextElement extends BaseHudElement {
             }
         }
         
-        drawer.drawFormattedText(text, 0, 0, state.color);
+        int alignment = getTextAlignment();
+        int textWidth = mc.textRenderer.getWidth(text);
+        int x = switch (alignment) {
+            case 1 -> -textWidth / 2;
+            case 2 -> -textWidth;
+            default -> 0;
+        };
+
+        drawer.drawFormattedText(text, x, 0, getTextColor());
     }
 
     @Override
@@ -45,6 +57,40 @@ public abstract class SimpleTextElement extends BaseHudElement {
     @Override
     protected final int calculateContentHeight(MinecraftClient mc) {
         return mc.textRenderer.fontHeight;
+    }
+
+    @Override
+    public Rectangle getBounds(MinecraftClient mc) {
+
+        var state = getCachedState();
+        float scale = state.size / 12.0F;
+
+        int textWidth = (int)(calculateContentWidth(mc) * scale);
+        int textHeight = (int)(calculateContentHeight(mc) * scale);
+
+        int alignment = getTextAlignment();
+        int x = switch (alignment) {
+            case 1 -> -textWidth / 2;
+            case 2 -> -textWidth;
+            default -> 0;
+        };
+
+        return new Rectangle(state.x + x, state.y, textWidth, textHeight);
+    }
+
+    /**
+     * Set alignment of the text within the element bounds
+     * 0 = left, 1 = center, 2 = right, default is left
+     */
+    public int getTextAlignment() {
+        return 0;
+    }
+
+    /**
+     * Return the text color, or -1 to use the default element color
+     */
+    protected int getTextColor() {
+        return getCachedState().color;
     }
 
     /**

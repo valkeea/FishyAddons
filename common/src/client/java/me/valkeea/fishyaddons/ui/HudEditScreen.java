@@ -4,10 +4,11 @@ import java.awt.Rectangle;
 
 import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.config.Key;
+import me.valkeea.fishyaddons.hud.base.SimpleTextElement;
 import me.valkeea.fishyaddons.hud.core.ElementRegistry;
 import me.valkeea.fishyaddons.hud.core.HudElement;
 import me.valkeea.fishyaddons.hud.elements.simple.PetDisplay;
-import me.valkeea.fishyaddons.hud.elements.custom.TitleDisplay;
+import me.valkeea.fishyaddons.hud.elements.simple.TitleDisplay;
 import me.valkeea.fishyaddons.tool.FishyMode;
 import me.valkeea.fishyaddons.ui.list.ChatAlerts;
 import me.valkeea.fishyaddons.ui.widget.FaButton;
@@ -157,13 +158,28 @@ public class HudEditScreen extends Screen {
             if (bounds.contains(click.x(), click.y())) {
                 dragging = element;
                 selectedElement = element;
-                dragOffsetX = (int)click.x() - bounds.x;
+                dragOffsetX = getDragOffsetX(element, bounds, click);
                 dragOffsetY = (int)click.y() - bounds.y;
                 return true;
             }
         }
         
         return super.mouseClicked(click, doubled);
+    }
+
+    private int getDragOffsetX(HudElement e, Rectangle b, Click c) {
+
+        if (e instanceof SimpleTextElement ste && ste.getTextAlignment() != 0) {
+            int a = ste.getTextAlignment();
+
+            if (a == 1) {
+                return b.width / 2 - (int)(c.x() - b.x);
+            } else if (a == 2) {
+                return b.width - (int)(c.x() - b.x);
+            }
+        }
+        
+        return (int)c.x() - b.x;
     }
 
     @Override

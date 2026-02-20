@@ -59,9 +59,15 @@ public class SkillTracker {
     public static synchronized SkillTracker getInstance() {
         if (instance == null) {
             instance = new SkillTracker();
-            FaEvents.SEA_CREATURE_CATCH.register(instance::onCatch);
         }
         return instance;
+    }
+
+    public static void init() {
+        refresh();
+        var st = getInstance();
+        FaEvents.SEA_CREATURE_CATCH.register(st::onCatch);
+        FaEvents.XP_GAIN.register(event -> st.onXpGain(event.skill, event.progress));
     }
 
     public static void refresh() {
@@ -86,10 +92,8 @@ public class SkillTracker {
      * Track skill progress by comparing current XP to baseline.
      */
     public void onXpGain(String skillName, String progressInfo) {
-        if (skillName == null || skillName.trim().isEmpty() || progressInfo == null) {
-            return;
-        }
-        
+        if (!enabled) return;
+
         var baseline = skillBaselines.computeIfAbsent(skillName, k -> new SkillBaseline());
         Integer currentLevel = knownSkillLevels.get(skillName);
         
@@ -223,7 +227,6 @@ public class SkillTracker {
 
         if (pausedTime > 0 && System.currentTimeMillis() - pausedTime > 900_000 && !downTiming) {
             resetAll();
-            FishyNotis.send("Skill tracking data cleared due to extended inactivity.");
         }
     }
 

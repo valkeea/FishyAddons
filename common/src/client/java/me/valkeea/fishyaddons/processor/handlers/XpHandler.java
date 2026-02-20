@@ -4,6 +4,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
 
+import me.valkeea.fishyaddons.event.impl.FaEvents;
+import me.valkeea.fishyaddons.event.impl.XpGainEvent;
 import me.valkeea.fishyaddons.processor.ChatHandler;
 import me.valkeea.fishyaddons.processor.ChatHandlerResult;
 import me.valkeea.fishyaddons.processor.ChatMessageContext;
@@ -54,14 +56,14 @@ public class XpHandler implements ChatHandler {
             var progressInfo = matcher.group(5);
             var lastProgress = lastSeenProgress.get(skillName);
 
-            if (progressInfo.equals(lastProgress)) {
-                return true;
-            }
+            if (amountStr == null || skillName == null || progressInfo == null) return false;
+            if (progressInfo.equals(lastProgress)) return true;
             
             lastSeenProgress.put(skillName, progressInfo);
             
             try {
-                SkillTracker.getInstance().onXpGain(skillName, progressInfo);
+                var event = new XpGainEvent(skillName, progressInfo);
+                FaEvents.XP_GAIN.firePhased(event, listener -> listener.onXpGain(event));
                 return true;
 
             } catch (NumberFormatException e) {

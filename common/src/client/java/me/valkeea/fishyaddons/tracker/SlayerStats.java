@@ -6,6 +6,8 @@ import org.slf4j.LoggerFactory;
 import me.valkeea.fishyaddons.api.skyblock.SlayerTables;
 import me.valkeea.fishyaddons.api.skyblock.SlayerTables.SlayerType;
 import me.valkeea.fishyaddons.config.StatConfig;
+import me.valkeea.fishyaddons.tracker.monitoring.ActivityMonitor;
+import me.valkeea.fishyaddons.tracker.monitoring.Currently;
 import me.valkeea.fishyaddons.util.FishyNotis;
 import net.minecraft.text.Text;
 
@@ -275,7 +277,7 @@ public class SlayerStats {
         
         if (!isCurrentlyActive()) setPaused(false);
 
-        ActivityMonitor.getInstance().recordActivity(ActivityMonitor.Currently.SLAYER);
+        ActivityMonitor.getInstance().recordActivity(Currently.SLAYER);
         sessionBosses++;
         sessionXp += xp;
         
@@ -422,7 +424,7 @@ public class SlayerStats {
     // --- Utility ---
 
     private boolean isCurrentlyActive() {
-        return ActivityMonitor.getInstance().isActive(ActivityMonitor.Currently.SLAYER);
+        return ActivityMonitor.getInstance().isActive(Currently.SLAYER);
     }
 
     public void sendSlayerStats() {

@@ -14,7 +14,8 @@ import me.valkeea.fishyaddons.event.impl.EnvironmentChangeEvent;
 import me.valkeea.fishyaddons.event.impl.FaEvents;
 import me.valkeea.fishyaddons.event.impl.ScCatchEvent;
 import me.valkeea.fishyaddons.tool.RunDelayed;
-import me.valkeea.fishyaddons.tracker.ActivityMonitor;
+import me.valkeea.fishyaddons.tracker.monitoring.ActivityMonitor;
+import me.valkeea.fishyaddons.tracker.monitoring.Currently;
 import me.valkeea.fishyaddons.util.FishyNotis;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.decoration.ArmorStandEntity;
@@ -72,7 +73,7 @@ public class ScStats {
     }
     
     public static void init() {
-        enabled = FishyConfig.getState(me.valkeea.fishyaddons.config.Key.TRACK_SCS, true);
+        enabled = FishyConfig.getState(me.valkeea.fishyaddons.config.Key.TRACK_SCS, false);
         countDh = FishyConfig.getState(me.valkeea.fishyaddons.config.Key.TRACK_SCS_WITH_DH, false);
         announce = FishyConfig.getState(me.valkeea.fishyaddons.config.Key.SC_SINCE, false);
 
@@ -205,11 +206,11 @@ public class ScStats {
     private static void checkSpecialConditions(String name) {
         if (name.equals("scarecrow") || name.equals("grim_reaper") ||
             name.equals("nightmare") || name.equals("phantom_fisher")) {
-            ActivityMonitor.getInstance().recordActivity(ActivityMonitor.Currently.SPOOKY);
+            ActivityMonitor.getInstance().recordActivity(Currently.SPOOKY);
         }
         
         if (name.contains("shark")) {
-            ActivityMonitor.getInstance().recordActivity(ActivityMonitor.Currently.SHARK);
+            ActivityMonitor.getInstance().recordActivity(Currently.SHARK);
         }   
     }
 
@@ -432,10 +433,18 @@ public class ScStats {
 
         var ciSb = new StringBuilder(sb);
 
-        ciSb.append("§8 - §cRagnarok: §b").append(getCounterFor(Sc.RAGNAROK));
-        ciSb.append("§7, §cPlhlegblast: §b").append(getCounterFor(Sc.PLHLEG));
+        if (isHotspot) {
+            ciSb.append("§8 - §cRagnarok: §b").append(getCounterFor(Sc.RAGNAROK));
+            ciSb.append("§8 - §6Scuttler: §b").append(getCounterFor(Sc.SCUTTLER));
+        }        
+    
+        if (isPlhlegPool) {
+            ciSb.append("§7, §dPlhlegblast: §b").append(getCounterFor(Sc.PLHLEG));
+        }
+
         ciSb.append("§7, §cThunder: §b").append(getCounterFor(Sc.genAreaKey(Sc.THUNDER)));
         ciSb.append("§7, §cJawbus: §b").append(getCounterFor(Sc.genAreaKey(Sc.JAWBUS)));
+
         ciSb.append("§7 (§cJawbus §7since §dVial: §b").append(jawbusSinceVial).append("§7)");
 
         if (isHotspot || isPlhlegPool) ciSb.append("§8 - §7Currently in:");

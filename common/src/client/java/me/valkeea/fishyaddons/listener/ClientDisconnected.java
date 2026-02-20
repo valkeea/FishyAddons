@@ -6,10 +6,9 @@ import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.config.ItemConfig;
 import me.valkeea.fishyaddons.config.StatConfig;
 import me.valkeea.fishyaddons.config.TrackerProfiles;
-import me.valkeea.fishyaddons.event.impl.FaEvents;
 import me.valkeea.fishyaddons.feature.item.animations.HeldItems;
 import me.valkeea.fishyaddons.feature.waypoints.ChainConfig;
-import me.valkeea.fishyaddons.tracker.ActivityMonitor;
+import me.valkeea.fishyaddons.tracker.monitoring.ActivityMonitor;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 
 public class ClientDisconnected {

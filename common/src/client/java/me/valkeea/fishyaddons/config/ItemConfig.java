@@ -182,7 +182,15 @@ public class ItemConfig {
         }
 
         try (Reader reader = new InputStreamReader(new FileInputStream(CONFIG_FILE), java.nio.charset.StandardCharsets.UTF_8)) {
-            JsonObject json = JsonParser.parseReader(reader).getAsJsonObject();
+            JsonElement j = JsonParser.parseReader(reader);
+            
+            if (j == null || !j.isJsonObject()) {
+                System.err.println("[ItemConfig] Config file contains invalid JSON (not an object). Attempting to restore from backup...");
+                loadOrRestore();
+                return;
+            }
+            
+            JsonObject json = j.getAsJsonObject();
 
             if (!validate(json)) {
                 System.err.println("[ItemConfig] Invalid config detected. Attempting to restore from backup...");
@@ -193,13 +201,13 @@ public class ItemConfig {
             settings.loadFromJson(json);
 
             if (json.has(Key.PROTECTED_UUIDS)) {
-                JsonElement element = json.get(Key.PROTECTED_UUIDS);
+                JsonElement k = json.get(Key.PROTECTED_UUIDS);
 
-                if (element.isJsonObject()) {
+                if (k.isJsonObject()) {
                     protectedItems.loadFromJson(json);
                     
-                } else if (element.isJsonArray()) {
-                    JsonArray array = element.getAsJsonArray();
+                } else if (k.isJsonArray()) {
+                    var array = k.getAsJsonArray();
                     for (JsonElement item : array) {
                         if (item.isJsonPrimitive()) {
                             String uuid = item.getAsString();
@@ -216,6 +224,9 @@ public class ItemConfig {
 
         } catch (JsonSyntaxException | JsonIOException e) {
             System.err.println("[ItemConfig] JSON parsing error: " + e.getMessage());
+            loadOrRestore();
+        } catch (IllegalStateException e) {
+            System.err.println("[ItemConfig] Corrupted config file (possible null bytes): " + e.getMessage());
             loadOrRestore();
         } catch (IOException e) {
             System.err.println("[ItemConfig] IO error loading config: " + e.getMessage());

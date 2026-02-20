@@ -32,6 +32,9 @@ public class ScData {
     // Histogram tracking: creature -> (attempts -> frequency)
     private final Map<String, Map<Integer, Integer>> catchGraph = new ConcurrentHashMap<>();
 
+    // Version tracking
+    private long dataVersion = 0;
+
     private static boolean enabled = false;
     private static ScData instance = null;
 
@@ -51,6 +54,10 @@ public class ScData {
 
     public static boolean isEnabled() {
         return enabled;
+    }
+
+    public long getDataVersion() {
+        return dataVersion;
     }
 
     private void updateCatchRate(String creatureKey, int catchAmount) {
@@ -220,6 +227,7 @@ public class ScData {
     }
     
     private void notifyHudDataChanged() {
+        dataVersion++;
         try {
             me.valkeea.fishyaddons.hud.elements.custom.ScDisplay hudInstance = 
                 me.valkeea.fishyaddons.hud.elements.custom.ScDisplay.getInstance();

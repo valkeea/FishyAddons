@@ -11,12 +11,12 @@ import me.valkeea.fishyaddons.config.Key;
 import me.valkeea.fishyaddons.hud.core.HudElement;
 import me.valkeea.fishyaddons.hud.core.HudElementState;
 import me.valkeea.fishyaddons.render.OutlinedText;
-import me.valkeea.fishyaddons.tracker.ActivityMonitor;
-import me.valkeea.fishyaddons.tracker.ActivityMonitor.Currently;
 import me.valkeea.fishyaddons.tracker.fishing.Sc;
 import me.valkeea.fishyaddons.tracker.fishing.ScData;
 import me.valkeea.fishyaddons.tracker.fishing.ScRegistry;
 import me.valkeea.fishyaddons.tracker.fishing.ScStats;
+import me.valkeea.fishyaddons.tracker.monitoring.ActivityMonitor;
+import me.valkeea.fishyaddons.tracker.monitoring.Currently;
 import me.valkeea.fishyaddons.util.text.Color;
 import me.valkeea.fishyaddons.util.text.TextUtils;
 import net.minecraft.client.MinecraftClient;
@@ -46,9 +46,9 @@ public class ScDisplay implements HudElement {
     private static final Text EMPTY_RATE_TEXT = Text.literal("§7Rate: §f--");
     
     private final Map<String, String> displayNameCache = new ConcurrentHashMap<>();
-    private final Map<String, String> meanTextCache = new ConcurrentHashMap<>();
-    private final Map<String, String> rateTextCache = new ConcurrentHashMap<>();
-    private long lastDataUpdate = 0;
+    private final Map<String, Text> meanTextCache = new ConcurrentHashMap<>();
+    private final Map<String, Text> rateTextCache = new ConcurrentHashMap<>();
+    private long lastDataVersion = -1;
     
     // Cache for calculations
     private final Map<String, HistogramCache> histogramCache = new ConcurrentHashMap<>();
@@ -106,10 +106,10 @@ public class ScDisplay implements HudElement {
         Island currentArea = ScStats.getInstance().getCurrentAreaKey();
         checkAreaChange(currentArea);
         
-        long currentTime = System.currentTimeMillis();
-        if (currentTime - lastDataUpdate > 10000) {
+        long currentDataVersion = ScData.getInstance().getDataVersion();
+        if (currentDataVersion != lastDataVersion) {
             clearAllCaches();
-            lastDataUpdate = currentTime;
+            lastDataVersion = currentDataVersion;
         }
 
         int x = getHudX();
@@ -124,9 +124,9 @@ public class ScDisplay implements HudElement {
         int scaledY = (int) (y / scale);
 
         if (editingMode) {
-            renderEditMode(context, scaledX, scaledY);
+            renderEditMode(context, mc, scaledX, scaledY);
         } else {
-            renderDisplays(context, scaledX, scaledY);
+            renderDisplays(context, mc, scaledX, scaledY);
         }
 
         context.getMatrices().popMatrix();
@@ -150,28 +150,28 @@ public class ScDisplay implements HudElement {
         }
     }
 
-    private void renderDisplays(DrawContext context, int x, int y) {
+    private void renderDisplays(DrawContext context, MinecraftClient mc, int x, int y) {
         if (!ScStats.isEnabled()) return;
 
         Island currentArea = ScStats.getInstance().getCurrentAreaKey();
         List<String> creatures = getCreaturesForArea(currentArea);
         if (creatures.isEmpty()) return;
 
-        int screenWidth = MinecraftClient.getInstance().getWindow().getScaledWidth();
+        int screenWidth = mc.getWindow().getScaledWidth();
         int leftThreshold = screenWidth / 3;
         int rightThreshold = (2 * screenWidth) / 3;
 
         boolean anchorOnLeft = x < leftThreshold;
         boolean anchorOnRight = x >= rightThreshold;
         
-        boolean hasAnyData = drawGraphs(context, x, y, creatures, anchorOnLeft, anchorOnRight);
+        boolean hasAnyData = drawGraphs(context, mc, x, y, creatures, anchorOnLeft, anchorOnRight);
         
-        if (!hasAnyData && ActivityMonitor.getInstance().getPrimaryActivity() == ActivityMonitor.Currently.FISHING) {
-            renderWaitingForData(context, x, y, currentArea, creatures);
+        if (!hasAnyData && ActivityMonitor.getInstance().getPrimaryActivity() == Currently.FISHING) {
+            renderWaitingForData(context, mc, x, y, currentArea, creatures);
         }
     }
     
-    private boolean drawGraphs(DrawContext context, int x, int y, List<String> creatures, 
+    private boolean drawGraphs(DrawContext context, MinecraftClient mc, int x, int y, List<String> creatures, 
                                          boolean anchorOnLeft, boolean anchorOnRight) {
         boolean hasAnyData = false;
         int graphIdx = 0;
@@ -180,7 +180,7 @@ public class ScDisplay implements HudElement {
             Map<Integer, Integer> data = ScData.getInstance().getDataFor(creatureKey, MAX_BARS_PER_CHART);
             if (data != null && !data.isEmpty()) {
                 int currentX = calcGraphX(x, graphIdx, anchorOnLeft, anchorOnRight);
-                renderBase(context, currentX, y, creatureKey, data);
+                renderBase(context, mc, currentX, y, creatureKey, data);
                 graphIdx++;
                 hasAnyData = true;
             }
@@ -211,9 +211,11 @@ public class ScDisplay implements HudElement {
         }
     }
 
-    private void renderBase(DrawContext context, int x, int y, String creatureKey, Map<Integer, Integer> data) {
+    private void renderBase(DrawContext context, MinecraftClient mc, int x, int y, String creatureKey, Map<Integer, Integer> data) {
         String displayName = displayNameCache.computeIfAbsent(creatureKey, 
             key -> TextUtils.stripColor(Sc.displayName(key)));
+        
+        var textRenderer = mc.textRenderer;
         
         if (getHudBg()) {
             context.fill(x - 2, y, x + CHART_WIDTH, y + CHART_HEIGHT + 10, 0x80000000);
@@ -222,37 +224,36 @@ public class ScDisplay implements HudElement {
         if (getHudOutline()) {
             OutlinedText.withColor(
                 context,
-                MinecraftClient.getInstance().textRenderer, 
+                textRenderer, 
                 Text.literal(displayName),
                 x + 5, y + 5, getHudColor()              
             );
 
         } else {
-            context.drawText(MinecraftClient.getInstance().textRenderer, 
+            context.drawText(textRenderer, 
                 Text.literal(displayName), x + 5, y + 5, getHudColor(), false);
         }
 
-        String meanText = getCachedMeanText(creatureKey);
-        String rateText = getCachedRateText(creatureKey);
+        Text meanText = getCachedMeanText(creatureKey);
+        Text rateText = getCachedRateText(creatureKey);
         
-        context.drawText(MinecraftClient.getInstance().textRenderer, 
-            Text.literal(meanText), x + 5, y + 17, 0xFFFFFFFF, false);
-        context.drawText(MinecraftClient.getInstance().textRenderer, 
-            Text.literal(rateText), x + 80, y + 17, 0xFFFFFFFF, false);
+        context.drawText(textRenderer, meanText, x + 5, y + 17, 0xFFFFFFFF, false);
+        context.drawText(textRenderer, rateText, x + 80, y + 17, 0xFFFFFFFF, false);
 
-        drawHistogram(context, x + CHART_PADDING, y + 35, data, creatureKey);
+        drawHistogram(context, mc, x + CHART_PADDING, y + 35, data, creatureKey);
     }
 
-    private void renderWaitingForData(DrawContext context, int x, int y, Island area, List<String> creatures) {
+    private void renderWaitingForData(DrawContext context, MinecraftClient mc, int x, int y, Island area, List<String> creatures) {
         if (getHudBg()) {
             context.fill(x - 2, y, x + CHART_WIDTH, y + 80, 0x80000000);
         }
 
-        context.drawText(MinecraftClient.getInstance().textRenderer,
+        var textRenderer = mc.textRenderer;
+        context.drawText(textRenderer,
             Text.literal("RNG Data"), x + 5, y + 5, getHudColor(), false);
-        context.drawText(MinecraftClient.getInstance().textRenderer,
+        context.drawText(textRenderer,
             Text.literal("§7Area: " + formatAreaName(area)), x + 5, y + 14, 0xFFFFFFFF, false);
-        context.drawText(MinecraftClient.getInstance().textRenderer, 
+        context.drawText(textRenderer, 
             Text.literal("§7Catch rare scs!"), x + 5, y + 23, 0xFFFFFFFF, false);
 
         var creatureList = new StringBuilder("§8");
@@ -263,21 +264,24 @@ public class ScDisplay implements HudElement {
         if (creatures.size() > 2) {
             creatureList.append(", +").append(creatures.size() - 2);
         }
-        context.drawText(MinecraftClient.getInstance().textRenderer, 
+        context.drawText(textRenderer, 
             Text.literal(creatureList.toString()), x + 5, y + 32, getHudColor(), false);
     }
 
-    private void renderEditMode(DrawContext context, int x, int y) {
+    private void renderEditMode(DrawContext context, MinecraftClient mc, int x, int y) {
         if (getHudBg()) {
             context.fill(x - 2, y, x + CHART_WIDTH, y + CHART_HEIGHT + 10, 0x80000000);
         }
-        context.drawText(MinecraftClient.getInstance().textRenderer,
+        var textRenderer = mc.textRenderer;
+        context.drawText(textRenderer,
             Text.literal("Catch Graph"), x + 5, y + 5, getHudColor(), false);
-        context.drawText(MinecraftClient.getInstance().textRenderer,
+        context.drawText(textRenderer,
             Text.literal("§8[Edit Mode]"), x + 5, y + 20, getHudColor(), false);
+        context.drawText(textRenderer,
+            Text.literal("§bThis element auto-adjusts!"), x + 5, y + 35, getHudColor(), false);            
     }
 
-    private void drawHistogram(DrawContext context, int chartX, int chartY, Map<Integer, Integer> data, String creatureKey) {
+    private void drawHistogram(DrawContext context, MinecraftClient mc, int chartX, int chartY, Map<Integer, Integer> data, String creatureKey) {
         if (data.isEmpty()) return;
 
         HistogramCache cache = histogramCache.computeIfAbsent(creatureKey, 
@@ -302,7 +306,7 @@ public class ScDisplay implements HudElement {
         int axisColor = 0xFF666666;
         context.fill(chartX, chartY, chartX + 1, chartY + availableHeight, axisColor);
         context.fill(chartX, chartY + availableHeight, chartX + availableWidth, chartY + availableHeight + 1, axisColor);
-        drawAxisLabels(context, chartX, chartY, cache.sortedEntries, cache.maxFrequency, cache.minAttempts, cache.maxAttempts);
+        drawAxisLabels(context, mc, chartX, chartY, cache.sortedEntries, cache.maxFrequency, cache.minAttempts, cache.maxAttempts);
 
         for (Map.Entry<Integer, Integer> entry : cache.sortedEntries) {
             int bracket = entry.getKey();
@@ -321,8 +325,10 @@ public class ScDisplay implements HudElement {
         }
     }
     
-    private void drawAxisLabels(DrawContext context, int chartX, int chartY, List<Map.Entry<Integer,
-                                Integer>> sortedEntries, int maxFrequency, double minAttempts, double maxAttempts) {
+    @SuppressWarnings("squid:S107")
+    private void drawAxisLabels(DrawContext context, MinecraftClient mc, int chartX, int chartY, List<Map.Entry<Integer,
+        Integer>> sortedEntries, int maxFrequency, double minAttempts, double maxAttempts
+    ) {
         if (sortedEntries.isEmpty()) return;
 
         int availableWidth = CHART_WIDTH - CHART_PADDING_X2;
@@ -331,22 +337,23 @@ public class ScDisplay implements HudElement {
         context.getMatrices().pushMatrix();
         context.getMatrices().scale(AXIS_FONT_SCALE, AXIS_FONT_SCALE);
 
+        var textRenderer = mc.textRenderer;
         int scaledChartX = (int) (chartX / AXIS_FONT_SCALE);
         int scaledChartY = (int) (chartY / AXIS_FONT_SCALE);
         int scaledAvailableHeight = (int) (availableHeight / AXIS_FONT_SCALE);
         int scaledAvailableWidth = (int) (availableWidth / AXIS_FONT_SCALE);
         
-        context.drawText(MinecraftClient.getInstance().textRenderer, 
+        context.drawText(textRenderer, 
             Text.literal("0"), scaledChartX - 15, scaledChartY + scaledAvailableHeight - 5, 0xFFAAAAAA, false);
         
         if (maxFrequency > 2) {
             int midFreq = maxFrequency / 2;
             int midY = scaledChartY + scaledAvailableHeight / 2;
-            context.drawText(MinecraftClient.getInstance().textRenderer, 
+            context.drawText(textRenderer, 
                 Text.literal(String.valueOf(midFreq)), scaledChartX - 15, midY, 0xFFAAAAAA, false);
         }
         
-        context.drawText(MinecraftClient.getInstance().textRenderer, 
+        context.drawText(textRenderer, 
             Text.literal(String.valueOf(maxFrequency)), scaledChartX - 15, scaledChartY, 0xFFAAAAAA, false);
         
         double attemptRange = Math.max(1, maxAttempts - minAttempts);
@@ -354,12 +361,12 @@ public class ScDisplay implements HudElement {
         int minBracket = sortedEntries.get(0).getKey();
         int maxBracket = sortedEntries.get(sortedEntries.size() - 1).getKey();
         
-        context.drawText(MinecraftClient.getInstance().textRenderer, 
+        context.drawText(textRenderer, 
             Text.literal(formatBracketLabel(minBracket)), scaledChartX, scaledChartY + scaledAvailableHeight + 5, 0xFFAAAAAA, false);
         
         String highestLabel = formatBracketLabel(maxBracket);
-        int highestLabelWidth = MinecraftClient.getInstance().textRenderer.getWidth(highestLabel);
-        context.drawText(MinecraftClient.getInstance().textRenderer, 
+        int highestLabelWidth = textRenderer.getWidth(highestLabel);
+        context.drawText(textRenderer, 
             Text.literal(highestLabel), scaledChartX + scaledAvailableWidth - (int)(highestLabelWidth * AXIS_FONT_SCALE), 
             scaledChartY + scaledAvailableHeight + 5, 0xFFAAAAAA, false);
         
@@ -367,8 +374,8 @@ public class ScDisplay implements HudElement {
 
             int midBracket = (minBracket + maxBracket) / 2;
             String midLabel = formatBracketLabel(midBracket);
-            int midLabelWidth = MinecraftClient.getInstance().textRenderer.getWidth(midLabel);
-            context.drawText(MinecraftClient.getInstance().textRenderer, 
+            int midLabelWidth = textRenderer.getWidth(midLabel);
+            context.drawText(textRenderer, 
                 Text.literal(midLabel), scaledChartX + (scaledAvailableWidth - (int)(midLabelWidth * AXIS_FONT_SCALE)) / 2, 
                 scaledChartY + scaledAvailableHeight + 5, 0xFFAAAAAA, false);
         }
@@ -376,17 +383,17 @@ public class ScDisplay implements HudElement {
         context.getMatrices().popMatrix();
     }
     
-    private String getCachedMeanText(String creatureKey) {
+    private Text getCachedMeanText(String creatureKey) {
         return meanTextCache.computeIfAbsent(creatureKey, key -> {
             double meanAttempts = ScData.getInstance().getMeanAttemptsFor(key);
-            return meanAttempts > 0 ? String.format("§7Mean: §f%.1f", meanAttempts) : EMPTY_MEAN_TEXT.getString();
+            return meanAttempts > 0 ? Text.literal(String.format("§7Mean: §f%.1f", meanAttempts)) : EMPTY_MEAN_TEXT;
         });
     }
     
-    private String getCachedRateText(String creatureKey) {
+    private Text getCachedRateText(String creatureKey) {
         return rateTextCache.computeIfAbsent(creatureKey, key -> {
             double catchRate = ScData.getInstance().getCatchChance(key);
-            return catchRate > 0 ? String.format("§7Rate: §f%.1f%%", catchRate) : EMPTY_RATE_TEXT.getString();
+            return catchRate > 0 ? Text.literal(String.format("§7Rate: §f%.1f%%", catchRate)) : EMPTY_RATE_TEXT;
         });
     }
 
@@ -481,7 +488,7 @@ public class ScDisplay implements HudElement {
         meanTextCache.clear();
         rateTextCache.clear();
         histogramCache.clear();
-        lastDataUpdate = System.currentTimeMillis();
+        lastDataVersion = -1;  // Force refresh on next render
     }
     
     private boolean isEnabled() {

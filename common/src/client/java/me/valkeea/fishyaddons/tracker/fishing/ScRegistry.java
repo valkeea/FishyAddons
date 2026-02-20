@@ -10,7 +10,8 @@ import java.util.Set;
 
 import me.valkeea.fishyaddons.api.skyblock.SkyblockAreas.Island;
 import me.valkeea.fishyaddons.config.StatConfig;
-import me.valkeea.fishyaddons.tracker.ActivityMonitor;
+import me.valkeea.fishyaddons.tracker.monitoring.ActivityMonitor;
+import me.valkeea.fishyaddons.tracker.monitoring.Currently;
 
 /**
  * Registry for sc spawn requirements.
@@ -112,14 +113,14 @@ public class ScRegistry {
         SpawnRequirement isSpooky = new SpawnRequirement("spooky", 
             () -> {
                 try { 
-                    return ActivityMonitor.getInstance().isActive(ActivityMonitor.Currently.SPOOKY); 
+                    return ActivityMonitor.getInstance().isActive(Currently.SPOOKY);
                 } catch (Exception e) { return false; }
             });
 
         SpawnRequirement isShark = new SpawnRequirement("shark", 
             () -> {
                 try { 
-                    return ActivityMonitor.getInstance().isActive(ActivityMonitor.Currently.SHARK); 
+                    return ActivityMonitor.getInstance().isActive(Currently.SHARK);
                 } catch (Exception e) { return false; }
             });            
 
@@ -154,6 +155,9 @@ public class ScRegistry {
             
         registerCreature(Sc.RAGNAROK, "§cRagnarok", 
             Set.of(Island.CI_HOTSPOT, Island.PLHLEGBLAST), List.of(inHotspot), true);
+
+        registerCreature(Sc.SCUTTLER, "§6Fiery Scuttler", 
+            Set.of(Island.CI_HOTSPOT, Island.PLHLEGBLAST), List.of(inHotspot), true);            
             
         registerCreature(Sc.PLHLEG, "§dPlhlegblast", 
             Set.of(Island.PLHLEGBLAST), List.of(inPool), true);
@@ -241,8 +245,8 @@ public class ScRegistry {
             hash.append(area).append("|");
             hash.append(ScStats.isHspt()).append("|");
             hash.append(ScStats.isPool()).append("|");
-            hash.append(ActivityMonitor.getInstance().isActive(ActivityMonitor.Currently.SPOOKY)).append("|");
-            hash.append(ActivityMonitor.getInstance().isActive(ActivityMonitor.Currently.SHARK)).append("|");
+            hash.append(ActivityMonitor.getInstance().isActive(Currently.SPOOKY)).append("|");
+            hash.append(ActivityMonitor.getInstance().isActive(Currently.SHARK)).append("|");
             hash.append(ScStats.getArea());
             return hash.toString();
         } catch (Exception e) {

@@ -7,6 +7,7 @@ import me.valkeea.fishyaddons.api.skyblock.SkyblockAreas;
 public class Sc {
     public static final String THUNDER = "thunder";
     public static final String RAGNAROK = "ragnarok";
+    public static final String SCUTTLER = "fiery_scuttler";
     public static final String PLHLEG = "plhlegblast";
     public static final String JAWBUS = "lord_jawbus";
     public static final String CH_MINER = "abyssal_miner";

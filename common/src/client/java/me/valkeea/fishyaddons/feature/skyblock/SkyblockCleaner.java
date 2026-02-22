@@ -2,10 +2,14 @@ package me.valkeea.fishyaddons.feature.skyblock;
 
 import java.util.Set;
 
+import org.jetbrains.annotations.Nullable;
+
 import me.valkeea.fishyaddons.api.skyblock.GameMode;
 import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.config.Key;
+import me.valkeea.fishyaddons.impl.MutableSoundInstance;
 import me.valkeea.fishyaddons.tracker.profit.ValuableMobs;
+import net.minecraft.client.sound.SoundInstance;
 import net.minecraft.registry.Registries;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.Identifier;
@@ -16,7 +20,12 @@ public class SkyblockCleaner {
     private static boolean runeOn = false;
     private static boolean thunderOn = false;
     private static boolean hideHotspot = false;
+    private static boolean feroTrueVol = false;    
     private static float hotspotDistance = 0.0f;
+    private static float feroOn = 0.0f;    
+    private static String feroPath = "";
+
+    private static final String FERO = "entity.zombie.break_wooden_door";
 
     private static final Set<Identifier> HYPE_SOUNDS = Set.of(
         Registries.SOUND_EVENT.getId(SoundEvents.ENTITY_GENERIC_EXPLODE.value()),
@@ -24,45 +33,79 @@ public class SkyblockCleaner {
         Registries.SOUND_EVENT.getId(SoundEvents.ENTITY_ENDERMAN_TELEPORT)
     );
 
-    public static boolean isRuneSound(Identifier soundId) {
-        return soundId.getPath().contains("entity.cat.ambient") || 
-               soundId.getPath().contains("entity.cat.purreow") ||
-               soundId.getPath().contains("entity.villager.ambient") || 
-               soundId.getPath().contains("entity.wolf.ambient") ||
-               soundId.getPath().contains("entity.wolf.growl");
+    public static boolean runeSound(String path) {
+        return path.contains("entity.cat.ambient") || 
+               path.contains("entity.cat.purreow") ||
+               path.contains("entity.villager.ambient") || 
+               path.contains("entity.wolf.ambient") ||
+               path.contains("entity.wolf.growl");
     }
 
-    private static boolean isThunderSound(Identifier soundId) {
-        return soundId.getPath().contains("lightning_bolt") ||
-                soundId.getPath().contains("guardian");
-    }    
-
-    public static boolean shouldClean(Identifier soundId) {
-        if (!GameMode.skyblock()) return false;
-        return shouldCleanHype(soundId) || shouldMutePhantom(soundId) ||
-                shouldMuteRune(soundId) || shouldMuteThunder(soundId);
+    private static boolean thunderSound(String path) {
+        return path.contains("lightning_bolt") ||
+                path.contains("guardian");
     }
 
-    public static boolean shouldCleanHype(Identifier soundId) {
+    /**
+     * Check if a sound should be replaced with a different sound.
+     * Returns a replacement SoundInstance if applicable, null otherwise.
+     */
+    @Nullable
+    public static SoundInstance getReplacementSound(SoundInstance sound) {
+        if (sound == null || !GameMode.skyblock()) return null;
+
+        try {
+            var soundId = sound.getId();
+            if (soundId == null) return null;
+
+            var fishingReplacement = CatchAlert.getReplacementSound(soundId);
+            if (fishingReplacement != null) return fishingReplacement;
+
+            var path = soundId.getPath();
+            return getFeroReplacement(path, sound);
+
+        } catch (Exception e) {
+            // Ignore
+            return null;
+        }
+    }
+
+    /**
+     * Check if a sound should be muted
+     */
+    public static boolean shouldClean(SoundInstance sound) {
+        if (sound == null || !GameMode.skyblock()) return false;
+
+        try {
+            var soundId = sound.getId();
+            if (soundId == null) return false;
+
+            var path = soundId.getPath();
+            return muteHype(soundId) || mutePhantom(path) ||
+                    muteRune(path) || muteThunder(path);
+
+        } catch (Exception e) {
+            // Ignore
+            return false;
+        }
+    }
+
+    public static boolean muteHype(Identifier soundId) {
         return hypeOn && HYPE_SOUNDS.contains(soundId);
     }
 
-    public static boolean shouldCleanHype() {
-        return hypeOn;
+    public static boolean mutePhantom(String path) {
+        return phantomOn && path.contains("entity.phantom");
     }
 
-    public static boolean shouldMutePhantom(Identifier soundId) {
-        return phantomOn && soundId.getPath().contains("entity.phantom");
-    }
-
-    public static boolean shouldMuteRune(Identifier soundId) {
-        return runeOn && isRuneSound(soundId);
+    public static boolean muteRune(String path) {
+        return runeOn && runeSound(path);
     }
 
     private static long thunderCalled = 0;
 
-    private static boolean shouldMuteThunder(Identifier soundId) {
-        if (thunderOn && isThunderSound(soundId)) {
+    private static boolean muteThunder(String path) {
+        if (thunderOn && thunderSound(path)) {
 
             boolean thunderAlive = ValuableMobs.isMobAlive("Thunder");
             
@@ -70,13 +113,32 @@ public class SkyblockCleaner {
                 thunderCalled = System.currentTimeMillis();
                 return true;
 
-            } else if (System.currentTimeMillis() - thunderCalled < 60000) {
+            } else if (System.currentTimeMillis() - thunderCalled < 65000) {
                 return true;
             }
         }
 
         return false;
     }
+
+    @Nullable
+    private static SoundInstance getFeroReplacement(String path, SoundInstance original) {
+        if (feroOn <= 0.0f || !path.contains(FERO)) return null;
+
+        var id = Identifier.tryParse(feroPath);
+        if (id == null) return null;
+
+        var sound = Registries.SOUND_EVENT.get(id);
+        if (sound == null || Registries.SOUND_EVENT.getId(sound) == null) return null;
+
+        return feroTrueVol 
+            ? MutableSoundInstance.masterBypass(sound, 1.0f, feroOn, false)
+            : MutableSoundInstance.master(sound, 1.0f, feroOn, false);
+    }     
+
+    public static boolean shouldCleanHype() {
+        return hypeOn;
+    }    
 
     public static boolean shouldHideHotspot() {
         return hideHotspot;
@@ -92,7 +154,10 @@ public class SkyblockCleaner {
         runeOn = FishyConfig.getState(Key.MUTE_RUNE, false);
         thunderOn = FishyConfig.getState(Key.MUTE_THUNDER, false);
         hideHotspot = FishyConfig.getState(Key.HIDE_HOTSPOT, false);
+        feroTrueVol = FishyConfig.getState(Key.FERO_TRUE_VOLUME, false);
         hotspotDistance = FishyConfig.getFloat(Key.HOTSPOT_DISTANCE, 7.0f);
+        feroOn = FishyConfig.getFloat(Key.CUSTOM_FERO, 0.0f);
+        feroPath = FishyConfig.getString(Key.FERO_ALERT, FERO);
     }    
 
     private SkyblockCleaner() {

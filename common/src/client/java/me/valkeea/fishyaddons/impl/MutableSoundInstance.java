@@ -14,7 +14,7 @@ import net.minecraft.util.math.random.Random;
 /**
  * Custom sound instance for control over sound playback
  */
-public class MutableSoundInstance implements SoundInstance {
+public class MutableSoundInstance implements SoundInstance, BypassVolumeSound {
     private final SoundEvent soundEvent;
     private final SoundCategory category;
     private final float volume;
@@ -27,6 +27,7 @@ public class MutableSoundInstance implements SoundInstance {
     private final double z;
     private final boolean relative;
     private final Random random;
+    private final boolean bypassVolumeSettings;
     private Sound sound;
 
     private MutableSoundInstance(Builder builder) {
@@ -41,7 +42,8 @@ public class MutableSoundInstance implements SoundInstance {
         this.y = builder.y;
         this.z = builder.z;
         this.relative = builder.relative;
-        this.random = Random.create();
+        this.random = builder.random;
+        this.bypassVolumeSettings = builder.bypassVolumeSettings;
     }
 
     @Override
@@ -75,7 +77,12 @@ public class MutableSoundInstance implements SoundInstance {
     @Override public float getPitch() { return pitch; }
     @Override public double getX() { return x; }
     @Override public double getY() { return y; }
-    @Override public double getZ() { return z; }    
+    @Override public double getZ() { return z; }
+
+    @Override
+    public boolean shouldBypassVolumeSettings() {
+        return bypassVolumeSettings;
+    }    
 
     public static class Builder {
         private SoundEvent soundEvent;
@@ -89,6 +96,8 @@ public class MutableSoundInstance implements SoundInstance {
         private double y = 0.0;
         private double z = 0.0;
         private boolean relative = true;
+        private Random random = Random.create();
+        private boolean bypassVolumeSettings = false;
 
         public Builder(SoundEvent soundEvent) {
             this.soundEvent = soundEvent;
@@ -137,15 +146,26 @@ public class MutableSoundInstance implements SoundInstance {
             return this;
         }
 
+        public Builder noRandom(boolean noRandom) {
+            if (noRandom) this.random.setSeed(0);
+            return this;
+        }
+
+        public Builder bypassVolumeSettings(boolean bypass) {
+            this.bypassVolumeSettings = bypass;
+            return this;
+        }
+
         public MutableSoundInstance build() {
             return new MutableSoundInstance(this);
         }
     }
 
-    public static MutableSoundInstance master(SoundEvent soundEvent, float pitch, float volume) {
+    public static MutableSoundInstance master(SoundEvent soundEvent, float pitch, float volume, boolean noRandom) {
         return new Builder(soundEvent)
                 .pitch(pitch)
                 .volume(volume)
+                .noRandom(noRandom)
                 .build();
     }
 
@@ -164,6 +184,15 @@ public class MutableSoundInstance implements SoundInstance {
                 .volume(volume)
                 .repeatable(true)
                 .repeatDelay(repeatDelay)
+                .build();
+    }
+
+    public static MutableSoundInstance masterBypass(SoundEvent soundEvent, float pitch, float volume, boolean noRandom) {
+        return new Builder(soundEvent)
+                .pitch(pitch)
+                .volume(volume)
+                .bypassVolumeSettings(true)
+                .noRandom(noRandom)
                 .build();
     }
 }

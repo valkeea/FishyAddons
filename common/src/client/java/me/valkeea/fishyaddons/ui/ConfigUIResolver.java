@@ -8,9 +8,11 @@ import java.util.function.Supplier;
 
 import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.config.Key;
+import me.valkeea.fishyaddons.feature.skyblock.PetInfo;
 import me.valkeea.fishyaddons.feature.skyblock.TransLava;
 import me.valkeea.fishyaddons.feature.visual.ParticleVisuals;
 import me.valkeea.fishyaddons.feature.visual.XpColor;
+import me.valkeea.fishyaddons.tool.FishyMode;
 import me.valkeea.fishyaddons.ui.list.ChatAlerts;
 import me.valkeea.fishyaddons.ui.list.CustomFaColors;
 import me.valkeea.fishyaddons.ui.list.FilterRules;
@@ -85,6 +87,13 @@ public class ConfigUIResolver {
                 FishyConfig.setInt(Key.XP_COLOR, color);
                 XpColor.refresh();
             });
+
+        registerColorHandler(Key.HUD_PETXP,
+            () -> FishyConfig.getInt(Key.HUD_PETXP_COLOR, -9961480),
+            color -> {
+                FishyConfig.setInt(Key.HUD_PETXP_COLOR, color);
+                PetInfo.refresh();
+            }); 
             
         registerColorHandler(Key.CUSTOM_PARTICLE_COLOR_INDEX,
             () -> {
@@ -156,13 +165,13 @@ public class ConfigUIResolver {
     public static int getColor(VCEntry entry) {
         if (XP_COLOR_ENTRY_NAME.equals(entry.name)) {
             IntSupplier getter = COLOR_GETTERS.get(XP_COLOR_ENTRY_NAME);
-            return getter != null ? getter.getAsInt() : 0xFFFF0000;
+            return getter != null ? getter.getAsInt() : FishyMode.getThemeColor();
         }
 
-        if (entry.configKey == null) return 0xFFFF0000;
+        if (entry.configKey == null) return FishyMode.getThemeColor();
         
         IntSupplier getter = COLOR_GETTERS.get(entry.configKey);
-        return getter != null ? getter.getAsInt() : 0xFFFF0000;
+        return getter != null ? getter.getAsInt() : FishyMode.getThemeColor();
     }
     
     /**

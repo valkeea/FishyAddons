@@ -51,7 +51,7 @@ public class ColorWheel extends Screen {
     private boolean thick;
     private boolean draggingWheel = false;
     private boolean draggingBar = false;
-    private boolean hasReset = false;
+    private boolean hasDisable = false;
 
     public ColorWheel(Screen parent, int initialColor, Consumer<Integer> onColorSelected) {
         this(parent, initialColor, onColorSelected, false);
@@ -59,12 +59,12 @@ public class ColorWheel extends Screen {
 
     public ColorWheel(Screen parent, int initialColor,
                         Consumer<Integer> onColorSelected,
-                        boolean hasReset) {
+                        boolean hasDisable) {
 
         super(Text.literal("Color Picker"));
         this.parent = parent;
         this.onColorSelected = onColorSelected;
-        this.hasReset = hasReset;
+        this.hasDisable = hasDisable;
         float[] rgb = intToRGB(initialColor);
 
         if (rgb.length == 3) {
@@ -87,7 +87,7 @@ public class ColorWheel extends Screen {
     }
 
     private void calcDimensions() {
-        uiScale = Math.clamp(FishyConfig.getFloat(Key.MOD_UI_SCALE, 0.4265625f), 0.75f, 1.3f);
+        uiScale = Math.clamp(FishyConfig.getFloat(Key.MOD_UI_SCALE, 0.8f), 0.75f, 1.3f);
         thick = uiScale > 1.0f;
         wheelRadius = (int)(70 * uiScale);
         wheelCenterX = this.width / 2;
@@ -119,10 +119,10 @@ public class ColorWheel extends Screen {
         btnY = fieldY + 30;
         int cancelX = wheelCenterX - fieldWidth  / 2;
 
-        if (hasReset) {
+        if (hasDisable) {
             btnWidth = (int)(45 * uiScale); 
             addCancelBtn(cancelX, btnY);
-            addResetBtn(cancelX + btnWidth + 5, btnY);
+            addDisableBtn(cancelX + btnWidth + 5, btnY);
             addConfirmBtn(cancelX + (btnWidth + 5) * 2, btnY);
         } else {
             btnWidth = (int)(70 * uiScale);
@@ -141,17 +141,17 @@ public class ColorWheel extends Screen {
         this.addDrawableChild(cancelBtn);
     }
 
-    private void addResetBtn(int x, int y) {
-        var resetBtn = new FaButton(
+    private void addDisableBtn(int x, int y) {
+        var disableBtn = new FaButton(
             x, y, btnWidth, widgetHeight,
-            Text.literal("Reset").setStyle(Style.EMPTY.withColor(0xFFFF8080)),
+            Text.literal("Disable").setStyle(Style.EMPTY.withColor(0xFFFF8080)),
             btn -> {
                 onColorSelected.accept(0);
                 this.client.setScreen(parent);
             }
         );
-        resetBtn.setUIScale(uiScale);
-        this.addDrawableChild(resetBtn);  
+        disableBtn.setUIScale(uiScale);
+        this.addDrawableChild(disableBtn);  
     }
 
     private void addConfirmBtn(int x, int y) {

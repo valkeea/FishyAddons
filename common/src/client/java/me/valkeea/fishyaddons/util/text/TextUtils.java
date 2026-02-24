@@ -59,46 +59,4 @@ public class TextUtils {
     public static String stripColor(String text) {
         return text == null ? "" : text.replaceAll("(?i)§[0-9a-fk-or]", "");
     }
-
-    /**
-     * Flatten and combine overly nested text into a single line, preserving styles
-     */
-    public static void combineToFlat(Text suffix, MutableText target) {
-        if (suffix.getSiblings().isEmpty()) {
-            String content = suffix.getString();
-            if (!content.isEmpty()) {
-                target.append(Text.literal(content).setStyle(suffix.getStyle()));
-            }
-
-        } else {
-            for (Text sibling : suffix.getSiblings()) {
-                combineToFlat(sibling, target);
-            }
-        }
-    }
-    
-    /**
-     * Recursively recolor text while preserving bold/italic formatting
-     */
-    public static MutableText recolorText(Text text, int color) {
-        if (text == null) return Text.literal("");
-        
-        var style = text.getStyle();
-        boolean wasBold = style != null && style.isBold();
-        boolean wasItalic = style != null && style.isItalic();
-        
-        var newStyle = Style.EMPTY.withColor(color);
-        if (wasBold) newStyle = newStyle.withBold(true);
-        if (wasItalic) newStyle = newStyle.withItalic(true);
-        
-        MutableText base = text.getSiblings().isEmpty() 
-            ? Text.literal(text.getString()).setStyle(newStyle)
-            : Text.empty().setStyle(newStyle);
-        
-        for (Text sibling : text.getSiblings()) {
-            base.append(recolorText(sibling, color));
-        }
-        
-        return base;
-    }
 }

@@ -7,18 +7,21 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 import me.valkeea.fishyaddons.api.skyblock.GameMode;
+import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.config.Key;
 import me.valkeea.fishyaddons.util.TabScanner;
+import me.valkeea.fishyaddons.util.text.Color;
 import me.valkeea.fishyaddons.util.text.Enhancer;
-import me.valkeea.fishyaddons.util.text.TextUtils;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 
 public class PetInfo {
     private PetInfo() {}
+
     private static boolean isOn = false;
     private static boolean tablistReady = false;
+    private static int color = 0;
 
     private static Text l1Scanned = null;
     private static Text directOverride = null;
@@ -55,7 +58,9 @@ public class PetInfo {
     }
 
     public static void refresh() {
-        isOn = me.valkeea.fishyaddons.config.FishyConfig.getState(Key.HUD_PET_ENABLED, false);
+        isOn = FishyConfig.getState(Key.HUD_PET_ENABLED, false);
+        color = FishyConfig.getInt(Key.HUD_PETXP_COLOR, -9961480);
+        ActivePet.forceUpdate();
     }    
 
     public static void setOverride(Text petInfo) { 
@@ -67,9 +72,7 @@ public class PetInfo {
     }
 
     public static Text getPet() {
-        if (directOverride != null) {
-            return directOverride;
-        }
+        if (directOverride != null) return directOverride;
         return l1Scanned != null ? l1Scanned : Text.literal("");
     }
 
@@ -88,14 +91,12 @@ public class PetInfo {
     public static void onTablistReady() {
         setTablistReady(true);
         if (l1Scanned == null && isOn) TabScanner.delayedScan();
-    }    
+    }
 
     public static void setTablistReady(boolean ready) { tablistReady = ready; }
     public static boolean isTablistReady() { return tablistReady; }
     public static boolean isOn() { return isOn; }
-    public static boolean shouldIncludeXp() { 
-        return me.valkeea.fishyaddons.config.FishyConfig.getState(Key.HUD_PETXP, false);
-    }
+    public static boolean shouldIncludeXp() { return FishyConfig.getState(Key.HUD_PETXP, false); }
 
     public static class ActivePet {
         private static Text l1;
@@ -116,6 +117,16 @@ public class PetInfo {
             scheduleCombine();
         }
 
+        public static synchronized void forceUpdate() {
+            if (l2 != null) {
+                scheduleCombine();
+            }
+        }
+
+        public static void shutdown() {
+            scheduler.shutdown();
+        }        
+
         private static synchronized void scheduleCombine() {
             if (pendingCombine != null && !pendingCombine.isDone()) {
                 pendingCombine.cancel(false);
@@ -124,20 +135,49 @@ public class PetInfo {
         }
 
         private static synchronized void combine() {
-            MutableText flattened = Text.empty();
-            TextUtils.combineToFlat(l1, flattened);
+
+            var merged = Text.empty();
+            merged.append(l1);
 
             if (PetInfo.shouldIncludeXp()) {
-                flattened.append(Text.literal(" "));
-                TextUtils.combineToFlat(l2, flattened);
+                merged.append(Text.literal(" "));
+
+                if (color != 0) merged.append(formatl2(l2, color));
+                else merged.append(l2);
+            }
+            
+            clearOverride();
+            setNewPet(merged);
+        }
+
+        private static Text formatl2(Text line, int color) {
+
+            var raw = line.getString().trim();
+            if (raw.equalsIgnoreCase("max level")) {
+                return Text.empty().append(Text.literal("MAX").setStyle(Style.EMPTY
+                    .withBold(true))
+                    .withColor(color));
             }
 
-            clearOverride();
-            setNewPet(flattened);
+            var tail = false;
+            var result = Text.empty();
+
+            for (int i = 0; i < raw.length(); i++) {
+                char c = raw.charAt(i);
+
+                if (c == 'X' || c == 'P') result.append(paintChar(c, color));
+                else if (c == '/' || c == '+' || c == '(' || tail) {
+                    result.append(paintChar(c, Color.mulRGB(color, 0.6f)));
+                    if (c == '(') tail = true;
+                }
+                else result.append(paintChar(c, Color.mulRGB(color, 1.2f)));
+            }
+
+            return result;
         }
 
-        public static void shutdown() {
-            scheduler.shutdown();
-        }
+        private static MutableText paintChar(char c, int color) {
+            return Text.literal(String.valueOf(c)).setStyle(Style.EMPTY.withColor(color));
+        }        
     }  
 }

@@ -18,32 +18,14 @@ public class Color {
         return new float[]{r, g, b, a};
     }
 
-    public static int dim(int color, float factor) {
-        int a = (color >> 24) & 0xFF;
-        int r = (color >> 16) & 0xFF;
-        int g = (color >> 8) & 0xFF;
-        int b = color & 0xFF;
-
-        r = (int)(r * factor);
-        g = (int)(g * factor);
-        b = (int)(b * factor);
-
-        return (a << 24) | (r << 16) | (g << 8) | b;
-    }
-
-    public static int darken(int color, float factor) {
-        int r = (color >> 16) & 0xFF;
-        int g = (color >> 8) & 0xFF;
-        int b = color & 0xFF;
-
-        r = (int)(r * factor);
-        g = (int)(g * factor);
-        b = (int)(b * factor);
-
-        return (color & 0xFF000000) | (r << 16) | (g << 8) | b;
-    }
-
-    public static int lighten(int color, float factor) {
+    /**
+     * Multiply the RGB components of a color by a factor, keeping alpha unchanged.
+     * 
+     * @param color The original color as an ARGB integer
+     * @param factor The factor to multiply the RGB components by (e.g., 0.5 to darken, 1.5 to brighten)
+     * @return The resulting color as an ARGB integer
+     */
+    public static int mulRGB(int color, float factor) {
         int a = (color >> 24) & 0xFF;
         int r = (color >> 16) & 0xFF;
         int g = (color >> 8) & 0xFF;
@@ -56,6 +38,13 @@ public class Color {
         return (a << 24) | (r << 16) | (g << 8) | b;
     } 
 
+    /**
+     * Brighten a color by blending it with white based on the given factor.
+     * 
+     * @param color The original color as an ARGB integer
+     * @param factor 0.0 to 1.0, where 0 returns the original color and 1 returns white
+     * @return The brightened color as an ARGB integer
+     */
     public static int brighten(int color, float factor) {
         int a = (color >> 24) & 0xFF;
         int r = (color >> 16) & 0xFF;
@@ -69,6 +58,39 @@ public class Color {
         return (a << 24) | (r << 16) | (g << 8) | b;
     }
 
+    /**
+     * Increase saturation by blending the color with a more saturated version of itself based on the given factor.
+     * 
+     * @param color The original color as an ARGB integer
+     * @param factor 0.0 to 1.0, where 0 returns the original color and 1 returns the fully saturated color
+     * @return The saturated color as an ARGB integer
+     */
+    public static int saturate(int color, float factor) {
+        int a = (color >> 24) & 0xFF;
+        int r = (color >> 16) & 0xFF;
+        int g = (color >> 8) & 0xFF;
+        int b = color & 0xFF;
+
+        int gray = (r + g + b) / 3;
+
+        r = (int)(gray + (r - gray) * (1 + factor));
+        g = (int)(gray + (g - gray) * (1 + factor));
+        b = (int)(gray + (b - gray) * (1 + factor));
+
+        r = Math.min(255, r);
+        g = Math.min(255, g);
+        b = Math.min(255, b);
+
+        return (a << 24) | (r << 16) | (g << 8) | b;
+    }
+
+    /**
+     * Darken a color by blending it with black based on the given factor.
+     * 
+     * @param color The original color as an ARGB integer
+     * @param factor 0.0 to 1.0, where 0 returns the original color and 1 returns black
+     * @return The darkened color as an ARGB integer
+     */
     public static int desaturateAndDarken(int color, float factor) {
         int a = (color >> 24) & 0xFF;
         int r = (color >> 16) & 0xFF;
@@ -88,6 +110,13 @@ public class Color {
         return (a << 24) | (r << 16) | (g << 8) | b;
     }
 
+    /**
+     * Desaturate a color by blending it with its grayscale version based on the given factor.
+     * 
+     * @param color The original color as an ARGB integer
+     * @param factor 0.0 to 1.0, where 0 returns the original color and 1 returns the fully desaturated color
+     * @return The desaturated color as an ARGB integer
+     */
     public static int desaturate(int color, float factor) {
         int a = (color >> 24) & 0xFF;
         int r = (color >> 16) & 0xFF;

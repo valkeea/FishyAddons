@@ -192,7 +192,9 @@ public class FaColors {
         int length() { return key.length(); }
     }
 
-    // Split input string into segments based on matched player names
+    /**
+     * Split input string into segments based on matched player names.
+     */
     private static List<Segment> splitForMatches(String input) {
         List<Segment> segments = new ArrayList<>();
         int pos = 0;
@@ -200,14 +202,16 @@ public class FaColors {
         while (pos < input.length()) {
             final int currentPos = pos;
             
+            // Find the earliest and longest matching player name in the remaining input
             Optional<MatchResult> bestMatch = combinedMap.object2ObjectEntrySet().stream()
                 .map(entry -> {
                     String key = entry.getKey();
-                    int idx = input.indexOf(key, currentPos);
+                    int idx = findNextMatch(input, key, currentPos);
                     return new MatchResult(key, entry.getValue(), idx, idx + key.length());
                 })
                 .filter(MatchResult::isValid)
                 .min((m1, m2) -> {
+                    // Prioritize matches that start earlier; if same start, prefer longer matches
                     int startComparison = Integer.compare(m1.startIndex, m2.startIndex);
                     return startComparison != 0 ? startComparison : Integer.compare(m2.length(), m1.length());
                 });
@@ -219,14 +223,47 @@ public class FaColors {
 
             var match = bestMatch.get();
             
+            // Add unmatched text before the match (if any)
             if (match.startIndex > pos) {
                 segments.add(new Segment(input.substring(pos, match.startIndex), null));
             }
 
+            // Add the matched player name with its color
             segments.add(new Segment(match.key, match.color));
             pos = match.endIndex;
         }
         return segments;
+    }
+
+    /**
+     * Find the next occurrence of a player name at a word boundary.
+     * Returns -1 if not found or if the match isn't at a word boundary.
+     */
+    private static int findNextMatch(String input, String playerName, int fromIndex) {
+        int start = input.indexOf(playerName, fromIndex);
+        
+        while (start >= 0) {
+            boolean isStartBoundary = (start == 0) || !isWordChar(input.charAt(start - 1))
+                || isPartOfFormattingCode(input, start - 1);
+            boolean isEndBoundary = (start + playerName.length() == input.length()) 
+                || !isWordChar(input.charAt(start + playerName.length()));
+            
+            if (isStartBoundary && isEndBoundary) {
+                return start;
+            }
+            
+            start = input.indexOf(playerName, start + 1);
+        }
+        
+        return -1;
+    }
+
+    private static boolean isPartOfFormattingCode(String input, int pos) {
+        return pos > 0 && input.charAt(pos - 1) == '§';
+    }
+
+    private static boolean isWordChar(char c) {
+        return Character.isLetterOrDigit(c);
     }
 
     /**

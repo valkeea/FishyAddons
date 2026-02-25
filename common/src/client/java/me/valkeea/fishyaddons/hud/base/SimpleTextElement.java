@@ -4,7 +4,9 @@ import java.awt.Rectangle;
 
 import me.valkeea.fishyaddons.hud.core.HudDrawer;
 import me.valkeea.fishyaddons.hud.core.HudElementState;
+import me.valkeea.fishyaddons.hud.core.HudUtils;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.DrawContext;
 import net.minecraft.text.Text;
 
 /**
@@ -29,9 +31,7 @@ public abstract class SimpleTextElement extends BaseHudElement {
         if (text == null || text.getString().isEmpty()) {
             if (isEditingMode()) {
                 text = Text.literal(placeholderText);
-            } else {
-                return;
-            }
+            } else return;
         }
         
         int alignment = getTextAlignment();
@@ -43,6 +43,20 @@ public abstract class SimpleTextElement extends BaseHudElement {
         };
 
         drawer.drawFormattedText(text, x, 0, getTextColor());
+    }
+
+    @Override
+    public void drawBackGround(DrawContext context, MinecraftClient mc, HudElementState state) {
+        float scale = state.size / 12.0F;
+        int textWidth = (int)(calculateContentWidth(mc) * scale);
+        int textHeight = (int)(calculateContentHeight(mc) * scale);
+        int alignment = getTextAlignment();
+        int xOffset = switch (alignment) {
+            case 1 -> -textWidth / 2;
+            case 2 -> -textWidth;
+            default -> 0;
+        };
+        HudUtils.drawBackground(context, state.x + xOffset, state.y, textWidth, textHeight);
     }
 
     @Override

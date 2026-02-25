@@ -5,13 +5,14 @@ import java.util.Map;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 
-import me.valkeea.fishyaddons.api.HypixelPriceClient;
+import me.valkeea.fishyaddons.api.hypixel.PriceService;
 import me.valkeea.fishyaddons.command.CommandBuilderUtils;
 import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.config.TrackerProfiles;
-import me.valkeea.fishyaddons.hud.elements.custom.TrackerDisplay;
-import me.valkeea.fishyaddons.tracker.profit.ItemTrackerData;
+import me.valkeea.fishyaddons.hud.elements.interactive.ProfitDisplay;
+import me.valkeea.fishyaddons.tracker.PriceUtil;
 import me.valkeea.fishyaddons.tracker.profit.ProfitTracker;
+import me.valkeea.fishyaddons.tracker.profit.TrackedItemData;
 import me.valkeea.fishyaddons.util.FishyNotis;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
@@ -30,9 +31,7 @@ public class FpRoot implements CommandHandler {
         builder
             .then(toggleCmd())
             .then(statsCmd())
-            .then(initCmd())
             .then(refreshCmd())
-            .then(statusCmd())
             .then(clearCmd())
             .then(ignoredCmd())
             .then(typeCmd())
@@ -55,19 +54,9 @@ public class FpRoot implements CommandHandler {
         .executes(ctx -> handleStats() ? 1 : 0);
     }
     
-    private static LiteralArgumentBuilder<FabricClientCommandSource> initCmd() {
-        return ClientCommandManager.literal("init")
-        .executes(ctx -> handleInit() ? 1 : 0);
-    }
-    
     private static LiteralArgumentBuilder<FabricClientCommandSource> refreshCmd() {
         return ClientCommandManager.literal("refresh")
         .executes(ctx -> handleRefresh() ? 1 : 0);
-    }
-    
-    private static LiteralArgumentBuilder<FabricClientCommandSource> statusCmd() {
-        return ClientCommandManager.literal("status")
-        .executes(ctx -> handleStatus() ? 1 : 0);
     }
     
     private static LiteralArgumentBuilder<FabricClientCommandSource> clearCmd() {
@@ -146,14 +135,14 @@ public class FpRoot implements CommandHandler {
             .executes(ctx -> handleRestore(new String[]{RESTORE}) ? 1 : 0);
     }
 
-    private static final String KEY = me.valkeea.fishyaddons.config.Key.HUD_TRACKER_ENABLED;
+    private static final String KEY = me.valkeea.fishyaddons.config.Key.HUD_PROFIT_ENABLED;
     
     private static boolean handleToggle() {
         boolean newState = !FishyConfig.getState(KEY, false);
-        FishyConfig.enable(KEY, newState);
+        FishyConfig.setState(KEY, newState);
         String status = newState ? "§aenabled" : "§cdisabled";
         String msgStart = "§3Profit Tracker " + status;        
-        me.valkeea.fishyaddons.tracker.profit.ProfitTracker.refresh();
+        me.valkeea.fishyaddons.tracker.PriceUtil.refresh();
         
         if (newState && TrackerProfiles.hasJsonFile()) {
             if (TrackerProfiles.loadFromJson()) {
@@ -185,37 +174,36 @@ public class FpRoot implements CommandHandler {
             return false;
         }
 
-        HypixelPriceClient.setPriceType(newType);
+        PriceService.setPriceType(newType);
         FishyConfig.setString(me.valkeea.fishyaddons.config.Key.PRICE_TYPE, newType);
-        ItemTrackerData.clearValueCache();
-        ItemTrackerData.refreshPrices();
+        PriceUtil.refreshPrices();
         FishyNotis.alert(Text.literal(String.format("§bPrice type set to §3%s", newType)));
         return true;
     }
     
     private static boolean handleClear() {
-        ItemTrackerData.clearAll();
+        TrackedItemData.clearAll();
         FishyNotis.send("Profit Tracker data cleared");
         return true;
     }
     
     private static boolean handleStats() {
-        Map<String, Integer> items = ItemTrackerData.getAllItems();
+        Map<String, Integer> items = TrackedItemData.getAllItems();
         
         if (items.isEmpty()) {
             FishyNotis.alert(Text.literal("§7No items tracked this session. Use §3/fp toggle §7to enable, §3/fp §7to see available commands."));
             return false;
         }
         
-        long sessionTime = ItemTrackerData.getTotalDurationMinutes();
-        int totalItems = ItemTrackerData.getTotalItemCount();
-        double totalValue = ItemTrackerData.getTotalSessionValue();
+        long sessionTime = TrackedItemData.getTotalDurationMinutes();
+        int totalItems = TrackedItemData.getTotalItemCount();
+        double totalValue = TrackedItemData.getTotalSessionValue();
 
         FishyNotis.themed("α Profit Tracker Stats α");
 
         String sessionTimeDisplay = String.format("§7Playtime: §3%d h", sessionTime / 60);
-        if (ItemTrackerData.isCurrentlyPaused()) {
-            long inactiveMinutes = ItemTrackerData.getInactiveMinutes();
+        if (TrackedItemData.isCurrentlyPaused()) {
+            long inactiveMinutes = TrackedItemData.getInactiveMinutes();
             sessionTimeDisplay += String.format(" §8(paused for %d min)", inactiveMinutes);
         }
 
@@ -224,8 +212,8 @@ public class FpRoot implements CommandHandler {
         
         if (totalValue > 0) {
             String valueStr = formatCoins(totalValue);
-            long fullDuration = ItemTrackerData.getTotalDurationMinutes();
-            long lastApiUpdate = ItemTrackerData.getLastApiUpdateTime();
+            long fullDuration = TrackedItemData.getTotalDurationMinutes();
+            long lastApiUpdate = PriceUtil.getLastApiUpdateTime();
             boolean hasRecentData = lastApiUpdate > 0 && (System.currentTimeMillis() - lastApiUpdate) < 300000;
             String apiStatus = hasRecentData ? " §a(live prices)" : " §c(estimated)";
             FishyNotis.alert(Text.literal(String.format("§7Value: §e%s%s", valueStr, apiStatus)));
@@ -234,21 +222,11 @@ public class FpRoot implements CommandHandler {
         
         FishyNotis.alert(Text.literal("§7Top items (by value):"));
         
-        var priceClient = ItemTrackerData.getPriceClient();
         items.entrySet().stream()
             .map(entry -> {
                 String itemName = entry.getKey();
                 int quantity = entry.getValue();
-                double unitPrice = 0;
-                
-                if (priceClient != null) {
-                    if (priceClient.hasBazaarData(itemName)) {
-                        unitPrice = priceClient.getBazaarBuyPrice(itemName);
-                    } else if (priceClient.hasAuctionData(itemName)) {
-                        unitPrice = priceClient.getCachedAuctionPrice(itemName);
-                    }
-                }
-                
+                double unitPrice = TrackedItemData.getPrice(itemName);
                 double itemTotal = unitPrice * quantity;
                 return new ItemDisplayData(itemName, quantity, unitPrice, itemTotal);
             })
@@ -265,50 +243,10 @@ public class FpRoot implements CommandHandler {
         
         return true;
     }
-    
-    private static boolean handleInit() {
-        initTracking();
-        FishyNotis.notice("Initialized price client");
-        return true;
-    }
-
-    private static void initTracking() {
-        ItemTrackerData.init();
-        var priceClient = ItemTrackerData.getPriceClient();
-        if (priceClient != null) {
-            priceClient.clearAuctionCache();
-        }
-        
-        ItemTrackerData.updateAllAsync();        
-    }
 
     private static boolean handleRefresh() {
-        ItemTrackerData.refreshPrices();
+        PriceUtil.refreshPrices();
         FishyNotis.notice("§b§oRefreshing prices...");
-        return true;
-    }
-    
-    private static boolean handleStatus() {
-        long lastBazaar = ItemTrackerData.getLastBazaarUpdateTime();
-        long lastAuction = ItemTrackerData.getLastAuctionUpdateTime();
-
-        FishyNotis.themed("  α API Status α  ");
-        FishyNotis.alert(Text.literal("§7Price type: §3" + me.valkeea.fishyaddons.api.HypixelPriceClient.getType()));
-        
-        if (lastBazaar > 0) {
-            long minutes = (System.currentTimeMillis() - lastBazaar) / 60000;
-            FishyNotis.alert(Text.literal(String.format("§7Bazaar: §a✓ §7(%d min ago)", minutes)));
-        } else {
-            FishyNotis.alert(Text.literal("§7Bazaar: §c✗"));
-        }
-        
-        if (lastAuction > 0) {
-            long minutes = (System.currentTimeMillis() - lastAuction) / 60000;
-            FishyNotis.alert(Text.literal(String.format("§7Auctions: §a✓ §7(%d min ago)", minutes)));
-        } else {
-            FishyNotis.alert(Text.literal("§7Auctions: §c✗ §7(on-demand)"));
-        }
-        
         return true;
     }
     
@@ -372,8 +310,7 @@ public class FpRoot implements CommandHandler {
 
     private static boolean profileSwitchOrCreate(String profileName) {
         if (!FishyConfig.getState(KEY, false)) {
-            FishyConfig.enable(KEY, true);
-            initTracking();
+            FishyConfig.setState(KEY, true);
         }
 
         var currentProfile = TrackerProfiles.getCurrentProfile();
@@ -390,6 +327,7 @@ public class FpRoot implements CommandHandler {
         java.util.List<String> availableProfiles = TrackerProfiles.getAvailableProfiles();
         if (availableProfiles.contains(profileName.toLowerCase())) {
             TrackerProfiles.setCurrentProfile(profileName);
+            ProfitDisplay.refreshDisplay();
             FishyNotis.send(Text.literal("§dSwitched to profile: §3" + profileName));
         } else {
             if (TrackerProfiles.createProfile(profileName)) {
@@ -438,7 +376,7 @@ public class FpRoot implements CommandHandler {
         displayPriceQueryHeader(priceQuery);
 
         FishyNotis.alert(Text.literal("§7§oSearching..."));
-        ItemTrackerData.getItemValueAsync(priceQuery.itemName, (value, source) -> handlePriceAsyncCallback(value, source, priceQuery.amount));
+        handlePrice(TrackedItemData.getPrice(priceQuery.itemName), priceQuery.amount);
 
         return true;
     }
@@ -499,14 +437,14 @@ public class FpRoot implements CommandHandler {
         }
     }
 
-    private static void handlePriceAsyncCallback(double value, String source, int amount) {
+    private static void handlePrice(double value, int amount) {
         if (value > 0) {
             double totalValue = value * amount;
             if (amount > 1) {
-                FishyNotis.alert(Text.literal(String.format("§7[%s] §e%s §7each", source, formatCoins(value))));
+                FishyNotis.alert(Text.literal(String.format("§7§e%s §7each", formatCoins(value))));
                 FishyNotis.alert(Text.literal(String.format("§7Total: §e%s", formatCoins(totalValue))));
             } else {
-                FishyNotis.alert(Text.literal(String.format("§7[%s] §e%s", source, formatCoins(value))));
+                FishyNotis.alert(Text.literal(String.format("§7§e%s", formatCoins(value))));
             }
         } else {
             FishyNotis.alert(Text.literal("§cNo price data found"));
@@ -524,7 +462,7 @@ public class FpRoot implements CommandHandler {
     }
     
     private static boolean handleIgnored() {
-        var tracker = TrackerDisplay.getInstance();
+        var tracker = ProfitDisplay.getInstance();
         if (tracker == null) {
             FishyNotis.alert(Text.literal("§cTracker display not initialized"));
             return false;
@@ -555,7 +493,7 @@ public class FpRoot implements CommandHandler {
     
     private static boolean handleRestore(String[] args) {
         var cmdArgs = new CommandBuilderUtils.CommandArgs(args);
-        var tracker = TrackerDisplay.getInstance();
+        var tracker = ProfitDisplay.getInstance();
         
         if (tracker == null) {
             FishyNotis.alert(Text.literal("§cTracker display not initialized"));
@@ -610,7 +548,7 @@ public class FpRoot implements CommandHandler {
 
     public static void profitPerHour() {
         if (ProfitTracker.isEnabled()) {
-            double profitPerHour = ItemTrackerData.getTotalSessionValue() / Math.max(1, ItemTrackerData.getTotalDurationMinutes()) * 60.0;
+            double profitPerHour = TrackedItemData.getTotalSessionValue() / Math.max(1, TrackedItemData.getTotalDurationMinutes()) * 60.0;
             FishyNotis.alert(Text.literal(String.format("§7Per hour: §e%s", formatCoins(profitPerHour))));
         }
     }

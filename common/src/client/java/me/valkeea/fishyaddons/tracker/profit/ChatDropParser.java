@@ -7,8 +7,6 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import me.valkeea.fishyaddons.api.cache.PriceLookupCache;
-
 public class ChatDropParser {
     private static final String SHARD_KEYWORD = "shard";
     private static final String SHARD_PLURAL = " shards";
@@ -214,24 +212,13 @@ public class ChatDropParser {
     public static ParseResult parseMessage(String message) {
         if (message == null || message.trim().isEmpty()) return null;
         
-        // Check cache first for previously parsed messages
-        Object cachedResult = PriceLookupCache.getCachedMessageParse(message);
-        if (cachedResult != null) {
-            if (PriceLookupCache.isNullParseResult(cachedResult)) {
-                return null;
-            }
-            return (ParseResult) cachedResult;
-        }
-        
         // Filter out annoying cases (mostly fishing) 
         if (ignore(message)) {
-            PriceLookupCache.cacheMessageParse(message, null);
             return null;
         }
         
         // Quick pre-filter to check for common drop indicators
         if (!isDrop(message)) {
-            PriceLookupCache.cacheMessageParse(message, null);
             return null;
         }
         
@@ -239,13 +226,10 @@ public class ChatDropParser {
         for (DropPattern pattern : DROP_PATTERNS) {
             ParseResult result = tryPattern(pattern, message);
             if (result != null) {
-                // Cache the successful parse result
-                PriceLookupCache.cacheMessageParse(message, result);
                 return result;
             }
         }
         
-        PriceLookupCache.cacheMessageParse(message, null);
         return null;
     }
 
@@ -407,24 +391,16 @@ public class ChatDropParser {
     }
     
     private static String cleanItemName(String itemName) {
-        // Check cache first
-        String cachedResult = PriceLookupCache.getCachedNormalization(itemName);
-        if (cachedResult != null) {
-            return cachedResult;
-        }
-        
+        // Direct normalization - simple and fast
         String cleaned = itemName.trim()
                 .replaceAll("\\s+", " ")
                 .replaceAll("[\"'`]", "")
                 .replaceAll("\\([^)]*\\)", "")
-                .replace("✯", "")
+                .replace("✹", "")
                 .trim()
                 .toLowerCase();
         
-        String normalized = normalizePlural(cleaned);
-        PriceLookupCache.cacheNormalization(itemName, normalized);
-        
-        return normalized;
+        return normalizePlural(cleaned);
     }
     
     /**

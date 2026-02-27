@@ -1,11 +1,12 @@
 package me.valkeea.fishyaddons.hud.ui;
 
 import java.awt.Rectangle;
+import java.util.List;
 
-import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.feature.qol.ItemSearchOverlay;
-import me.valkeea.fishyaddons.hud.core.HudElement;
+import me.valkeea.fishyaddons.hud.base.InteractiveHudElement;
 import me.valkeea.fishyaddons.hud.core.HudElementState;
+import me.valkeea.fishyaddons.tool.FishyMode;
 import me.valkeea.fishyaddons.ui.GuiUtil;
 import me.valkeea.fishyaddons.ui.widget.VCTextField;
 import net.minecraft.client.MinecraftClient;
@@ -14,24 +15,24 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.input.KeyInput;
 import net.minecraft.text.Text;
 
-public class SearchHudElement implements HudElement {
+public class SearchHudElement extends InteractiveHudElement {
     private static final String SEARCH_PLACEHOLDER = "right-click to search...";
     private static final String EDITING_MODE_TEXT = "Search Field";
     private static final String HUD_CONFIG_KEY = "search";
     
     private static SearchHudElement instance = null;    
-    private HudElementState cachedState = null;
     private VCTextField searchField;
-    private boolean overlayActive = false;
-    private boolean editingMode = false;    
+    private boolean overlayActive = false;  
 
     private static boolean isContainer = false;
     
     public SearchHudElement() {
+        super(HUD_CONFIG_KEY, "Item Search", 100, 10, 20, 0xFFFFFFFF, false, true);
         var client = MinecraftClient.getInstance();
         if (client != null && client.textRenderer != null) {
             searchField = new VCTextField(client.textRenderer, 10, 10, 150, 15, Text.literal(SEARCH_PLACEHOLDER));
             searchField.setVisible(false);
+            searchField.interceptInventory(true);
         }
     }
     
@@ -43,20 +44,27 @@ public class SearchHudElement implements HudElement {
     }
 
     @Override
-    public void render(DrawContext context, int mouseX, int mouseY) {
+    protected boolean shouldRender() {
+        return isEditingMode() || (ItemSearchOverlay.isEnabled() && isContainer);
+    }
+
+    private boolean isSearching() {
+        return isOverlayActive() && !getSearchTerm().isEmpty();
+    }
+
+    @Override
+    public void postRenderCustom(DrawContext context, MinecraftClient mc, HudElementState state, int mouseX, int mouseY) {
         if (!shouldRender()) return;
         
         initIfNeeded();
-        if (searchField == null) {
-            return;
+        if (searchField == null) return;
+        
+        if (isSearching() && mc.currentScreen instanceof net.minecraft.client.gui.screen.ingame.HandledScreen<?> hs) {
+            ItemSearchOverlay.getInstance().renderOverlay(context, hs, getSearchTerm());
         }
-
+        
         updateDimensions();
         renderContent(context, mouseX, mouseY);
-    }
-    
-    private boolean shouldRender() {
-        return ItemSearchOverlay.isEnabled() && isContainer;
     }
     
     private void initIfNeeded() {
@@ -64,6 +72,7 @@ public class SearchHudElement implements HudElement {
             var client = MinecraftClient.getInstance();
             if (client != null && client.textRenderer != null) {
                 searchField = new VCTextField(client.textRenderer, 10, 10, 150, 15, Text.literal(SEARCH_PLACEHOLDER));
+                searchField.interceptInventory(true);
             }
         }
     }
@@ -84,6 +93,7 @@ public class SearchHudElement implements HudElement {
                                          hudX, hudY, scaledWidth, scaledHeight, 
                                          Text.literal(SEARCH_PLACEHOLDER));
             searchField.setText(currentText);
+            searchField.interceptInventory(true);
             if (wasFocused) {
                 searchField.setFocused(false);
             }
@@ -95,6 +105,7 @@ public class SearchHudElement implements HudElement {
     }
     
     private void renderContent(DrawContext context, int mouseX, int mouseY) {
+        
         var state = getCachedState();
         int hudX = state.x;
         int hudY = state.y;
@@ -104,8 +115,8 @@ public class SearchHudElement implements HudElement {
         int scaledHeight = (int)(15 * scale);
 
         if (searchField.getText().isEmpty()) {
-            String placeholderText = editingMode ? EDITING_MODE_TEXT : SEARCH_PLACEHOLDER;
-            int placeholderColor = editingMode ? 0x80FFFFFF : 0x80808080;
+            String placeholderText = isEditingMode() ? EDITING_MODE_TEXT : SEARCH_PLACEHOLDER;
+            int placeholderColor = isEditingMode() ? 0x80FFFFFF : 0x80808080;
             context.drawText(
                 MinecraftClient.getInstance().textRenderer, 
                 Text.literal(placeholderText), 
@@ -116,39 +127,11 @@ public class SearchHudElement implements HudElement {
         searchField.render(context, mouseX, mouseY, 0);
 
         if (overlayActive) {
-            GuiUtil.wireRect(context, hudX - 2, hudY - 2, scaledWidth + 4, scaledHeight + 4, 0xFF00FFE1);
-        }
-    }
-
-    @Override
-    public void setHudPosition(int x, int y) {
-        FishyConfig.setHudX(HUD_CONFIG_KEY, x);
-        FishyConfig.setHudY(HUD_CONFIG_KEY, y);
-    }
-
-    @Override
-    public Rectangle getBounds(MinecraftClient mc) {
-        var state = getCachedState();
-        float scale = state.size / 15.0F;
-        int scaledWidth = (int)(150 * scale);
-        int scaledHeight = (int)(15 * scale);
-        return new Rectangle(state.x, state.y, scaledWidth, scaledHeight);
-    }
-
-    @Override
-    public HudElementState getCachedState() {
-        if (cachedState == null) {
-            cachedState = new HudElementState(
-                getHudX(), getHudY(), getHudSize(), getHudColor(),
-                getHudOutline(), getHudBg()
+            GuiUtil.wireRect(
+                context, hudX - 2, hudY - 2, scaledWidth + 4,
+                scaledHeight + 4, FishyMode.getThemeColor()
             );
         }
-        return cachedState;
-    }
-
-    @Override
-    public void invalidateCache() {
-        cachedState = null;
     }
     
     public VCTextField getSearchField() {
@@ -195,7 +178,6 @@ public class SearchHudElement implements HudElement {
 
                 else if (button == 1) {
                     overlayActive = !overlayActive;
-                    searchField.setFocused(overlayActive);
                     return true;
                 }
 
@@ -249,16 +231,28 @@ public class SearchHudElement implements HudElement {
         }
     }
 
-    @Override public int getHudX() { return FishyConfig.getHudX(HUD_CONFIG_KEY, 100); }
-    @Override public int getHudY() { return FishyConfig.getHudY(HUD_CONFIG_KEY, 10); }
-    @Override public int getHudSize() { return FishyConfig.getHudSize(HUD_CONFIG_KEY, 20); }
-    @Override public int getHudColor() { return FishyConfig.getHudColor(HUD_CONFIG_KEY, 0xFFFFFFFF); }    
-    @Override public boolean getHudOutline() { return FishyConfig.getHudOutline(HUD_CONFIG_KEY, false); }
-    @Override public boolean getHudBg() { return FishyConfig.getHudBg(HUD_CONFIG_KEY, true); }
-    @Override public String getDisplayName() { return "Item Search"; }    
-    @Override public void setEditingMode(boolean editing) { this.editingMode = editing; }
-    @Override public void setHudSize(int size) { FishyConfig.setHudSize(HUD_CONFIG_KEY, size); }
-    @Override public void setHudColor(int color) { FishyConfig.setHudColor(HUD_CONFIG_KEY, color); }
-    @Override public void setHudOutline(boolean outline) { FishyConfig.setHudOutline(HUD_CONFIG_KEY, outline); }
-    @Override public void setHudBg(boolean bg) { FishyConfig.setHudBg(HUD_CONFIG_KEY, bg); }        
+    @Override
+    public boolean isHovered(double mouseX, double mouseY) {
+        if (isSearching()) return true;
+        return super.isHovered(mouseX, mouseY);
+    }
+
+    @Override
+    public Rectangle getBounds(MinecraftClient mc) {
+        var state = getCachedState();
+        float scale = state.size / 15.0F;
+        int scaledWidth = (int)(150 * scale);
+        int scaledHeight = (int)(15 * scale);
+        return new Rectangle(state.x, state.y, scaledWidth, scaledHeight);
+    }
+
+    @Override
+    protected String getMaxLinesConfigKey() {
+        return null;
+    }
+    
+    @Override
+    protected List<Text> getDisplayLines(HudElementState state) {
+        return List.of();
+    }
 }

@@ -114,7 +114,7 @@ public class CommandBuilderUtils {
         
         builder.then(ClientCommandManager.literal("on")
             .executes(context -> {
-                FishyConfig.enable(key, true);
+                FishyConfig.setState(key, true);
                 FishyNotis.on(label);
                 onEnableCallback.ifPresent(Runnable::run);
                 return 1;
@@ -132,7 +132,7 @@ public class CommandBuilderUtils {
             builder.then(ClientCommandManager.literal("toggle")
                 .executes(context -> {
                     boolean current = FishyConfig.getState(key, false);
-                    FishyConfig.enable(key, !current);
+                    FishyConfig.setState(key, !current);
                     if (!current) {
                         FishyNotis.on(label);
                         onEnableCallback.ifPresent(Runnable::run);

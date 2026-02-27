@@ -7,12 +7,13 @@ public class Key {
     public static final String HUD_PING_ENABLED = "pingHud";
     public static final String HUD_TIMER_ENABLED = "timerHud"; 
     public static final String HUD_PET_ENABLED = "petHud";
-    public static final String HUD_TRACKER_ENABLED = "profitTrackerHud";
+    public static final String HUD_PROFIT_ENABLED = "profitTrackerHud";
     public static final String HUD_CENTURY_CAKE_ENABLED = "centuryCakeHud";
     public static final String HUD_CATCH_GRAPH_ENABLED = "scGraphHud";
     public static final String HUD_SKILL_XP_ENABLED = "skillXpHud";
     public static final String HUD_HEALTH_ENABLED = "healthHud";
-    public static final String HUD_EFFECTS_ENABLED = "tempEffectsHud";
+    public static final String HUD_EFFECTS_ENABLED = "tempEffectsHud";    
+    public static final String HUD_COLLECTION_ENABLED = "collectionHud";
 
     // --- Hud State ---
     public static final String HUD_PING_X = "pingHudX";
@@ -29,10 +30,10 @@ public class Key {
     public static final String HUD_PET_X = "petHudX";
     public static final String HUD_PET_Y = "petHudY";
     public static final String HUD_PET_SIZE = "petHudSize";
-    public static final String HUD_TRACKER_X = "trackerHudX";
-    public static final String HUD_TRACKER_Y = "trackerHudY";
-    public static final String HUD_TRACKER_SIZE = "trackerHudSize";
-    public static final String HUD_TRACKER_COLOR = "trackerHudColor";
+    public static final String HUD_PROFIT_X = "profitTrackerHudX";
+    public static final String HUD_PROFIT_Y = "profitTrackerHudY";
+    public static final String HUD_PROFIT_SIZE = "profitTrackerHudSize";
+    public static final String HUD_PROFIT_COLOR = "profitTrackerHudColor";
     public static final String HUD_SEARCH_X = "searchX";
     public static final String HUD_SEARCH_Y = "searchY";
     public static final String HUD_SEARCH_SIZE = "searchSize";
@@ -48,14 +49,21 @@ public class Key {
     public static final String HUD_SKILL_XP_Y = "skillXpHudY";
     public static final String HUD_SKILL_XP_SIZE = "skillXpHudSize";
     public static final String HUD_SKILL_XP_COLOR = "skillXpHudColor";
+    public static final String HUD_COLL_X = "collectionTrackerHudX";
+    public static final String HUD_COLL_Y = "collectionTrackerHudY";
+    public static final String HUD_COLL_SIZE = "collectionTrackerHudSize";
+    public static final String HUD_COLL_COLOR = "collectionTrackerHudColor";
 
     // --- Hud Modifiers ---
-    public static final String HUD_PETXP = "petXpCheck";    
+    public static final String HUD_PETXP = "petXpCheck"; 
+    public static final String HUD_PETXP_COLOR = "petXpColor";   
     public static final String TRACK_SACK = "trackSack";
     public static final String PER_ITEM = "pricePerItem";
     public static final String HUD_PING_SHOW_PING = "pingHudShowPing";
     public static final String HUD_PING_SHOW_TPS = "pingHudShowTps";
-    public static final String HUD_PING_SHOW_FPS = "pingHudShowFps";    
+    public static final String HUD_PING_SHOW_FPS = "pingHudShowFps";
+    public static final String HUD_PROFIT_LINES = "profitTrackerLines";
+    public static final String HUD_COLLECTION_LINES = "collectionTrackerLines";
 
     // --- Settings ---
     public static final String XP_COLOR = "xpColor";
@@ -103,6 +111,13 @@ public class Key {
     public static final String TRACK_SCS = "trackScs";
     public static final String TRACK_SCS_WITH_DH = "trackScsWithDh";
     public static final String SC_SINCE = "scSince";
+    public static final String CUSTOM_REEL = "customReel";
+    public static final String REEL_ALERT = "reelAlert";
+    public static final String REEL_NORANDOM = "reelNoRandom";
+    public static final String REEL_TRUE_VOLUME = "reelTrueVolume";
+    public static final String CUSTOM_FERO = "customFero";
+    public static final String FERO_ALERT = "feroAlert";
+    public static final String FERO_TRUE_VOLUME = "feroTrueVolume";
     public static final String TRACK_DIANA = "trackDiana";
     public static final String PRICE_TYPE = "priceType";
     public static final String HIDE_HOTSPOT = "hideHotspot";
@@ -156,6 +171,8 @@ public class Key {
     public static final String EQUIPMENT_SKULL_TEXTURES = "equipmentSkullTextures";
     public static final String EQUIPMENT_SKULL_ITEMS = "equipmentSkullItems";
     public static final String EXCLUDED_ITEMS = "tracker_excluded_items";
+    public static final String HIDDEN_COLLECTIONS = "hidden_collections";
+    public static final String ACTIVE_GOAL = "active_goal";
     public static final String SCREEN_NAMES = "screenNames";
     public static final String SCREEN_SLOT_MAP = "screenSlotMap";
 
@@ -212,9 +229,10 @@ public class Key {
         settings.set(TRACK_HOTSPOT, false);
         settings.set(ANNOUNCE_HOTSPOT, false);
         settings.set(HSPT_COORDS, false);
-        settings.set(TRACK_SCS, true);
+        settings.set(TRACK_SCS, false);
         settings.set(TRACK_SCS_WITH_DH, false);
         settings.set(SC_SINCE, false);
+        settings.set(CUSTOM_REEL, false);
         settings.set(TRACK_DIANA, false);
         settings.set(HIDE_HOTSPOT, false);
         settings.set(HOTSPOT_DISTANCE, 7.0f);
@@ -222,7 +240,7 @@ public class Key {
         settings.set(TRACKER_NOTIS, false);
         settings.set(RAIN_NOTI, false);
         settings.set(EQ_DISPLAY, false);
-        settings.set(MOD_UI_SCALE, 0.4265625f);
+        settings.set(MOD_UI_SCALE, 0.8f);
         settings.set(GLOBAL_FA_COLORS, false);
         settings.set(CUSTOM_FA_COLORS, false);
         settings.set(SB_ONLY_FAC, false);
@@ -244,30 +262,19 @@ public class Key {
         settings.set(CHAT_FILTER_PARTYBTN, false);
 
         settings.set(HUD_HEALTH_ENABLED, false);
+        settings.set(HUD_COLLECTION_ENABLED, false);
         settings.set(HUD_TEXT_SHADOW, true);
         settings.set(CHAT_FORMATTING, true);
         settings.set(HELD_ITEM_TRANSFORMS, false);
         settings.set(ACCEPT_NPC, false);
 
-        hud.set(HUD_PING_X, 5);
-        hud.set(HUD_PING_Y, 12);
-        hud.set(HUD_PING_SIZE, 12);
-        hud.set(HUD_PING_COLOR, 1.5649516E7);
         hud.set(HUD_TIMER_X, 5);
         hud.set(HUD_TIMER_Y, 28);
         hud.set(HUD_TIMER_SIZE, 12);
         hud.set(HUD_TIMER_COLOR, 1.3228737E7);
-        hud.set(HUD_TITLE_X, 600);
-        hud.set(HUD_TITLE_Y, 120);
         hud.set(HUD_TITLE_SIZE, 55);
         hud.set(HUD_PET_ENABLED, false);
-        hud.set(HUD_PET_X, 601);
-        hud.set(HUD_PET_Y, 486);
         hud.set(HUD_PET_SIZE, 12);
-        hud.set(HUD_TRACKER_X, 5);
-        hud.set(HUD_TRACKER_Y, 44);
-        hud.set(HUD_TRACKER_SIZE, 12);
-        hud.set(HUD_TRACKER_COLOR, 1.5649516E7);
         hud.set(HUD_SEARCH_X, 400);
         hud.set(HUD_SEARCH_Y, 44);
         hud.set(HUD_SEARCH_SIZE, 14);

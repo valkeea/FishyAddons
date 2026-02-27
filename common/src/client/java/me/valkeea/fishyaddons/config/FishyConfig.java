@@ -197,14 +197,14 @@ public class FishyConfig {
     // Generalized HUD position getters/setters
     public static int getHudX(String hudKey, int defaultX) {
         Object value = hud.getValues().getOrDefault(hudKey + "X", defaultX);
-        value = Math.clamp(value instanceof Number n ? n.intValue() : defaultX, 0, MinecraftClient.getInstance().getWindow().getWidth());
-        return value instanceof Number n ? n.intValue() : defaultX;
+        int intValue = value instanceof Number n ? n.intValue() : defaultX;
+        return Math.clamp(intValue, 0, MinecraftClient.getInstance().getWindow().getScaledWidth());
     }
 
     public static int getHudY(String hudKey, int defaultY) {
         Object value = hud.getValues().getOrDefault(hudKey + "Y", defaultY);
-        value = Math.clamp(value instanceof Number n ? n.intValue() : defaultY, 0, MinecraftClient.getInstance().getWindow().getHeight());
-        return value instanceof Number n ? n.intValue() : defaultY;
+        int intValue = value instanceof Number n ? n.intValue() : defaultY;
+        return Math.clamp(intValue, 0, MinecraftClient.getInstance().getWindow().getScaledHeight());
     }
 
     public static void setHudX(String hudKey, int x) {
@@ -499,19 +499,20 @@ public class FishyConfig {
         return v instanceof Boolean b ? b : def;
     }    
 
-    public static void enable(String key, boolean enabled) {
+    public static void setState(String key, boolean enabled) {
         settings.set(key, enabled);
+        save();
+    }
+
+    public static void toggle(String key, boolean def) {
+        boolean current = getState(key, def);
+        settings.set(key, !current);
         save();
     }
 
     public static void disable(String key) {
         settings.set(key, false);
         save();
-    }
-
-    public static void toggle(String key, boolean def) {
-        boolean current = getState(key, def);
-        enable(key, !current);
     }
 
     // get Integer value

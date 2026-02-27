@@ -16,6 +16,7 @@ import net.minecraft.util.Identifier;
 public class VCTextField extends TextFieldWidget {
     private static final Identifier BG_TEXTURE = SpriteUtil.createModSprite("gui/default/textbg");
 
+    private boolean interceptInventory = false;
     private boolean isDragging = false;    
     private boolean drawsBg = true;
     private boolean allowSection = true;
@@ -38,6 +39,10 @@ public class VCTextField extends TextFieldWidget {
 
     public void setSectionSymbol(boolean allow) {
         this.allowSection = allow;
+    }
+
+    public void interceptInventory(boolean intercept) {
+        this.interceptInventory = intercept;
     }
 
     @Override
@@ -188,9 +193,13 @@ public class VCTextField extends TextFieldWidget {
             String clipboard = MinecraftClient.getInstance().keyboard.getClipboard();
             return writeText(clipboard);
         }
+        if (this.isFocused() && interceptInventory &&
+            MinecraftClient.getInstance().options.inventoryKey.matchesKey(input)) {
+            return true;
+        }
         return super.keyPressed(input);
     }
-    
+
     @Override
     public boolean charTyped(CharInput input) {
         if (this.isFocused() && this.isActive()) {

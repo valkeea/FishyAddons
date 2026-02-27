@@ -1,17 +1,18 @@
-package me.valkeea.fishyaddons.hud.core;
+package me.valkeea.fishyaddons.tracker.profit;
 
-import java.util.HashMap;
 import java.util.Map;
 
-import me.valkeea.fishyaddons.tracker.profit.ItemTrackerData;
+import me.valkeea.fishyaddons.api.hypixel.PriceServiceManager;
+import me.valkeea.fishyaddons.hud.core.HudUtils;
+import me.valkeea.fishyaddons.tracker.PriceUtil;
 
 @SuppressWarnings("squid:S6548")
 public class HudDisplayCache {
     private static HudDisplayCache instance;
     private CachedHudData cachedData;
     private long lastApiUpdate = 0;
-    private static final long CACHE_VALIDITY_MS = 5000;
-    private static final long API_STALENESS_THRESHOLD = 6000000;
+    private static final long CACHE_VALIDITY_MS = 10000;
+    private static final long API_STALENESS_THRESHOLD = 2L * 60 * 60 * 1000;
     private HudDisplayCache() {}
 
     public static HudDisplayCache getInstance() {
@@ -27,13 +28,10 @@ public class HudDisplayCache {
 
     public CachedHudData getDisplayData() {
         long currentTime = System.currentTimeMillis();
-        long apiTimestamp = Math.max(
-            ItemTrackerData.getLastBazaarUpdateTime(),
-            ItemTrackerData.getLastAuctionUpdateTime()
-        );
+        long apiTimestamp = PriceUtil.getLastApiUpdateTime();
         
-        boolean needsRefresh = cachedData == null ||
-                             apiTimestamp > lastApiUpdate ||
+        boolean needsRefresh = cachedData == null || apiTimestamp > lastApiUpdate ||
+                            !PriceServiceManager.isInitialized() ||
                              (cachedData.cacheTime > 0 && (currentTime - cachedData.cacheTime) > CACHE_VALIDITY_MS);
         
         if (needsRefresh) {
@@ -49,21 +47,15 @@ public class HudDisplayCache {
     }
     
     private void refreshCache(long apiTimestamp, long currentTime) {
-        Map<String, Integer> items = ItemTrackerData.getAllItems();
-        Map<String, Double> itemValues = new HashMap<>();
-        for (String itemName : items.keySet()) {
-            double unitPrice = ItemTrackerData.getCachedItemValue(itemName);
-            if (unitPrice > 0) {
-                itemValues.put(itemName, unitPrice);
-            }
-        }
-        
-        int totalItems = ItemTrackerData.getTotalItemCount();
-        double totalValue = ItemTrackerData.getTotalSessionValue();
-        long sessionDuration = ItemTrackerData.getTotalDurationMinutes();
+
+        var items = TrackedItemData.getAllItems();
+        var itemValues = TrackedItemData.getPrices();
+        int totalItems = TrackedItemData.getTotalItemCount();
+        double totalValue = TrackedItemData.getTotalSessionValue();
+        long sessionDuration = TrackedItemData.getTotalDurationMinutes();
         
         boolean hasRecentApiData = apiTimestamp > 0 && (currentTime - apiTimestamp) < API_STALENESS_THRESHOLD;
-        String formattedValue = formatCoins(totalValue);
+        String formattedValue = HudUtils.formatCoins(totalValue);
         String timeString = sessionDuration > 60 ? String.format(" (%dh %dmin)", sessionDuration / 60, sessionDuration % 60) : String.format(" (%dmin)", sessionDuration);
         String apiIndicator = calculateApiIndicator(hasRecentApiData);
         
@@ -81,30 +73,19 @@ public class HudDisplayCache {
         
         lastApiUpdate = apiTimestamp;
     }
+
+    public int getSize() {
+        return cachedData != null ? cachedData.items.size() : 0;
+    }
     
     private String calculateApiIndicator(boolean hasRecentData) {
-        long lastBazaarUpdate = ItemTrackerData.getLastBazaarUpdateTime();
-        if (lastBazaarUpdate > 0) {
-            return hasRecentData ? " §a●" : " §c●";
+        if (PriceUtil.getLastApiUpdateTime() > CACHE_VALIDITY_MS) {
+            return hasRecentData ? " §a●" : " §7●";
         } else {
             return " §7●";
         }
     }
-    
-    private String formatCoins(double coins) {
-        if (coins == 0) return "0 coins";
-        
-        if (coins >= 1_000_000_000.0) {
-            return String.format("%.1fb coins", coins / 1_000_000_000.0);
-        } else if (coins >= 1_000_000.0) {
-            return String.format("%.1fm coins", coins / 1_000_000.0);
-        } else if (coins >= 1_000.0) {
-            return String.format("%.1fk coins", coins / 1_000.0);
-        } else {
-            return String.format("%.0f coins", coins);
-        }
-    }
-    
+
     public static class CachedHudData {
         public final Map<String, Integer> items;
         public final Map<String, Double> itemValues;

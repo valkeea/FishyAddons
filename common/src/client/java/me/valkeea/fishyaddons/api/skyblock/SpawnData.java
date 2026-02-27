@@ -16,23 +16,16 @@ public class SpawnData {
         new SpawnZone(Island.CI, -376, -373, 113, 115, -1035, -1030),
         new SpawnZone(Island.CI, -293, -287, 120, 126, -1000, -993),
         // Hub
-        new SpawnZone(Island.HUB, -45, -43, null, null, 10, 13),
-        new SpawnZone(Island.HUB, -223, -200, null, null, -16, -14),
-        new SpawnZone(Island.HUB, -4, -1, 68, 71, -71, -68),
-        new SpawnZone(Island.HUB, -160, -158, null, null, -159, -157),
-        new SpawnZone(Island.HUB, 75, 77, null, null, -183, -180),
-        new SpawnZone(Island.HUB, -11, -8, null, null, -229, -227),
-        new SpawnZone(Island.HUB, 90, 92, null, null, 172, 174),
-        new SpawnZone(Island.HUB, 41, 43, null, null, 68, 70),
-        new SpawnZone(Island.HUB, -251, -249, null, null, 44, 46),
-        new SpawnZone(Island.HUB, -162, -160, null, null, -100, -99),
-        // New Hub
-        new SpawnZone(Island.HUB, -2, 1, 70, 80, -2, 2), // hub main
+        new SpawnZone(Island.HUB, -2, 1, 70, 80, -2, 2), // main
         new SpawnZone(Island.HUB, 28, 31, 70, 80, 0, 3), // museum
-        new SpawnZone(Island.HUB, -221, -220, 73, 74, -16, -15), // hub park
-        new SpawnZone(Island.HUB, -145, -141, 76, 74, -185, -183), // hub den
-        new SpawnZone(Island.HUB, -1, 0, 64, 65, -188, -187), // hub mines
-        new SpawnZone(Island.HUB, 83, 86, 70, 75, -151, -149), // hub barn
+        new SpawnZone(Island.HUB, -223, -220, 72, 74, -17, -15), // park
+        new SpawnZone(Island.HUB, -145, -141, 76, 74, -185, -183), // den
+        new SpawnZone(Island.HUB, -1, 0, 64, 65, -188, -187), // mines
+        new SpawnZone(Island.HUB, 83, 86, 70, 75, -151, -149), // barn
+        new SpawnZone(Island.HUB, -162, -160, 61, 63, -108, -106), // crypt
+        new SpawnZone(Island.HUB, 43, 45, 118, 120, 92, 94), // tower
+        new SpawnZone(Island.HUB, -251, -249, 129, 131, 44, 46), // castle
+        new SpawnZone(Island.HUB, 90, 92, 74, 76, 172, 174), // dark auction
         // Dungeon Hub
         new SpawnZone(Island.DH, -32, -29, 120, 122, -2, 2),
         // Crystal Hollows
@@ -42,17 +35,10 @@ public class SpawnData {
         new SpawnZone(Island.DM, -50, -47, 198, 202, -125, -119),
         new SpawnZone(Island.DM, -1, 2, 147, 149, -70, -67),
         // The End
-        new SpawnZone(Island.END, -503, -501, null, null, -276, -274),
-        new SpawnZone(Island.END, -570, -569, null, null, -319, -317),
-        new SpawnZone(Island.END, -607, -605, null, null, -276, -274),
-        // New End: -503 10 -275, -569.9 7 -318, -606.5 22 -275
         new SpawnZone(Island.END, -504, -502, 7, 12, -277, -273),
         new SpawnZone(Island.END, -572, -567, 6, 9, -320, -316),
         new SpawnZone(Island.END, -608, -605, 20, 24, -277, -273),
         // Farming Islands
-        new SpawnZone(Island.FI, 100, 130, null, null, -230, -180),
-        new SpawnZone(Island.FI, 140, 160, null, null, -320, -290),
-        // New Farming Islands: 160.5 77 -370, 160.5 77 -370
         new SpawnZone(Island.FI, 111, 115, 69, 73, -210, -205),
         new SpawnZone(Island.FI, 158, 162, 75, 78, -372, -368),
         // Glacite Tunnels
@@ -89,7 +75,7 @@ public class SpawnData {
         int z = pos.getZ();
 
         SPAWN_DATA.stream().filter(zone -> zone.matches(x, y, z)).findFirst()
-            .ifPresent(zone -> SkyblockAreas.setIsland(zone.name));
+            .ifPresent(zone -> SkyblockAreas.setIsland(zone.name));   
     }
 
     private static class SpawnZone {

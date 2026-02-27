@@ -9,20 +9,21 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
+import me.valkeea.fishyaddons.config.ItemConfig;
 import me.valkeea.fishyaddons.event.EventPhase;
 import me.valkeea.fishyaddons.event.EventPriority;
 import me.valkeea.fishyaddons.event.impl.FaEvents;
 import me.valkeea.fishyaddons.mixin.HandledScreenAccessor;
-import me.valkeea.fishyaddons.util.SbGui;
+import me.valkeea.fishyaddons.util.ContainerScanner;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.screen.slot.SlotActionType;
-import net.minecraft.text.Text;
 
 public class GuiIcons {
     private GuiIcons() {}
+    
     private static final Set<String> screenNames = new HashSet<>();
     private static final Map<String, Set<Integer>> screenSlotMap = new HashMap<>();
     private static List<Integer> cachedSlots = Collections.emptyList();
@@ -36,9 +37,22 @@ public class GuiIcons {
             }
         }, EventPriority.NORMAL, EventPhase.PRE);
     }
+    
+    public static void onConfigLoaded() {
+        screenNames.clear();
+        screenNames.addAll(ItemConfig.getGuiIconsScreenNames());
+        
+        screenSlotMap.clear();
+        Map<String, Set<Integer>> loaded = ItemConfig.getGuiIconsScreenSlotMap();
+        for (var entry : loaded.entrySet()) {
+            screenSlotMap.put(entry.getKey(), new HashSet<>(entry.getValue()));
+        }
+        
+        refresh();
+    }
 
     private static boolean checkClick(Slot hovered, int button, HandledScreen<?> screen) {
-        if (hovered == null || !SbGui.getInstance().inGui()) return false;
+        if (hovered == null || !anyBlocked()) return false;
         if (handleIcons(hovered)) { return true; }
 
         if (handleShift(hovered.id)) {
@@ -60,7 +74,7 @@ public class GuiIcons {
     }
 
     private static boolean handleIcons(Slot hovered) {
-        return GuiIcons.isBlocked(hovered.id);
+        return isBlocked(hovered.id);
     }
 
     public static void refresh() {
@@ -73,29 +87,32 @@ public class GuiIcons {
         return enabled;
     }
 
-    public static boolean hasConfig(Text title) {
-        if (!enabled) return false;
-        String screenName = title.getString();
-        return !screenNames.isEmpty() && checkScreen(screenName);
+    private static boolean anyBlocked() {
+        return hasConfig(ContainerScanner.current());
     }
 
-    private static boolean checkScreen(String screenName) {
+    public static boolean hasConfig(String name) {
+        if (!enabled) return false;
+        return !screenNames.isEmpty() && checkGui(name);
+    }
+
+    private static boolean checkGui(String gui) {
         for (String name : screenNames) {
-            if (screenName.equalsIgnoreCase(name)) {
+            if (gui.equalsIgnoreCase(name)) {
                 return true;
             }
         }
         return false;
-    }    
+    }  
 
     public static boolean isBlocked(int slotIndex) {
         if (!enabled) return false;
-        return getSlotsForScreen(SbGui.getInstance().current()).contains(slotIndex)
+        return getSlotsFor(ContainerScanner.current()).contains(slotIndex)
                && !isShiftDown(MinecraftClient.getInstance());
     }
 
     public static boolean handleShift(int slotIndex) {
-        return getSlotsForScreen(SbGui.getInstance().current()).contains(slotIndex);
+        return getSlotsFor(ContainerScanner.current()).contains(slotIndex);
     }    
 
     private static boolean isShiftDown(MinecraftClient cl) {
@@ -109,81 +126,55 @@ public class GuiIcons {
      * If the screen is not already registered, it will be added to the configured list.
      */
     public static void addGuiSlot(String screenName, int slotId) {
+
         String key = screenName.toLowerCase(java.util.Locale.ROOT);
-        if (!screenNames.contains(screenName)) {
-            screenNames.add(screenName);
-            SbGui.getInstance().setInGui(screenName);
-        }
-        java.util.Set<Integer> slots = screenSlotMap.computeIfAbsent(key, k -> new java.util.HashSet<>());
-        boolean added = slots.add(slotId);
-        if (!added) {
-            removeGuiSlot(screenName, slotId);
+        Set<Integer> slots = screenSlotMap.get(key);
+        boolean exists = slots != null && slots.contains(slotId);
+        
+        if (exists) {
+            slots.remove(slotId);
             if (slots.isEmpty()) {
-                screenNames.removeIf(name -> name.equalsIgnoreCase(screenName));
                 screenSlotMap.remove(key);
+                screenNames.removeIf(name -> name.equalsIgnoreCase(screenName));
+                ItemConfig.removeGuiIconsScreen(screenName);
+            } else {
+                ItemConfig.removeGuiIconsSlot(screenName, slotId);
             }
+
+        } else {
+            if (!screenNames.contains(screenName)) {
+                screenNames.add(screenName);
+                ItemConfig.addGuiIconsScreen(screenName);
+            }
+            screenSlotMap.computeIfAbsent(key, k -> new HashSet<>()).add(slotId);
+            ItemConfig.addGuiIconsSlot(screenName, slotId);
         }
+        
         refresh();
         refreshSlots(screenName);
-        me.valkeea.fishyaddons.config.ItemConfig.saveGuiIcons();     
+        ItemConfig.saveGuiIcons();     
     }
-
-    private static void removeGuiSlot(String screenName, int slotIndex) {
-        String key = screenName.toLowerCase(Locale.ROOT);
-        Set<Integer> slots = screenSlotMap.get(key);
-        if (slots != null) {
-            slots.remove(slotIndex);
-            if (slots.isEmpty()) {
-                screenSlotMap.remove(key);
-            }
-        }
-    }    
 
     /**
      * Returns a list of slot indices for the given screen name, cached for latest
      */    
-    public static List<Integer> slots(String screenName) {
-        Set<Integer> slots = screenSlotMap.getOrDefault(screenName.toLowerCase(Locale.ROOT),
+    public static List<Integer> slots(String screen) {
+        Set<Integer> slots = screenSlotMap.getOrDefault(screen.toLowerCase(Locale.ROOT),
         Collections.emptySet());
         return new ArrayList<>(slots);
     }
 
     private static void refreshSlots(String screen) {
-        if (screen == null) return;
+        if (screen.isEmpty()) return;
         lastScreen = screen;
         cachedSlots = slots(lastScreen);
     }
 
-    public static List<Integer> getSlotsForScreen(String screenName) {
-        if (screenName == null) return Collections.emptyList();
-        if (!screenName.equals(lastScreen)) {
-            refreshSlots(screenName);
+    public static List<Integer> getSlotsFor(String screen) {
+        if (screen.isEmpty()) return Collections.emptyList();
+        if (!screen.equals(lastScreen)) {
+            refreshSlots(screen);
         }
         return cachedSlots;
-    }
-
-    public static Set<String> getScreenNames() {
-        return new HashSet<>(screenNames);
-    }
-
-    public static void setScreenNames(Set<String> names) {
-        screenNames.clear();
-        screenNames.clear();
-        screenNames.addAll(names);
-    }        
-
-    public static Map<String, Set<Integer>> getScreenSlotMap() {
-        Map<String, Set<Integer>> copy = new HashMap<>();
-        for (Map.Entry<String, Set<Integer>> e : screenSlotMap.entrySet()) {
-            copy.put(e.getKey(), new HashSet<>(e.getValue()));
-        }
-        return copy;
-    }
-
-    public static void setScreenSlotMap(Map<String, Set<Integer>> map) {
-        screenSlotMap.clear();
-        for (Map.Entry<String, Set<Integer>> e : map.entrySet()) {
-            screenSlotMap.put(e.getKey(), new HashSet<>(e.getValue()));
-        }
     }
 }

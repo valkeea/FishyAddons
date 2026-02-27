@@ -13,6 +13,7 @@ import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -48,7 +49,7 @@ public class ItemConfig {
     private static final String ITEMSTACK_PREFIX = "itemstack_";
     private static final String EQUIPMENT_ITEMSTACKS_KEY = "equipmentItemStacks";
     private static final String GUIICONS_SCREEN_NAMES = "guiicons_screenNames";
-    private static final String GUIICONS_SCREEN_SLOT_MAP = "guiicons_screenSlotMap";    
+    private static final String GUIICONS_SCREEN_SLOT_MAP = "guiicons_screenSlotMap";
 
     public static class SimpleConfigSection<V> {
         private final Map<String, V> values;
@@ -102,27 +103,30 @@ public class ItemConfig {
     public static final SimpleConfigSection<Object> settings =
         new SimpleConfigSection<>("settings",
             new TypeToken<Map<String, Object>>(){}.getType(),
-            v -> save());
+            v -> markConfigChanged());
 
     public static final SimpleConfigSection<String> protectedItems =
         new SimpleConfigSection<>(Key.PROTECTED_UUIDS,
             new TypeToken<Map<String, String>>(){}.getType(),
-            v -> save());
+            v -> markConfigChanged());
 
     public static final SimpleConfigSection<Integer> slotData =
         new SimpleConfigSection<>("slotData",
             new TypeToken<Map<String, Integer>>(){}.getType(),
-            v -> save());
+            v -> markConfigChanged());
 
     public static final SimpleConfigSection<String> equipmentData =
         new SimpleConfigSection<>("equipmentData",
             new TypeToken<Map<String, String>>(){}.getType(),
-            v -> save());
+            v -> markConfigChanged());
 
     public static final SimpleConfigSection<Object> blacklistData =
         new SimpleConfigSection<>(Key.BLACKLIST,
             new TypeToken<List<Map<String, Object>>>(){}.getType(),
-            v -> save());
+            v -> markConfigChanged());
+
+    private static final Set<String> guiIconsScreenNames = new java.util.HashSet<>();
+    private static final Map<String, Set<Integer>> guiIconsScreenSlotMap = new HashMap<>();
 
     static {
         File root = new File(MinecraftClient.getInstance().runDirectory, "config/fishyaddons");
@@ -158,8 +162,9 @@ public class ItemConfig {
             settings.set(Key.PROTECT_TRIGGER_ENABLED, true);
             settings.set(Key.PROTECT_NOTI_ENABLED, true);
             settings.set(Key.LOCK_TRIGGER_ENABLED, true);
-            save();
         }
+        
+        saveConfigIfNeeded();
     }
 
     public static void markConfigChanged() {
@@ -332,22 +337,28 @@ public class ItemConfig {
     }
 
     private static void loadGuiIconsConfig(JsonObject json) {
-        // screenNames
+
         if (json.has(GUIICONS_SCREEN_NAMES)) {
             JsonElement element = json.get(GUIICONS_SCREEN_NAMES);
             Set<String> names = GSON.fromJson(element, new TypeToken<Set<String>>(){}.getType());
             if (names != null) {
-                GuiIcons.setScreenNames(names);
+                guiIconsScreenNames.clear();
+                guiIconsScreenNames.addAll(names);
             }
         }
-        // screenSlotMap
+
         if (json.has(GUIICONS_SCREEN_SLOT_MAP)) {
             JsonElement element = json.get(GUIICONS_SCREEN_SLOT_MAP);
             Map<String, Set<Integer>> map = GSON.fromJson(element, new TypeToken<Map<String, Set<Integer>>>(){}.getType());
             if (map != null) {
-                GuiIcons.setScreenSlotMap(map);
+                guiIconsScreenSlotMap.clear();
+                for (Map.Entry<String, Set<Integer>> e : map.entrySet()) {
+                    guiIconsScreenSlotMap.put(e.getKey(), new HashSet<>(e.getValue()));
+                }
             }
         }
+
+        GuiIcons.onConfigLoaded();
     }    
 
     public static synchronized void save() {
@@ -453,10 +464,10 @@ public class ItemConfig {
     }
 
     private static void saveGuiIconsConfig(JsonObject json) {
-        Set<String> names = GuiIcons.getScreenNames();
-        Map<String, Set<Integer>> map = GuiIcons.getScreenSlotMap();
-        json.add(GUIICONS_SCREEN_NAMES, GSON.toJsonTree(names));
-        json.add(GUIICONS_SCREEN_SLOT_MAP, GSON.toJsonTree(map));
+        if (!guiIconsScreenNames.isEmpty() && !guiIconsScreenSlotMap.isEmpty()) {
+            json.add(GUIICONS_SCREEN_NAMES, GSON.toJsonTree(guiIconsScreenNames));
+            json.add(GUIICONS_SCREEN_SLOT_MAP, GSON.toJsonTree(guiIconsScreenSlotMap));
+        }
     }    
 
     // --- Generalized Methods for Settings ---
@@ -666,5 +677,56 @@ public class ItemConfig {
 
     public static void saveGuiIcons() {
         save();
+    }
+
+    // --- GuiIcons ---
+    
+    public static synchronized Set<String> getGuiIconsScreenNames() {
+        return new java.util.HashSet<>(guiIconsScreenNames);
+    }
+    
+    public static synchronized Map<String, Set<Integer>> getGuiIconsScreenSlotMap() {
+        Map<String, Set<Integer>> copy = new HashMap<>();
+        for (Map.Entry<String, Set<Integer>> e : guiIconsScreenSlotMap.entrySet()) {
+            copy.put(e.getKey(), new HashSet<>(e.getValue()));
+        }
+        return copy;
+    }
+    
+    public static synchronized void addGuiIconsScreen(String screenName) {
+        if (screenName != null && !screenName.isEmpty()) {
+            guiIconsScreenNames.add(screenName);
+            markConfigChanged();
+        }
+    }
+    
+    public static synchronized void removeGuiIconsScreen(String screenName) {
+        if (screenName != null) {
+            guiIconsScreenNames.removeIf(name -> name.equalsIgnoreCase(screenName));
+            guiIconsScreenSlotMap.remove(screenName.toLowerCase(java.util.Locale.ROOT));
+            markConfigChanged();
+        }
+    }
+    
+    public static synchronized void addGuiIconsSlot(String screenName, int slotId) {
+        if (screenName != null && !screenName.isEmpty()) {
+            String key = screenName.toLowerCase(java.util.Locale.ROOT);
+            guiIconsScreenSlotMap.computeIfAbsent(key, k -> new HashSet<>()).add(slotId);
+            markConfigChanged();
+        }
+    }
+    
+    public static synchronized void removeGuiIconsSlot(String screenName, int slotId) {
+        if (screenName != null) {
+            String key = screenName.toLowerCase(java.util.Locale.ROOT);
+            Set<Integer> slots = guiIconsScreenSlotMap.get(key);
+            if (slots != null) {
+                slots.remove(slotId);
+                if (slots.isEmpty()) {
+                    guiIconsScreenSlotMap.remove(key);
+                }
+                markConfigChanged();
+            }
+        }
     }
 }

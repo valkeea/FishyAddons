@@ -22,10 +22,9 @@ public class EffectDisplay implements HudElement {
     private boolean intersects = false;
 
     @Override
-    public void render(DrawContext context, int mouseX, int mouseY) {
+    public void render(DrawContext context, MinecraftClient mc, int mouseX, int mouseY) {
         if (!editingMode && !FishyConfig.getState(HUD_KEY, false)) return;
 
-        var mc = MinecraftClient.getInstance();
         var state = getCachedState();
         int hudX = state.x;
         int hudY = state.y;
@@ -39,27 +38,7 @@ public class EffectDisplay implements HudElement {
 
         boolean empty = entries.isEmpty();
 
-        if (editingMode && empty) {
-
-            context.getMatrices().pushMatrix();
-            context.getMatrices().translate(hudX, hudY);
-            context.getMatrices().scale(scale, scale); 
-
-            int y = 0;
-
-            context.fill(0, y, 16, y + 16, 0xFF3A3A3A);
-            HudDrawer.drawText(context, Text.literal("59m"), 18, y + 4, color, state.outlined);
-
-            y += 20;
-            
-            context.fill(0, y, 16, y + 16, 0xFF3A3A3A);
-            HudDrawer.drawText(context, Text.literal("1h 12m"), 18, y + 4, color, state.outlined);
-
-            context.getMatrices().popMatrix();
-            return;
-        }
-
-        if (empty) return;
+        if (editingOrEmpty(empty, context, hudX, hudY, scale, color, state)) return;
 
         int maxTextWidth = 0;
         for (var e : entries) {
@@ -104,6 +83,29 @@ public class EffectDisplay implements HudElement {
         context.getMatrices().popMatrix();
     }
 
+    private boolean editingOrEmpty(boolean empty, DrawContext context, int hudX, int hudY, float scale, int color, HudElementState state) {
+        if (editingMode && empty) {
+
+            context.getMatrices().pushMatrix();
+            context.getMatrices().translate(hudX, hudY);
+            context.getMatrices().scale(scale, scale); 
+
+            int y = 0;
+
+            context.fill(0, y, 16, y + 16, 0xFF3A3A3A);
+            HudDrawer.drawText(context, Text.literal("59m"), 18, y + 4, color, state.outlined);
+
+            y += 20;
+            
+            context.fill(0, y, 16, y + 16, 0xFF3A3A3A);
+            HudDrawer.drawText(context, Text.literal("1h 12m"), 18, y + 4, color, state.outlined);
+
+            context.getMatrices().popMatrix();
+            return true;
+
+        } else return empty;
+    }
+
     public void updateSpace() {
         var mc = MinecraftClient.getInstance();
         int totalH = (int)(Math.max(1, EffectTimers.getInstance().listActive().size()) * 20 * Math.max(0.5f, getHudSize() / 12.0F));
@@ -112,8 +114,8 @@ public class EffectDisplay implements HudElement {
             return;
         }
 
-        for (HudElement other : ElementRegistry.getElements()) {
-            if (other == this) continue;
+        for (var other : ElementRegistry.getElements()) {
+            if (other == this || other == null) continue;
             var otherBounds = other.getBounds(mc);
             var thisBounds = getBounds(mc);
             if (thisBounds.intersects(otherBounds)) {
@@ -159,7 +161,7 @@ public class EffectDisplay implements HudElement {
     @Override public void setHudPosition(int x, int y) { FishyConfig.setHudX(HUD_KEY, x); FishyConfig.setHudY(HUD_KEY, y); }
     @Override public int getHudSize() { return FishyConfig.getHudSize(HUD_KEY, 12); }
     @Override public void setHudSize(int size) { FishyConfig.setHudSize(HUD_KEY, size); }
-    @Override public int getHudColor() { return FishyConfig.getHudColor(HUD_KEY, 0xFFFFFF); }
+    @Override public int getHudColor() { return FishyConfig.getHudColor(HUD_KEY, 0xFFFFFFFF); }
     @Override public void setHudColor(int color) { FishyConfig.setHudColor(HUD_KEY, color); }
     @Override public boolean getHudOutline() { return FishyConfig.getHudOutline(HUD_KEY, true); }
     @Override public void setHudOutline(boolean outline) { FishyConfig.setHudOutline(HUD_KEY, outline); }

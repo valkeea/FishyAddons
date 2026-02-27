@@ -7,6 +7,7 @@ import me.valkeea.fishyaddons.config.Key;
 import me.valkeea.fishyaddons.hud.base.SimpleTextElement;
 import me.valkeea.fishyaddons.hud.core.ElementRegistry;
 import me.valkeea.fishyaddons.hud.core.HudElement;
+import me.valkeea.fishyaddons.hud.core.ScreenRenderContext;
 import me.valkeea.fishyaddons.hud.elements.simple.PetDisplay;
 import me.valkeea.fishyaddons.hud.elements.simple.TitleDisplay;
 import me.valkeea.fishyaddons.tool.FishyMode;
@@ -43,6 +44,9 @@ public class HudEditScreen extends Screen {
 
     @Override
     protected void init() {
+        // Prevent double rendering - HudEditScreen handles all element rendering
+        ScreenRenderContext.setEditMode(true);
+        
         if (targetElementName != null) {
             for (HudElement element : ElementRegistry.getConfigurable()) {
                 if (targetElementName.equals(element.getDisplayName())) {
@@ -216,14 +220,15 @@ public class HudEditScreen extends Screen {
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
 
+        var mc = MinecraftClient.getInstance();
         for (HudElement element : ElementRegistry.getConfigurable()) {
             element.setEditingMode(true);
-            element.render(context, mouseX, mouseY);
-            GuiUtil.wireRect(context, element.getBounds(MinecraftClient.getInstance()), 0x80FFFFFF);
+            element.render(context, mc, mouseX, mouseY);
+            GuiUtil.wireRect(context, element.getBounds(mc), 0x80FFFFFF);
         }
 
         if (selectedElement != null) {
-            Rectangle bounds = selectedElement.getBounds(MinecraftClient.getInstance());
+            Rectangle bounds = selectedElement.getBounds(mc);
             context.fill(
                 bounds.x,
                 bounds.y,
@@ -273,6 +278,8 @@ public class HudEditScreen extends Screen {
 
     @Override
     public void removed() {
+        // Re-enable normal HUD rendering
+        ScreenRenderContext.setEditMode(false);
         for (HudElement element : ElementRegistry.getConfigurable()) {
             element.setEditingMode(false);
         }

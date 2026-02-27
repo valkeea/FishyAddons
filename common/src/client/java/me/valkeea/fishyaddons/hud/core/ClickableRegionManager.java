@@ -40,9 +40,9 @@ public class ClickableRegionManager {
      */
     public boolean handleClick(double mouseX, double mouseY, int button) {
         for (ClickableRegion<?> region : regions) {
-            if (region.button == button && region.isHovered(mouseX, mouseY)) {
-                region.invokeClick();
-                return true;
+            if (region.button == button && region.isHovered(mouseX, mouseY) && region.onClick != null) {
+                    region.invokeClick();
+                    return true;
             }
             if (button == 1 && region.isHovered(mouseX, mouseY) && region.getData() instanceof Text text) {
                 CopyChat.toClipboard(text.getString());

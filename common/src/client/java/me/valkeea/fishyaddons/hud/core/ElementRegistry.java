@@ -5,35 +5,48 @@ import java.util.List;
 
 import me.valkeea.fishyaddons.event.impl.FaEvents;
 import me.valkeea.fishyaddons.feature.qol.ItemSearchOverlay;
+import me.valkeea.fishyaddons.hud.base.InteractiveHudElement;
 import me.valkeea.fishyaddons.hud.elements.custom.HealthDisplay;
 import me.valkeea.fishyaddons.hud.elements.custom.InfoDisplay;
 import me.valkeea.fishyaddons.hud.elements.custom.ScDisplay;
 import me.valkeea.fishyaddons.hud.elements.custom.SkillXpDisplay;
-import me.valkeea.fishyaddons.hud.elements.custom.TitleDisplay;
-import me.valkeea.fishyaddons.hud.elements.custom.TrackerDisplay;
-import me.valkeea.fishyaddons.hud.elements.segmented.CakeDisplay;
+import me.valkeea.fishyaddons.hud.elements.interactive.CollectionDisplay;
+import me.valkeea.fishyaddons.hud.elements.interactive.ProfitDisplay;
 import me.valkeea.fishyaddons.hud.elements.segmented.EffectDisplay;
 import me.valkeea.fishyaddons.hud.elements.segmented.NetworkDisplay;
 import me.valkeea.fishyaddons.hud.elements.segmented.TimerDisplay;
+import me.valkeea.fishyaddons.hud.elements.simple.CakeDisplay;
 import me.valkeea.fishyaddons.hud.elements.simple.PetDisplay;
+import me.valkeea.fishyaddons.hud.elements.simple.TitleDisplay;
 import me.valkeea.fishyaddons.hud.ui.SearchHudElement;
+import me.valkeea.fishyaddons.hud.ui.UIFeedback;
 
 public class ElementRegistry {
     private ElementRegistry() {}
     private static final List<HudElement> ELEMENTS = new ArrayList<>();
+    private static final List<InteractiveHudElement> INTERACTIVE_ELEMENTS = new ArrayList<>();
 
     public static void register(HudElement element) {
-        ELEMENTS.add(element);
+        if (element != null) {
+            ELEMENTS.add(element);
+            if (element instanceof InteractiveHudElement interactive) {
+                INTERACTIVE_ELEMENTS.add(interactive);
+            }
+        }
     }
 
     public static List<HudElement> getElements() {
         return ELEMENTS;
     }
+    
+    public static List<InteractiveHudElement> getInteractiveElements() {
+        return INTERACTIVE_ELEMENTS;
+    }
 
     public static List<HudElement> getConfigurable() {
         List<HudElement> configurable = new ArrayList<>();
         for (HudElement element : ELEMENTS) {
-            if (element.isConfigurable()) {
+            if (element != null && element.isConfigurable()) {
                 configurable.add(element);
             }
         }
@@ -57,13 +70,24 @@ public class ElementRegistry {
         register(new SkillXpDisplay());
         register(new HealthDisplay());
 
-        register(TrackerDisplay.getInstance());
+        register(CollectionDisplay.getInstance());
+        register(ProfitDisplay.getInstance());
         register(ScDisplay.getInstance());
         register(InfoDisplay.getInstance());
+        register(UIFeedback.getInstance());        
 
         FaEvents.HUD_RENDER.register(event -> {
+
+            if (ScreenRenderContext.isInEditMode()) return;
+            
             for (HudElement element : ELEMENTS) {
-                element.render(event.getContext(), 0, 0);
+                if (element != null) {
+                    if (element instanceof InteractiveHudElement interactive 
+                        && ScreenRenderContext.shouldSkipInHudRender(interactive)) {
+                        continue;
+                    }
+                    element.render(event.getContext(), event.getClient(), 0, 0);
+                }
             }
         });
     }

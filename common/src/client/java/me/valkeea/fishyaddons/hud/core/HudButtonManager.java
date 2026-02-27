@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.text.Text;
 
 /**
@@ -11,12 +12,36 @@ import net.minecraft.text.Text;
  */
 public class HudButtonManager {
     private final List<HudButton> buttons = new ArrayList<>();
-    private int baseX;
+    private int baseX; // State x, positioning is relative to the element
     private int baseY;
     private float scale;
     private int buttonWidth;
     private int buttonHeight;
     private int buttonSpacing;
+    
+    public static class LineCountControlRegions {
+        public final int minusX;
+        public final int minusY;
+        public final int minusWidth;
+        public final int minusHeight;
+        public final int plusX;
+        public final int plusY;
+        public final int plusWidth;
+        public final int plusHeight;
+        
+        @SuppressWarnings("squid:S107")
+        public LineCountControlRegions(int minusX, int minusY, int minusWidth, int minusHeight,
+                                       int plusX, int plusY, int plusWidth, int plusHeight) {
+            this.minusX = minusX;
+            this.minusY = minusY;
+            this.minusWidth = minusWidth;
+            this.minusHeight = minusHeight;
+            this.plusX = plusX;
+            this.plusY = plusY;
+            this.plusWidth = plusWidth;
+            this.plusHeight = plusHeight;
+        }
+    }
 
     public HudButtonManager(int x, int y, float scale) {
         this.baseX = x;
@@ -105,6 +130,43 @@ public class HudButtonManager {
     public int getTotalWidth() {
         if (buttons.isEmpty()) return 0;
         return buttons.size() * buttonWidth + (buttons.size() - 1) * buttonSpacing;
+    }
+    
+    /**
+     * Render line count control under or next to buttons.
+     * Returns region data for click handling.
+     */
+    public LineCountControlRegions renderLineCountControl(MinecraftClient mc, HudDrawer drawer,
+                                                            int elementWidth, int stateColor, int currentValue, 
+                                                            double mouseX, double mouseY) {
+        int buttonsWidth = getTotalWidth();
+        boolean under = buttonsWidth > elementWidth;
+        int controlX = baseX + buttonSpacing + (under ? elementWidth : buttonsWidth);
+        int controlY = under ? baseY + (int)(4 * scale) : baseY - buttonHeight;
+        
+        int minusX = controlX + (int)(4 * scale);
+        int minusWidth = (int)(12 * scale);
+        boolean minusHovered = mouseX >= minusX && mouseX <= minusX + minusWidth 
+                           && mouseY >= controlY && mouseY <= controlY + buttonHeight;
+        drawer.textButton(minusX, controlY, minusWidth, buttonHeight, 
+                         Text.literal("−"), minusHovered);
+        
+        int countX = minusX + minusWidth + (int)(2 * scale);
+        Text countText = Text.literal(String.valueOf(currentValue));
+        int countWidth = (int)(mc.textRenderer.getWidth(countText) * scale);
+        drawer.drawText(countText, countX, controlY + (int)(4 * scale), stateColor);
+        
+        int plusX = countX + countWidth + (int)(2 * scale);
+        int plusWidth = (int)(12 * scale);
+        boolean plusHovered = mouseX >= plusX && mouseX <= plusX + plusWidth 
+                           && mouseY >= controlY && mouseY <= controlY + buttonHeight;
+        drawer.textButton(plusX, controlY, plusWidth, buttonHeight, 
+                         Text.literal("+"), plusHovered);
+        
+        return new LineCountControlRegions(
+            minusX, controlY, minusWidth, buttonHeight,
+            plusX, controlY, plusWidth, buttonHeight
+        );
     }
     
     /**

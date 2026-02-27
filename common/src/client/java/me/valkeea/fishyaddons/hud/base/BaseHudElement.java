@@ -38,18 +38,13 @@ public abstract class BaseHudElement implements HudElement {
     }
 
     @Override
-    public final void render(DrawContext context, int mouseX, int mouseY) {
+    public final void render(DrawContext context, MinecraftClient mc, int mouseX, int mouseY) {
         if (!editingMode && !shouldRender()) return;
 
-        var mc = MinecraftClient.getInstance();
         var state = getCachedState();
         float scale = state.size / 12.0F;
 
-        if (state.bg) {
-            int bgWidth = (int)(calculateContentWidth(mc) * scale);
-            int bgHeight = (int)(calculateContentHeight(mc) * scale);
-            HudUtils.drawBackground(context, state.x, state.y, bgWidth, bgHeight);
-        }
+        if (state.bg) drawBackGround(context, mc, state);
 
         context.getMatrices().pushMatrix();
         context.getMatrices().translate(state.x, state.y);
@@ -77,6 +72,17 @@ public abstract class BaseHudElement implements HudElement {
     protected abstract void renderContent(HudDrawer drawer, MinecraftClient mc, HudElementState state);
     protected abstract int calculateContentWidth(MinecraftClient mc);
     protected abstract int calculateContentHeight(MinecraftClient mc);
+
+    /**
+     * Draw background based on content size.
+     * Default implementation draws a simple rectangle, can be overridden for custom backgrounds.
+     */
+    protected void drawBackGround(DrawContext context, MinecraftClient mc, HudElementState state) {
+        float scale = state.size / 12.0F;
+        int bgWidth = (int)(calculateContentWidth(mc) * scale);
+        int bgHeight = (int)(calculateContentHeight(mc) * scale);
+        HudUtils.drawBackground(context, state.x, state.y, bgWidth, bgHeight);
+    }    
     
     /**
      * Special rendering in editing mode

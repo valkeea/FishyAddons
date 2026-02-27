@@ -20,10 +20,9 @@ public class HealthDisplay implements HudElement {
     private HudElementState cachedState = null;
 
     @Override
-    public void render(DrawContext context, int mouseX, int mouseY) {
+    public void render(DrawContext context, MinecraftClient mc, int mouseX, int mouseY) {
         if (!editingMode && !ValuableMobs.displayOn()) return;
 
-        var mc = MinecraftClient.getInstance();
         var state = getCachedState();
         int hudX = state.x;
         int hudY = state.y;

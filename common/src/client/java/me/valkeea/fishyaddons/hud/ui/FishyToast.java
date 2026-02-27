@@ -3,7 +3,6 @@ package me.valkeea.fishyaddons.hud.ui;
 import me.valkeea.fishyaddons.event.impl.FaEvents;
 import me.valkeea.fishyaddons.event.impl.HudRenderEvent;
 import me.valkeea.fishyaddons.tool.FishyMode;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.gui.DrawContext;
@@ -52,7 +51,7 @@ public class FishyToast implements Toast {
 
             if (elapsed < 4000L) {
 
-                var mc = MinecraftClient.getInstance();
+                var mc = event.getClient();
                 int screenWidth = mc.getWindow().getScaledWidth();
                 int toastWidth = 160;
                 int toastHeight = 32;

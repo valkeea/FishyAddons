@@ -10,7 +10,6 @@ import me.valkeea.fishyaddons.event.impl.ScreenClickEvent;
 import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 
-@SuppressWarnings("java:S2440")
 @Mixin(HandledScreen.class)
 public class MixinHandledScreenMouseClicked {
 
@@ -21,5 +20,5 @@ public class MixinHandledScreenMouseClicked {
         Boolean result = FaEvents.SCREEN_MOUSE_CLICK.fireReturnable(event, listener -> listener.onClick(event), false);
 
         if (event.isConsumed()) cir.setReturnValue(result);
-    }
+    } 
 }

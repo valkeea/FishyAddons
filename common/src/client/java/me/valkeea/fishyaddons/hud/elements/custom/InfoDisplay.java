@@ -53,7 +53,7 @@ public class InfoDisplay implements HudElement {
     }
 
     @Override
-    public void render(DrawContext context, int mouseX, int mouseY) {
+    public void render(DrawContext context, MinecraftClient mc, int mouseX, int mouseY) {
         if (!visible || !ModInfo.shouldShowInfo() || message == null || message.trim().isEmpty()) {
             if (visible && !ModInfo.shouldShowInfo()) {
                 forceHide();
@@ -61,7 +61,6 @@ public class InfoDisplay implements HudElement {
             return;
         }
 
-        var mc = MinecraftClient.getInstance();
         if (mc == null || mc.textRenderer == null) return;
         String[] lines = message.replace("\\n", "\n").split("\n");
         int maxWidth = 0;

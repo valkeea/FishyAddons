@@ -18,9 +18,9 @@ public class NetworkDisplay extends SegmentedTextElement {
             "Network Display",
             5, 5,
             12,
-            0xFFEECAEC,
-            false,
-            true
+            0xFFDB8BF2,
+            true,
+            false
         );
     }
 

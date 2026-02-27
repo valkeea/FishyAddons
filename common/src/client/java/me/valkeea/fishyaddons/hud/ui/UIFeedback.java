@@ -71,9 +71,9 @@ public class UIFeedback implements HudElement {
     }
 
     @Override
-    public void render(DrawContext context, int mouseX, int mouseY) {
+    public void render(DrawContext context, MinecraftClient mc, int mouseX, int mouseY) {
         if (current != null && current.isActive()) {
-            current.progress(context, x, y);
+            current.progress(context, mc, x, y);
         }
     }
 
@@ -137,15 +137,15 @@ public class UIFeedback implements HudElement {
             return 255;
         }
 
-        public void render(DrawContext context, int x, int y) {
+        public void render(DrawContext context, MinecraftClient mc, int x, int y) {
 
             int alpha = getAlpha();
             int color = (alpha << 24) | FishyMode.getThemeColor() & 0xFFFFFF;
-            int lineHeight = MinecraftClient.getInstance().textRenderer.fontHeight;
+            int lineHeight = mc.textRenderer.fontHeight;
 
             for (int i = 0; i < lines.size(); i++) {
                 context.drawText(
-                    MinecraftClient.getInstance().textRenderer,
+                    mc.textRenderer,
                     lines.get(i),
                     x,
                     y + i * lineHeight,
@@ -155,10 +155,10 @@ public class UIFeedback implements HudElement {
             }
         }
 
-        public void progress(DrawContext context, int x, int y) {
+        public void progress(DrawContext context, MinecraftClient mc, int x, int y) {
             if (!active) return;
             tick();
-            render(context, x, y);
+            render(context, mc, x, y);
         }
     }
 

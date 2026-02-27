@@ -18,7 +18,7 @@ public interface HudElement {
     boolean getHudBg();
     void setHudBg(boolean bg);
     void setEditingMode(boolean editing);
-    void render(DrawContext context, int mouseX, int mouseY);
+    void render(DrawContext context, MinecraftClient mc, int mouseX, int mouseY);
     String getDisplayName();
     Rectangle getBounds(MinecraftClient mc);
     HudElementState getCachedState();

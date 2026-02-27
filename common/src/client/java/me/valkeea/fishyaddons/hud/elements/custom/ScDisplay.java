@@ -92,16 +92,13 @@ public class ScDisplay implements HudElement {
     }
 
     @Override
-    public void render(DrawContext context, int mouseX, int mouseY) {
+    public void render(DrawContext context, MinecraftClient mc, int mouseX, int mouseY) {
         if ((!isEnabled() || !ActivityMonitor.getInstance().isActive(Currently.FISHING)) &&
             !editingMode) {
             return;
         }
 
-        var mc = MinecraftClient.getInstance();
-        if (mc.player == null) {
-            return;
-        }
+        if (mc.player == null) return;
 
         Island currentArea = ScStats.getInstance().getCurrentAreaKey();
         checkAreaChange(currentArea);

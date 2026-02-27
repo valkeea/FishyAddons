@@ -77,8 +77,23 @@ public class HudDrawer {
 
         drawText(text, x + (width - mc.textRenderer.getWidth(text)) / 2, y + (height - 9) / 2, 0xFFFFFFFF);
     }
+
+    /** Text button with centering and hover feedback */
+    public void textButton(int x, int y, int width, int height, Text text, boolean hovered) {
+        int textColor = hovered ? VCVisuals.borderHex(true, true) : state.color;
+        drawText(text, x + (width - mc.textRenderer.getWidth(text)) / 2, y + (height - 9) / 2, textColor);
+    }
     
     public void drawTooltip(DrawContext context, List<Text> tooltip, int mouseX, int mouseY, int themeColor) {
+
+        var screen = mc.getWindow();
+        var tr = mc.textRenderer;
+        int w = tr.getWidth(tooltip.get(0)) + 10;
+        int h = tooltip.size() * (tr.fontHeight + 2) + 4;
+
+        if (mouseX + w > screen.getScaledWidth()) mouseX = screen.getScaledWidth() - w - 5;
+        if (mouseY + h > screen.getScaledHeight()) mouseY = screen.getScaledHeight() - h - 5;
+
         VCRenderUtils.preview(context, mc.textRenderer, tooltip, mouseX, mouseY, themeColor, 1.0F);
     }
 

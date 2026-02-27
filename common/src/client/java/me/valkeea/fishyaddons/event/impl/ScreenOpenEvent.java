@@ -7,7 +7,7 @@ import net.minecraft.screen.slot.Slot;
 import net.minecraft.text.Text;
 
 /**
- * Event triggered when a new container is opened,
+ * Event triggered when a new container or inventory is opened,
  * or when the title of an already open container is updated
  */
 public class ScreenOpenEvent extends BaseEvent {

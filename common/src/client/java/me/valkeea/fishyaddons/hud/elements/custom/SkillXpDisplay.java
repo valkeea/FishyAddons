@@ -100,7 +100,7 @@ public class SkillXpDisplay implements HudElement {
     private static final java.util.Map<String, SkillDisplayCache> skillCaches = new java.util.concurrent.ConcurrentHashMap<>();
 
     @Override
-    public void render(DrawContext context, int mouseX, int mouseY) {
+    public void render(DrawContext context, MinecraftClient mc, int mouseX, int mouseY) {
         if (!editingMode && !SkillTracker.isEnabled()) return;
         
         var tracker = SkillTracker.getInstance();
@@ -108,7 +108,7 @@ public class SkillXpDisplay implements HudElement {
 
             if (editingMode) {
                 context.drawText(
-                    MinecraftClient.getInstance().textRenderer,
+                    mc.textRenderer,
                     Text.literal("Skill Tracker"),
                     getHudX(),
                     getHudY(),
@@ -120,7 +120,6 @@ public class SkillXpDisplay implements HudElement {
             return;
         }
 
-        var mc = MinecraftClient.getInstance();
         var state = getCachedState();
         
         if (tracker.hasMultipleSkills()) {
@@ -324,12 +323,12 @@ public class SkillXpDisplay implements HudElement {
     public HudElementState getCachedState() {
         if (cachedState == null) {
             cachedState = new HudElementState(
-                FishyConfig.getHudX(HUD_KEY, 5),
-                FishyConfig.getHudY(HUD_KEY, 25),
-                FishyConfig.getHudSize(HUD_KEY, 12),
-                FishyConfig.getHudColor(HUD_KEY, 0xFFFFFFFF),
-                FishyConfig.getHudOutline(HUD_KEY, false),
-                FishyConfig.getHudBg(HUD_KEY, true)
+                getHudX(),
+                getHudY(),
+                getHudSize(),
+                getHudColor(),
+                getHudOutline(),
+                getHudBg()
             );
         }
         return cachedState;
@@ -340,16 +339,16 @@ public class SkillXpDisplay implements HudElement {
         cachedState = null;
     }
 
-    @Override public int getHudX() { return FishyConfig.getHudX(HUD_KEY, 5); }
-    @Override public int getHudY() { return FishyConfig.getHudY(HUD_KEY, 25); }
+    @Override public int getHudX() { return FishyConfig.getHudX(HUD_KEY, 300); }
+    @Override public int getHudY() { return FishyConfig.getHudY(HUD_KEY, 100); }
     @Override public void setHudPosition(int x, int y) { FishyConfig.setHudX(HUD_KEY, x); FishyConfig.setHudY(HUD_KEY, y); }
     @Override public int getHudSize() { return FishyConfig.getHudSize(HUD_KEY, 12); }
     @Override public void setHudSize(int size) { FishyConfig.setHudSize(HUD_KEY, size); }
-    @Override public int getHudColor() { return FishyConfig.getHudColor(HUD_KEY, 0xFFEECAEC); }
+    @Override public int getHudColor() { return FishyConfig.getHudColor(HUD_KEY, 0xFFCCFFB9); }
     @Override public void setHudColor(int color) { FishyConfig.setHudColor(HUD_KEY, color); }
     @Override public boolean getHudOutline() { return FishyConfig.getHudOutline(HUD_KEY, false); }
     @Override public void setHudOutline(boolean outline) { FishyConfig.setHudOutline(HUD_KEY, outline); }   
-    @Override public boolean getHudBg() { return FishyConfig.getHudBg(HUD_KEY, true); }
+    @Override public boolean getHudBg() { return FishyConfig.getHudBg(HUD_KEY, false); }
     @Override public void setHudBg(boolean bg) { FishyConfig.setHudBg(HUD_KEY, bg); }
     @Override public void setEditingMode(boolean editing) { this.editingMode = editing; }
     @Override public String getDisplayName() { return "Skill XP Tracker"; }

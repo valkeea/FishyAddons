@@ -5,6 +5,9 @@ import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.screen.slot.Slot;
 
+/**
+ * Cancellable event fired when mouse is clicked on an Element in a HandledScreen.
+ */
 public class ScreenClickEvent extends BaseEvent {
     public final HandledScreen<?> screen;
     public final Slot hoveredSlot;

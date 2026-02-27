@@ -47,7 +47,7 @@ public class EqTextures {
         skullItemStacks.put(slotIndex, itemStack.copy());
         emptySlots.put(slotIndex, false);
         
-        String serialized = JsonUtil.serialize(itemStack);
+        String serialized = JsonUtil.serializeItemStack(itemStack);
         if (serialized != null && !serialized.isEmpty()) {
             ItemConfig.setEqItemStack(slotIndex, serialized);
         }
@@ -141,7 +141,7 @@ public class EqTextures {
         var client = MinecraftClient.getInstance();
         if (client.world == null) return;
 
-        var itemStack = JsonUtil.deserialize(data);
+        var itemStack = JsonUtil.deserializeItemStack(data);
         if (itemStack.isEmpty() || itemStack.getItem() != Items.PLAYER_HEAD) {
             LOGGER.debug("Failed to deserialize or invalid ItemStack for slot {}", slot);
             return;
@@ -158,7 +158,7 @@ public class EqTextures {
     private static void loadSlotFromConfig(int slotIndex) {
         String serialized = ItemConfig.getEqItemStack(slotIndex);
         if (serialized != null && !serialized.isEmpty()) {
-            var itemStack = JsonUtil.deserialize(serialized);
+            var itemStack = JsonUtil.deserializeItemStack(serialized);
             if (!itemStack.isEmpty() && itemStack.getItem() == Items.PLAYER_HEAD) {
                 skullItemStacks.put(slotIndex, itemStack);
             }

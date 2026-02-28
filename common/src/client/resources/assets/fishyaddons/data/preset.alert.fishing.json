@@ -5,7 +5,8 @@
     "color": 1.5649516E7,
     "soundId": "",
     "volume": 1.0,
-    "toggled": true
+    "toggled": true,
+    "startsWith": true
   },
   "A massive Titanoboa surfaces. Its body stretches as far as the eye can see.": {
     "msg": "",
@@ -13,7 +14,8 @@
     "color": 1.5649516E7,
     "soundId": "",
     "volume": 1.0,
-    "toggled": true
+    "toggled": true,
+    "startsWith": true
   },
   "This can't be! The manifestation of death himself!": {
     "msg": "",
@@ -21,7 +23,8 @@
     "color": 1.5649516E7,
     "soundId": "",
     "volume": 1.0,
-    "toggled": true
+    "toggled": true,
+    "startsWith": true
   },
   "What is this creature!?": {
     "msg": "",
@@ -29,7 +32,8 @@
     "color": 1.5649516E7,
     "soundId": "",
     "volume": 1.0,
-    "toggled": true
+    "toggled": true,
+    "startsWith": true
   },
   "Hide no longer, a Great White Shark has tracked your scent and thirsts for your blood!": {
     "msg": "",
@@ -37,7 +41,8 @@
     "color": 1.5649516E7,
     "soundId": "",
     "volume": 1.0,
-    "toggled": true
+    "toggled": true,
+    "startsWith": true
   },
   "A Fiery Scuttler inconspicuously waddles up to you, friends in tow.": {
     "msg": "",
@@ -45,7 +50,8 @@
     "color": 1.5649516E7,
     "soundId": "",
     "volume": 1.0,
-    "toggled": true
+    "toggled": true,
+    "startsWith": true
   },
   "The Water Hydra has come to test your strength.": {
     "msg": "",
@@ -53,7 +59,8 @@
     "color": 1.5649516E7,
     "soundId": "",
     "volume": 1.0,
-    "toggled": true
+    "toggled": true,
+    "startsWith": true
   },
   "You've hooked an Ent, as ancient as the forest itself.": {
     "msg": "",
@@ -61,7 +68,8 @@
     "color": 1.5649516E7,
     "soundId": "",
     "volume": 1.0,
-    "toggled": true
+    "toggled": true,
+    "startsWith": true
   },
   "It must be a full moon, a Werewolf appears.": {
     "msg": "",
@@ -69,7 +77,8 @@
     "color": 1.5649516E7,
     "soundId": "",
     "volume": 1.0,
-    "toggled": true
+    "toggled": true,
+    "startsWith": true
   },
   "A striped beast bounds from the depths, the wild Tiger Shark!": {
     "msg": "",
@@ -77,7 +86,8 @@
     "color": 1.5649516E7,
     "soundId": "",
     "volume": 1.0,
-    "toggled": true
+    "toggled": true,
+    "startsWith": true
   },
   "A Reindrake forms from the depths.": {
     "msg": "",
@@ -85,7 +95,8 @@
     "color": 1.5649516E7,
     "soundId": "",
     "volume": 1.0,
-    "toggled": true
+    "toggled": true,
+    "startsWith": true
   },
   "The sky darkens and the air thickens. The end times are upon us: Ragnarok is here.": {
     "msg": "",
@@ -93,7 +104,8 @@
     "color": 1.5649516E7,
     "soundId": "",
     "volume": 1.0,
-    "toggled": true
+    "toggled": true,
+    "startsWith": true
   },
   "You hear a massive rumble as Thunder emerges.": {
     "msg": "",
@@ -101,7 +113,8 @@
     "color": 1.5649516E7,
     "soundId": "",
     "volume": 1.0,
-    "toggled": true
+    "toggled": true,
+    "startsWith": true
   },
   "WOAH! A Plhlegblast appeared.": {
     "msg": "",
@@ -109,7 +122,8 @@
     "color": 1.5649516E7,
     "soundId": "",
     "volume": 1.0,
-    "toggled": true
+    "toggled": true,
+    "startsWith": true
   },
   "You have angered a legendary creature... Lord Jawbus has arrived.": {
     "msg": "",
@@ -117,7 +131,8 @@
     "color": 1.5649516E7,
     "soundId": "",
     "volume": 1.0,
-    "toggled": true
+    "toggled": true,
+    "startsWith": true
   },
   "The Loch Emperor arises from the depths.": {
     "msg": "",
@@ -125,7 +140,8 @@
     "color": 1.5649516E7,
     "soundId": "",
     "volume": 1.0,
-    "toggled": true
+    "toggled": true,
+    "startsWith": true
   },
   "Is this even a fish? It's the Carrot King!": {
     "msg": "",
@@ -133,7 +149,8 @@
     "color": 1.5649516E7,
     "soundId": "",
     "volume": 1.0,
-    "toggled": true
+    "toggled": true,
+    "startsWith": true
   },
   "A garish set of tentacles arise. It's a Blue Ringed Octopus!": {
     "msg": "",
@@ -141,7 +158,8 @@
     "color": 1.5649516E7,
     "soundId": "",
     "volume": 1.0,
-    "toggled": true
+    "toggled": true,
+    "startsWith": true
   },
   "An Abyssal Miner breaks out of the water!": {
     "msg": "",
@@ -149,7 +167,8 @@
     "color": 1.5649516E7,
     "soundId": "",
     "volume": 1.0,
-    "toggled": true
+    "toggled": true,
+    "startsWith": true
   },
   "A long snout breaks the surface of the water. It's an Alligator!": {
     "msg": "",
@@ -157,7 +176,8 @@
     "color": 1.5649516E7,
     "soundId": "",
     "volume": 1.0,
-    "toggled": true
+    "toggled": true,
+    "startsWith": true
   },
   "The spirit of a long lost Phantom Fisher has come to haunt you.": {
     "msg": "",
@@ -165,7 +185,8 @@
     "color": 1.5649516E7,
     "soundId": "",
     "volume": 1.0,
-    "toggled": true
+    "toggled": true,
+    "startsWith": true
   },
   "An Oasis Rabbit appears from the water.": {
     "msg": "",
@@ -173,6 +194,7 @@
     "color": 1.5649516E7,
     "soundId": "",
     "volume": 1.0,
-    "toggled": true
+    "toggled": true,
+    "startsWith": true
   }  
 }

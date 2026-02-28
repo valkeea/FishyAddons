@@ -124,9 +124,10 @@ public class FwpRoot implements CommandHandler {
         .executes(ctx -> {
             String chainName = StringArgumentType.getString(ctx, NAME);
             return WaypointCmd.toggleChainVisibility(chainName);
-        }));
+        })
+        .executes(ctx -> WaypointCmd.toggle()));        
     }
-    
+
     private static LiteralArgumentBuilder<FabricClientCommandSource> setCmd() {
         return ClientCommandManager.literal("set")
         .then(ClientCommandManager.argument(NAME, StringArgumentType.word())

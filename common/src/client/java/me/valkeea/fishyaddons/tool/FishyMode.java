@@ -7,7 +7,7 @@ public class FishyMode {
     private FishyMode() {}
     private static final FishyMode INSTANCE = new FishyMode();
     private String cachedTheme = "default";
-    private int cachedColor = 0xFFE2CAE9;
+    private int cachedColor = 0xFFDABCEB;
 
     public static void init() {
         getInstance();
@@ -26,7 +26,7 @@ public class FishyMode {
             case "blue" -> 0xFFA2C8FF;
             case "white" -> 0xFFE5E5FF;
             case "green" -> 0xFFA2FFA2;
-            default -> 0xFFE2CAE9;
+            default -> 0xFFDABCEB;
         };
     }
 

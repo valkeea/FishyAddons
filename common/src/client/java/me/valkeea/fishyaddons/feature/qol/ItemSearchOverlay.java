@@ -227,7 +227,7 @@ public class ItemSearchOverlay {
     }
     
     public void setEnabled(boolean enabled) {
-        FishyConfig.enable(Key.INV_SEARCH, enabled);
+        FishyConfig.setState(Key.INV_SEARCH, enabled);
         if (!enabled) clearSearch();
     }
     

@@ -72,7 +72,7 @@ public class ScRules extends Screen {
         
         entries.clear();        
         this.clearChildren();
-        calcDimensions(FishyConfig.getFloat(Key.MOD_UI_SCALE, 0.4265625f), this.width);
+        calcDimensions(FishyConfig.getFloat(Key.MOD_UI_SCALE, 0.8f), this.width);
 
         var allCreatures = FilterConfig.getSeaCreatureData();
         var categories = FilterConfig.getSeaCreatureCategories();
@@ -640,10 +640,6 @@ public class ScRules extends Screen {
                         this.prefixText = currentPrefixText;
                     }
                 }
-                
-                MinecraftClient.getInstance().getSoundManager().play(
-                    PositionedSoundInstance.master(SoundEvents.UI_BUTTON_CLICK, 1.0F)
-                );
                 
                 this.modified = false;
                 this.rule = FilterConfig.getAllRules().get(ruleName);

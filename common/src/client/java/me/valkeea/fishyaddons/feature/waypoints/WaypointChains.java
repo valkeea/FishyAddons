@@ -99,14 +99,8 @@ public class WaypointChains {
         
         if (!enabledPresets.equals(newEnabledPresets)) {
             enabledPresets = newEnabledPresets;
-            clearPresetCache();
+            clearAllCaches();
         }
-    }
-    
-    private static void clearPresetCache() {
-        CACHED_PRESET_CHAINS.clear();
-        CACHED_USER_CHAINS.clear();
-        lastArea = null;
     }
     
     public static void clearUserChainCache() {
@@ -240,7 +234,7 @@ public class WaypointChains {
             return Color.brighten(baseColor, 0.3f);
         }
 
-        return Color.dim(baseColor, 0.8f);
+        return Color.mulRGB(baseColor, 0.8f);
     }
 
     private static double calcDistance(Vec3d playerPos, BlockPos pos) {

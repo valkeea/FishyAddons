@@ -28,11 +28,11 @@ public class FishyNotis {
 
     private static Text prefix() {
         int theme = FishyMode.getCmdColor();
-        int theme2 = Color.dim(theme, 0.7f);
+        int theme2 = Color.mulRGB(theme, 0.7f);
         return Text.literal("[").styled(style -> style.withColor(theme2))
                 .append(Text.literal("α").styled(style -> style.withColor(theme)))
                 .append(Text.literal("]").styled(style -> style.withColor(theme2)))
-            .append(Text.literal(" » ").styled(style -> style.withColor(Formatting.DARK_GRAY)));
+            .append(Text.literal(" ▸ ").styled(style -> style.withColor(Formatting.DARK_GRAY)));
     }
 
     /** Send text with prefix and custom formatting */
@@ -137,9 +137,9 @@ public class FishyNotis {
     public static void helpNoti() {
         int theme = FishyMode.getCmdColor();
         chat(Text.literal("α Available Commands α").styled(style -> style.withColor(theme).withBold(true)));
-        chat(Text.literal("/fishyaddons opens the main config! /fp to see tracker commands.").formatted(Formatting.AQUA));
+        chat(Text.literal("/fishyaddons opens the main config!").formatted(Formatting.AQUA));
         chat(Text.literal("/fishyaddons = /fa, /fa guard = /fg").formatted(Formatting.AQUA));
-        chat(Text.literal("/fg clear | add | remove | list | alert").formatted(Formatting.DARK_AQUA));
+        chat(Text.literal("/fg clear | add | remove | list").formatted(Formatting.DARK_AQUA));
         chat(Text.literal("/fa key | /fa cmd |/fa chat | /fg").formatted(Formatting.DARK_AQUA));
         chat(Text.literal("/fa key | cmd | chat + on | off").formatted(Formatting.DARK_AQUA));
         chat(Text.literal("/fa key | cmd | fg + add").formatted(Formatting.DARK_AQUA));
@@ -148,10 +148,13 @@ public class FishyNotis {
         chat(Text.literal("/fa coords <title>").formatted(Formatting.DARK_AQUA));
         chat(Text.literal("/fa sc since | rng | <scname>").formatted(Formatting.DARK_AQUA));
         chat(Text.literal("/fa diana | reset").formatted(Formatting.DARK_AQUA));
-        chat(Text.literal("/fa skilltracker dt").formatted(Formatting.DARK_AQUA));
+        chat(Text.literal("/fa slayer | <type> | reset").formatted(Formatting.DARK_AQUA));
+        chat(Text.literal("/fa skill dt | reset").formatted(Formatting.DARK_AQUA));
         chat(Text.literal("/fa hud").formatted(Formatting.DARK_AQUA));
         chat(Text.literal(GUIDE_CMD).formatted(Formatting.DARK_AQUA));
         chat(Text.literal("/fa help").formatted(Formatting.DARK_AQUA));
+        chat(Text.literal("/fp - Profit Tracker commands").formatted(Formatting.AQUA));
+        chat(Text.literal("/fwp - Waypoint Chain commands").formatted(Formatting.AQUA));        
     }
 
     public static void guideNoti2() {
@@ -251,8 +254,6 @@ public class FishyNotis {
         chat(Text.literal("§3/fp clear §8- §7Clear current data"));
         chat(Text.literal("§3/fp refresh §8- §7Manually refresh cached prices"));
         chat(Text.literal("§3/fp stats §8- §7Show session/profile stats"));
-        chat(Text.literal("§3/fp init §8- §7Manually initialize APIs"));
-        chat(Text.literal("§3/fp status §8- §7Check API status"));
         chat(Text.literal("§3/fp price <amount> <item> §8- §7Check and update price"));
         chat(Text.literal("§3/fp profile §8- §7Show current/all profiles"));
         chat(Text.literal("§3/fp profile <name> §8- §7Create or switch to a profile"));
@@ -264,7 +265,8 @@ public class FishyNotis {
     }
 
     public static void fwp() {
-        FishyNotis.themed("Waypoint Commands:");
+        int theme = FishyMode.getCmdColor();
+        chat(Text.literal("α Waypoint Chain Commands α").styled(style -> style.withColor(theme).withBold(true)));
         FishyNotis.alert(Text.literal("§3/fwp <chain> <order> §8- §7Add waypoint at current location"));
         FishyNotis.alert(Text.literal("§3/fwp list §8- §7List all waypoint chains"));
         FishyNotis.alert(Text.literal("§3/fwp info <chain> §8- §7Show detailed chain information"));

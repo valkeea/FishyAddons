@@ -1,7 +1,5 @@
 package me.valkeea.fishyaddons.feature.item.safeguard;
 
-import org.lwjgl.glfw.GLFW;
-
 import me.valkeea.fishyaddons.config.ItemConfig;
 import me.valkeea.fishyaddons.event.EventPhase;
 import me.valkeea.fishyaddons.event.EventPriority;
@@ -11,6 +9,7 @@ import me.valkeea.fishyaddons.util.ContainerScanner;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.gui.screen.ingame.InventoryScreen;
+import net.minecraft.client.util.InputUtil;
 import net.minecraft.item.ItemStack;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.slot.Slot;
@@ -65,11 +64,11 @@ public class SlotHandler {
     }
 
     private static boolean isShiftDown() {
-        var client = MinecraftClient.getInstance();
-        long handle = client.getWindow().getHandle();
-        return GLFW.glfwGetKey(handle, GLFW.GLFW_KEY_LEFT_SHIFT) == GLFW.GLFW_PRESS
-            || GLFW.glfwGetKey(handle, GLFW.GLFW_KEY_RIGHT_SHIFT) == GLFW.GLFW_PRESS;
-    }
+        var cl = MinecraftClient.getInstance();
+        if (cl.options == null) return false;
+        int keyCode = cl.options.sneakKey.getDefaultKey().getCode();
+        return InputUtil.isKeyPressed(cl.getWindow(), keyCode);
+    } 
 
     private static boolean canInsertItems(Slot hovered, Slot boundSlot, ItemStack hoveredStack, ItemStack boundStack) {
         return (hoveredStack.isEmpty() || boundSlot.canInsert(hoveredStack))

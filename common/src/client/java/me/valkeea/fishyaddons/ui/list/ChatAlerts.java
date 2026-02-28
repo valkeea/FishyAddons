@@ -69,7 +69,7 @@ public class ChatAlerts extends Screen {
 
         entries.clear();        
         this.clearChildren();
-        calcDimensions(FishyConfig.getFloat(Key.MOD_UI_SCALE, 0.4265625f));
+        calcDimensions(FishyConfig.getFloat(Key.MOD_UI_SCALE, 0.8f));
 
         for (Map.Entry<String, AlertData> entry : FishyConfig.getChatAlerts().entrySet()) {
             Entry e = new Entry(entry.getKey());

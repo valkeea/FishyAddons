@@ -39,7 +39,7 @@ public class KeybindEntryList extends GenericEntryList {
 
     @Override
     public void setEntry(String key, String value) {
-        FishyConfig.setKeybind(key, value);;
+        FishyConfig.setKeybind(key, value);
     }
 
     @Override
@@ -84,11 +84,13 @@ public class KeybindEntryList extends GenericEntryList {
     }
 
     public GenericEntryList.GenericEntry getHoveredKeybindEntry() {
-        return (GenericEntryList.GenericEntry) this.getHoveredEntry();
+        return this.getHoveredEntry();
     }
 
     @Override
-    public void appendClickableNarrations(net.minecraft.client.gui.screen.narration.NarrationMessageBuilder builder) {}
+    public void appendClickableNarrations(net.minecraft.client.gui.screen.narration.NarrationMessageBuilder builder) {
+        // Access
+    }
 
     @Override
     public boolean isValidEntry(String key, String value) {

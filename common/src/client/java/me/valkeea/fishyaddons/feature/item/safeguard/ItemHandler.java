@@ -4,7 +4,7 @@ import java.util.Map;
 import java.util.Set;
 
 import me.valkeea.fishyaddons.config.ItemConfig;
-import me.valkeea.fishyaddons.util.ItemData;
+import me.valkeea.fishyaddons.tool.ItemData;
 import net.minecraft.item.ItemStack;
 
 public class ItemHandler {

@@ -34,10 +34,11 @@ public class ChatFormatHandler implements ChatHandler {
     public ChatHandlerResult handle(ChatMessageContext context) {
 
         try {
-            Text newLine = context.getCurrentMessage();
-            Text original = context.getOriginalText();
-            String cleanOriginal = context.getRawString();
-            Text enhanced = addFormatting(newLine, original, cleanOriginal);
+
+            var newLine = context.getCurrentMessage();
+            var original = context.getOriginalText();
+            var raw = context.getRawString();
+            var enhanced = addFormatting(newLine, original, raw);
 
             if (!enhanced.equals(newLine)) {
                 context.setCurrentMessage(enhanced);
@@ -111,23 +112,20 @@ public class ChatFormatHandler implements ChatHandler {
         return lower.equals("pls") || lower.equals("please");
     }
 
-    private Text addFormatting(Text originalMessage, Text originalText, String cleanOriginal) {
-        if (hasFormattingCodes(cleanOriginal) && FishyConfig.getState(Key.CHAT_FORMATTING, true)) {
-            originalMessage = Enhancer.parseExistingStyle(originalText);
+    private Text addFormatting(Text newLine, Text original, String raw) {
+        if (hasFormattingCodes(raw) && FishyConfig.getState(Key.CHAT_FORMATTING, true)) {
+            newLine = Enhancer.parseExistingStyle(original);
         }
 
-        if (!FishyConfig.getState(Key.CHAT_FILTER_PARTYBTN, false) || !hasLfgTag(cleanOriginal)) {
-            return originalMessage;
+        if (!FishyConfig.getState(Key.CHAT_FILTER_PARTYBTN, false) || !hasLfgTag(raw)) {
+            return newLine;
         }
 
-        String ign = extractIgn(cleanOriginal);
-
-        if (ign.isEmpty()) {
-            return originalMessage;
-        }
+        String ign = extractIgn(raw);
+        if (ign.isEmpty()) return newLine;
         
         var hideBtn = ChatButton.create("/party " + ign, "Party");
 
-        return originalMessage.copy().append(hideBtn);
+        return newLine.copy().append(hideBtn);
     }
 }

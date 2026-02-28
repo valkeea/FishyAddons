@@ -73,11 +73,12 @@ public class AliasEntryList extends GenericEntryList {
     }
 
     public GenericEntryList.GenericEntry getHoveredCommandEntry() {
-        return (GenericEntryList.GenericEntry) this.getHoveredEntry();
+        return this.getHoveredEntry();
     }
 
     @Override
     public void appendClickableNarrations(net.minecraft.client.gui.screen.narration.NarrationMessageBuilder builder) {
+        // Access
     }
 
     @Override

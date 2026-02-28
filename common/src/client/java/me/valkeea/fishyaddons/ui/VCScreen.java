@@ -59,7 +59,7 @@ public class VCScreen extends Screen {
     private VCEntry activeDropdownEntry = null;
     private VCToggleMenu activeDropdown = null;
 
-    private final Identifier icon = SpriteUtil.createModSprite("hud/icon");    
+    private final Identifier icon = Identifier.of("fishyaddons", "icon.png");
     
     // Renderer for config entries
     private VCGui renderer;

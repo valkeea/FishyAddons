@@ -6,11 +6,12 @@ import java.util.concurrent.ConcurrentHashMap;
 import me.valkeea.fishyaddons.api.skyblock.GameChat;
 import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.config.FishyConfig.AlertData;
-import me.valkeea.fishyaddons.hud.elements.custom.TitleDisplay;
+import me.valkeea.fishyaddons.hud.elements.simple.TitleDisplay;
 import me.valkeea.fishyaddons.processor.BaseAnalysis;
 import me.valkeea.fishyaddons.processor.ChatMessageContext;
 import me.valkeea.fishyaddons.tool.PlaySound;
 import me.valkeea.fishyaddons.tool.PlayerPosition;
+import me.valkeea.fishyaddons.util.ServerCommand;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.util.Identifier;
 
@@ -19,9 +20,7 @@ public class ChatAlert {
     private static boolean enabled = false;
     
     private static final long TRIGGER_COOLDOWN_MS = 1000;
-    private static final long COMMAND_COOLDOWN_MS = 2000;
     private static final Map<String, Long> lastTriggerTime = new ConcurrentHashMap<>();
-    private static final Map<String, Long> lastCommandTime = new ConcurrentHashMap<>();
 
     public static void refresh() {
         enabled = FishyConfig.getState(me.valkeea.fishyaddons.config.Key.CHAT_ALERTS_ENABLED, false);
@@ -72,28 +71,13 @@ public class ChatAlert {
                 var id = Identifier.tryParse(data.getSoundId());
                 if (id != null) {
                     PlaySound.dynamic(id.toString(),
-                    data.getVolume(), 1.0F);
+                    data.getVolume(), 1.0F, false);
                 }
             } catch (Exception ignored) {
                 // Ignore sound playback errors
             }
         }
     }    
-
-    private static boolean isValid(String command) {
-        return command != null && !command.trim().isEmpty();
-    }
-
-    /**
-     * Check if enough time has passed since the last command execution.
-     */
-    private static boolean canExecuteCommand() {
-        Long lastExecution = lastCommandTime.get("global");
-        if (lastExecution == null) {
-            return true;
-        }
-        return (System.currentTimeMillis() - lastExecution) > COMMAND_COOLDOWN_MS;
-    }
 
     private static void handleMsg(AlertData data, MinecraftClient client) {
         String message = data.getMsg().trim();
@@ -107,15 +91,11 @@ public class ChatAlert {
         }
 
         if (message.startsWith("/")) {
-
-            if (isValid(message) && canExecuteCommand()) {
-                message = message.replace("/", "");
-                client.player.networkHandler.sendChatCommand(message);
-            }
-
-        } else if (isInParty) client.player.networkHandler.sendChatMessage("/pc " + message);
-
-        lastCommandTime.put("global", System.currentTimeMillis());
+            message = message.substring(1);
+            ServerCommand.send(message);
+        } else if (isInParty) {
+            ServerCommand.send("pc " + message);
+        }
     }
 
     private static void cleanupOldTriggers(long currentTime) {

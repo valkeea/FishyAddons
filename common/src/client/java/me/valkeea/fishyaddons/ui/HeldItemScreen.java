@@ -55,7 +55,7 @@ public class HeldItemScreen extends Screen {
         super(Text.literal("Held Item Animations"));
         this.parent = parent;
         this.theme = FishyMode.getThemeColor();
-        this.scale = Math.clamp(FishyConfig.getFloat(Key.MOD_UI_SCALE, 0.4265625f), 0.5f, 1.3f);
+        this.scale = Math.clamp(FishyConfig.getFloat(Key.MOD_UI_SCALE, 0.8f), 0.5f, 1.3f);
     }
 
     private void calcDimensions() {

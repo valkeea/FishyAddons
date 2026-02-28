@@ -59,7 +59,7 @@ public class ParticleVisuals {
 
     public static void setDmg(boolean state) {
         scaleDmg = state;
-        FishyConfig.toggle(Key.SCALE_CRIT, state);
+        FishyConfig.setState(Key.SCALE_CRIT, state);
         refreshCache();
     }
 

@@ -155,7 +155,6 @@ public class VCSlider {
     public String getPercentageText() {
         float actualValue = getValue();
         
-        // Use custom format if provided, otherwise default behavior
         if (displayFormat.equals(DEFAULT_FORMAT)) {
             return String.format(displayFormat, actualValue * 100);
         } else {

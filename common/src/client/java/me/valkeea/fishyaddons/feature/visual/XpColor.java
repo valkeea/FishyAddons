@@ -24,14 +24,4 @@ public class XpColor {
         FishyConfig.setInt(Key.XP_COLOR, newColor);
         refresh();
     }
-
-    public static void toggle() {
-        FishyConfig.toggle(Key.XP_COLOR_ON, false);
-        refresh();
-    }
-
-    public static void toggleOutline() {
-        FishyConfig.toggle(Key.XP_OUTLINE, false);
-        refresh();
-    }
 }

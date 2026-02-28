@@ -5,7 +5,7 @@ import me.valkeea.fishyaddons.config.Key;
 import me.valkeea.fishyaddons.feature.item.safeguard.SlotHandler;
 import me.valkeea.fishyaddons.mixin.HandledScreenAccessor;
 import me.valkeea.fishyaddons.util.Keyboard;
-import me.valkeea.fishyaddons.util.SbGui;
+import me.valkeea.fishyaddons.util.ContainerScanner;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ChatScreen;
@@ -118,7 +118,7 @@ public class FishyKeys {
     private static void lockKeyRelease(HandledScreen<?> screen, Slot hovered, boolean isPressed) {
 
         if (!isPressed && wasPressed && dragging && 
-            bindStart != null && SbGui.isPlayerInventory() && hovered != null) {
+            bindStart != null && ContainerScanner.isGuiOrInv() && hovered != null) {
 
             if (hovered == bindStart) {
                 singleSlotAction(screen, hovered);

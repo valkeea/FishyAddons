@@ -148,17 +148,19 @@ public class BlacklistManager {
     }
 
     public static void loadUserBlacklistFromJson(List<Map<String, Object>> jsonEntries) {
+
         userBlacklist.clear();
+
         for (Map<String, Object> entry : jsonEntries) {
+
             Object idObj = entry.get("identifiers");
             List<String> identifiers = new ArrayList<>();
-            if (idObj instanceof List<?>) {
-                for (Object o : (List<?>) idObj) {
-                    if (o instanceof String string) {
-                        identifiers.add(string);
-                    }
+            if (idObj instanceof List<?> idList) {
+                for (Object id : idList) {
+                    if (id instanceof String idStr) identifiers.add(idStr);
                 }
             }
+
             boolean enabled = Boolean.TRUE.equals(entry.get("enabled"));
             boolean checkTitle = Boolean.TRUE.equals(entry.get("checkTitle"));
             userBlacklist.add(new GuiBlacklistEntry(identifiers, enabled, checkTitle));

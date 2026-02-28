@@ -148,7 +148,7 @@ public class AlertEditScreen extends Screen {
                 soundIdField.setText(soundId);
                 searchMenu.setVisible(false);
             },
-            soundId -> PlaySound.dynamic(soundId, volumeSlider != null ? volumeSlider.getValue() : 1.0F, 1.0F),
+            soundId -> PlaySound.dynamic(soundId, volumeSlider != null ? volumeSlider.getValue() : 1.0F, 1.0F, false),
             this,
             soundIdField
         );
@@ -166,7 +166,7 @@ public class AlertEditScreen extends Screen {
             initialVolume = initialData.getVolume();
         }
         
-        volumeSlider = new VCSlider(x + width, sy, initialVolume, 0.0f, 10.0f, "%.1f", value -> {});
+        volumeSlider = new VCSlider(x + width, sy, initialVolume, 0.0f, 1.0f, "%.0f%%", value -> {});
         volumeSlider.setUIScale(1.0f);
 
         formatMenu = new TextFormatMenu(

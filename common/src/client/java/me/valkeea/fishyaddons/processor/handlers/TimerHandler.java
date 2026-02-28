@@ -1,6 +1,5 @@
 package me.valkeea.fishyaddons.processor.handlers;
 
-import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -14,7 +13,6 @@ import me.valkeea.fishyaddons.feature.skyblock.timer.EffectTimers;
 import me.valkeea.fishyaddons.processor.ChatHandler;
 import me.valkeea.fishyaddons.processor.ChatHandlerResult;
 import me.valkeea.fishyaddons.processor.ChatMessageContext;
-import net.minecraft.util.Identifier;
 
 public class TimerHandler implements ChatHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger("FishyAddons/EffectTimerChatHandler");

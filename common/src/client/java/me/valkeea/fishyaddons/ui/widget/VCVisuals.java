@@ -15,7 +15,7 @@ public class VCVisuals {
     /**
      * Theme-aware background colors for buttons
      */
-    protected static int bgHex(boolean hovered, boolean enabled) {
+    public static int bgHex(boolean hovered, boolean enabled) {
         if (hovered) {
             return (themeColor & 0x088FFFFF) | 0x99000000;
         } else if (!enabled) {
@@ -36,7 +36,7 @@ public class VCVisuals {
     /**
      * Theme-aware border colors for buttons
      */
-    protected static int borderHex(boolean hovered, boolean enabled) {
+    public static int borderHex(boolean hovered, boolean enabled) {
         if (hovered) {
             return (themeColor & 0x088FFFFF) | 0x99000000;
         } else if (!enabled) {

@@ -15,7 +15,7 @@ public class TimerDisplay extends SegmentedTextElement {
             12,
             0xC8D9C0,
             false,
-            true
+            false
         );
     }
 

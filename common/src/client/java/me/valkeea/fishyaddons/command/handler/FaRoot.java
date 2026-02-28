@@ -101,7 +101,7 @@ public class FaRoot implements CommandHandler {
     private static LiteralArgumentBuilder<FabricClientCommandSource> lavaCommand() {
         return CommandBuilderUtils.toggleCommand("lava", Key.FISHY_LAVA, "Clear Lava")
             .onToggle(RenderTweaks::refresh)
-            .withHelpMessage("Usage: /fa lava <on | off>")
+            .withHelpMessage("Usage: §b/fa lava §8<§7on §8| §7off§8>")
             .build();
     }
     
@@ -167,8 +167,8 @@ public class FaRoot implements CommandHandler {
             return 1;
         }))
         .executes(context -> {
-            FishyNotis.themed("§lRain Tracker:");
-            FishyNotis.alert(Text.literal("§3/fa rain track §8- §7Track the current rain state."));
+            FishyNotis.themed("§lWeather Tracker:");
+            FishyNotis.alert(Text.literal("§3/fa rain track §8- §7Check the current rain state."));
             FishyNotis.alert(Text.literal("§3/fa rain on | off §8- §7Enable/disable rain notifications"));
             return 1;
         });
@@ -205,8 +205,8 @@ public class FaRoot implements CommandHandler {
         .executes(context -> {
             FishyNotis.themed("Usage:");
             FishyNotis.alert(Text.literal("§3/fa fishyaddons sc sounds §8- §7Instructions for resource pack sounds"));
-            FishyNotis.alert(Text.literal("§3/fa fishyaddons sc since §8- §7Stats for 'sc since' in the current island"));
-            FishyNotis.alert(Text.literal("§3/fa fishyaddons sc rng §8- §7Catch % for rare scs"));
+            FishyNotis.alert(Text.literal("§3/fa fishyaddons sc since §8- §7Stats for 'sc since' in the current island"));          
+            FishyNotis.alert(Text.literal("§3/fa fishyaddons sc rng §8- §7Catch % for all rare scs"));
             FishyNotis.alert(Text.literal("§3/fa fishyaddons sc <name> §8- §7Data summary for a specific sc"));
             return 1;
         });

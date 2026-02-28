@@ -205,7 +205,7 @@ public class VCCategory {
         int height = tab.getDropdownHeight();
         
         renderCtx.context.fill(x, y, x + width, y + height, 0x90000000);
-        VCRenderUtils.border(renderCtx.context, x, y, width, height, Color.dim(theme, 0.6f));
+        VCRenderUtils.border(renderCtx.context, x, y, width, height, Color.mulRGB(theme, 0.6f));
         
         List<VCCategory.DropdownItem> items = tab.getDropdownItems();
         int itemHeight = (int)(14 * uiScale);
@@ -266,7 +266,7 @@ public class VCCategory {
             new DropdownItem("Water", "clear water"),
             new DropdownItem("Vanilla XP", "xp text color"),
             new DropdownItem("Redstone", "redstone particle color"),
-            new DropdownItem("FA Colors", "custom fa colors")
+            new DropdownItem("IGN Colors", "custom fa colors")
         ));
         tabs.add(renderTab);
         
@@ -285,27 +285,34 @@ public class VCCategory {
         ));
         tabs.add(qolTab);
         
-        var skyblockTab = new Tab("SkyBlock", "SB", "── SkyBlock Features ──");
+        var skyblockTab = new Tab("SkyBlock", "SB", "── SkyBlock Misc ──");
         skyblockTab.setDropdownItems(Arrays.asList(
             new DropdownItem("Equipment", "equipment display"),
-            new DropdownItem("Pet Display"),
-            new DropdownItem("Healthbars", "mob health bar"),
+            new DropdownItem("Mob Health", "mob health bar"),            
+            new DropdownItem("Pet Display", "include pet xp"),
             new DropdownItem("Profit", "price per item"),
+            new DropdownItem("Collection", "collection progress display"),
+            new DropdownItem("Diana", "track various diana stats"),
+            new DropdownItem("Slayer", "track slayer xp"),
             new DropdownItem("Skill XP", "skill xp per hour"),
             new DropdownItem("Cakes", "century cake display"),
             new DropdownItem("Effects", "consumable cooldowns"),
-            new DropdownItem("Diana", "track various diana stats"),
-            new DropdownItem("Slayer", "track slayer xp and bosses per hour"),
-            new DropdownItem("Skills", "track skill xp per hour"),
             new DropdownItem("Cocoon", "nearby cocoon alert"),            
             new DropdownItem("Moonglade", "timer display"),
             new DropdownItem("Hyperion", "clean wither impact"),
-            new DropdownItem("Sounds", "mute list"),
             new DropdownItem("Sb Gui", "hide skyblock gui buttons"),
             new DropdownItem("Npc Dialogue", "accept npc dialogue"),
             new DropdownItem("Invisibug", "invisibug helper")
         ));
         tabs.add(skyblockTab);
+
+        var audioTab = new Tab("Audio", "Audio", "── Audio ──");
+        audioTab.setDropdownItems(Arrays.asList(
+            new DropdownItem("Ferocity", "custom ferocity sound"),
+            new DropdownItem("Mute", "mute list"),
+            new DropdownItem("Catch", "custom fishing catch volume")
+        ));
+        tabs.add(audioTab);        
         
         var fishingTab = new Tab("Fishing", "Fish", "── Fishing ──");
         fishingTab.setDropdownItems(Arrays.asList(
@@ -324,7 +331,8 @@ public class VCCategory {
             new DropdownItem("Sack", "hide sack messages"),
             new DropdownItem("Autopet", "hide autopet messages"),
             new DropdownItem("Implosion", "hide implosion messages"),
-            new DropdownItem("[Party]", "click to party")
+            new DropdownItem("[Party]", "click to party"),
+            new DropdownItem("Formatting", "ingame chat formatting")            
         ));
         tabs.add(filterTab);
         

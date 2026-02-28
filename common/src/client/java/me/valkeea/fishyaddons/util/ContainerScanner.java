@@ -30,6 +30,7 @@ public class ContainerScanner {
 
     public void onScreen(ScreenOpenEvent event) {
         setUser(event);
+        updateGui(event.titleString);
     }
 
     public void onInventory(GuiChangeEvent event) {

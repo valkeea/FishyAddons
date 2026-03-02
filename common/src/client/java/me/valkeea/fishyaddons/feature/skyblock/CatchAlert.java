@@ -24,8 +24,8 @@ public class CatchAlert {
     private static String def = "block.note_block.pling";
     private static String id = def;
     private static FishingBobberEntity lastBobber = null;
+    private static boolean alertActive = false;
     private static int catchCd = 0;
-    private static long bookCd = 0;
 
     public static void init() {
         refresh();
@@ -39,11 +39,6 @@ public class CatchAlert {
 
         if (catchCd > 0) catchCd--;
 
-        if (bookCd > 0) {
-            if (bookCd >= 5) bookCd = 0;
-            else bookCd--;
-        }
-
         lastBobber = isFishing();
     }
 
@@ -52,7 +47,7 @@ public class CatchAlert {
      */
     public static FishingBobberEntity isFishing() {
         var mc = MinecraftClient.getInstance();
-        if (mc.player == null || mc.world == null) return null;
+        if (mc.player == null || mc.world == null || !alertActive) return null;
         return mc.player.fishHook;
     }
 
@@ -81,12 +76,16 @@ public class CatchAlert {
     }
 
     private static boolean isFishingPling(String path) {
-        return isEnabled() && catchCd + bookCd <= 0 && lastBobber != null &&
+        return isEnabled() && catchCd <= 0 && lastBobber != null &&
         !lastBobber.isRemoved() && path.equals(def);
     }
 
-    public static void bookDetected() {
-        bookCd = 5;
+    public static boolean isFishingAlert(String label) {
+        return label.equals("?") || label.equals("!!!");
+    }
+
+    public static void update(boolean foundStand) {
+        alertActive = foundStand;
     }
 
     public static void refresh() {

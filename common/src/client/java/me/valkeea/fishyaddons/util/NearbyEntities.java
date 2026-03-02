@@ -6,9 +6,12 @@ import java.util.List;
 import java.util.Map;
 
 import me.valkeea.fishyaddons.api.skyblock.GameMode;
+import me.valkeea.fishyaddons.feature.skyblock.CatchAlert;
 import me.valkeea.fishyaddons.feature.skyblock.FishingHotspot;
 import me.valkeea.fishyaddons.tracker.profit.ValuableMobs;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.decoration.ArmorStandEntity;
 import net.minecraft.util.math.Vec3d;
@@ -18,8 +21,8 @@ public class NearbyEntities {
 
     private static int tickCounter = 0;
     private static final double RADIUS = 50.0;
-    private static final Map<Integer, String> labelCache = new HashMap<>();
-    private static final Map<String, String> obfuscationCache = new HashMap<>();
+    private static final Map<Integer, String> labels = new HashMap<>();
+    private static final Map<String, String> obfuscation = new HashMap<>();
 
     public static void tick() {
         tickCounter++;
@@ -28,7 +31,7 @@ public class NearbyEntities {
         
         if (tickCounter % scanInterval == 0) {
             checkClosest();
-            if (active) labelCache.clear();
+            if (active) labels.clear();
         }
     }
 
@@ -37,70 +40,71 @@ public class NearbyEntities {
         if (!GameMode.skyblock()) return;
 
         var client = MinecraftClient.getInstance();
-        if (client.world == null || client.player == null) return;
+        var player = client.player;
+        var world = client.world;
+        if (world == null || player == null) return;
         
         if (tickCounter % 200 == 0) {
-            labelCache.clear();
-            obfuscationCache.clear();
+            labels.clear();
+            obfuscation.clear();
         }
         
         List<ArmorStandEntity> nearbyHspts = new ArrayList<>();
         List<ArmorStandEntity> nearbyVals = new ArrayList<>();
+        boolean foundFishAlert = false;
 
-        for (var armorStand : findArmorStands(RADIUS)) {
+        for (var stand : findArmorStands(world, player, RADIUS)) {
 
-            var labelText = extractLabel(armorStand);
+            var labelText = extractLabel(stand);
             if (isValidLabel(labelText)) {
-
                 if (FishingHotspot.isHotspotType(labelText)) {
-                    nearbyHspts.add(armorStand);
-                    continue;
+                    nearbyHspts.add(stand);
+                } else if (ValuableMobs.isValArmorstand(labelText, stand)) {
+                    nearbyVals.add(stand);
+                } else if (!foundFishAlert && CatchAlert.isFishingAlert(labelText)) {
+                    foundFishAlert = true;
                 }
-
-                if (ValuableMobs.isValArmorstand(labelText, armorStand)) {
-                    nearbyVals.add(armorStand);
-                }                
             }
         }
 
         FishingHotspot.update(nearbyHspts);
         ValuableMobs.update(nearbyVals);
+        CatchAlert.update(foundFishAlert);
     }
 
     /**
      * Finds all armor stands within the specified radius
      */
-    public static List<ArmorStandEntity> findArmorStands(double radius) {
-        var client = MinecraftClient.getInstance();
-        List<ArmorStandEntity> armorStands = new ArrayList<>();
-        
-        if (client.player == null || client.world == null) return armorStands;
+    public static List<ArmorStandEntity> findArmorStands(ClientWorld world, ClientPlayerEntity player, double radius) {
 
-        for (var entity : client.world.getEntitiesByClass(
+        List<ArmorStandEntity> stands = new ArrayList<>();
+
+        for (var entity : world.getEntitiesByClass(
                 ArmorStandEntity.class,
-                client.player.getBoundingBox().expand(radius),
+                player.getBoundingBox().expand(radius),
                 e -> true)) {
 
-            if (entity instanceof ArmorStandEntity armorStand) {
-                armorStands.add(armorStand);
+            if (entity instanceof ArmorStandEntity stand) {
+                stands.add(stand);
             }
         }
         
-        return armorStands;
+        return stands;
     }
 
     /**
      * Checks view based on camera direction
      */
-    public static boolean lookingAt(ArmorStandEntity armorStand) {
+    public static boolean lookingAt(ArmorStandEntity stand) {
         
         var mc = MinecraftClient.getInstance();
-        if (mc.player == null || mc.world == null) return false;
+        var player = mc.player;
+        if (player == null || mc.world == null) return false;
 
-        double distance = mc.player.distanceTo(armorStand);
+        double distance = player.distanceTo(stand);
         if (distance < 8.0) return true;
         
-        var cameraPos = mc.gameRenderer.getCamera().getPos();
+        var cameraPos = mc.gameRenderer.getCamera().getCameraPos();
 
         float yaw = mc.gameRenderer.getCamera().getYaw();
         float pitch = mc.gameRenderer.getCamera().getPitch();
@@ -113,7 +117,7 @@ public class NearbyEntities {
             Math.cos(yawRad) * Math.cos(pitchRad)
         ).normalize();
         
-        Vec3d toEntity = armorStand.getEntityPos().subtract(cameraPos).normalize();
+        Vec3d toEntity = stand.getEntityPos().subtract(cameraPos).normalize();
         double dot = cameraDirection.dotProduct(toEntity);
         double fovCos = Math.cos(Math.toRadians(60.0));
         
@@ -123,31 +127,31 @@ public class NearbyEntities {
     /**
      * Checks if an armor stand is in radius of the player
      */
-    public static boolean isInRange(ArmorStandEntity armorStand, double radius) {
+    public static boolean isInRange(ArmorStandEntity stand, double radius) {
         var client = MinecraftClient.getInstance();
-        if (client.player == null || client.world == null) return false;
+        var player = client.player;
+        if (player == null || client.world == null) return false;
 
-        return client.player.squaredDistanceTo(armorStand) <= radius * radius;
+        return player.squaredDistanceTo(stand) <= radius * radius;
     }
 
     /**
      * Extracts the label text from an armor stand.
      * Can be used for any mob after spawn.
      */
-    public static String extractLabel(ArmorStandEntity armorStand) {
-        if (armorStand.getCustomName() == null) { 
-            return ""; 
-        }
+    public static String extractLabel(ArmorStandEntity stand) {
+        if (stand.getCustomName() == null) return "";
         
-        int entityId = armorStand.getId();
-        var cached = labelCache.get(entityId);
-        if (cached != null) {
-            return cached;
-        }
+        int entityId = stand.getId();
+        var cached = labels.get(entityId);
+        if (cached != null) return cached;
         
-        var rawLabel = armorStand.getCustomName().getString();
+        var label = stand.getCustomName();
+        if (label == null) return "";
+
+        var rawLabel = label.getString();
         var cleaned = cutObfuscation(rawLabel);
-        labelCache.put(entityId, cleaned);
+        labels.put(entityId, cleaned);
         return cleaned;
     }
 
@@ -155,8 +159,8 @@ public class NearbyEntities {
      * Get the name of player entities, including on spawn
      */
     public static String extractDisplayName(Entity entity) {
-        if (entity.getDisplayName() == null) return "";
-        return entity.getDisplayName().getString();
+        var name = entity.getDisplayName();
+        return name != null ? name.getString() : "";
     }
 
     public static boolean isValidLabel(String labelText) {
@@ -170,7 +174,7 @@ public class NearbyEntities {
     public static String cutObfuscation(String text) {
         if (text == null || text.isEmpty()) return text;
 
-        var cached = obfuscationCache.get(text);
+        var cached = obfuscation.get(text);
         if (cached != null) return cached;
 
         var obfuscationPattern = java.util.regex.Pattern.compile(".*\\b([a-z])([A-Z]\\w*).*");
@@ -185,11 +189,11 @@ public class NearbyEntities {
                 if (cleaned.endsWith(obfuscatedChar)) {
                     cleaned = cleaned.substring(0, cleaned.length() - 1);
                 }
-                result = cleaned;
+                result = cleaned.replace("obfuscated", "");
             }
         }
         
-        obfuscationCache.put(text, result);
+        obfuscation.put(text, result);
         return result;
     }    
 }

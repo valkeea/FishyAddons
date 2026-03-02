@@ -77,9 +77,15 @@ public class FishingHotspot {
      * Finds armor stands that match hotspot criteria
      */
     public static List<ArmorStandEntity> findHotspotArmorStands(double radius, boolean forHiding) {
+
         List<ArmorStandEntity> hotspots = new ArrayList<>();
+        var mc = MinecraftClient.getInstance();
+        var player = mc.player;
+        var world = mc.world;
+
+        if (player == null || world == null) return hotspots;
         
-        for (ArmorStandEntity armorStand : NearbyEntities.findArmorStands(radius)) {
+        for (ArmorStandEntity armorStand : NearbyEntities.findArmorStands(world, player, radius)) {
             String labelText = extractLabel(armorStand);
             boolean isValid = isValidLabel(labelText);
 
@@ -100,19 +106,17 @@ public class FishingHotspot {
     public static void update(List<ArmorStandEntity> nearbyHspts) {
         if (!trackActivity) return;
 
-        MinecraftClient client = MinecraftClient.getInstance();
-        if (client.player == null) return;
+        var mc = MinecraftClient.getInstance();
+        if (mc.player == null) return;
 
         ArmorStandEntity closestHotspot = null;
 
         for (ArmorStandEntity armorStand : nearbyHspts) {
             if (NearbyEntities.lookingAt(armorStand)) {
-                Text label = armorStand.getCustomName() != null
-                    ? armorStand.getCustomName()
-                    : Text.literal("");
+                Text label = armorStand.getName();
                 String labelString = label.getString();
                 var pos = armorStand.getBlockPos();
-                if (client.player.distanceTo(armorStand) <= 14.0) {
+                if (mc.player.distanceTo(armorStand) <= 14.0) {
                     closestHotspot = armorStand;
                 }
                 String hotspotKey = createKey(pos, labelString);

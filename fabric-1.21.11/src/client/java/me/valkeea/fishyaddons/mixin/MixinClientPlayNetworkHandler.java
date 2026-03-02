@@ -7,12 +7,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import me.valkeea.fishyaddons.event.impl.FaEvents;
 import me.valkeea.fishyaddons.event.impl.GameMessageEvent;
-import me.valkeea.fishyaddons.feature.qol.ItemSearchOverlay;
+import me.valkeea.fishyaddons.event.impl.GuiChangeEvent;
 import me.valkeea.fishyaddons.feature.qol.NetworkMetrics;
 import me.valkeea.fishyaddons.tracker.profit.InventoryTracker;
-import me.valkeea.fishyaddons.util.SbGui;
 import me.valkeea.fishyaddons.util.TabScanner;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.screen.ingame.GenericContainerScreen;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.network.packet.s2c.play.GameMessageS2CPacket;
 import net.minecraft.network.packet.s2c.play.InventoryS2CPacket;
@@ -47,12 +47,11 @@ public class MixinClientPlayNetworkHandler {
         if (packet.getSyncId() == 0) {
             int slotId = packet.getSlot();
             var stack = packet.getStack();
-
+            
             if (!stack.isEmpty() && (slotId < 5 || slotId > 8)) {
                 InventoryTracker.onItemAdded(stack);
             }
-
-        } else ItemSearchOverlay.getInstance().invalidateCache();
+        }
     }
 
     @Inject(
@@ -60,8 +59,15 @@ public class MixinClientPlayNetworkHandler {
         at = @At("TAIL")
     )
     private void inventory(InventoryS2CPacket packet, CallbackInfo ci) {
-        SbGui.getInstance().onInvUpdate();
-        me.valkeea.fishyaddons.feature.qol.ItemSearchOverlay.getInstance().invalidateCache();
+
+        var screen = MinecraftClient.getInstance().currentScreen;
+        if (!(screen instanceof GenericContainerScreen gcs)) return;
+
+        var title = gcs.getTitle();
+        if (title == null) return;
+
+        var event = new GuiChangeEvent(gcs, title);
+        FaEvents.GUI_CHANGE.firePhased(event, listener -> listener.onGuiChange(event));
     }
 
     @Inject(

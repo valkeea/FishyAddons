@@ -6,6 +6,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import me.valkeea.fishyaddons.feature.item.safeguard.GuiHandler;
+import me.valkeea.fishyaddons.feature.qol.ItemSearchOverlay;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
@@ -40,5 +41,7 @@ public abstract class MixinHandledScreenMouseRelease {
             GuiHandler.triggerProtection();
             cir.setReturnValue(false);
         }
+
+        ItemSearchOverlay.getInstance().invalidateCache();
     }
 }

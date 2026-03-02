@@ -41,7 +41,7 @@ public class KeybindEntryList extends GenericEntryList {
 
     @Override
     public void setEntry(String key, String value) {
-        FishyConfig.setKeybind(key, value);;
+        FishyConfig.setKeybind(key, value);
     }
 
     @Override

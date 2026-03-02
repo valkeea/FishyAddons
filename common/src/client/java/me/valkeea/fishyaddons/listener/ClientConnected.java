@@ -2,6 +2,7 @@ package me.valkeea.fishyaddons.listener;
 
 import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.config.ItemConfig;
+import me.valkeea.fishyaddons.config.RuleFactory;
 import me.valkeea.fishyaddons.feature.skyblock.timer.CakeTimer;
 import me.valkeea.fishyaddons.feature.waypoints.ChainConfig;
 import me.valkeea.fishyaddons.feature.waypoints.WaypointChains;
@@ -15,6 +16,7 @@ public class ClientConnected {
     private static boolean firstLoad = false;
     private static boolean anyRecreated = false;
     private static boolean anyRestored = false;
+    private static boolean rulesCorrupted = false;
     private static boolean pendingInfo = false;
     private static boolean pendingAlert = false;
 
@@ -27,13 +29,15 @@ public class ClientConnected {
         boolean r1 = FishyConfig.isRecreated();
         boolean r2 = ItemConfig.isRecreated();
         boolean r3 = ChainConfig.isRecreated();
+        boolean r4 = RuleFactory.isRecreated();
         boolean a1 = me.valkeea.fishyaddons.util.ModInfo.shouldShowInfo();
 
         firstLoad = r1 && r2 && r3;
-        anyRecreated = r1 || r2 || r3;
+        anyRecreated = r1 || r2 || r3 || r4;
         anyRestored = FishyConfig.isRestored() || ItemConfig.isRestored() || ChainConfig.isRestored();
+        rulesCorrupted = RuleFactory.isCorrupted();
         pendingInfo = a1;
-        pendingAlert = firstLoad || anyRecreated || anyRestored || pendingInfo;
+        pendingAlert = firstLoad || anyRecreated || anyRestored || rulesCorrupted || pendingInfo;
 
         onInitialLoad();
     }
@@ -52,6 +56,9 @@ public class ClientConnected {
                 if (anyRestored) {
                     FishyNotis.notice("One or more configuration files were corrupted and have been restored from backups.");
                 }
+                if (rulesCorrupted) {
+                    FishyNotis.notice("Sea creatures data file is corrupted. Using default. Fix or delete config/fishyaddons/data/sea_creatures.json to regenerate.");
+                }
             }
             resetFlags();
         }
@@ -61,9 +68,11 @@ public class ClientConnected {
         ItemConfig.resetFlags();
         FishyConfig.resetFlags();
         ChainConfig.resetFlags();
+        RuleFactory.resetFlags();
         firstLoad = false;
         anyRecreated = false;
         anyRestored = false;
+        rulesCorrupted = false;
         pendingInfo = false;
         pendingAlert = false;
     }

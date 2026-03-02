@@ -1,8 +1,10 @@
 package me.valkeea.fishyaddons.config;
 
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -19,37 +21,36 @@ public class RuleFactory {
     private static final Gson GSON = new Gson();
     private static SeaCreatureData cachedData = null;
     
+    private static boolean recreated = false;
+    private static boolean corrupted = false;
+    
+    private static final String CFG = "config";
+    private static final String FA = "fishyaddons";
+    private static final String DATA_DIR = "data";
+    private static final String SEA_CREATURES_FILE = "sea_creatures.json";
+    private static final String RESOURCE_PATH = "assets/fishyaddons/data/" + SEA_CREATURES_FILE;
+    
     public static class SeaCreatureData {
         private Map<String, CategoryConfig> categories;
         private List<String> triggerMessages;
         private List<CreatureConfig> creatures;
         
-        public static class CategoryConfig {
-            int priority;
-            String prefix;
-            String doubleHookPrefix;
-            boolean enabled;
-
-            public String getPrefix() { return prefix; }
-            public String getDoubleHookPrefix() { return doubleHookPrefix; }
-            public boolean isEnabled() { return enabled; }
-        }
+        public record CategoryConfig(
+            int priority,
+            String prefix,
+            String doubleHookPrefix,
+            boolean enabled
+        ) {}
         
-        public static class CreatureConfig {
-            String id;
-            String triggerText;
-            String displayName;
-            String displayNamePlural;
-            String category;
-            String emoji;
-            String customMessage;
-
-            public String getId() { return id; }
-            public String getDisplayName() { return displayName; }
-            public String getCategory() { return category; }
-            public String getEmoji() { return emoji; }
-            public String getCustomMessage() { return customMessage; }
-        }
+        public record CreatureConfig(
+            String id,
+            String triggerText,
+            String displayName,
+            String displayNamePlural,
+            String category,
+            String emoji,
+            String customMessage
+        ) {}
     }
 
     private static final String[] DH_TRIGGERS = new String[] {
@@ -57,38 +58,96 @@ public class RuleFactory {
         "It's a Double Hook! Woot woot!"
     };
     
-    public static SeaCreatureData loadSeaCreatureData() {
-        if (cachedData != null) {
-            return cachedData;
+    public static Path getFilePath() {
+        return Paths.get(CFG, FA, DATA_DIR, SEA_CREATURES_FILE);
+    }
+    
+    public static Path getDataDir() {
+        return Paths.get(CFG, FA, DATA_DIR);
+    }
+    
+    public static boolean isRecreated() {
+        return recreated;
+    }
+
+    public static boolean isCorrupted() {
+        return corrupted;
+    }
+    
+    public static void resetFlags() {
+        recreated = false;
+        corrupted = false;
+    }
+    
+    public static void ensureFile() {
+        var targetPath = getFilePath();
+
+        if (!Files.exists(targetPath)) {
+            cloneToConfig(targetPath);
         }
+    }
+    
+    private static void cloneToConfig(Path targetPath) {
         
+        try (var inputStream = RuleFactory.class.getResourceAsStream("/" + RESOURCE_PATH)) {
+            if (inputStream == null) {
+                System.err.println("[FishyAddons] Could not find sea_creatures.json at: " + RESOURCE_PATH);
+                return;
+            }
+            
+            Files.createDirectories(targetPath.getParent());
+            Files.copy(inputStream, targetPath);
+            recreated = true;
+        } catch (Exception e) {
+            System.err.println("[FishyAddons] Failed to copy sea_creatures.json: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+    
+    private static boolean validContent(SeaCreatureData data) {
+        if (data == null) return false;
+        if (data.categories == null || data.categories.isEmpty()) return false;
+        if (data.creatures == null || data.creatures.isEmpty()) return false;
+        if (data.triggerMessages == null || data.triggerMessages.isEmpty()) return false;
+        
+        for (var sc: data.creatures) {
+            if (sc.category == null || !data.categories.containsKey(sc.category)) {
+                System.err.println("[FishyAddons] Invalid sea creature data: Creature " + sc.id + " has unknown category '" + sc.category + "'");
+                return false;
+            }
+        }
+        return true;
+    }
+    
+    private static SeaCreatureData loadFromAssets() {
         try {
-            MinecraftClient client = MinecraftClient.getInstance();
+            var client = MinecraftClient.getInstance();
             if (client != null && client.getResourceManager() != null) {
-                Identifier resourceId = Identifier.of("fishyaddons", "data/sea_creatures.json");
-                InputStream inputStream = client.getResourceManager()
+                var resourceId = Identifier.of(FA, "data/sea_creatures.json");
+                var inputStream = client.getResourceManager()
                     .getResource(resourceId)
                     .orElseThrow()
                     .getInputStream();
                 
-                try (InputStreamReader reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8)) {
-                    cachedData = GSON.fromJson(reader, SeaCreatureData.class);
-                    return cachedData;
+                try (var reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8)) {
+                    SeaCreatureData data = GSON.fromJson(reader, SeaCreatureData.class);
+                    if (validContent(data)) return data;
                 }
-            } else {
 
-                InputStream inputStream = RuleFactory.class.getClassLoader()
-                    .getResourceAsStream("assets/fishyaddons/data/sea_creatures.json");
+            } else {
+                var inputStream = RuleFactory.class.getClassLoader()
+                    .getResourceAsStream(RESOURCE_PATH);
                 
                 if (inputStream != null) {
-                    try (InputStreamReader reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8)) {
-                        cachedData = GSON.fromJson(reader, SeaCreatureData.class);
-                        return cachedData;
+                    try (var reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8)) {
+                        SeaCreatureData data = GSON.fromJson(reader, SeaCreatureData.class);
+                        if (validContent(data)) return data;
                     }
                 } else {
                     System.err.println("[FishyAddons] Could not find sea_creatures.json in classpath");
                 }
             }
+
         } catch (Exception e) {
             System.err.println("[FishyAddons] Failed to load sea creature data: " + e.getMessage());
             e.printStackTrace();
@@ -96,10 +155,47 @@ public class RuleFactory {
         return null;
     }
     
+    public static SeaCreatureData loadSeaCreatureData() {
+        if (cachedData != null) {
+            return cachedData;
+        }
+        
+        ensureFile();
+        
+        Path configPath = getFilePath();
+        if (Files.exists(configPath)) {
+            try {
+                String json = Files.readString(configPath);
+                SeaCreatureData data = GSON.fromJson(json, SeaCreatureData.class);
+                
+                if (validContent(data)) {
+                    cachedData = data;
+                    return cachedData;
+                } else {
+                    System.err.println("[FishyAddons] Invalid sea creature data in config file, using default.");
+                    corrupted = true;
+                }
+            } catch (Exception e) {
+                System.err.println("[FishyAddons] Failed to load sea creature data from config: " + e.getMessage());
+                e.printStackTrace();
+                corrupted = true;
+            }
+        }
+        
+        var data = loadFromAssets();
+        if (data != null) {
+            cachedData = data;
+        } else {
+            System.err.println("[FishyAddons] Failed to load sea creature data from any source");
+        }
+
+        return cachedData;
+    }
+    
     public static Map<String, FilterConfig.Rule> generateSeaCreatureRules() {
+
         Map<String, FilterConfig.Rule> rules = new ConcurrentHashMap<>();
         SeaCreatureData data = loadSeaCreatureData();
-        
         if (data == null || data.creatures == null || data.categories == null) {
             System.err.println("[FishyAddons] Invalid sea creature data, skipping rule generation");
             return rules;
@@ -115,15 +211,15 @@ public class RuleFactory {
             ));
         }
 
-        for (SeaCreatureData.CreatureConfig creature : data.creatures) {
-            SeaCreatureData.CategoryConfig category = data.categories.get(creature.category);
+        for (var sc : data.creatures) {
+            SeaCreatureData.CategoryConfig category = data.categories.get(sc.category);
             if (category == null) {
-                System.err.println("[FishyAddons] Unknown category '" + creature.category + "' for creature " + creature.id);
+                System.err.println("[FishyAddons] Unknown category '" + sc.category + "' for creature " + sc.id);
                 continue;
             }
             
-            String formattedMessage = buildCreatureMessage(creature, category);
-            String ruleName = "sc_" + creature.id;
+            String formattedMessage = buildCreatureMessage(sc, category);
+            String ruleName = "sc_" + sc.id;
             FilterConfig.Rule existingUserRule = FilterConfig.getUserRules().get(ruleName);
             String actualPrefix = category.doubleHookPrefix;
             String actualMessage = formattedMessage;
@@ -140,7 +236,7 @@ public class RuleFactory {
             }
 
             FilterConfig.Rule rule = new FilterConfig.Rule(
-                creature.triggerText,
+                sc.triggerText,
                 actualMessage,
                 actualPrefix,
                 data.triggerMessages.toArray(new String[0]),
@@ -152,13 +248,13 @@ public class RuleFactory {
         return rules;
     }
     
-    private static String buildCreatureMessage(SeaCreatureData.CreatureConfig creature, 
+    private static String buildCreatureMessage(SeaCreatureData.CreatureConfig sc, 
                                              SeaCreatureData.CategoryConfig category) {
-        String message = creature.customMessage;
+        String message = sc.customMessage;
         
-        message = message.replace("{name}", creature.displayName);
-        message = message.replace("{emoji}", creature.emoji);
-        message = message.replace("{id}", creature.id);
+        message = message.replace("{name}", sc.displayName);
+        message = message.replace("{emoji}", sc.emoji);
+        message = message.replace("{id}", sc.id);
         
         return category.prefix + message;
     }

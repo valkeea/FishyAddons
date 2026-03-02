@@ -44,7 +44,8 @@ public class ItemSearchOverlay {
             EventPriority.HIGH, EventPhase.PRE
         );
 
-        FaEvents.GUI_CHANGE.register(event -> getInstance().invalidateCache());
+        FaEvents.SCREEN_OPEN.register(event -> getInstance().invalidateCache());
+        FaEvents.SCREEN_CLOSE.register(event -> getInstance().invalidateCache());
     }
 
     public static ItemSearchOverlay getInstance() {
@@ -134,12 +135,14 @@ public class ItemSearchOverlay {
         
         var lowerSearchTerm = searchTerm.toLowerCase();
         var searchChanged = !lowerSearchTerm.equals(lastSearchTerm);
+        var handler = screen.getScreenHandler();
+        if (handler == null) return;
 
         if (searchChanged || !cacheValid) {
             matchingSlots.clear();
             lastSearchTerm = lowerSearchTerm;
             
-            for (var slot : screen.getScreenHandler().slots) {
+            for (var slot : handler.slots) {
                 var stack = slot.getStack();
                 if (stack != null && !stack.isEmpty() && matchesSearch(stack, lowerSearchTerm)) {
                     matchingSlots.add(slot.id);
@@ -159,7 +162,7 @@ public class ItemSearchOverlay {
 
         Set<Rectangle> excluded = new HashSet<>();
 
-        for (var slot : screen.getScreenHandler().slots) {
+        for (var slot : handler.slots) {
             if (matchingSlots.contains(slot.id)) {
                 int slotScreenX = guiX + slot.x;
                 int slotScreenY = guiY + slot.y;

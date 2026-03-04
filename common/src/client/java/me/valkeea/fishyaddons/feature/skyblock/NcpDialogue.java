@@ -1,6 +1,7 @@
 package me.valkeea.fishyaddons.feature.skyblock;
 
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
 
 import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.tool.RunDelayed;
@@ -10,21 +11,25 @@ import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 
 public class NcpDialogue {
+    private static final long BASE_DELAY = 650;
+    private static final int RANDOM_DELAY_RANGE = 151;
     private static final Random RANDOM = new Random();
     private NcpDialogue() {}
     
     public static boolean checkForCommands(Text message) {
 
-        Text option = findAcceptButton(message);
-
+        var option = findAcceptButton(message);
         if (option != null) {
-            String runnable = FromText.findCommand(option);
+
+            var runnable = FromText.findCommand(option);
+            var timeStamp = String.valueOf(TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()));
             
             if ((runnable != null)) {
-                long delay = (long)850 + RANDOM.nextInt(151);
+                long delay = BASE_DELAY + RANDOM.nextInt(RANDOM_DELAY_RANGE);
                 RunDelayed.run(() -> MinecraftClient.getInstance().player.networkHandler.sendChatCommand(
                     runnable.replace("/", "")),
-                    delay, runnable);
+                    delay, runnable + "_" + timeStamp
+                );
             }
         }
 

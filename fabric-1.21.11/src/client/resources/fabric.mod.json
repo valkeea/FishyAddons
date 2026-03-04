@@ -1,9 +1,17 @@
 {
+	"custom": {
+		"modmenu": {
+		"links": {
+			"modmenu.modrinth": "https://modrinth.com/project/QOUIa2cU"
+		},
+		"update_checker": true
+		}
+	},
 	"schemaVersion": 1,
 	"id": "fishyaddons",
 	"version": "${version}",
 	"name": "FishyAddons",
-	"description": "Skyblock/general utility mod.",
+	"description": "Utility/Customization mod for Hypixel Skyblock.",
 	"authors": [
 		"valkeea"
 	],
@@ -16,6 +24,9 @@
 	"entrypoints": {
 		"client": [
 			"me.valkeea.fishyaddons.FishyAddons"
+		],
+		"modmenu": [
+			"me.valkeea.fishyaddons.api.ModMenuIntegration"
 		]
 	},
 	"mixins": [

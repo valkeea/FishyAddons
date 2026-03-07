@@ -7,6 +7,7 @@ import java.util.Map;
 import me.valkeea.fishyaddons.config.ItemConfig;
 import me.valkeea.fishyaddons.util.FishyNotis;
 import me.valkeea.fishyaddons.util.JsonUtil;
+import me.valkeea.fishyaddons.util.text.ChatButton;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ChatScreen;
 import net.minecraft.text.Text;
@@ -41,34 +42,53 @@ public class CmdHelper {
         });
 
         FishyNotis.send(Text.literal("Protected Items:").formatted(Formatting.AQUA));
-        for (Map.Entry<String, String> entry : entries) {
-            Text shown = JsonUtil.deserializeText(entry.getValue());
-            FishyNotis.alert(Text.literal(" - ").formatted(Formatting.DARK_GRAY).append(shown));
+        
+        for (Map.Entry<String, String> e : entries) {
+
+            var line = JsonUtil.deserializeText(e.getValue());
+            var btn = ChatButton.create("/fg remove " + e.getKey(), "Remove");
+
+            FishyNotis.alert(
+                Text.literal(" - ").styled(s -> s.withColor(0xFFAAAAAA))
+                .append(line).append(Text.literal(" "))
+                .append(btn)
+            );
         }
     }
 
     private static char getFirstColorCode(Text text) {
 
-        var color = text.getStyle().getColor();
+        var color = getActualColor(text);
+        char code = '\0';
+        
         if (color != null) {
-
             var formatting = getFormattingFromTextColor(color);
-            if (formatting != null) return formatting.getCode();
+            if (formatting != null) code = formatting.getCode();
         }
 
-        if (!text.getSiblings().isEmpty()) {
-            return getFirstColorCode(text.getSiblings().get(0));
-        }
+        return code;
+    }
 
-        return '\0';
+    private static TextColor getActualColor(Text text) {
+
+        var siblings = text.getSiblings();
+        if (siblings.isEmpty()) return text.getStyle().getColor();
+
+        else return siblings.stream()
+            .filter(s -> !s.getString().isEmpty() && Character.isAlphabetic(s.getString().charAt(0)))
+            .map(s -> s.getStyle().getColor())
+            .findFirst()
+            .orElse(null);
     }
 
     private static Formatting getFormattingFromTextColor(TextColor color) {
         
         int rgb = color.getRgb() & 0xFFFFFFFF;
-        for (var formatting : Formatting.values()) {
-            if (formatting.getColorValue() != null && (formatting.getColorValue() & 0xFFFFFFFF) == rgb) {
-                return formatting;
+        for (var candidate : Formatting.values()) {
+
+            var v = candidate.getColorValue();
+            if (v != null && (v & 0xFFFFFFFF) == rgb) {
+                return candidate;
             }
         }
 

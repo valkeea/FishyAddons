@@ -31,10 +31,10 @@ public abstract class MixinHandledScreenSlotOverlay {
     private void drawSlotOverlay(DrawContext context, Slot slot, int mouseX, int mouseY, CallbackInfo ci) {
 
         if (!ContainerScanner.isGuiOrInv()) return;
+        
         HandledScreen<?> screen = (HandledScreen<?>) (Object) this;
         int invIndex = SlotHandler.remap(screen, slot.id);
-
-        if (invIndex <= 8 || invIndex >= 44) return;
+        if (invIndex == -1) return;
 
         if (SlotHandler.isSlotLocked(invIndex)) {
             overlay(context, slot, "falocked");

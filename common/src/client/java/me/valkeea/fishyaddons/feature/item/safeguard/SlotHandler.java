@@ -31,26 +31,22 @@ public class SlotHandler {
     private static boolean isLockedClick(HandledScreen<?> screen, Slot hovered) {
         int index = hovered.id;
         int invIndex = remap(screen, index);
-        if (invIndex <= 8 || invIndex >= 44) return false;
+        if (invIndex == -1) return false;
         return isSlotLocked(invIndex);
     }
 
     private static boolean isBoundClick(HandledScreen<?> screen, Slot hovered, int index, int invIndex) {
-        if (!isSlotBound(invIndex) || !ContainerScanner.isGuiOrInv()) {
-            return false;
-        }
 
-        if (!isShiftDown()) {
-            return true;
-        }
+        if (!isSlotBound(invIndex) || !ContainerScanner.isGuiOrInv()) return false;
+        if (!isShiftDown() || !(screen instanceof InventoryScreen)) return true;
 
         int boundSlotId = getBoundSlot(invIndex);
         var handler = screen.getScreenHandler();
-        if (handler == null || boundSlotId < 0 || boundSlotId >= handler.slots.size()) {
+        if (handler == null || remapInventory(boundSlotId) == -1) {
             return false;
         }
-        Slot boundSlot = handler.getSlot(boundSlotId);
 
+        var boundSlot = handler.getSlot(boundSlotId);
         var hoveredStack = hovered.getStack();
         var boundStack = boundSlot.getStack();
 
@@ -58,9 +54,11 @@ public class SlotHandler {
             return true;
         }
 
-        var client = MinecraftClient.getInstance();
-
-        return swapOrMoveItems(client, handler, invIndex, boundSlotId, index, hoveredStack, boundStack);
+        return swapOrMoveItems(
+            MinecraftClient.getInstance(),
+            handler, invIndex, boundSlotId,
+            index, hoveredStack, boundStack
+        );
     }
 
     private static boolean isShiftDown() {
@@ -167,7 +165,7 @@ public class SlotHandler {
             : -1;
     }
 
-    /** From the last 46 slots: 4-8 armor, 9-35 main inventory, 36-43 accessible hotbar */
+    /** From the last 46 slots: 5-8 armor, 9-35 main inventory, 36-43 accessible hotbar */
     private static int remapContainer(int slotId, int totalSlots) {
         int playerStart = totalSlots - 36;
         if (slotId < playerStart || slotId >= totalSlots) return -1;

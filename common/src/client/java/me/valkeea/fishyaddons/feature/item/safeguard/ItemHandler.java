@@ -22,4 +22,14 @@ public class ItemHandler {
     public static Map<String, String> getProtectedUUIDsWithNames() {
         return ItemConfig.getProtectedUUIDs();
     }
+
+    public static void removeFromFg(String uuid) {
+        ItemConfig.removeUUID(uuid);
+        GuiHandler.clearCache();
+    }
+
+    public static void addToFg(String uuid, net.minecraft.text.Text name) {
+        ItemConfig.addUUID(uuid, name);
+        GuiHandler.clearCache();
+    }
 }

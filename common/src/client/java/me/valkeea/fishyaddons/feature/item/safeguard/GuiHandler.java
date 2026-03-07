@@ -1,23 +1,23 @@
 package me.valkeea.fishyaddons.feature.item.safeguard;
 
+import java.util.HashMap;
 import java.util.Map;
-import java.util.WeakHashMap;
 
 import me.valkeea.fishyaddons.config.ItemConfig;
 import me.valkeea.fishyaddons.event.EventPhase;
 import me.valkeea.fishyaddons.event.EventPriority;
 import me.valkeea.fishyaddons.event.impl.FaEvents;
 import me.valkeea.fishyaddons.event.impl.ScreenClickEvent;
+import me.valkeea.fishyaddons.tool.ItemData;
 import me.valkeea.fishyaddons.tool.PlaySound;
 import me.valkeea.fishyaddons.util.FishyNotis;
-import me.valkeea.fishyaddons.util.ItemData;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.item.ItemStack;
 
 public class GuiHandler {
     private GuiHandler() {}
-    private static final Map<ItemStack, Boolean> protectionCache = new WeakHashMap<>();
-    private static final int MAX_CACHE_SIZE = 1000;
+    private static final Map<String, Boolean> protectionCache = new HashMap<>();
+    private static final int MAX_CACHE_SIZE = 200;
 
     public static void init() {
         FaEvents.SCREEN_MOUSE_CLICK.register(event -> {
@@ -31,9 +31,11 @@ public class GuiHandler {
 
         var mc = MinecraftClient.getInstance();
         ItemStack stack;
+        int slotId = -1;
 
         if (event.hoveredSlot != null) {
             stack = event.hoveredSlot.getStack();
+            slotId = event.hoveredSlot.id;
         } else {
             stack = mc.player.currentScreenHandler.getCursorStack();
         }
@@ -43,31 +45,30 @@ public class GuiHandler {
 
         if (BlacklistMatcher.isBlacklistedGUI(event.screen, event.screen.getClass().getName()) && 
             ItemConfig.isSellProtectionEnabled()) {
-            triggerProtection();
-            event.setConsumed(true);
-
-            return true;
+            
+            int remapped = SlotHandler.remap(event.screen, slotId);
+            if (remapped != -1) {
+                triggerProtection();
+                return true;
+            }
         }
+        
         return false;
     }    
 
     public static boolean isProtectedCached(ItemStack stack) {
         if (stack == null || stack.isEmpty()) return false;
 
+        String uuid = ItemData.extractUUID(stack);
+        if (uuid.isEmpty()) return false;
+
         if (protectionCache.size() > MAX_CACHE_SIZE) {
             protectionCache.clear();
         }
 
-        return protectionCache.computeIfAbsent(stack, s -> {
-            try {
-                String uuid = ItemData.extractUUID(s);
-                if (uuid.isEmpty()) return false;
-                
-                return ItemConfig.isProtected(uuid);
-            } catch (RuntimeException e) {
-                return false;
-            }
-        });
+        return protectionCache.computeIfAbsent(
+            uuid, ItemConfig::isProtected
+        );
     }
 
     public static void triggerProtection() {
@@ -77,5 +78,9 @@ public class GuiHandler {
         if (ItemConfig.isProtectNotiEnabled()) {
             FishyNotis.protectNoti();
         }
+    }
+
+    public static void clearCache() {
+        protectionCache.clear();
     }
 }

@@ -1,5 +1,6 @@
 package me.valkeea.fishyaddons.command.handler;
 
+import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 
 import me.valkeea.fishyaddons.command.CmdHelper;
@@ -64,7 +65,7 @@ public class FgRoot implements CommandHandler {
             }
 
             var name = held.getName();
-            ItemConfig.addUUID(uuid, name);
+            ItemHandler.addToFg(uuid, name);
 
             FishyNotis.format(Text.literal("Your ").formatted(Formatting.GRAY)
                 .append(name)
@@ -76,6 +77,12 @@ public class FgRoot implements CommandHandler {
 
     private static LiteralArgumentBuilder<FabricClientCommandSource> removeCmd() {
         return ClientCommandManager.literal("remove")
+        .then(ClientCommandManager.argument("uuid", StringArgumentType.greedyString())
+        .executes(ctx -> {
+            String uuid = StringArgumentType.getString(ctx, "uuid");
+            if (!onRemove(uuid)) FishyNotis.notice("Provided UUID isn't protected or is invalid.");
+            return 1;
+        }))
         .executes(ctx -> {
 
             var mc = MinecraftClient.getInstance();
@@ -88,14 +95,7 @@ public class FgRoot implements CommandHandler {
             }
 
             var uuid = ItemData.extractUUID(held);
-            if (!uuid.isEmpty() && ItemHandler.isProtected(held)) {
-
-                ItemConfig.removeUUID(uuid);
-                FishyNotis.format(Text.literal("Your ").formatted(Formatting.GRAY)
-                    .append(held.getName())
-                    .append(Text.literal(" is no longer protected.").formatted(Formatting.GRAY)));
-
-            } else FishyNotis.notice("Held item isn't protected or doesn't have a UUID.");
+            if (!(onRemove(uuid))) FishyNotis.notice("Held item isn't protected or doesn't have a UUID.");
 
             return 1;
         });
@@ -149,5 +149,23 @@ public class FgRoot implements CommandHandler {
             FishyNotis.themed("Usage: §bfa/fa guard §8< §7add §8| §7remove §8| §7list §8| §7clear §8>");
             return 1;
         });
+    }
+
+    private static boolean onRemove(String uuid) {
+        if (uuid == null || uuid.isEmpty()) return false;
+
+        boolean isProtected = ItemConfig.isProtected(uuid);
+        if (isProtected) {
+
+            var name = ItemConfig.getDisplayName(uuid);
+            if (name != null) {
+                FishyNotis.format(Text.literal("Your ").formatted(Formatting.GRAY)
+                    .append(name)
+                    .append(Text.literal(" is no longer protected.").formatted(Formatting.GRAY)));
+            }
+            ItemHandler.removeFromFg(uuid);
+        }
+        
+        return isProtected;
     }
 }

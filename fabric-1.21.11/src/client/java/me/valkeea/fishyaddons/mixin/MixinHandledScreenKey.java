@@ -6,6 +6,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import me.valkeea.fishyaddons.feature.item.safeguard.GuiHandler;
+import me.valkeea.fishyaddons.feature.item.safeguard.ItemHandler;
 import me.valkeea.fishyaddons.feature.item.safeguard.SlotHandler;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
@@ -27,8 +28,7 @@ public abstract class MixinHandledScreenKey {
         boolean isThrowKey = mc.options.dropKey.matchesKey(input);
         int slotId = hoveredSlot.id;
         int invIndex = SlotHandler.remap(gui, slotId);
-
-        if (invIndex < 8 || invIndex >= 44) return;
+        if (invIndex == -1) return;
 
         if (isThrowKey && (SlotHandler.isSlotLocked(invIndex)
                 || SlotHandler.isSlotBound(invIndex))) {
@@ -37,7 +37,7 @@ public abstract class MixinHandledScreenKey {
         }
 
         var stack = hoveredSlot.getStack();
-        if (isThrowKey && me.valkeea.fishyaddons.feature.item.safeguard.ItemHandler.isProtected(stack)) {
+        if (isThrowKey && ItemHandler.isProtected(stack)) {
             GuiHandler.triggerProtection();
             cir.setReturnValue(true);
         }

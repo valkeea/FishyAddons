@@ -153,20 +153,10 @@ public class TempWaypoint {
             this.setTime = System.currentTimeMillis();
         }
 
-        public BlockPos getPos() {
-            return pos;
-        }
-        public int getColor() {
-            return color;
-        }
-
-        public String getLabel() {
-            return label != null ? label : "";
-        }
-
-        public long getSetTime() {
-            return setTime;
-        }
+        public BlockPos getPos() { return pos; }
+        public String getLabel() { return formatLabel(label); }
+        public long getSetTime() { return setTime; }
+        public int getColor() { return color; }        
 
         public void setDuration(long duration) {
             this.duration = duration;
@@ -175,6 +165,18 @@ public class TempWaypoint {
         @Override
         public boolean fillBlock() {
             return false;
+        }
+
+        private String formatLabel(String label) {
+            
+            var mc = MinecraftClient.getInstance();
+            if (mc == null || mc.player == null) return label != null ? label : "";
+
+            var playerPos = mc.player != null ? mc.player.getEntityPos() : Vec3d.ZERO;
+            var distance = playerPos.distanceTo(new Vec3d(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5));
+            var distanceStr = String.format("%.1f", distance);
+
+            return label != null && !label.isEmpty() ? label + " (" + distanceStr + "m)" : distanceStr + "m";
         }
     }
 }

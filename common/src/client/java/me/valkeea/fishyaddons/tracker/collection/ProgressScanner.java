@@ -314,7 +314,7 @@ public class ProgressScanner {
         try {
             long collectionAmount = Long.parseLong(amountStr.replace(",", ""));
             if (!updateNeeded(itemName, collectionAmount)) return false;
-            CollectionData.updateProgress(itemName, collectionAmount);
+            CollectionData.updateProgress(itemName, collectionAmount, false);
             return true;
 
         } catch (NumberFormatException e) {
@@ -391,7 +391,7 @@ public class ProgressScanner {
     }
 
     private static void updateSingular(String itemName, long collectionAmount) {
-        CollectionData.updateProgress(itemName, collectionAmount);
+        CollectionData.updateProgress(itemName, collectionAmount, true);
         CollectionData.save();
         ActiveDisplay.getInstance().invalidateAll();
     }

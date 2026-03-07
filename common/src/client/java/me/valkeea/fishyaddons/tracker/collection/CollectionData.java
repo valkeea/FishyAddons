@@ -34,8 +34,6 @@ public class CollectionData {
     private static final Map<String, Long> lastUpdated = new HashMap<>();       // Name -> last update timestamp
     private static final Map<String, Boolean> baselineStale = new HashMap<>();  // Name -> baseline stale flag
 
-    private static final long BASELINE_DIFF_ABS_THRESHOLD = 10_000L;
-    private static final double BASELINE_DIFF_PERCENT_THRESHOLD = 0.01;
     private static final int MAX_PENDING_DROPS = 15;
 
     // Unverified potential drop name -> pending quantity
@@ -60,7 +58,7 @@ public class CollectionData {
      */
     static final Set<String> falseMatches = Set.of(
         "jungle", "heart", "nether", "magma", "feather", "shard", "flesh", "potato",
-        "mushrooms", "dust", "halfeaten mushroom", "bone", "spider", "never-melt ice"
+        "mushrooms", "dust", "halfeaten mushroom", "bone", "spider", "never-melt ice", "pumpkin guts"
     );
 
     static final Set<String> specialCrafts = Set.of(
@@ -238,36 +236,35 @@ public class CollectionData {
 
     // --- Data handling ---
 
+    private static int version = 0;
+
     /**
      * Update collection progress from a successful scan and
      * correct any tracking errors while preserving session continuity.
      */
-    protected static void updateProgress(String itemName, long scannedTotal) {
+    protected static void updateProgress(String itemName, long scannedTotal, boolean accurate) {
 
         itemName = normalize(itemName);
 
         long oldBaseline = baselines.getOrDefault(itemName, 0L);
         long currentGain = sessionGains.getOrDefault(itemName, 0L);
-        boolean wasStale = isBaselineStale(itemName);
-        
         long calculated = oldBaseline + currentGain;
         long difference = scannedTotal - calculated;
 
-        if (oldBaseline == 0) { // First encounter: set baseline
-            long newBaseline = Math.max(scannedTotal - currentGain, 0L);
-            baselines.put(itemName, newBaseline);
-            
-        // Baseline is stale and scan is far off: keep current session gains            
-        } else if (wasStale && isLargeBaselineMismatch(oldBaseline, scannedTotal, difference)) {
-            long newBaseline = Math.max(scannedTotal - currentGain, 0L);
-            baselines.put(itemName, newBaseline);
-            inform("Updated stale data for §b" + itemName);
-            
-        } else if (difference != 0) { // Reasonable discrepancy: adjust gains
+        if (difference == 0) {
+            baselineStale.put(itemName, false);
+            lastUpdated.put(itemName, System.currentTimeMillis());
+            return;
+        }
+                    
+        if (!accurate) {
+            tryUseStaleScan(itemName, oldBaseline, scannedTotal, currentGain);
+
+        } else {
 
             long adjustedGain = currentGain + difference;
-            if (currentGain == 0) adjustedGain = 0;
-            
+            if (currentGain == 0) adjustedGain = 0; 
+
             baselines.put(itemName, scannedTotal - adjustedGain);
             sessionGains.put(itemName, adjustedGain);
             
@@ -278,11 +275,24 @@ public class CollectionData {
                 );
             }
 
+            baselineStale.put(itemName, false);
+            lastUpdated.put(itemName, System.currentTimeMillis());
             refreshDisplays();     
         }
-        
-        baselineStale.put(itemName, false);
-        lastUpdated.put(itemName, System.currentTimeMillis());
+    }
+
+    /**
+     * Utilize rankings data if its not behind, or warn if it cant be used.
+     */
+    private static void tryUseStaleScan(String itemName, long oldBaseline, long scannedTotal, long currentGain) {
+        if ((version == 0 && currentGain == 0) || oldBaseline == 0) {
+            long newBaseline = Math.max(scannedTotal - currentGain, 0L);
+            baselines.put(itemName, newBaseline);
+            inform("Updated stale data for §b" + itemName);
+
+        } else if (baselineStale.getOrDefault(itemName, true) && currentGain > 0) {
+            inform("Skipping stale scan for §b" + itemName + "§r\ndue to active session gains");
+        }
     }
 
     /**
@@ -322,9 +332,10 @@ public class CollectionData {
         pendingDrops.clear();
         save();
         refreshDisplays();
+        version++;
     }
 
-    protected static void refreshDisplays() {
+    public static void refreshDisplays() {
         ActiveDisplay.getInstance().invalidateAll();
         GoalManager.getInstance().clearAll();
     }
@@ -572,17 +583,6 @@ public class CollectionData {
         pendingDrops.clear();
         baseDropConversions.clear();
         baselineStale.clear();
-    }
-
-    private static boolean isBaselineStale(String itemName) {
-        return baselineStale.getOrDefault(itemName, true);
-    }
-
-    private static boolean isLargeBaselineMismatch(long oldBaseline, long newCollectionAmount, long difference) {
-        long reference = Math.max(oldBaseline, newCollectionAmount);
-        long percentThreshold = Math.round(reference * BASELINE_DIFF_PERCENT_THRESHOLD);
-        long threshold = Math.max(BASELINE_DIFF_ABS_THRESHOLD, percentThreshold);
-        return Math.abs(difference) > threshold;
     }
 
     private static void inform(String msg) {

@@ -401,9 +401,13 @@ public class WaypointCmd {
     }
 
     public static int toggle() {
+        
         boolean newState = !FishyConfig.getState(Key.WAYPOINT_CHAINS_ENABLED, false);
         FishyConfig.setState(Key.WAYPOINT_CHAINS_ENABLED, newState);
         WaypointChains.refresh();
+
+        if (newState) FishyNotis.on("Waypoint Chains");
+        else FishyNotis.off("Waypoint Chains");
         return 1;
     }
 

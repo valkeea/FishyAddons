@@ -1,9 +1,7 @@
 package me.valkeea.fishyaddons.listener;
 
-import me.valkeea.fishyaddons.feature.skyblock.CocoonAlert;
-import me.valkeea.fishyaddons.feature.skyblock.PetInfo;
-import me.valkeea.fishyaddons.tool.RunDelayed;
-import me.valkeea.fishyaddons.tracker.profit.ItemTrackerData;
+import me.valkeea.fishyaddons.feature.skyblock.PetInfo.ActivePet;
+import me.valkeea.fishyaddons.tracker.PriceUtil;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 
 public class ClientStop {
@@ -16,6 +14,7 @@ public class ClientStop {
             saveScData();
             saveCakeTimer();
             saveEffectTimers();
+            saveCollections();
             shutdown();
         });
     }
@@ -81,11 +80,19 @@ public class ClientStop {
         }
     }
 
+    private static void saveCollections() {
+        try {
+            if (me.valkeea.fishyaddons.tracker.collection.CollectionTracker.isEnabled()) {
+                me.valkeea.fishyaddons.tracker.collection.CollectionTracker.shutdown();
+            }
+        } catch (Exception e) {
+            System.err.println("ClientStop: Failed to shutdown CollectionTracker: " + e.getMessage());
+        }
+    }
+
     private static void shutdown() {
-        RunDelayed.shutdown();
-        ItemTrackerData.shutdown();
-        PetInfo.ActivePet.shutdown();
-        CocoonAlert.shutdown();
+        PriceUtil.shutdown();
+        ActivePet.shutdown();
     }
 
     private ClientStop() {}

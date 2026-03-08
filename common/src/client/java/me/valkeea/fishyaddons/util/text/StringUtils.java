@@ -68,4 +68,21 @@ public class StringUtils {
         }
         return false;
     }
+
+    /**
+     * Capitalize substrings of a string, splitting by spaces and underscores.
+     */
+    public static String capitalize(String input) {
+        if (input == null || input.isEmpty()) return input;
+
+        var parts = input.trim().split("[ _]");
+        var capitalized = java.util.Arrays.stream(parts).map(s -> {
+            if (!s.isEmpty()) {
+                return Character.toUpperCase(s.charAt(0)) + s.substring(1).toLowerCase();
+            }
+            return s;
+        }).toArray(String[]::new);
+        
+        return String.join(" ", capitalized);
+    }
 }

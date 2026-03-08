@@ -9,8 +9,8 @@ import me.valkeea.fishyaddons.api.skyblock.GameChat;
 import me.valkeea.fishyaddons.api.skyblock.GameMode;
 import me.valkeea.fishyaddons.api.skyblock.SkyblockAreas;
 import me.valkeea.fishyaddons.api.skyblock.SkyblockAreas.Island;
-import me.valkeea.fishyaddons.feature.skyblock.timer.CakeTimer;
 import me.valkeea.fishyaddons.feature.skyblock.PetInfo;
+import me.valkeea.fishyaddons.feature.skyblock.timer.CakeTimer;
 import me.valkeea.fishyaddons.listener.WorldEvent;
 import me.valkeea.fishyaddons.processor.ChatHandler;
 import me.valkeea.fishyaddons.processor.ChatHandlerResult;
@@ -38,15 +38,17 @@ public class GameplayHandler implements ChatHandler {
     @Override
     public ChatHandlerResult handle(ChatMessageContext context) {
         String message = context.getCleanString();
+        String lower = context.getLowerCleanString();
         try {
             if (handleGamemodeDetection(message)) return ChatHandlerResult.STOP;
             if (handleAreaChanges(message)) return ChatHandlerResult.STOP;
             if (handlePetInfo(context.getRawString())) return ChatHandlerResult.STOP;
             if (handleChatMode(message)) return ChatHandlerResult.STOP;
+            if (handleDropCorrections(lower)) return ChatHandlerResult.STOP;
             if (handleBeaconFrequency(message)) return ChatHandlerResult.STOP;
             if (handleCakeTimer(context.getRawString())) return ChatHandlerResult.STOP;
-            if (handleVial(context.getLowerCleanString())) return ChatHandlerResult.STOP;
-            if (handleWaypointChains(message)) return ChatHandlerResult.CONTINUE;
+            if (handleVial(lower)) return ChatHandlerResult.STOP;
+            if (handleWaypointChains(message)) return ChatHandlerResult.STOP;
             return ChatHandlerResult.CONTINUE;
             
         } catch (Exception e) {
@@ -85,6 +87,10 @@ public class GameplayHandler implements ChatHandler {
             return true;
         }
         return false;
+    }
+
+    private boolean handleDropCorrections(String s) {
+        return me.valkeea.fishyaddons.tracker.profit.SackDropParser.notGain(s);
     }
 
     private boolean handleBeaconFrequency(String message) {
@@ -142,8 +148,8 @@ public class GameplayHandler implements ChatHandler {
         return false;
     }
 
-    private boolean handleVial(String message) {
-        return me.valkeea.fishyaddons.tracker.fishing.ScStats.getInstance().checkForVial(message);
+    private boolean handleVial(String s) {
+        return me.valkeea.fishyaddons.tracker.fishing.ScStats.getInstance().checkForVial(s);
     }
 
     private boolean handleApiMessages(String message) {
@@ -163,7 +169,7 @@ public class GameplayHandler implements ChatHandler {
                     map = jsonObject.get("map").getAsString();
                 }
                 
-                if (gametype != null) return checkGameType(gametype, map);
+                return checkGameType(gametype, map);
                 
             } catch (JsonSyntaxException | IllegalStateException e) {
                 System.err.println("[FishyAddons] Failed to parse API message: " + e.getMessage());
@@ -173,16 +179,15 @@ public class GameplayHandler implements ChatHandler {
     }
 
     private boolean checkGameType(String type, String map) {
+        if (type == null) return false;
 
         if (type.equals("SKYBLOCK")) {
             GameMode.confirm();
             if (map != null) SkyblockAreas.setIslandByMap(map);
-            return true;
 
-        } else {
-            GameMode.leftSkyblock();
-            return true;
-        }
+        } else GameMode.leftSkyblock();
+
+        return true;
     }
     
     @Override

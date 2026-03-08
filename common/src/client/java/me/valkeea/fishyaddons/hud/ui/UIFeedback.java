@@ -54,7 +54,7 @@ public class UIFeedback implements HudElement {
     public void set(String message, int duration, @Nullable Integer x,
         @Nullable Integer y, @Nullable Integer color) {
 
-        List<String> lines = List.of(message.split("\n"));
+        List<String> lines = message.lines().toList();
 
         if (x == null || y == null) {
             var hsa = (HandledScreenAccessor) MinecraftClient.getInstance().currentScreen;

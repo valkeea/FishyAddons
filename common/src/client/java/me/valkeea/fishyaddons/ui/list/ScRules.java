@@ -18,14 +18,11 @@ import me.valkeea.fishyaddons.ui.widget.VCTextField;
 import me.valkeea.fishyaddons.ui.widget.VCVisuals;
 import me.valkeea.fishyaddons.ui.widget.dropdown.TextFormatMenu;
 import me.valkeea.fishyaddons.util.text.Enhancer;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.input.KeyInput;
-import net.minecraft.client.sound.PositionedSoundInstance;
-import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 
@@ -82,10 +79,10 @@ public class ScRules extends Screen {
         
         for (var creature : allCreatures) {
 
-            String ruleName = "sc_" + creature.getId();
+            String ruleName = "sc_" + creature.id();
 
-            if (!creature.getCategory().equals(currentCategory)) {
-                currentCategory = creature.getCategory();
+            if (!creature.category().equals(currentCategory)) {
+                currentCategory = creature.category();
                 String categoryDisplay = currentCategory.substring(0, 1).toUpperCase() + currentCategory.substring(1);
                 
                 Entry categoryHeader = createCategoryHeader("── " + categoryDisplay + " ──");
@@ -94,8 +91,8 @@ public class ScRules extends Screen {
             }
             
             var existingRule = FilterConfig.getAllRules().get(ruleName);
-            var category = categories.get(creature.getCategory());
-            var displayName = creature.getDisplayName();
+            var category = categories.get(creature.category());
+            var displayName = creature.displayName();
             String currentReplacement;
             boolean isEnabled;
             
@@ -161,19 +158,19 @@ public class ScRules extends Screen {
         Map<String, Integer> categoryOrder = new LinkedHashMap<>();
         int order = 0;
         for (var creature : creatures) {
-            if (!categoryOrder.containsKey(creature.getCategory())) {
-                categoryOrder.put(creature.getCategory(), order++);
+            if (!categoryOrder.containsKey(creature.category())) {
+                categoryOrder.put(creature.category(), order++);
             }
         }
         
         creatures.sort((a, b) -> {
             int categoryComparison = Integer.compare(
-                categoryOrder.get(a.getCategory()), 
-                categoryOrder.get(b.getCategory())
+                categoryOrder.get(a.category()), 
+                categoryOrder.get(b.category())
             );
 
             if (categoryComparison == 0) {
-                return a.getDisplayName().compareTo(b.getDisplayName());
+                return a.displayName().compareTo(b.displayName());
             }
             return categoryComparison;
         });
@@ -442,15 +439,15 @@ public class ScRules extends Screen {
     private String buildPreview(RuleFactory.SeaCreatureData.CreatureConfig creature, 
                                      RuleFactory.SeaCreatureData.CategoryConfig category) {
         if (category == null) {
-            return creature.getDisplayName() + " " + creature.getEmoji();
+            return creature.displayName() + " " + creature.emoji();
         }
 
-        String message = creature.getCustomMessage();
-        message = message.replace("{name}", creature.getDisplayName());
-        message = message.replace("{emoji}", creature.getEmoji());
-        message = message.replace("{id}", creature.getId());
+        String message = creature.customMessage();
+        message = message.replace("{name}", creature.displayName());
+        message = message.replace("{emoji}", creature.emoji());
+        message = message.replace("{id}", creature.id());
 
-        return category.getPrefix() + message;
+        return category.prefix() + message;
     }
 
     private Entry createCategoryHeader(String categoryName) {
@@ -623,7 +620,7 @@ public class ScRules extends Screen {
             }
             
             try {
-                String ruleName = "sc_" + this.creatureData.getId();
+                String ruleName = "sc_" + this.creatureData.id();
                 
                 if (this.modified) {
                     String currentOverrideText = this.overrideField != null ? this.overrideField.getText() : "";

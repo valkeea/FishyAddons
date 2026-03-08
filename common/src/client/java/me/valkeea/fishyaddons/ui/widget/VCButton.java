@@ -64,8 +64,8 @@ public class VCButton {
      */
     public static void render(DrawContext context, TextRenderer textRenderer, ButtonConfig config) {
         switch (config.type) {
-            case TOGGLE -> renderToggle(context, textRenderer, config);
-            case SIMPLE -> renderToggleWithText(context, textRenderer, config, config.text);
+            case TOGGLE -> renderDefaultToggle(context, textRenderer, config);
+            case SIMPLE -> renderToggle(context, textRenderer, config, config.text);
             case KEYBIND -> renderKeybind(context, textRenderer, config);
             case NAVIGATION -> renderNavigation(context, textRenderer, config);
             case MCTOGGLE -> renderMcToggle(context, textRenderer, config);
@@ -166,26 +166,14 @@ public class VCButton {
         VCText.drawScaledButtonText(context, textRenderer, config.text, textX, textY, textColor, config.uiScale);
     }
 
-    private static void renderToggle(DrawContext context, TextRenderer textRenderer, ButtonConfig config) {
+    private static void renderDefaultToggle(DrawContext context, TextRenderer textRenderer, ButtonConfig config) {
         String text = config.enabled ? "ON" : "OFF";
-        int textColor = config.enabled ? 0xFFCCFFCC : 0xFFFF8080;
-        
-        int bgColor = VCVisuals.bgHex(config.hovered, config.enabled);
-        int borderColor = VCVisuals.borderHex(config.hovered, config.enabled);
-
-        VCRenderUtils.gradient(context, config.x, config.y, config.width, config.height, bgColor);
-        VCRenderUtils.border(context, config.x, config.y, config.width, config.height, borderColor);
-
-        int textX = config.x + config.width / 2 - (int)(textRenderer.getWidth(text) * Math.min(config.uiScale, 1.0f)) / 2;
-        int textY = config.y + (config.height - textRenderer.fontHeight) / 2 + 2;
-        VCText.drawScaledButtonText(context, textRenderer, text, textX, textY, textColor, config.uiScale);
+        renderToggle(context, textRenderer, config, text);
     }
 
-    private static void renderToggleWithText(DrawContext context, TextRenderer textRenderer, ButtonConfig config, String buttonText) {
-
-        String text = buttonText;
+    private static void renderToggle(DrawContext context, TextRenderer textRenderer, ButtonConfig config, String text) {
         int textColor = config.enabled ? 0xFFCCFFCC : 0xFFFF8080;
-
+        
         int bgColor = VCVisuals.bgHex(config.hovered, config.enabled);
         int borderColor = VCVisuals.borderHex(config.hovered, config.enabled);
 

@@ -151,20 +151,18 @@ public class FilterConfig {
             String result = text;
             
             try {
-                // Sort creatures by displayName length (longest first) to avoid partial matches
-                List<RuleFactory.SeaCreatureData.CreatureConfig> sortedCreatures = 
-                    new ArrayList<>(RuleFactory.getCreatures());
+                var sortedCreatures = new ArrayList<>(RuleFactory.getCreatures());
                 sortedCreatures.sort((a, b) -> {
-                    if (a.displayName == null && b.displayName == null) return 0;
-                    if (a.displayName == null) return 1;
-                    if (b.displayName == null) return -1;
-                    return Integer.compare(b.displayName.length(), a.displayName.length());
+                    if (a.displayName() == null && b.displayName() == null) return 0;
+                    if (a.displayName() == null) return 1;
+                    if (b.displayName() == null) return -1;
+                    return Integer.compare(b.displayName().length(), a.displayName().length());
                 });
                 
                 for (RuleFactory.SeaCreatureData.CreatureConfig creature : sortedCreatures) {
-                    if (creature.displayName != null && creature.displayNamePlural != null) {
-                        String quotedName = java.util.regex.Pattern.quote(creature.displayName);
-                        String pluralName = creature.displayNamePlural;
+                    if (creature.displayName() != null && creature.displayNamePlural() != null) {
+                        String quotedName = java.util.regex.Pattern.quote(creature.displayName());
+                        String pluralName = creature.displayNamePlural();
                         String beforeReplacement = result;
                         
                         result = result.replaceAll("\\ba " + quotedName + "\\b", pluralName);
@@ -207,7 +205,7 @@ public class FilterConfig {
         return USER_RULES;
     }
     
-    static {
+    public static void init() {
         initScRules();
         loadConfig();
     }
@@ -377,8 +375,6 @@ public class FilterConfig {
             
             if (filterFile.exists()) {
                 loadFilterRulesFromFile(filterFile);
-            } else {
-                System.out.println("[FishyAddons] No saved filter rules found, using defaults");
             }
         } catch (Exception e) {
             System.err.println("[FishyAddons] Failed to load filter configuration: " + e.getMessage());

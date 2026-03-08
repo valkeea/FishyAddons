@@ -26,7 +26,9 @@ public class MixinMinecraftClientScreenChange {
     @Inject(method = "setScreen", at = @At("HEAD"))
     private void onScreenChange(Screen screen, CallbackInfo ci) {
 
-        if (screen == null && (currentScreen instanceof GenericContainerScreen || currentScreen instanceof InventoryScreen)) {
+        var wasRelevantScreen = currentScreen instanceof InventoryScreen || currentScreen instanceof GenericContainerScreen;
+        
+        if (screen == null && wasRelevantScreen) {
             Text title = currentScreen.getTitle();
             if (title != null) {
                 var event = new ScreenCloseEvent(title);
@@ -37,19 +39,25 @@ public class MixinMinecraftClientScreenChange {
         } 
 
         var isInv = screen instanceof InventoryScreen;
-        var isContainer = screen instanceof GenericContainerScreen;
+        var newGcs = screen instanceof GenericContainerScreen gcs ? gcs : null;
+        var relevantScreen = isInv || newGcs != null;
         
-        if (!isInv && !isContainer && (currentScreen instanceof InventoryScreen || currentScreen instanceof GenericContainerScreen)) {
+        if (!relevantScreen && wasRelevantScreen) {
             ScreenRenderContext.reset(); // Context reset on switch
         }
 
-        if (isContainer && screen != null && screen.getTitle() != null) { // New screen is a container
-            var event = new ScreenOpenEvent((GenericContainerScreen) (isContainer ? screen : null), screen.getTitle());
+        if (newGcs != null && newGcs.getTitle() != null) { // New screen is a container
+            var event = new ScreenOpenEvent(newGcs, newGcs.getTitle());
             FaEvents.SCREEN_OPEN.firePhased(event, listener -> listener.onScreenOpen(event));
         }
 
         if (SearchHudElement.getInstance() != null) {
-            SearchHudElement.onScreenChange(isInv || isContainer);
+            SearchHudElement.onScreenChange(relevantScreen);
         }        
     }
+
+    @Inject(method = "onResolutionChanged", at = @At("HEAD"))
+    private void onResolutionChanged(CallbackInfo ci) {
+        me.valkeea.fishyaddons.hud.core.ElementRegistry.clearAllCaches();
+    }    
 }

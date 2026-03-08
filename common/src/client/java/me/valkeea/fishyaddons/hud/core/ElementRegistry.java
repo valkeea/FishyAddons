@@ -44,13 +44,11 @@ public class ElementRegistry {
     }
 
     public static List<HudElement> getConfigurable() {
-        List<HudElement> configurable = new ArrayList<>();
-        for (HudElement element : ELEMENTS) {
-            if (element != null && element.isConfigurable()) {
-                configurable.add(element);
-            }
-        }
-        return configurable;
+        return ELEMENTS.stream().filter(e -> e != null && e.isConfigurable()).toList();
+    }
+
+    public static void clearAllCaches() {
+        for (HudElement e : ELEMENTS) if (e != null) e.invalidateCache();
     }
 
     public static void init() {

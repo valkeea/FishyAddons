@@ -40,7 +40,6 @@ public class ChatEntryList extends GenericEntryList {
     @Override
     public void toggleEntry(String key, boolean toggled) {
         FishyConfig.toggleChatReplacement(key, toggled);
-        ChatReplacement.refresh();
     }
 
     @Override

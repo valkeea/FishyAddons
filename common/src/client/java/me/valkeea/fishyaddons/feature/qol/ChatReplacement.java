@@ -17,9 +17,11 @@ public class ChatReplacement {
     public static String apply(String message) {
         if (!enabled) return message;
 
-        String result = message;
+        var result = message;
         for (Map.Entry<String, String> entry : cached.entrySet()) {
-            result = result.replace(entry.getKey(), entry.getValue());
+            if (FishyConfig.isChatReplacementToggled(entry.getKey()) && result.contains(entry.getKey())) {
+                result = result.replace(entry.getKey(), entry.getValue());
+            }
         }
         
         return result;

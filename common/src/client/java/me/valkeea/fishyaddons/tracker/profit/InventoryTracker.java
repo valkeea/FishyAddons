@@ -6,8 +6,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import me.valkeea.fishyaddons.tool.ItemData;
+import me.valkeea.fishyaddons.tool.RunDelayed;
 import me.valkeea.fishyaddons.util.FishyNotis;
-import me.valkeea.fishyaddons.util.ItemData;
 import me.valkeea.fishyaddons.util.text.FromText;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.LoreComponent;
@@ -58,14 +59,9 @@ public class InventoryTracker {
     private InventoryTracker() {}
     
     public static void onItemAdded(ItemStack stack) {
-        if (stack.isEmpty()) return;
-        
-        if (!isMonitoringActive()) {
-            return;
-        }
+        if (stack.isEmpty() || !isMonitoringActive()) return;
 
         var newItem = stack.getItem();
-        
         if (newItem == Items.PLAYER_HEAD) {
             handlePlayerHeadAdded(stack);
             return;
@@ -127,10 +123,15 @@ public class InventoryTracker {
             lastKnownStackSizes.put(cleanName, currentStackSize);
             
             String uuid = extractUUID(stack);
-            var dropResult = ItemTrackerData.addDrop(cleanName, newItems, null, uuid);
-            if (dropResult.shouldNotify) FishyNotis.trackerNoti(displayName, newItems);
+            var dropResult = TrackedItemData.addDrop(cleanName, newItems, null, uuid);
+            
+            if (dropResult.shouldNotify) {
+                FishyNotis.trackerNoti(displayName, newItems);
+            }
 
-        } else lastKnownStackSizes.put(cleanName, currentStackSize);
+        } else {
+            lastKnownStackSizes.put(cleanName, currentStackSize);
+        }
     }
 
     private static void handleGhastTearAdded(ItemStack stack) {
@@ -139,7 +140,7 @@ public class InventoryTracker {
 
         if (TRACKED_GHAST_TEARS.contains(cleanName)) {
             String uuid = extractUUID(stack);
-            var dropResult = ItemTrackerData.addDrop(cleanName, 1, null, uuid);
+            var dropResult = TrackedItemData.addDrop(cleanName, 1, null, uuid);
             
             if (dropResult.shouldNotify) {
                 FishyNotis.trackerNoti(displayName, 1);
@@ -156,7 +157,7 @@ public class InventoryTracker {
             var tieredName = rarity + cleanName;
             
             String uuid = extractUUID(stack);
-            var dropResult = ItemTrackerData.addDrop(tieredName, 1, null, uuid);
+            var dropResult = TrackedItemData.addDrop(tieredName, 1, null, uuid);
             
             if (dropResult.shouldNotify) {
                 FishyNotis.trackerNoti(displayName, 1);
@@ -165,13 +166,14 @@ public class InventoryTracker {
     }
 
     private static String getRarityTier(Style style) {
+        
         String def = "common ";
+        if (style == null) return def;
 
-        if (style == null || style.getColor() == null) {
-            return def;
-        }
+        var color = style.getColor();
+        if (color == null) return def;
 
-        switch (style.getColor().toString()) {
+        switch (color.toString()) {
             case "white": return def;
             case "blue": return "rare ";
             case "dark_purple": return "epic ";
@@ -190,8 +192,8 @@ public class InventoryTracker {
         if (bookInfo == null) return;
         
         String uuid = extractUUID(stack);
-        var dropResult = ItemTrackerData.addDrop(bookInfo.name, 1, null, uuid);
-        
+        var dropResult = TrackedItemData.addDrop(bookInfo.name, 1, null, uuid);
+
         if (!dropResult.alreadyCounted && dropResult.shouldNotify) {
             FishyNotis.bookNoti(bookInfo.styledText);
         }
@@ -275,6 +277,12 @@ public class InventoryTracker {
             lastKnownStackSizes.clear();
         }
     }
+
+    private static void disableIfActive() {
+        if (monitoringEnabled) {
+            monitoringEnabled = false;
+        }
+    }
     
     /**
      * Called when a loot share message is detected
@@ -299,15 +307,10 @@ public class InventoryTracker {
         monitoringEnabled = true;
         monitoringStartTime = System.currentTimeMillis();
         
-        Thread.startVirtualThread(() -> {
-            try {
-                Thread.sleep(500); 
-                if (System.currentTimeMillis() - monitoringStartTime >= 200 && monitoringEnabled) {
-                    monitoringEnabled = false;
-                }
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-        });
+        RunDelayed.run(
+            InventoryTracker::disableIfActive,
+            DROP_CORRELATION_WINDOW,
+            "valuableGone_" + monitoringStartTime
+        );
     }
 }

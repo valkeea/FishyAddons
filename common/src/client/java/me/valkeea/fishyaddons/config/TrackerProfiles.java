@@ -13,7 +13,7 @@ import java.util.Map;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
-import me.valkeea.fishyaddons.tracker.profit.ItemTrackerData;
+import me.valkeea.fishyaddons.tracker.profit.TrackedItemData;
 import me.valkeea.fishyaddons.util.FishyNotis;
 import net.minecraft.text.Text;
 
@@ -91,7 +91,7 @@ public class TrackerProfiles {
         }
         saveToJson();
         currentProfile = profile.toLowerCase().replaceAll(PROFILE_NAME_PATTERN, "");
-        ItemTrackerData.clearAll();
+        TrackedItemData.clearAll();
         loadFromJson();
     }
     
@@ -176,10 +176,10 @@ public class TrackerProfiles {
             Files.createDirectories(filePath.getParent());
 
             TrackerData data = new TrackerData();
-            data.itemCounts = new HashMap<>(ItemTrackerData.getAllItems());
-            data.sessionStartTime = ItemTrackerData.getSessionStartTime();
-            data.lastActivityTime = ItemTrackerData.getLastActivityTime();
-            data.totalPausedTime = ItemTrackerData.getTotalPausedTime();
+            data.itemCounts = new HashMap<>(TrackedItemData.getAllItems());
+            data.sessionStartTime = TrackedItemData.getSessionStartTime();
+            data.lastActivityTime = TrackedItemData.getLastActivityTime();
+            data.totalPausedTime = TrackedItemData.getTotalPausedTime();
             data.savedAt = System.currentTimeMillis();
             data.profileName = currentProfile;
 
@@ -223,7 +223,7 @@ public class TrackerProfiles {
 
             currentProfile = oldProfile;
             
-            ItemTrackerData.clearAll();
+            TrackedItemData.clearAll();
             setCurrentProfile(newName);
 
             FishyNotis.send(Text.literal("§aCreated new tracker profile: " + newName));
@@ -287,16 +287,16 @@ public class TrackerProfiles {
             TrackerData data = gson.fromJson(json, TrackerData.class);
 
             if (data != null && data.itemCounts != null) {
-                ItemTrackerData.setAllItems(data.itemCounts);
+                TrackedItemData.setAllItems(data.itemCounts);
                 if (data.sessionStartTime > 0) {
-                    ItemTrackerData.setSessionStartTime(data.sessionStartTime);
+                    TrackedItemData.setSessionStartTime(data.sessionStartTime);
                 }
                 if (data.lastActivityTime > 0) {
-                    ItemTrackerData.setLastActivityTime(data.lastActivityTime);
+                    TrackedItemData.setLastActivityTime(data.lastActivityTime);
                 } else {
-                    ItemTrackerData.setLastActivityTime(System.currentTimeMillis());
+                    TrackedItemData.setLastActivityTime(System.currentTimeMillis());
                 }
-                ItemTrackerData.setTotalPausedTime(data.totalPausedTime);
+                TrackedItemData.setTotalPausedTime(data.totalPausedTime);
                 return true;
             }
         } catch (Exception e) {

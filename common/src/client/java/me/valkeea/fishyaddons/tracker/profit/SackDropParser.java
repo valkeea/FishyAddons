@@ -7,36 +7,24 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import me.valkeea.fishyaddons.cache.ApiCache;
-import me.valkeea.fishyaddons.config.FishyConfig;
-import me.valkeea.fishyaddons.config.Key;
 import me.valkeea.fishyaddons.tracker.profit.ChatDropParser.ParseResult;
 
 public class SackDropParser {
     private SackDropParser() {}
-    
-    private static final String SACK_HOVER_PREFIX = "SACK_HOVER:";
-    private static final String SACK_CACHE_PREFIX = "SACK:";
     private static boolean shouldTrackSack = false;
-    
+
+    public static void setTracking(boolean state) {
+        shouldTrackSack = state;
+    }
+
+    public static boolean isEnabled() {
+        return shouldTrackSack;
+    }
+
     private static final Map<String, Long> seenTooltips = new ConcurrentHashMap<>();
     private static final Map<String, Integer> chatDrops = new ConcurrentHashMap<>();   
 
     private static final long DEDUP_WINDOW_MS = 1000;
-    
-    public static boolean isOn() {
-        return shouldTrackSack;
-    }
-
-    public static void refresh() {
-        shouldTrackSack = FishyConfig.getState(Key.TRACK_SACK, false) && 
-            FishyConfig.getState(Key.HUD_TRACKER_ENABLED, false);
-    }
-
-    public static void toggle() {
-        FishyConfig.toggle(Key.TRACK_SACK, false);
-        refresh();
-    }
     
     private static final Pattern HOVER_DROP_PATTERN = Pattern.compile(
         "\\+\\s*(\\d{1,3}(?:,\\d{3})*)\\s+(.+?)(?:\\s*\\([^)]*\\ssack\\))?$",
@@ -85,29 +73,9 @@ public class SackDropParser {
 
         seenTooltips.put(tooltipHash, currentTime);
         cleanup(currentTime);
-        Object cachedResult = ApiCache.getCachedMessageParse(SACK_HOVER_PREFIX + tooltipContent);
-
-        if (cachedResult != null) {
-            if (ApiCache.isNullParseResult(cachedResult)) {
-                return results;
-            }
-            @SuppressWarnings("unchecked")
-            List<ParseResult> cachedResults = (List<ParseResult>) cachedResult;
-            return cachedResults;
-        }
 
         results = parse(tooltipContent);
-        if (!results.isEmpty()) {
-            clearChatDrops();
-        }
-
-        if (results.isEmpty()) {
-            ApiCache.cacheMessageParse(SACK_HOVER_PREFIX + tooltipContent, null);
-        } else {
-            ApiCache.cacheMessageParse(SACK_HOVER_PREFIX + tooltipContent, results);
-        }
-
-        seenTooltips.put(tooltipContent, currentTime);
+        if (!results.isEmpty()) clearChatDrops();
         return results;
     }
     
@@ -117,28 +85,26 @@ public class SackDropParser {
     }
     
     private static List<ParseResult> parse(String tooltipContent) {
+
         List<ParseResult> results = new ArrayList<>();
         String[] lines = tooltipContent.split("\\n");
+
         for (String line : lines) {
-            String cleanLine = line.trim();
-            if (cleanLine.isEmpty()) {
-                continue;
-            }
+
+            var clean = line.trim();
+            if (clean.isEmpty()) continue;
             
-            ParseResult result = parseLine(cleanLine);
-            if (result != null) {
-                results.add(result);
-            }
+            var result = parseLine(clean);
+            if (result != null) results.add(result);
         }
         
         return results;
     }
     
     private static ParseResult parseLine(String line) {
+
         var matcher = HOVER_DROP_PATTERN.matcher(line);
-        if (!matcher.find()) {
-            return null;
-        }
+        if (!matcher.find()) return null;
         
         try {
             String quantityStr = matcher.group(1).replace(",", "");
@@ -148,6 +114,7 @@ public class SackDropParser {
             itemName = cleanSackItemName(itemName);
 
             if (isTrackableSackItem(itemName)) {
+
                 int chatQuantity = getChatDropQuantity(itemName);
                 if (chatQuantity > 0) {
                     int remainingQuantity = sackQuantity - chatQuantity;
@@ -155,11 +122,11 @@ public class SackDropParser {
                     if (remainingQuantity <= 0) {
                         return null;
                     } else {
-                        return new ParseResult(itemName, remainingQuantity, false);
+                        return new ParseResult(itemName, remainingQuantity);
                     }
                 }
 
-                return new ParseResult(itemName, sackQuantity, false);
+                return new ParseResult(itemName, sackQuantity);
             }
         } catch (NumberFormatException e) {
             // Skip invalid quantity
@@ -169,27 +136,18 @@ public class SackDropParser {
     }
     
     private static String cleanSackItemName(String itemName) {
-        if (itemName == null) {
-            return "";
-        }
-    
-        String cachedResult = ApiCache.getCachedNormalization(SACK_CACHE_PREFIX + itemName);
-        if (cachedResult != null) {
-            return cachedResult;
-        }
+        if (itemName == null) return "";
+
+        // First strip color codes (§x sequences), then clean and normalize
+        String stripped = me.valkeea.fishyaddons.util.text.TextUtils.stripColor(itemName);
         
-        String cleaned = itemName.trim()
+        return stripped.trim()
                 .replaceAll("\\s+", " ")
-                .replaceAll("[\"'`]", "")
-                .replace("✯", "")
+                .replaceAll("[^\\p{L}\\p{N}\\s-]", "")
                 .trim()
                 .toLowerCase();
-        
-        ApiCache.cacheNormalization(SACK_CACHE_PREFIX + itemName, cleaned);
-    
-        return cleaned;
     }
-    
+
     private static boolean isTrackableSackItem(String itemName) {
         return itemName != null && !itemName.trim().isEmpty();
     }
@@ -211,13 +169,13 @@ public class SackDropParser {
             return true;
         }
 
-        Matcher cm = BAZAAR_CLAIM_PATTERN.matcher(message);
-        if (cm.find() && tryParse(cm.group(2), cm.group(1))) {
+        Matcher m2 = BAZAAR_CLAIM_PATTERN.matcher(message);
+        if (m2.find() && tryParse(m2.group(2), m2.group(1))) {
             return true;
         }
 
-        Matcher scm = BAZAAR_SELL_CANCEL_PATTERN.matcher(message);
-        return (scm.find() && tryParse(scm.group(2), scm.group(1)));
+        Matcher m3 = BAZAAR_SELL_CANCEL_PATTERN.matcher(message);
+        return (m3.find() && tryParse(m3.group(2), m3.group(1)));
     }
 
     public static boolean onSupercraft(String message) {
@@ -233,7 +191,8 @@ public class SackDropParser {
     }
 
     private static boolean tryParse(String itemName, String quantityStr) {
-        if (itemName == null || itemName.trim().isEmpty() || quantityStr == null || quantityStr.trim().isEmpty()) {
+        if (itemName == null || itemName.trim().isEmpty() ||
+            quantityStr == null || quantityStr.trim().isEmpty()) {
             return false;
         }
 
@@ -241,6 +200,7 @@ public class SackDropParser {
             int quantity = Integer.parseInt(quantityStr.replace(",", "").trim());
             registerIfValid(itemName, quantity);
             return true;
+
         } catch (NumberFormatException e) {
             return false;
         }
@@ -255,25 +215,23 @@ public class SackDropParser {
 
     /** Register a chat drop to prevent sack duplicates */
     public static void registerChatDrop(String itemName, int quantity) {
-        if (!shouldTrackSack) {
-            return;
-        }
+        if (!shouldTrackSack) return;
 
-        String normalizedItemName = cleanSackItemName(itemName.trim());
-        if (chatDrops.containsKey(normalizedItemName)) {
-            int existingQuantity = chatDrops.get(normalizedItemName);
-            chatDrops.put(normalizedItemName, existingQuantity + quantity);
-        } else {
-            chatDrops.put(normalizedItemName, quantity);
-        }
+        String normalized = cleanSackItemName(itemName.trim());
+        if (chatDrops.containsKey(normalized)) {
+            int existingQuantity = chatDrops.get(normalized);
+            chatDrops.put(normalized, existingQuantity + quantity);
+
+        } else chatDrops.put(normalized, quantity);
     }
     
     /** Get the quantity of a recent chat drop for an item */
     private static int getChatDropQuantity(String itemName) {
-        return chatDrops.get(itemName) == null ? 0 : chatDrops.get(itemName);
+        String normalized = cleanSackItemName(itemName.trim());
+        return chatDrops.get(normalized) == null ? 0 : chatDrops.get(normalized);
     }
     
     private static void clearChatDrops() {
         chatDrops.clear();
-    }    
+    }
 }

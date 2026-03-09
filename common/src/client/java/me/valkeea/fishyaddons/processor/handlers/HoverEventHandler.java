@@ -46,6 +46,6 @@ public class HoverEventHandler implements ChatHandler {
     
     @Override
     public boolean isEnabled() {
-        return SackDropParser.isOn() || ProfitTracker.isEnabled();
+        return SackDropParser.isEnabled() || ProfitTracker.isEnabled();
     }
 }

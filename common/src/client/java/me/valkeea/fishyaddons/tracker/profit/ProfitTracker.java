@@ -1,8 +1,7 @@
 package me.valkeea.fishyaddons.tracker.profit;
 
-import me.valkeea.fishyaddons.config.FishyConfig;
-import me.valkeea.fishyaddons.config.Key;
 import me.valkeea.fishyaddons.config.TrackerProfiles;
+import me.valkeea.fishyaddons.tracker.collection.CollectionTracker;
 import me.valkeea.fishyaddons.ui.VCOverlay;
 import me.valkeea.fishyaddons.ui.VCPopup;
 import me.valkeea.fishyaddons.util.FishyNotis;
@@ -11,38 +10,31 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.text.Text;
 
 public class ProfitTracker {
-    private static boolean pricePerItem = false;
     private static boolean enabled = false;
+    private static boolean trackSackProfit = false;
+    private static boolean pricePerItem = false;
 
-    public static boolean isOn() {  return pricePerItem; }
+    public static boolean pricePerItem() {  return pricePerItem; }
     public static boolean isEnabled() { return enabled; }
 
-    public static void init() {
-        refresh();
-    }
-
-    public static void refresh() {
-        pricePerItem = FishyConfig.getState(Key.PER_ITEM, false);
-        enabled = FishyConfig.getState(Key.HUD_TRACKER_ENABLED, false);
-    }
-
-    public static void setPricePerItem(boolean state) {
-        pricePerItem = state;
-        FishyConfig.toggle(Key.PER_ITEM, state);
+    public static void setConfig(boolean generalTracking, boolean sackTracking, boolean perItem) {
+        enabled = generalTracking;
+        trackSackProfit = sackTracking;
+        pricePerItem = perItem;
     }
 
     public static boolean handleChat(String s, Text t) { 
-        ChatDropParser.ParseResult result = ChatDropParser.parseMessage(s);
 
         if (s.startsWith("loot share")) {
             InventoryTracker.onLsDetected();
             return true;
         }
         
+        var result = ChatDropParser.parseMessage(s);
+        
         if (result != null) {
-
             SackDropParser.registerChatDrop(result.itemName, result.quantity);
-            if (result.isCoinDrop) ItemTrackerData.addCoins(result.quantity);
+            if (result.coinDrop()) TrackedItemData.addCoins(result.quantity);
             else countImmediate(result, t);
             return true;
         }
@@ -50,39 +42,29 @@ public class ProfitTracker {
         return false;
     }
 
-    private static void countImmediate(ChatDropParser.ParseResult result, Text originalMessage) {
-        boolean isBook = result.itemName.contains("enchanted book");
-        ItemTrackerData.registerPendingDrop(result.itemName, result.quantity);
-        
-        if (isBook) {
-            ItemTrackerData.addDrop(result.itemName, result.quantity, originalMessage);
-        } else {
-            ItemTrackerData.addDrop(result.itemName, result.quantity);
-        }
+    private static void countImmediate(ChatDropParser.ParseResult r, Text originalMessage) {
+        var msg = r.bookDrop() ? originalMessage : null;
+        TrackedItemData.registerPendingDrop(r.itemName, r.quantity);
+        TrackedItemData.addDrop(r.itemName, r.quantity, msg);
     }
 
     public static boolean checkForHoverEvents(Text message) {
-        if (!SackDropParser.isOn())  return false;
+        if (!trackSackProfit)  return false;
         Text hoverEvent = FromText.findShowText(message);
         return hoverEvent != null && processSackHover(hoverEvent);
     }
     
     private static boolean processSackHover(Text hoverText) {
-            var sackDrops = SackDropParser.parseSackHoverEvent(hoverText.getString());
-
-            if (sackDrops.isEmpty()) {
-                return false;
-            }
-
-            for (var drop : sackDrops) {
-                handleSackDrop(drop);
-            }
-            return true;
+        var sackDrops = SackDropParser.parseSackHoverEvent(hoverText.getString());
+        if (sackDrops.isEmpty()) return false;
+        for (var drop : sackDrops) handleSackDrop(drop);
+        return true;
     }
 
     private static void handleSackDrop(ChatDropParser.ParseResult drop) {
         if (drop != null) {
-            ItemTrackerData.addDrop(drop.itemName, drop.quantity);
+            if (trackSackProfit) TrackedItemData.addDrop(drop.itemName, drop.quantity);
+            CollectionTracker.addDrop(drop.itemName, drop.quantity);
         }
     }
 

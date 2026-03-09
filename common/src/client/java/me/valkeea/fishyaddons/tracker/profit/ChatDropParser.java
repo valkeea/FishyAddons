@@ -7,30 +7,75 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.jetbrains.annotations.Nullable;
+
 public class ChatDropParser {
-    private static final String SHARD_KEYWORD = "shard";
+    private static final String SHARD_KW = "shard";
     private static final String SHARD_PLURAL = " shards";
-    private static final String COINS_KEYWORD = "coins";
-    private static final String COIN_KEYWORD = "coin";
-    private static final String CHARM_KEYWORD = "charm";
-    private static final String NAGA_KEYWORD = "naga";
-    private static final String YOU_CAUGHT = "you caught";
-    private static final String RARE_DROP = "rare drop";
-    private static final String VERY_RARE_DROP = "very rare drop";
-    private static final String CRAZY_RARE_DROP = "crazy rare drop";
-    private static final String EXTREMELY_RARE_DROP = "extremely rare drop";
-    private static final String INSANE_DROP = "insane drop";
-    private static final String PET_DROP = "pet drop";
-    private static final String PRAY_TO_RNGESUS_DROP = "pray to rngesus drop";
-    private static final String SALT_YOU_CHARMED = "salt you charmed";
-    private static final String LOOT_SHARE = "loot share";
+    private static final String COINS_KW = "coins";
+    private static final String COIN_KW = "coin";
     private static final String ANY_CATCH = "⛃\\s+\\w+\\s+catch!\\s+you caught\\s+";
-    private static final String CATCH_KEYWORD = "catch!";
-    private static final String WOW_DUG_OUT = "wow! you dug out";
     private static final String DROP_REGEX_SUFFIX = "!\\s*([^(\\r\\n]+?)(?:\\s*\\([^)]*\\).*)?$";
+    
     private static final List<DropPattern> DROP_PATTERNS = new ArrayList<>();
     private static final Set<String> TRACKED_SHARDS = new HashSet<>();
     private static final Set<String> VALUABLE_KEYWORDS = new HashSet<>();
+    
+    enum DropKeyword {
+        
+        // Tier keywords
+        RARE_DROP("rare drop", true),
+        VERY_RARE_DROP("very rare drop", true),
+        CRAZY_RARE_DROP("crazy rare drop", true),
+        EXTREMELY_RARE_DROP("extremely rare drop", true),
+        INSANE_DROP("insane drop", true),
+        PRAY_TO_RNGESUS_DROP("pray to rngesus drop", true),
+        PET_DROP("pet drop", true),
+        
+        // Other drop indicators
+        CATCH("catch!", false),
+        WOW_DUG_OUT("wow! you dug out", false),
+        YOU_CAUGHT("you caught", false),
+        CHARM("charm", false),
+        NAGA("naga", false),
+        SALT_YOU_CHARMED("salt you charmed", false),
+        LOOT_SHARE("loot share", false);
+        
+        final String keyword;
+        final boolean isDropTier;
+        
+        DropKeyword(String keyword, boolean isDropTier) {
+            this.keyword = keyword;
+            this.isDropTier = isDropTier;
+        }
+        
+        /**
+         * Check if the message contains any drop keyword
+         */
+        static boolean containsAny(String message) {
+            for (DropKeyword kw : values()) {
+                if (message.contains(kw.keyword)) return true;
+            }
+            return false;
+        }
+        
+        /**
+         * Build regex pattern for drop tiers
+         */
+        static String buildDropTierRegex(boolean includePetDrop) {
+            StringBuilder sb = new StringBuilder("(?:");
+            boolean first = true;
+            for (DropKeyword kw : values()) {
+                if (kw.isDropTier && (includePetDrop || kw != PET_DROP)) {
+                    if (!first) sb.append("|");
+                    sb.append(kw.keyword);
+                    first = false;
+                }
+            }
+            sb.append(")");
+            return sb.toString();
+        }
+    }
     
     static {
         init();
@@ -38,6 +83,7 @@ public class ChatDropParser {
     }
     
     private static void init() {
+
         String[] shardNames = {
 
             // Murkwater/Galatea
@@ -81,419 +127,263 @@ public class ChatDropParser {
         
         String[] keywords = {
             "enchanted", "rare", "epic", "legendary",
-            "book", "talisman", "[Lvl 1]", COIN_KEYWORD, SHARD_KEYWORD
+            "book", "talisman", "[Lvl 1]", COIN_KW, SHARD_KW
         };
         
-        for (String keyword : keywords) {
-            VALUABLE_KEYWORDS.add(keyword.toLowerCase());
+        for (String kw : keywords) {
+            VALUABLE_KEYWORDS.add(kw.toLowerCase());
         }
     }
     
     private static void initPatterns() {
-        // Pattern 1a: "RARE DROP! You dug out ItemName!"
+        
+        String rareDrops = DropKeyword.buildDropTierRegex(false);
+        String allDrops = DropKeyword.buildDropTierRegex(true);
+        
+        // Pattern 1: "RARE DROP! You dug out ItemName!"
         DROP_PATTERNS.add(new DropPattern(
-            Pattern.compile(RARE_DROP + "!\\s*You dug out an? ([^!]+)!", Pattern.CASE_INSENSITIVE),
-            -1, 1
+            Pattern.compile(DropKeyword.RARE_DROP.keyword + "!\\s*You dug out an? ([^!]+)!", Pattern.CASE_INSENSITIVE),
+            DropType.ITEM, -1, 1
         ));
 
-        // Pattern 5a: X DROP! Enchanted Book (itemName) (+X ✯ Magic Find)
+        // Pattern 2: X DROP! Enchanted Book (itemName) (+X ✯ Magic Find)
         DROP_PATTERNS.add(new DropPattern(
-            Pattern.compile("(?:rare drop|very rare drop|crazy rare drop|extremely rare drop|insane drop)!\\s*Enchanted Book\\s*\\(([^)]+?)\\)(?:\\s*\\([^)]*\\))?.*?$", Pattern.CASE_INSENSITIVE),
-            -1, 1
+            Pattern.compile(rareDrops + "!\\s*Enchanted Book\\s*\\(([^)]+?)\\)(?:\\s*\\([^)]*\\))?.*?$", Pattern.CASE_INSENSITIVE),
+            DropType.BOOK, -1, 1
         ));
 
-        // Pattern 5b: "X DROP! (31x ItemName) (+Magic Find)"
+        // Pattern 3a: "X DROP! (31x ItemName) (+Magic Find)"
         DROP_PATTERNS.add(new DropPattern(
-            Pattern.compile(
-                "(?:rare drop|very rare drop|crazy rare drop|extremely rare drop|insane drop)!\\s*\\((\\d+)x\\s+([^)]+?)\\)(?:\\s*\\([^)]*\\))?.*?$", 
-                Pattern.CASE_INSENSITIVE),
-            1, 2  // quantity group 1, item group 2
+            Pattern.compile(rareDrops + "!\\s*\\((\\d+)x\\s+([^)]+?)\\)(?:\\s*\\([^)]*\\))?.*?$", Pattern.CASE_INSENSITIVE),
+            DropType.ITEM, 1, 2
         ));
 
-        // Pattern 5c: "X DROP! (ItemName) (+Magic Find)"
+        // Pattern 3b: "X DROP! (ItemName) (+Magic Find)"
         DROP_PATTERNS.add(new DropPattern(
-            Pattern.compile(
-                "(?:rare drop|very rare drop|crazy rare drop|extremely rare drop|insane drop)!\\s*\\((?!\\d+x\\s)([^)]+?)\\)(?:\\s*\\([^)]*\\))?.*?$", 
-                Pattern.CASE_INSENSITIVE),
-            -1, 1  // no quantity group, item group 1
+            Pattern.compile(rareDrops + "!\\s*\\((?!\\d+x\\s)([^)]+?)\\)(?:\\s*\\([^)]*\\))?.*?$", Pattern.CASE_INSENSITIVE),
+            DropType.ITEM, -1, 1
         ));
 
-        // Pattern 1: "RARE DROP! ItemName"
+        // Pattern 4: "X DROP! ItemName"
         DROP_PATTERNS.add(new DropPattern(
-            Pattern.compile(RARE_DROP + DROP_REGEX_SUFFIX, Pattern.CASE_INSENSITIVE),
-            -1, 1 // quantity is 1
+            Pattern.compile(allDrops + DROP_REGEX_SUFFIX, Pattern.CASE_INSENSITIVE),
+            DropType.ITEM, -1, 1
         ));
         
-        // Pattern 2: "VERY RARE DROP! ItemName"
-        DROP_PATTERNS.add(new DropPattern(
-            Pattern.compile(VERY_RARE_DROP + DROP_REGEX_SUFFIX, Pattern.CASE_INSENSITIVE),
-            -1, 1
-        ));
-        
-        // Pattern 3: "CRAZY RARE DROP! ItemName"
-        DROP_PATTERNS.add(new DropPattern(
-            Pattern.compile(CRAZY_RARE_DROP + DROP_REGEX_SUFFIX, Pattern.CASE_INSENSITIVE),
-            -1, 1
-        ));
-        
-        // Pattern 4: "EXTREMELY RARE DROP! ItemName"
-        DROP_PATTERNS.add(new DropPattern(
-            Pattern.compile(EXTREMELY_RARE_DROP + DROP_REGEX_SUFFIX, Pattern.CASE_INSENSITIVE),
-            -1, 1
-        ));
-        
-        // Pattern 5: "INSANE DROP! ItemName"
-        DROP_PATTERNS.add(new DropPattern(
-            Pattern.compile(INSANE_DROP + DROP_REGEX_SUFFIX, Pattern.CASE_INSENSITIVE),
-            -1, 1
-        ));
-
-        // Pattern 6: "PRAY TO RNGESUS DROP! ItemName"
-        DROP_PATTERNS.add(new DropPattern(
-            Pattern.compile(PRAY_TO_RNGESUS_DROP + DROP_REGEX_SUFFIX, Pattern.CASE_INSENSITIVE),
-            -1, 1
-        ));
-        
-        // Pattern 7: "PET DROP! ItemName"
-        DROP_PATTERNS.add(new DropPattern(
-            Pattern.compile(PET_DROP + DROP_REGEX_SUFFIX, Pattern.CASE_INSENSITIVE),
-            -1, 1
-        ));
-        
-        // Pattern 8b: "⛃ <tier> CATCH! You caught ItemName xX!" - Multiple items (MUST come before 8a)
+        // Pattern 5a: "⛃ <tier> CATCH! You caught ItemName xX!"
         DROP_PATTERNS.add(new DropPattern(
             Pattern.compile(ANY_CATCH + "(.+?)\\s+x(\\d{1,3})!", Pattern.CASE_INSENSITIVE),
-            2, 1  // quantity group 2, item group 1
+            DropType.ITEM, 2, 1
         ));
 
-        // Pattern 8a: "⛃ <tier> CATCH! You caught a/an ItemName!" - Single item (MUST come after 8b)
+        // Pattern 5b: "⛃ <tier> CATCH! You caught a/an ItemName!"
         DROP_PATTERNS.add(new DropPattern(
             Pattern.compile(ANY_CATCH + "(?:an?\\s+)?(.+?)!", Pattern.CASE_INSENSITIVE),
-            -1, 1
+            DropType.ITEM, -1, 1
         ));
         
-        // Pattern 11: "Wow! You dug out X coins!"
+        // Pattern 6: "Wow! You dug out X coins!"
         DROP_PATTERNS.add(new DropPattern(
-            Pattern.compile(WOW_DUG_OUT + " ([\\d,]+)\\s+coins!", Pattern.CASE_INSENSITIVE),
-            -2, 1 // Special marker for coins
+            Pattern.compile(DropKeyword.WOW_DUG_OUT.keyword + " ([\\d,]+)\\s+coins!", Pattern.CASE_INSENSITIVE),
+            DropType.COIN, 1, -1
         ));
         
-        // Pattern 12: "You caught xX ItemName Shards!"
+        // Pattern 7a: "You caught xX ItemName Shards!"
         DROP_PATTERNS.add(new DropPattern(
             Pattern.compile("you caught x(\\d+)\\s+(.+?)\\s*shards?!", Pattern.CASE_INSENSITIVE),
-            1, 2
+            DropType.SHARD, 1, 2
         ));
         
-        // Pattern 13: "You caught a/an ItemName Shard!"
+        // Pattern 7b: "You caught a/an ItemName Shard!"
         DROP_PATTERNS.add(new DropPattern(
             Pattern.compile("you caught an?\\s+(.+?)\\s*shard!", Pattern.CASE_INSENSITIVE),
-            -1, 1
+            DropType.SHARD, -1, 1
         ));
         
-        // Pattern 14: "CHARM/SALT/NAGA You charmed a CreatureName and captured X Shards from it."
+        // Pattern 8a: "CHARM/SALT/NAGA You charmed a CreatureName and captured X Shards" (with or without "from it.")
         DROP_PATTERNS.add(new DropPattern(
-            Pattern.compile("(?:salt|charm|naga)\\s+you charmed an?\\s+(.+?)\\s+and captured (\\d+)\\s+shards? from it.", Pattern.CASE_INSENSITIVE),
-            2, 1
+            Pattern.compile("(?:salt|charm|naga)\\s+you charmed an?\\s+(.+?)\\s+and captured (\\d+)\\s+shards?", Pattern.CASE_INSENSITIVE),
+            DropType.SHARD, 2, 1
         ));
         
-        // Pattern 14b: "CHARM/SALT/NAGA You charmed a CreatureName and captured its Shard."
+        // Pattern 8b: "CHARM/SALT/NAGA You charmed a CreatureName and captured its Shard."
         DROP_PATTERNS.add(new DropPattern(
             Pattern.compile("(?:salt|charm|naga)\\s+you charmed an?\\s+(.+?)\\s+and captured its shard.", Pattern.CASE_INSENSITIVE),
-            -1, 1
+            DropType.SHARD, -1, 1
         ));
         
-        // Pattern 15: "LOOT SHARE You received a ItemName Shard for assisting <someone>!"
+        // Pattern 9: "LOOT SHARE You received a ItemName Shard for assisting <someone>!"
         DROP_PATTERNS.add(new DropPattern(
             Pattern.compile("loot share\\s+you received an?\\s+(.+?)\\s*shard for assisting\\s+\\w+!", Pattern.CASE_INSENSITIVE),
-            -1, 1
+            DropType.SHARD, -1, 1
         ));
     }
 
-    public static ParseResult parseMessage(String message) {
+    /**
+     * Parse a chat message for drop information
+     */
+    public static @Nullable ParseResult parseMessage(String message) {
         if (message == null || message.trim().isEmpty()) return null;
+        if (shouldIgnore(message)) return null;
+        if (!DropKeyword.containsAny(message.toLowerCase())) return null;
         
-        // Filter out annoying cases (mostly fishing) 
-        if (ignore(message)) {
-            return null;
+        for (var pattern : DROP_PATTERNS) {
+            Matcher m = pattern.pattern.matcher(message);
+            if (!m.find()) continue;
+            
+            ParseResult r = tryPattern(pattern, m, message);
+            if (r != null) return r;
         }
-        
-        // Quick pre-filter to check for common drop indicators
-        if (!isDrop(message)) {
-            return null;
-        }
-        
-        // Remove color codes and clean the message
-        for (DropPattern pattern : DROP_PATTERNS) {
-            ParseResult result = tryPattern(pattern, message);
-            if (result != null) {
-                return result;
-            }
-        }
-        
+
         return null;
     }
 
-    private static boolean isDrop(String lowerMessage) {
-        return lowerMessage.contains(RARE_DROP) ||
-               lowerMessage.contains(VERY_RARE_DROP) ||
-               lowerMessage.contains(CRAZY_RARE_DROP) ||
-               lowerMessage.contains(EXTREMELY_RARE_DROP) ||
-               lowerMessage.contains(INSANE_DROP) ||
-               lowerMessage.contains(PRAY_TO_RNGESUS_DROP) ||
-               lowerMessage.contains(PET_DROP) ||
-               lowerMessage.contains(CATCH_KEYWORD) ||
-               lowerMessage.contains(WOW_DUG_OUT) ||
-               lowerMessage.contains(YOU_CAUGHT) ||
-               lowerMessage.contains(CHARM_KEYWORD) ||
-                lowerMessage.contains(NAGA_KEYWORD) ||
-               lowerMessage.contains(SALT_YOU_CHARMED) ||
-               lowerMessage.contains(LOOT_SHARE);
-    }
+    private static ParseResult tryPattern(DropPattern pattern, Matcher m, String message) {
+        try {
 
-    private static boolean ignore(String lowerMessage) {
-        if (lowerMessage.contains(CATCH_KEYWORD) ||
-            lowerMessage.contains(SHARD_KEYWORD) ||
-            lowerMessage.contains("coins!")) {
-            return false;
-        }
-        return lowerMessage.contains("double hook") ||
-               lowerMessage.contains("you've hooked an");
-    }
-    
-    private static ParseResult tryPattern(DropPattern pattern, String cleanMessage) {
-        Matcher matcher = pattern.pattern.matcher(cleanMessage);
-        if (!matcher.find()) {
-            return null;
-        }
-        
-        try {
-            ParseResult result = extractItemAndQuantity(pattern, matcher, cleanMessage);
+            var rawItemName = extractItemName(pattern, m);
+            int quantity = extractQuantity(pattern, m);
+            var type = pattern.type;
             
-            if (result != null && (result.isCoinDrop || isTrackableItem(result.itemName, cleanMessage))) {
-                return result;
-            }
-        } catch (Exception e) {
-            // Continue to next pattern if parsing fails
-        }
-        
-        return null;
-    }
-    
-    private static ParseResult extractItemAndQuantity(DropPattern pattern, Matcher matcher, String cleanMessage) {
-        String itemName;
-        int quantity;
-        boolean isCoinDrop = false;
-        
-        try {
-            if (pattern.quantityGroup == -1) {
-                quantity = 1;
-                itemName = matcher.group(pattern.itemGroup);
-            } else if (pattern.quantityGroup == -2) {
-                String quantityStr = matcher.group(1).replace(",", "");
-                quantity = Integer.parseInt(quantityStr);
-                itemName = COINS_KEYWORD;
-                isCoinDrop = true;
-            } else {
-                String quantityStr = matcher.group(pattern.quantityGroup).replace(",", "");
-                quantity = Integer.parseInt(quantityStr);
-                itemName = matcher.group(pattern.itemGroup);
+            if (type.equals(DropType.COIN)) {
+                return new ParseResult(COINS_KW, quantity, DropType.COIN);
             }
             
-            if (!isCoinDrop && isCoinsPattern(itemName)) {
-                String coinMatch = itemName.replaceAll("[^\\d,]", "");
-                if (!coinMatch.isEmpty()) {
-                    quantity = Integer.parseInt(coinMatch.replace(",", ""));
-                    itemName = COINS_KEYWORD;
-                    isCoinDrop = true;
+            if (rawItemName != null && isCoinsPattern(rawItemName)) {
+                var coinTest = rawItemName.replaceAll("[^\\d,]", "");
+                if (!coinTest.isEmpty()) {
+                    int coinQuantity = Integer.parseInt(coinTest.replace(",", ""));
+                    return new ParseResult(COINS_KW, coinQuantity, DropType.COIN);
                 }
             }
             
-            itemName = handleSpecialMessages(itemName, cleanMessage);
-            itemName = cleanItemName(itemName);
-            
-            if (isCoinDrop) {
-                return new ParseResult(COINS_KEYWORD, quantity, true);
+            var normalized = normalize(rawItemName, type, message);
+            if (isTrackable(normalized, message)) {
+                return new ParseResult(normalized, quantity, type);
             }
-            
-            itemName = detectAndAddShardSuffix(itemName, cleanMessage);
-            itemName = ensureShardSuffix(itemName, cleanMessage);
-            String displayName = toSingular(itemName);
 
-            return new ParseResult(displayName, quantity, false, null);
-        } catch (Exception e) {
             return null;
+
+        } catch (Exception e) {
+            return null; // Parsing failed for this pattern
         }
-    }
-    
-    private static boolean isCoinsPattern(String itemName) {
-        return itemName.matches("[\\d,]+\\s+coins?!?") || 
-               itemName.matches("\\d[\\d,]*\\s+coins?!?") ||
-               itemName.toLowerCase().matches("[\\d,]+\\s+coins?!?");
     }
 
-    // Check if an item should be treated as a shard
-    private static String detectAndAddShardSuffix(String itemName, String originalMessage) {
-        String lowerItem = itemName.toLowerCase().trim();
-        String lowerMessage = originalMessage.toLowerCase();
-        if (lowerItem.contains(SHARD_KEYWORD)) {
-            return itemName;
-        }
-        
-        if (lowerItem.equals(COINS_KEYWORD) || lowerItem.equals(COIN_KEYWORD) || lowerItem.contains("coin")) {
-            return itemName;
-        }
-        
-        if (TRACKED_SHARDS.contains(lowerItem) &&
-            (lowerMessage.contains("caught") || lowerMessage.contains("good catch") || 
-             lowerMessage.contains("great catch") || lowerMessage.contains("outstanding catch"))) {
-            return itemName + " " + SHARD_KEYWORD;
-        }
-        
-        return itemName;
+    private static String extractItemName(DropPattern pattern, Matcher m) {
+        if (pattern.itemGroup == -1) return null;
+        return m.group(pattern.itemGroup);
     }
-    
-    private static String ensureShardSuffix(String itemName, String originalMessage) {
-        String lowerMessage = originalMessage.toLowerCase();
-        String lowerItem = itemName.toLowerCase();
-        boolean isShardMessage = lowerMessage.contains(SHARD_KEYWORD) || 
-                                lowerMessage.startsWith(CHARM_KEYWORD) || 
-                                lowerMessage.contains(NAGA_KEYWORD) ||
-                                lowerMessage.contains(SALT_YOU_CHARMED) ||
-                                lowerMessage.contains(LOOT_SHARE);
-        
-        // If it's a shard message and the item doesn't already end with "shard"
-        if (isShardMessage && !lowerItem.endsWith(SHARD_KEYWORD)
-            && !lowerItem.equals(COINS_KEYWORD) && !lowerItem.equals(COIN_KEYWORD) && !lowerItem.contains("coin")) {
-            return itemName + " " + SHARD_KEYWORD;
-        }
-        
-        return itemName;
+
+    private static int extractQuantity(DropPattern pattern, Matcher m) {
+        if (pattern.quantityGroup == -1) return 1;
+        String quantityStr = m.group(pattern.quantityGroup).replace(",", "");
+        return Integer.parseInt(quantityStr);
     }
-    
-    private static String handleSpecialMessages(String itemName, String cleanMessage) {
-        String lowerMessage = cleanMessage.toLowerCase();
-        if ((lowerMessage.startsWith(CHARM_KEYWORD) || lowerMessage.startsWith("salt")) || lowerMessage.startsWith(NAGA_KEYWORD) &&
-            (lowerMessage.contains("captured") || lowerMessage.contains(SHARD_KEYWORD))) {
-            return itemName + " " + SHARD_KEYWORD;
-        }
-        return itemName;
-    }
-    
-    private static String toSingular(String itemName) {
-        String normalized = itemName.toLowerCase();
-        
-        // If it's a shard, ensure singular form for display
-        if (normalized.contains(SHARD_KEYWORD) && normalized.endsWith(SHARD_PLURAL)) {
-            return itemName.substring(0, itemName.length() - 1);
-        }
-        
-        return itemName;
-    }
-    
-    private static String cleanItemName(String itemName) {
-        // Direct normalization - simple and fast
-        String cleaned = itemName.trim()
-                .replaceAll("\\s+", " ")
-                .replaceAll("[\"'`]", "")
-                .replaceAll("\\([^)]*\\)", "")
-                .replace("✹", "")
-                .trim()
-                .toLowerCase();
-        
-        return normalizePlural(cleaned);
-    }
-    
+
     /**
-     * Normalize plural item names to singular for consistent tracking
+     * Normalize item name based on type and content
      */
-    private static String normalizePlural(String itemName) {
-        // Handle common shard plurals (most frequent case)
-        if (itemName.endsWith(SHARD_PLURAL)) {
-            return itemName.replace(SHARD_PLURAL, " " + SHARD_KEYWORD);
-        }
+    private static String normalize(String rawS, DropType type, String originalS) {
+        if (rawS == null) return null;
         
-        // Handle other specific plurals
-        itemName = normalizeSpecificPlurals(itemName);
+        String s = rawS.trim()
+            .replaceAll("\\s+", " ")
+            .replaceAll("[\"'`]", "")
+            .replaceAll("\\([^)]*\\)", "")
+            .replace("✯", "")
+            .trim()
+            .toLowerCase();
         
-        // Handle generic plurals for known tracked items
-        return normalizeKnownShardPlurals(itemName);
-    }
-    
-    private static String normalizeSpecificPlurals(String itemName) {
-        if (itemName.endsWith(COINS_KEYWORD)) {
-            return itemName.replace(COINS_KEYWORD, COIN_KEYWORD);
-        }
-        
-        return itemName;
-    }
-    
-    private static String normalizeKnownShardPlurals(String itemName) {
-        for (String shard : TRACKED_SHARDS) {
-            if (itemName.equals(shard + "s")) {
-                return shard;
+        if (type.equals(DropType.SHARD)) {
+            if (!s.endsWith(SHARD_KW)) s = s.concat(" " + SHARD_KW);
+            if (s.endsWith(SHARD_PLURAL)) s = s.replace(SHARD_PLURAL, " " + SHARD_KW);
+
+        } else {
+            String lowerS = originalS.toLowerCase();
+            if (TRACKED_SHARDS.contains(s) && 
+                (lowerS.contains("caught") || lowerS.contains("catch"))) {
+                s = s.concat(" " + SHARD_KW);
             }
         }
-        return itemName;
+        
+        if (isCoinsPattern(s)) {
+            return COINS_KW;
+        }
+        
+        return s;
     }
-    
+
     /**
-     * Check if an item should be tracked
+     * Check if item should be tracked
      */
-    private static boolean isTrackableItem(String itemName, String cleanMessage) {
-        String normalized = itemName.toLowerCase();
-        String lowerMessage = cleanMessage.toLowerCase();
-    
-        if (isPlainCoin(normalized)) {
+    private static boolean isTrackable(String normalized, String original) {
+        if (normalized == null) return false;
+        
+        if (normalized.equals(COINS_KW) || normalized.equals(COIN_KW)) {
+            return false; // Ignore plain coin references
+        }
+        
+        if (normalized.contains(COINS_KW)) return true;
+        if (isShardItem(normalized)) return true;
+        
+        // Track items from rare drop messages
+        String lower = original.toLowerCase();
+        for (DropKeyword kw : DropKeyword.values()) {
+            if (kw.isDropTier && lower.contains(kw.keyword)) {
+                return true;
+            }
+        }
+        
+        // Check for catch patterns
+        if (lower.contains("rare catch") || 
+            lower.contains("good catch") ||
+            lower.contains("great catch") || 
+            lower.contains("outstanding catch") ||
+            lower.contains(DropKeyword.WOW_DUG_OUT.keyword)) {
+            return true;
+        }
+        
+        // Track items with valuable keywords
+        return hasValuableKeyword(normalized);
+    }
+
+    private static boolean shouldIgnore(String message) {
+        String lower = message.toLowerCase();
+        
+        if (lower.contains(DropKeyword.CATCH.keyword) ||
+            lower.contains(SHARD_KW) ||
+            lower.contains("coins!")) {
             return false;
         }
         
-        if (TRACKED_SHARDS.contains(normalized) || normalized.contains(COINS_KEYWORD)) {
-            return true;
-        }
-        
-        if (isShardItem(normalized)) {
-            return true;
-        }
-        
-        if (isRareDropPattern(lowerMessage)) {
-            return true;
-        }
-        
-        return hasValuableKeyword(normalized);
+        // Ignore fishing messages
+        return lower.contains("double hook") || lower.contains("you've hooked an");
     }
-    
-    private static boolean isRareDropPattern(String lowerMessage) {
-        return lowerMessage.contains(RARE_DROP) ||
-               lowerMessage.contains(VERY_RARE_DROP) ||
-               lowerMessage.contains(CRAZY_RARE_DROP) ||
-               lowerMessage.contains(EXTREMELY_RARE_DROP) ||
-               lowerMessage.contains(INSANE_DROP) ||
-               lowerMessage.contains(PRAY_TO_RNGESUS_DROP) ||
-               lowerMessage.contains("rare catch") ||
-               lowerMessage.contains("good catch") ||
-               lowerMessage.contains("great catch") ||
-               lowerMessage.contains("outstanding catch") ||
-               lowerMessage.contains(PET_DROP) ||
-               lowerMessage.contains(WOW_DUG_OUT);
-    }
-    
-    private static boolean isPlainCoin(String normalized) {
-        return normalized.equals(COINS_KEYWORD) || normalized.equals(COIN_KEYWORD);
+
+    private static boolean isCoinsPattern(String itemName) {
+        String lower = itemName.toLowerCase();
+        return lower.matches("[\\d,]+\\s+coins?!?") || 
+               lower.matches("\\d[\\d,]*\\s+coins?!?");
     }
     
     private static boolean isShardItem(String normalized) {
-        if (!normalized.contains(SHARD_KEYWORD)) {
+        if (!normalized.contains(SHARD_KW)) {
             return false;
         }
-        if (normalized.contains("raw salmon") || normalized.contains("shard of the shredded") || 
-            normalized.contains("prismarine shard") || normalized.contains("earth shard")) {
-            return false;
+        
+        if (normalized.contains("raw salmon") || 
+            normalized.contains("shard of the shredded") || 
+            normalized.contains("prismarine shard") || 
+            normalized.contains("earth shard")) {
+            return false; // Fake shards
         }
+        
         for (String shard : TRACKED_SHARDS) {
             if (normalized.contains(shard)) {
                 return true;
             }
         }
+        
         return false;
     }
     
@@ -506,52 +396,54 @@ public class ChatDropParser {
         return false;
     }
 
-    /**
-     * Data class for drop patterns
-     */
     private static class DropPattern {
         final Pattern pattern;
-        final int quantityGroup;
-        final int itemGroup;
+        final DropType type;
+        final int quantityGroup;  // -1 = quantity is 1
+        final int itemGroup;      // -1 = no item (coins)
         
-        DropPattern(Pattern pattern, int quantityGroup, int itemGroup) {
+        DropPattern(Pattern pattern, DropType type, int quantityGroup, int itemGroup) {
             this.pattern = pattern;
+            this.type = type;
             this.quantityGroup = quantityGroup;
             this.itemGroup = itemGroup;
         }
     }
     
-    /**
-     * Result of parsing a chat message
-     */
     public static class ParseResult {
         public final String itemName;
         public final int quantity;
-        public final boolean isCoinDrop;
-        public final String tooltipContent;
-        
+        public final DropType type;
+
         public ParseResult(String itemName, int quantity) {
-            this(itemName, quantity, false, null);
+            this(itemName, quantity, DropType.ITEM);
         }
         
-        public ParseResult(String itemName, int quantity, boolean isCoinDrop) {
-            this(itemName, quantity, isCoinDrop, null);
-        }
-        
-        public ParseResult(String itemName, int quantity, boolean isCoinDrop, String tooltipContent) {
+        public ParseResult(String itemName, int quantity, DropType dropType) {
             this.itemName = itemName;
             this.quantity = quantity;
-            this.isCoinDrop = isCoinDrop;
-            this.tooltipContent = tooltipContent;
+            this.type = dropType;
+        }
+
+        public boolean coinDrop() {
+            return type.equals(DropType.COIN);
+        }
+
+        public boolean bookDrop() {
+            return type.equals(DropType.BOOK);
         }
         
         @Override
         public String toString() {
-            if (isCoinDrop) {
+            if (type.equals(DropType.COIN)) {
                 return String.format("%s %s", String.format("%,d", quantity), itemName);
             }
-            return String.format("%dx %s", quantity, itemName);
+            return String.format("%s x%d", itemName, quantity);
         }
+    }
+
+    public enum DropType {
+        BOOK, COIN, SHARD, ITEM
     }
 
     private ChatDropParser() {

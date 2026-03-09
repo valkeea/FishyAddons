@@ -11,6 +11,7 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.decoration.ArmorStandEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.text.Text;
+import net.minecraft.util.math.Vec3d;
 
 public class ValuableMobs {
     private static boolean foundVal = false;
@@ -20,7 +21,7 @@ public class ValuableMobs {
     private static final List<ValuableMobInfo> valuableMobList = new ArrayList<>();
 
     private static final List<String> TRACKED_NAMES = List.of(
-        "thunder", "lord jawbus", "ragnarok", "minos inquisitor", "titanoboa",
+        "ragnarok", "minos inquisitor", "titanoboa",
         "wiki tiki", "sphinx", "king minos", "manticore", "sven alpha", "sven follower",
         "yeti", "reindrake", "scuttler"
     );
@@ -82,7 +83,7 @@ public class ValuableMobs {
         public final Text mobDisplayName;
         public final MobHealth health;
         public final boolean isPlayerEntity;
-        public final net.minecraft.util.math.Vec3d position;
+        public final Vec3d position;
 
         public ValuableMobInfo(ArmorStandEntity armorStand, String mobName, String labelText, boolean isPlayerEntity) {
             this.id = armorStand.getId();
@@ -99,16 +100,18 @@ public class ValuableMobs {
         public String getHealth() { return health.currentHealth; }
         public String getMaxHealth() { return health.maxHealth; }
         public int getHealthPercent() { return health.getHealthPercent(); }
-        public net.minecraft.util.math.Vec3d getPosition() { return position; }        
+        public Vec3d getPosition() { return position; }        
 
         private Text setDisplayName(ArmorStandEntity armorStand) {
+            var name = armorStand.getCustomName();
+            if (name == null) return Text.empty();
 
-            for (Text sibling : armorStand.getCustomName().getSiblings()) {
+            for (Text sibling : name.getSiblings()) {
                 String siblingStr = sibling.getString();
                 if (siblingStr.toLowerCase().contains(mobName.toLowerCase())) return sibling;
             }
 
-            return armorStand.getCustomName();
+            return name;
         }
         
         public static MobHealth extractHealth(String labelText) {
@@ -189,7 +192,7 @@ public class ValuableMobs {
 
     }
     
-    private record DeadMob(String name, net.minecraft.util.math.Vec3d position, long timestamp) {}
+    private record DeadMob(String name, Vec3d position, long timestamp) {}
 
     public static void onEntityAdded(net.minecraft.entity.Entity entity) {
         if (entity instanceof PlayerEntity player) {
@@ -214,19 +217,19 @@ public class ValuableMobs {
             if (foundVal) {
                 foundVal = false;
                 InventoryTracker.onValuableGone();
-                valuableMobList.forEach(vmi -> recordDeath(vmi, now));
+                valuableMobList.forEach(vmi -> {
+                    if (!hasRecentDeath(vmi)) recordDeath(vmi, now);
+                });
                 valuableMobList.clear();
             }
             return;
         }
 
         valuableMobList.removeIf(vmi -> {
-            boolean stillExists = valArmorStands.stream()
-                .anyMatch(armorStand -> armorStand.getId() == vmi.getId());
-
-            if (!stillExists) {
-                recordDeath(vmi, now);
-            }
+            boolean stillExists = valArmorStands.stream().anyMatch(
+                e -> e.getId() == vmi.getId() && vmi.health.getHealthPercent() > 0
+            );
+            if (!stillExists && !hasRecentDeath(vmi)) recordDeath(vmi, now);
             return !stillExists;
         });
 
@@ -284,7 +287,7 @@ public class ValuableMobs {
 
         // Health display
         boolean isTrackedMob = false;
-        for (String trackedName : TRACKED_NAMES) {
+        for (String trackedName : ALL_VALUABLE_NAMES) {
             if (lowerCleanedName.contains(trackedName)) {
                 isTrackedMob = true;
                 break;
@@ -367,6 +370,21 @@ public class ValuableMobs {
         return !valuableMobList.isEmpty();
     }
     
+    private static boolean hasRecentDeath(ValuableMobInfo vmi) {
+        long now = System.currentTimeMillis();
+        for (DeadMob deadMob : deadMobs.values()) {
+            if (now - deadMob.timestamp() > DEATH_CACHE_DURATION) continue;
+            
+            if (deadMob.name().equalsIgnoreCase(vmi.getName())) {
+                double distance = vmi.getPosition().distanceTo(deadMob.position());
+                if (distance <= DEATH_MATCH_DISTANCE) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+    
     private static void recordDeath(ValuableMobInfo vmi, long timestamp) {
         deadMobs.put(vmi.getName() + "_" + timestamp, 
             new DeadMob(vmi.getName(), vmi.getPosition(), timestamp));
@@ -375,7 +393,7 @@ public class ValuableMobs {
     /**
      * Checks if a cocoon location matches a recently dead valuable mob
      */
-    public static String checkRecentDeath(net.minecraft.util.math.Vec3d loc) {
+    public static String checkRecentDeath(Vec3d loc) {
 
         long now = System.currentTimeMillis();
         
@@ -387,7 +405,7 @@ public class ValuableMobs {
                 return deadMob.name();
             }
         }
-        
+
         return null;
     }
 }

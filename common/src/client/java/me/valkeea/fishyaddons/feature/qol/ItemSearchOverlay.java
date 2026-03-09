@@ -26,7 +26,7 @@ public class ItemSearchOverlay {
     private static final float DEFAULT_OVERLAY_OPACITY = 0.5f;
     
     private String lastSearchTerm = "";
-    private boolean cacheValid = false;
+    private int lastHash = 0;
     private boolean enabled = false;
     
     private ItemSearchOverlay() {
@@ -44,8 +44,33 @@ public class ItemSearchOverlay {
             EventPriority.HIGH, EventPhase.PRE
         );
 
-        FaEvents.SCREEN_OPEN.register(event -> getInstance().invalidateCache());
-        FaEvents.SCREEN_CLOSE.register(event -> getInstance().invalidateCache());
+        FaEvents.SCREEN_CLOSE.register(event -> getInstance().onScreenClose());
+    }
+
+    private void onScreenClose() {
+        matchingSlots.clear();
+        lastSearchTerm = "";
+        lastHash = 0;
+    }
+
+    private int computeHash(Object handler) {
+        
+        try {
+            var slots = ((net.minecraft.screen.ScreenHandler) handler).slots;
+            int h = 1;
+            for (var slot : slots) {
+                var stack = slot.getStack();
+                if (stack != null && !stack.isEmpty()) {
+                    h = 31 * h + stack.getItem().hashCode();
+                    h = 31 * h + stack.getCount();
+                    h = 31 * h + stack.getComponents().hashCode();
+                }
+            }
+            return h;
+
+        } catch (Exception e) {
+            return 0;
+        }
     }
 
     public static ItemSearchOverlay getInstance() {
@@ -69,16 +94,15 @@ public class ItemSearchOverlay {
         try {
 
             var components = stack.getComponents();
-            var loreComponent = components.get(net.minecraft.component.DataComponentTypes.LORE);
+            var lore= components.get(net.minecraft.component.DataComponentTypes.LORE);
             
-            if (loreComponent != null) {
-                for (var line : loreComponent.lines()) {
+            if (lore != null) {
+                for (var line : lore.lines()) {
                     if (line.getString().toLowerCase().contains(searchTerm)) {
                         return true;
                     }
                 }
             }
-
         } catch (Exception e) {
             // Ignore access error
         }
@@ -104,12 +128,12 @@ public class ItemSearchOverlay {
                 var blockingRect = findBlockingRect(x, y, excludedAreas);
                 if (blockingRect != null) {
                     if (x < blockingRect.x) {
-                        ctx.fillGradient(x, y, blockingRect.x, y + 1, overlayColor, overlayColor);
+                        ctx.fill(x, y, blockingRect.x, y + 1, overlayColor);
                     }
 
                     x = blockingRect.x + blockingRect.width;
                 } else {
-                    ctx.fillGradient(x, y, screenWidth, y + 1, overlayColor, overlayColor);
+                    ctx.fill(x, y, screenWidth, y + 1, overlayColor);
                     break;
                 }
             }
@@ -138,9 +162,13 @@ public class ItemSearchOverlay {
         var handler = screen.getScreenHandler();
         if (handler == null) return;
 
-        if (searchChanged || !cacheValid) {
+        int currentHash = computeHash(handler);
+        boolean slotsChanged = currentHash != lastHash;
+
+        if (searchChanged || slotsChanged) {
             matchingSlots.clear();
             lastSearchTerm = lowerSearchTerm;
+            lastHash = currentHash;
             
             for (var slot : handler.slots) {
                 var stack = slot.getStack();
@@ -148,8 +176,6 @@ public class ItemSearchOverlay {
                     matchingSlots.add(slot.id);
                 }
             }
-            
-            cacheValid = true;
         }
         
         if (matchingSlots.isEmpty()) {
@@ -218,11 +244,8 @@ public class ItemSearchOverlay {
             searchField.setOverlayActive(false);
         }
         matchingSlots.clear();
-        invalidateCache();
-    }
-
-    public void invalidateCache() {
-        cacheValid = false;
+        lastSearchTerm = "";
+        lastHash = 0;
     }
     
     public static boolean isEnabled() {

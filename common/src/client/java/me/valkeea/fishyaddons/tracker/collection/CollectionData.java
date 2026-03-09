@@ -57,8 +57,9 @@ public class CollectionData {
      * These cover some common pitfalls but potential drop matching likely needs future calibrating !
      */
     static final Set<String> falseMatches = Set.of(
-        "jungle", "heart", "nether", "magma", "feather", "shard", "flesh", "potato",
-        "mushrooms", "dust", "halfeaten mushroom", "bone", "spider", "never-melt ice", "pumpkin guts"
+        "jungle", "flaming", "star", "lump", "feather", "shard", "flesh", "potato",
+        "mushrooms", "halfeaten", "bone", "spider egg", "nevermelt", "pixie", "spectre",
+        "guts", "burning", "distillate", "shield", "ashes", "synthetic"
     );
 
     static final Set<String> specialCrafts = Set.of(
@@ -166,7 +167,8 @@ public class CollectionData {
     protected static boolean isPotentialDrop(String itemName) {
         String normalized = normalize(itemName);
         
-        if (baseDropConversions.containsKey(normalized) || specialCrafts.contains(normalized)) {
+        if (baseDropConversions.containsKey(normalized) ||
+            specialCrafts.stream().anyMatch(normalized::contains)) {
             return true;
         }
 
@@ -290,7 +292,7 @@ public class CollectionData {
             baselines.put(itemName, newBaseline);
             inform("Updated stale data for §b" + itemName);
 
-        } else if (baselineStale.getOrDefault(itemName, true) && currentGain > 0) {
+        } else if (baselineStale.getOrDefault(itemName, true).booleanValue() && currentGain > 0) {
             inform("Skipping stale scan for §b" + itemName + "§r\ndue to active session gains");
         }
     }

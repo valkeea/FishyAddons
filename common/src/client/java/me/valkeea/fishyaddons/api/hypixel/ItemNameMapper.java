@@ -174,6 +174,7 @@ public class ItemNameMapper {
             case "diamond magmafish" -> "MAGMA_FISH_DIAMOND";
             case "lucky clover core" -> "PET_ITEM_LUCKY_CLOVER_DROP";            
             case "exp share core" -> "PET_ITEM_EXP_SHARE_CORE_DROP";
+            case "nether star" -> "CORRUPTED_NETHER_STAR";
             case "coins" -> null;
             default -> null;
         };

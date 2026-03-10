@@ -5,54 +5,58 @@ import org.jetbrains.annotations.Nullable;
 import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.config.Key;
 import me.valkeea.fishyaddons.impl.MutableSoundInstance;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.sound.SoundInstance;
-import net.minecraft.entity.projectile.FishingBobberEntity;
 import net.minecraft.registry.Registries;
 import net.minecraft.util.Identifier;
 
 /**
- * Tracks fishing state to enable sound replacement for incoming catches.
- * (Contextual validation)
+ * Replaces Hypixel's fishing catch sound.
+ * Validation is done by recording the pitch of incoming sound packets and bobber render state.
  */
 public class CatchAlert {
     private CatchAlert() {}
 
+    private static final String DEF = "block.note_block.pling";
+    private static final float PITCH_REF = 1.0f;    
+    private static final int DROP_WINDOW = 15;
+    private static final int RENDER_TIMEOUT = 5;
+    private static final int INACTIVE_LIMIT = RENDER_TIMEOUT + 1;
+
+    private static int catchCd = 0;
+    private static int sinceRender = INACTIVE_LIMIT;
+    private static float lastPitch = -1.0f;
     private static float volume = 0.0f;
     private static boolean noRandom = false;
     private static boolean trueVol = false;
-    private static String def = "block.note_block.pling";
-    private static String id = def;
-    private static FishingBobberEntity lastBobber = null;
-    private static boolean alertActive = false;
-    private static int catchCd = 0;
+    private static String id = DEF;
 
     public static void init() {
         refresh();
     }    
 
     public static void tick() {
-        if (!isEnabled()) {
-            lastBobber = null;
-            return;
+        if (isEnabled()) {
+            if (catchCd > 0) catchCd--;
+            if (sinceRender < INACTIVE_LIMIT) sinceRender++;
         }
-
-        if (catchCd > 0) catchCd--;
-
-        lastBobber = isFishing();
     }
 
     /**
-     * Return the player's fishing bobber if it exists and is valid, null otherwise.
+     * Called every frame when player's fishing line is being rendered.
      */
-    public static FishingBobberEntity isFishing() {
-        var mc = MinecraftClient.getInstance();
-        if (mc.player == null || mc.world == null || !alertActive) return null;
-        return mc.player.fishHook;
+    public static void onFishingLineRendered() {
+        sinceRender = 0;
     }
 
-    public static boolean isEnabled() {
+    private static boolean isEnabled() {
         return volume > 0.0f;
+    }
+
+    /**
+     * Record pitch from incoming sound packet.
+     */
+    public static void recordPitch(String soundId, float pitch) {
+        if (soundId.contains(DEF)) lastPitch = pitch;
     }
 
     /**
@@ -60,10 +64,10 @@ public class CatchAlert {
      */
     @Nullable
     public static SoundInstance getReplacementSound(Identifier soundId) {
-        if (!isFishingPling(soundId.getPath())) return null; 
-               
-        catchCd = 10;
-        
+        if (!isFishing() || !isFishingPling(soundId.getPath())) return null;
+
+        catchCd = DROP_WINDOW;
+
         var soundIdentifier = Identifier.tryParse(id);
         if (soundIdentifier == null) return null;
 
@@ -71,26 +75,26 @@ public class CatchAlert {
         if (sound == null || Registries.SOUND_EVENT.getId(sound) == null) return null;
 
         return trueVol 
-            ? MutableSoundInstance.masterBypass(sound, 1.0f, volume, noRandom)
-            : MutableSoundInstance.master(sound, 1.0f, volume, noRandom);
+            ? MutableSoundInstance.masterBypass(sound, PITCH_REF, volume, noRandom)
+            : MutableSoundInstance.master(sound, PITCH_REF, volume, noRandom);
+    }
+
+    private static boolean isFishing() {
+        return isEnabled() && sinceRender < RENDER_TIMEOUT;
     }
 
     private static boolean isFishingPling(String path) {
-        return isEnabled() && catchCd <= 0 && lastBobber != null &&
-        !lastBobber.isRemoved() && path.equals(def);
-    }
+        if (catchCd > 0 || lastPitch < 0.0f || !path.equals(DEF)) return false;
 
-    public static boolean isFishingAlert(String label) {
-        return label.equals("?") || label.equals("!!!");
-    }
+        boolean matches = Math.abs(lastPitch - PITCH_REF) < 0.001f;
+        if (matches) lastPitch = -1.0f;
 
-    public static void update(boolean foundStand) {
-        alertActive = foundStand;
+        return matches;
     }
 
     public static void refresh() {
-        volume = FishyConfig.getFloat(Key.CUSTOM_REEL, 1.0f);
-        id = FishyConfig.getString(Key.REEL_ALERT, def);
+        volume = FishyConfig.getFloat(Key.CUSTOM_REEL, PITCH_REF);
+        id = FishyConfig.getString(Key.REEL_ALERT, DEF);
         noRandom = FishyConfig.getState(Key.REEL_NORANDOM, false);
         trueVol = FishyConfig.getState(Key.REEL_TRUE_VOLUME, false);
     }

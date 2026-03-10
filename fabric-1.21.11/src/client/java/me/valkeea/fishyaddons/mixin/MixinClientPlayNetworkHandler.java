@@ -9,6 +9,7 @@ import me.valkeea.fishyaddons.event.impl.FaEvents;
 import me.valkeea.fishyaddons.event.impl.GameMessageEvent;
 import me.valkeea.fishyaddons.event.impl.GuiChangeEvent;
 import me.valkeea.fishyaddons.feature.qol.NetworkMetrics;
+import me.valkeea.fishyaddons.feature.skyblock.CatchAlert;
 import me.valkeea.fishyaddons.tracker.profit.InventoryTracker;
 import me.valkeea.fishyaddons.util.TabScanner;
 import net.minecraft.client.MinecraftClient;
@@ -16,6 +17,7 @@ import net.minecraft.client.gui.screen.ingame.GenericContainerScreen;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.network.packet.s2c.play.GameMessageS2CPacket;
 import net.minecraft.network.packet.s2c.play.InventoryS2CPacket;
+import net.minecraft.network.packet.s2c.play.PlaySoundS2CPacket;
 import net.minecraft.network.packet.s2c.play.PlayerListS2CPacket;
 import net.minecraft.network.packet.s2c.play.ScreenHandlerSlotUpdateS2CPacket;
 import net.minecraft.network.packet.s2c.query.PingResultS2CPacket;
@@ -80,5 +82,18 @@ public class MixinClientPlayNetworkHandler {
         var pristine = packet.content();
         GameMessageEvent event = new GameMessageEvent(pristine, packet.overlay());
         FaEvents.GAME_MESSAGE.firePhased(event, listener -> listener.onGameMessage(event));
+    }
+
+    @Inject(
+        method = "onPlaySound",
+        at = @At("HEAD")
+    )
+	public void onPlaySound(PlaySoundS2CPacket packet, CallbackInfo ci) {
+        var sound = packet.getSound().value();
+        var soundId = net.minecraft.registry.Registries.SOUND_EVENT.getId(sound);
+        
+        if (soundId != null) {
+            CatchAlert.recordPitch(soundId.toString(), packet.getPitch());
+        }
     }
 }

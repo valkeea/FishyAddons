@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Map;
 
 import me.valkeea.fishyaddons.api.skyblock.GameMode;
-import me.valkeea.fishyaddons.feature.skyblock.CatchAlert;
 import me.valkeea.fishyaddons.feature.skyblock.FishingHotspot;
 import me.valkeea.fishyaddons.tracker.profit.ValuableMobs;
 import net.minecraft.client.MinecraftClient;
@@ -39,9 +38,9 @@ public class NearbyEntities {
 
         if (!GameMode.skyblock()) return;
 
-        var client = MinecraftClient.getInstance();
-        var player = client.player;
-        var world = client.world;
+        var mc = MinecraftClient.getInstance();
+        var player = mc.player;
+        var world = mc.world;
         if (world == null || player == null) return;
         
         if (tickCounter % 200 == 0) {
@@ -51,7 +50,6 @@ public class NearbyEntities {
         
         List<ArmorStandEntity> nearbyHspts = new ArrayList<>();
         List<ArmorStandEntity> nearbyVals = new ArrayList<>();
-        boolean fishReady = false;
 
         for (var stand : findArmorStands(world, player, RADIUS)) {
 
@@ -61,13 +59,12 @@ public class NearbyEntities {
                     nearbyHspts.add(stand);
                 } else if (ValuableMobs.isValArmorstand(labelText, stand)) {
                     nearbyVals.add(stand);
-                } else if (CatchAlert.isFishingAlert(labelText)) fishReady = true;
+                }
             }
         }
 
         FishingHotspot.update(nearbyHspts);
         ValuableMobs.update(nearbyVals);
-        CatchAlert.update(fishReady);
     }
 
     /**
@@ -126,9 +123,9 @@ public class NearbyEntities {
      * Checks if an armor stand is in radius of the player
      */
     public static boolean isInRange(ArmorStandEntity stand, double radius) {
-        var client = MinecraftClient.getInstance();
-        var player = client.player;
-        if (player == null || client.world == null) return false;
+        var mc = MinecraftClient.getInstance();
+        var player = mc.player;
+        if (player == null || mc.world == null) return false;
 
         return player.squaredDistanceTo(stand) <= radius * radius;
     }

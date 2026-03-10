@@ -1,8 +1,10 @@
 <div align="center">
   
-  # FishyAddons for Hypixel Skyblock
+<h1>FishyAddons for Hypixel Skyblock</h1>
 
-[![Modrinth](https://img.shields.io/badge/Modrinth-FA-green.svg)](https://modrinth.com/project/QOUIa2cU)
+<a href="https://modrinth.com/project/QOUIa2cU">
+<img alt="Modrinth Version" src="https://img.shields.io/modrinth/v/QOUIa2cU?label=Modrinth&labelColor=%23363636&color=%230affeb">
+</a>
 
  > _Use /fa or /fishyaddons to open config.  Features with commands have help message for the command root._
 
@@ -10,18 +12,24 @@
 
 ---
 
-## Quality of Life
+<h2>Quality of Life </h2>
 
 <details>
 <summary><b>Chat, Commands, Keybinds</b> (6)</summary>
-
-- Copy Chat with line/full message mode
-- Command keybinds _/fa key_
-- Command aliases _/fa cmd_
-- Chat Filter - supports custom formats
-- Customizable chat-event based alerts (title, autochat, sound alarm)
-- Chat Replacement (custom emojis)
-
+<ul>
+<li> Copy Chat with line/full message mode</li>
+<li> Command keybinds <i>/fa key</i></li>
+<li> Command aliases <i>/fa cmd</i></li>
+<li> Chat Filter - supports custom formats</li>
+<li> Chat Alerts - Trigger alerts on chat messages with an optional:
+  <ul>
+    <li>On-screen alert title</li>
+    <li>Sound alert</li>
+    <li>Automatic chat message</li>
+  </ul>
+</li>
+<li> Outgoing chat Replacement (custom emojis)</li>
+</ul>
 </details>
 
 <details>
@@ -34,11 +42,10 @@
 </details>
 
 <details>
-<summary><b>Render Tweaks</b> (3)</summary>
+<summary><b>Render Tweaks</b> (2)</summary>
 
 - Skip rendering entity death
 - Skip rendering fire on entities
-- Send and render player coordinates
 
 </details>
 
@@ -47,10 +54,11 @@
 ## Skyblock Features
 
 <details>
-<summary><b> Trackers & Displays</b> (7)</summary>
+<summary><b> Trackers & Displays</b> (8)</summary>
 
 - Skill XP Tracker / Display _/fa skill_
 - General Profit Tracker / Display (WIP) _/fp_
+- Collection Tracker + progress goals (items)
 - Slayer XP Tracker _/fa slayer_
 - Diana Tracker (out of date)
 - Pet Display
@@ -70,23 +78,28 @@
 </details>
 
 <details>
-<summary><b>Audio & Visual Tweaks</b> (7)</summary>
-
-- Scale and adjust held item rendering
-- Clean Wither Impact (disables particles and sound)
-- Mute Phantoms
-- Mute Thunders
-- Mute meow and Jerry runes
-- Scale and color crit particles on Galatea (invisibug)
-- Hide Skyblock gui buttons
-
+<summary><b>Audio & Visual Tweaks</b> (6)</summary>
+<ul>
+<li> Scale and adjust held item rendering (size, animation intensity)</li>
+<li> Clean Wither Impact (disables particles and sound)</li>
+<li> Custom ferocity sound & volume</li>
+<li> Mute options:
+  <ul>
+    <li>Phantoms on Galatea</li>
+    <li>Thunder Sea creature</li>
+    <li>Meow, Bark and Jerry runes</li>
+  </ul>
+</li>  
+<li> Hide and block clicks on Skyblock gui buttons</li>
+<li> Scale and color crit particles on Galatea (invisibug)</li>  
+</ul>
 </details>
 
 <details>
 <summary><b>Waypoints</b> (3)</summary>
 
 - Area-based waypoint chains _/fwp_
-- Send and render player coordinates _/fa coords_
+- Send and render player coordinates _/fa coords <optional msg>_
 - Spider's Den relic waypoints
 
 </details>
@@ -96,14 +109,14 @@
 
 - Click guild chat to party
 - Automatically accept NPC dialogue
-- Hide sack and autopet messages
+- Hide sack, Hyperion ability and autopet messages (Add more with Chat Filter!)
 
 </details>
 
 <details>
 <summary><b>Items</b> (2)</summary>
 
-- UUID based item protection _/fg_
+- UUID based item protection _/fg_ (Drop and GUI protection, configurable)
 - Slot locking and binding
 
 </details>
@@ -122,10 +135,12 @@
 </details>
 
 <details>
-<summary><b>Alerts & Notifications</b> (3)</summary>
+<summary><b>Alerts & Notifications</b> (4)</summary>
 
+- Customize Hypixel fishing alert (Option to override game volume)
 - Rain Stop / Start alert
 - Hotspot Spawn / Expiration alert
+- Chat Alert preset for sc's downloadable in _/fa alert_ (bottom right corner)
 
 </details>
 
@@ -147,8 +162,8 @@
 <details>
 <summary><b>Chat & Text</b> (2)</summary>
 
-- Globat chat formatting (preset or any color using &[]|{})
-- Custom name colors (hex, separate global and user-configurable lists)
+- Globat chat formatting (preset or use &[]|{}, example &[F58CCE>FFFFFF])
+- Custom name / word colors (separate global and user-only lists)
 
 </details>
 
@@ -161,7 +176,9 @@
 </details>
 
 <details>
-<summary><b>Builtin Resources</b> (3)</summary>
+<summary><b>Builtin Resources</b> (2)</summary>
 
 - Transparent UI
 - HD font
+
+</details>

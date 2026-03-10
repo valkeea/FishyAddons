@@ -1,6 +1,3 @@
 {
-"blacklist.salvage_items": "Block salvaging",
-"blacklist.create_auction": "Block Auctions",
-"blacklist.coins_transaction": "Block Trades",
-"blacklist.sell_item": "Block NPC selling"
+"key.category.fishyaddons.mod_keybinds": "FishyAddons"
 }

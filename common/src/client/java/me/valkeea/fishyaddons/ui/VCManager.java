@@ -15,8 +15,7 @@ import me.valkeea.fishyaddons.feature.qol.CopyChat;
 import me.valkeea.fishyaddons.feature.qol.ItemSearchOverlay;
 import me.valkeea.fishyaddons.feature.qol.KeyShortcut;
 import me.valkeea.fishyaddons.feature.qol.NetworkMetrics;
-import me.valkeea.fishyaddons.feature.skyblock.timer.CakeTimer;
-import me.valkeea.fishyaddons.feature.skyblock.timer.ChatTimers;
+import me.valkeea.fishyaddons.feature.skyblock.CatchAlert;
 import me.valkeea.fishyaddons.feature.skyblock.CocoonAlert;
 import me.valkeea.fishyaddons.feature.skyblock.FishingHotspot;
 import me.valkeea.fishyaddons.feature.skyblock.GuiIcons;
@@ -24,6 +23,8 @@ import me.valkeea.fishyaddons.feature.skyblock.PetInfo;
 import me.valkeea.fishyaddons.feature.skyblock.SkyblockCleaner;
 import me.valkeea.fishyaddons.feature.skyblock.TransLava;
 import me.valkeea.fishyaddons.feature.skyblock.WeatherTracker;
+import me.valkeea.fishyaddons.feature.skyblock.timer.CakeTimer;
+import me.valkeea.fishyaddons.feature.skyblock.timer.ChatTimers;
 import me.valkeea.fishyaddons.feature.visual.FaColors;
 import me.valkeea.fishyaddons.feature.visual.MobAnimations;
 import me.valkeea.fishyaddons.feature.visual.ParticleVisuals;
@@ -32,16 +33,15 @@ import me.valkeea.fishyaddons.feature.visual.ResourceHandler;
 import me.valkeea.fishyaddons.feature.visual.XpColor;
 import me.valkeea.fishyaddons.feature.waypoints.TempWaypoint;
 import me.valkeea.fishyaddons.feature.waypoints.WaypointChains;
-import me.valkeea.fishyaddons.hud.elements.custom.TrackerDisplay;
+import me.valkeea.fishyaddons.hud.elements.interactive.ProfitDisplay;
 import me.valkeea.fishyaddons.hud.ui.EqDisplay;
 import me.valkeea.fishyaddons.tool.FishyMode;
-import me.valkeea.fishyaddons.tracker.ActivityMonitor;
+import me.valkeea.fishyaddons.tracker.PriceUtil;
 import me.valkeea.fishyaddons.tracker.SkillTracker;
 import me.valkeea.fishyaddons.tracker.fishing.ScData;
-import me.valkeea.fishyaddons.tracker.profit.SackDropParser;
-import me.valkeea.fishyaddons.tracker.profit.ProfitTracker;
+import me.valkeea.fishyaddons.tracker.monitoring.ActivityMonitor;
 import me.valkeea.fishyaddons.tracker.profit.ValuableMobs;
-import me.valkeea.fishyaddons.ui.VCScreen.ExtraControl;
+import me.valkeea.fishyaddons.ui.VCEntry.ExtraControl;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.text.Text;
 
@@ -60,6 +60,7 @@ public class VCManager {
         addRender(entries);
         addQol(entries);        
         addSb(entries);
+        addAudio(entries);
         addFish(entries);
         addFilter(entries);
         addFg(entries);
@@ -84,15 +85,15 @@ public class VCManager {
             "%.1fx",
             value -> {
                 FishyConfig.setFloat(Key.MOD_UI_SCALE, value);
-                MinecraftClient client = MinecraftClient.getInstance();
-                if (client.currentScreen instanceof VCScreen currentScreen) {
+                var mc = MinecraftClient.getInstance();
+                if (mc.currentScreen instanceof VCScreen vcs) {
                     VCState.preserveState(
-                        currentScreen.getScrollOffset(),
-                        currentScreen.getLastSearchText(),
-                        currentScreen.getExpandedEntries()
+                        vcs.getScrollOffset(),
+                        vcs.getLastSearchText(),
+                        vcs.getExpandedEntries()
                     );
                 }
-                client.setScreen(new VCScreen());
+                mc.setScreen(new VCScreen());
             }
         )); 
 
@@ -120,15 +121,15 @@ public class VCManager {
             false,
             () -> { 
                 ResourceHandler.updateGuiPack();
-                MinecraftClient client = MinecraftClient.getInstance();
-                if (client.currentScreen instanceof VCScreen currentScreen) {
+                var mc = MinecraftClient.getInstance();
+                if (mc.currentScreen instanceof VCScreen vcs) {
                     VCState.preservePersistentState(
-                        currentScreen.getScrollOffset(),
-                        currentScreen.getLastSearchText(),
-                        currentScreen.getExpandedEntries()
+                        vcs.getScrollOffset(),
+                        vcs.getLastSearchText(),
+                        vcs.getExpandedEntries()
                     );
                 }
-                client.setScreen(new VCScreen());
+                mc.setScreen(new VCScreen());
             }
         ));
 
@@ -139,21 +140,21 @@ public class VCManager {
             false,
             () -> {
                 ResourceHandler.updateFontPack();
-                MinecraftClient client = MinecraftClient.getInstance();
-                if (client.currentScreen instanceof VCScreen currentScreen) {
+                var mc = MinecraftClient.getInstance();
+                if (mc.currentScreen instanceof VCScreen vcs) {
                     VCState.preservePersistentState(
-                        currentScreen.getScrollOffset(),
-                        currentScreen.getLastSearchText(),
-                        currentScreen.getExpandedEntries()
+                        vcs.getScrollOffset(),
+                        vcs.getLastSearchText(),
+                        vcs.getExpandedEntries()
                     );
                 }
-                client.setScreen(new VCScreen());
+                mc.setScreen(new VCScreen());
             }
         ));
     }
     
     /**
-     * Rendering Tweaks
+     * Visual
      */
     private static void addRender(List<VCEntry> entries) {
         entries.add(VCEntry.header("── Rendering Tweaks ──", ""));
@@ -294,7 +295,7 @@ public class VCManager {
 
         entries.add(VCEntry.toggleExpandable(
             "FA Colors",
-            "Colors player names for all users.\nNote: Name label recoloring is incompatible with Skyhanni.",
+            "Colors player names for all users.\n§8Note: Sidebar/tab recoloring is incompatible with Skyhanni's custom HUD.",
             colorSubEntries,
             Arrays.asList(
                 Text.literal("FA Colors:"),
@@ -309,6 +310,8 @@ public class VCManager {
         ));
     }
 
+    private static final String PERCENTAGE = "%.0f%%";
+
     private static void addQol(List<VCEntry> entries) {
         entries.add(VCEntry.header("── General QoL ──", ""));
 
@@ -321,7 +324,7 @@ public class VCManager {
             "Enables a HUD textfield for inventory search.",
             Key.INV_SEARCH,
             false,
-            null,
+            ItemSearchOverlay::refresh,
             new ExtraControl("Item Search", false, false)
         ));
 
@@ -331,7 +334,7 @@ public class VCManager {
             Key.INV_SEARCH_OPACITY,
             0.0f,
             1.0f,
-            "%.0f%%",
+            PERCENTAGE,
             opacity -> ItemSearchOverlay.getInstance().setOpacity(opacity)
         ));
 
@@ -353,7 +356,7 @@ public class VCManager {
             Key.RENDER_COORD_MS,
             10.0f,
             120.0f,
-            "%.0fs",
+            "%.0f s",
             value -> {
                 FishyConfig.setInt(Key.RENDER_COORD_MS, Math.round(value));
                 TempWaypoint.refresh();
@@ -427,7 +430,7 @@ public class VCManager {
                 Text.literal("- §8Area-based waypoint sequences"),
                 Text.literal("- §8Relic locations"),
                 Text.literal("- §8User-defined chains:"),
-                Text.literal("  - §8Use /fwp to see available commands!")
+                Text.literal("- §8Use /fwp to see available commands!")
             ),
             Key.WAYPOINT_CHAINS_ENABLED,
             false,
@@ -505,8 +508,11 @@ public class VCManager {
     private static void addSb(List<VCEntry> entries) {
         entries.add(VCEntry.header("── SkyBlock Features ──", ""));
 
+        List<VCEntry> petEntries = new ArrayList<>();
         List<VCEntry> profitEntries = new ArrayList<>();
-        List<VCEntry> trackerEntries = new ArrayList<>(); 
+        List<VCEntry> trackerEntries = new ArrayList<>();
+        List<VCEntry> timerEntries = new ArrayList<>();
+        List<VCEntry> alarmEntries = new ArrayList<>();
 
         entries.add(VCEntry.toggle(
             "Equipment Display",
@@ -516,31 +522,44 @@ public class VCManager {
             EqDisplay::reset
         ));
 
-        entries.add(VCEntry.toggle2(
-            "Pet Display",
-            "Renders a HUD element for your currently active pet, optionally with xp.\nRequires the tab widget for active pet.",
-            Key.HUD_PET_ENABLED,
-            false,
-            "SHOW XP",
-            Key.HUD_PETXP,
-            true,
-            PetInfo::refresh
-        ));
-
         entries.add(VCEntry.toggle(
             "Mob Health Bar",
             "Hud element to display the current health of relevant mobs (mostly fishing).",
             Key.HUD_HEALTH_ENABLED,
             false,
             ValuableMobs::refresh
-        ));        
+        ));
+
+        petEntries.add(VCEntry.toggleColorOrHud(
+            "Include Pet XP",
+            "Toggle to include pet XP. You can toggle overflow in /tablist.",
+            Key.HUD_PETXP,
+            false,
+            PetInfo::refresh,
+            new ExtraControl(null, true, false)
+        ));
+
+        entries.add(VCEntry.toggleExpandable(
+            "Pet Display",
+            "Active pet display, optionally with xp.\nEnable tab widget for accurate data §7/tablist.",
+            petEntries,
+            Arrays.asList(
+                Text.literal("Pet Display:"),
+                Text.literal("- §8Shows your active pet in HUD"),
+                Text.literal("- §8Includes pet XP if enabled"),
+                Text.literal("- §8Uses tab widget and chat messages")
+            ),
+            Key.HUD_PET_ENABLED,
+            false,
+            PetInfo::refresh
+        ));
 
         profitEntries.add(VCEntry.toggle(
             "Price per Item",
             "Adds additional price data to the display.",
             Key.PER_ITEM,
             false,
-            ProfitTracker::refresh
+            PriceUtil::refresh
         ));
 
         profitEntries.add(VCEntry.toggle(
@@ -548,7 +567,7 @@ public class VCManager {
             "Requires sack notifications on to function.",
             Key.TRACK_SACK,
             false,
-            SackDropParser::refresh
+            PriceUtil::refresh
         ));
 
         profitEntries.add(VCEntry.slider(
@@ -560,8 +579,8 @@ public class VCManager {
             "%.0f",
             value -> {
                 FishyConfig.setFloat(Key.FILTER_MIN_VALUE, value);
-                FishyConfig.enable(Key.VALUE_FILTER, value > 0.0f);
-                TrackerDisplay.refreshDisplay();
+                FishyConfig.setState(Key.VALUE_FILTER, value > 0.0f);
+                ProfitDisplay.refreshDisplay();
             }
         ));
 
@@ -585,39 +604,18 @@ public class VCManager {
                 Text.literal("  §8- Set profit display options"),
                 Text.literal("- §8- /fp toggle, /fp help")
             ),
-            Key.HUD_TRACKER_ENABLED,
+            Key.HUD_PROFIT_ENABLED,
             false,
-            ProfitTracker::refresh
+            PriceUtil::refresh
         ));
 
-        trackerEntries.add(VCEntry.header("── Century Cake Timer ──", ""));
-
-        trackerEntries.add(VCEntry.toggle(
-            "Enable Notifications",
-            "Notifies the user when a century cake is about to expire or expires.",
-            Key.CAKE_NOTI,
+        entries.add(VCEntry.toggleColorOrHud(
+            "Collection Progress Display §7(§8Requires sack messages§7)",
+            "Works best if you open /collection <item> before a session.\nOr, toggle the rankings view (updates slow, only used with no session gains),",
+            Key.HUD_COLLECTION_ENABLED,
             false,
-            CakeTimer::refresh
-        ));
-
-        trackerEntries.add(VCEntry.toggleColorOrHud(
-            "Century Cake Display",
-            "Enables a HUD timer.",
-            Key.HUD_CENTURY_CAKE_ENABLED,
-            false,
-            ProfitTracker::refresh,
-            new ExtraControl("Century Cakes: ", false, false)
-        ));
-
-        trackerEntries.add(VCEntry.header("── Temporary Effects ──", ""));
-
-        trackerEntries.add(VCEntry.toggleColorOrHud(
-            "Active Effect Display",
-            "Flask, moby, gummy and truffle duration/cooldown.",
-            Key.HUD_EFFECTS_ENABLED,
-            false,
-            null,
-            new ExtraControl(Key.HUD_EFFECTS_ENABLED, false, false)
+            PriceUtil::refresh,
+            new ExtraControl(Key.HUD_COLLECTION_ENABLED, false, false)
         ));
 
         trackerEntries.add(VCEntry.header("── Diana Tracker ──", ""));
@@ -643,17 +641,72 @@ public class VCManager {
         trackerEntries.add(VCEntry.header("── Skill XP Tracker ──", ""));
 
         trackerEntries.add(VCEntry.toggle(
-            "Skill Xp per hour §7(§8Includes catches/hour§7)",
+            "Skill Xp per hour §7(§8Includes catches / hour§7)",
             "Displays your skill xp gain rate. (Needs tabwidget if skill isn't maxed)",
             Key.HUD_SKILL_XP_ENABLED,
             false,
             SkillTracker::refresh
         ));
+        
+        entries.add(VCEntry.expandable(
+            "Trackers (Statistics)",
+            "Trackers for skill xp, diana and slayer.",
+            trackerEntries,
+            Arrays.asList(
+                Text.literal("Trackers (Stats):"),
+                Text.literal("- §8Diana stats:"),
+                Text.literal("  §8-Burrows, bph, chim rate etc."),
+                Text.literal("- §8Slayer XP per hour"),
+                Text.literal("- §8Skill XP per hour (with catch rate)")
+            )
+        ));        
 
-        trackerEntries.add(VCEntry.header("── Cocoon Alert ──", ""));
+        timerEntries.add(VCEntry.header("── Century Cake Timer ──", ""));
 
-        trackerEntries.add(VCEntry.toggle2(
-            "Bloodshot/The Primordial Cocoon Alert",
+        timerEntries.add(VCEntry.toggle(
+            "Enable Notifications",
+            "Notifies the user when a century cake is about to expire or expires.",
+            Key.CAKE_NOTI,
+            false,
+            CakeTimer::refresh
+        ));
+
+        timerEntries.add(VCEntry.toggleColorOrHud(
+            "Century Cake Display",
+            "Enables a HUD timer.",
+            Key.HUD_CENTURY_CAKE_ENABLED,
+            false,
+            CakeTimer::refresh,
+            new ExtraControl("Century Cakes: ", false, false)
+        ));
+
+        timerEntries.add(VCEntry.header("── Temporary Effects ──", ""));
+
+        timerEntries.add(VCEntry.toggleColorOrHud(
+            "Active Effect Display",
+            "Flask, moby, gummy and truffle duration / cooldown.",
+            Key.HUD_EFFECTS_ENABLED,
+            false,
+            null,
+            new ExtraControl(Key.HUD_EFFECTS_ENABLED, false, false)
+        ));   
+
+        entries.add(VCEntry.expandable(
+            "Timers",
+            "Configure settings for various trackers and alarms.",
+            timerEntries,
+            Arrays.asList(
+                Text.literal("Timers:"),
+                Text.literal("- §8Cakes, consumables"),
+                Text.literal("- §8Cocoon alert"),
+                Text.literal("- §8Moonglade minigame alarm")
+            )
+        ));
+
+        alarmEntries.add(VCEntry.header("── Cocoon Alert ──", ""));
+
+        alarmEntries.add(VCEntry.toggle2(
+            "Bloodshot / The Primordial Cocoon Alert",
             "Attempts to detect cocoons if nearby. Default chat alert, toggleable title + audio.",
             Key.TRACK_COCOON,
             false,
@@ -663,9 +716,9 @@ public class VCManager {
             CocoonAlert::refresh
         ));        
 
-        trackerEntries.add(VCEntry.header("── Moonglade Minigame Alarm ──", ""));
+        alarmEntries.add(VCEntry.header("── Moonglade Minigame Alarm ──", ""));
 
-        trackerEntries.add(VCEntry.toggle(
+        alarmEntries.add(VCEntry.toggle(
             "Alarm",
             "Alerts you with a sound and system toast when the minigame is ready.",
             Key.BEACON_ALARM,
@@ -673,25 +726,21 @@ public class VCManager {
             ChatTimers.getInstance()::refresh
         ));
 
-        trackerEntries.add(VCEntry.toggleColorOrHud(
+        alarmEntries.add(VCEntry.toggleColorOrHud(
             "Timer Display",
             "Adds a HUD timer if the minigame is on cooldown.",
             Key.HUD_TIMER_ENABLED,
             false,
             ChatTimers.getInstance()::refresh,
             new ExtraControl("Moonglade: ", false, false)
-        ));     
-
+        ));
+        
         entries.add(VCEntry.expandable(
-            "Trackers and timers",
-            "Configure settings for Century Cake Display and Moonglade Minigame alarm.",
-            trackerEntries,
+            "Alarms",
+            "Cocoon alert and Moonglade minigame alarm.",
+            alarmEntries,
             Arrays.asList(
-                Text.literal("Trackers and timers:"),
-                Text.literal("- §8Cakes, consumables"),
-                Text.literal("- §8Diana stats tracker"),
-                Text.literal("- §8Slayer XP per hour"),
-                Text.literal("- §8Skill XP per hour"),
+                Text.literal("Alarms:"),
                 Text.literal("- §8Cocoon alert"),
                 Text.literal("- §8Moonglade minigame alarm")
             )
@@ -703,18 +752,10 @@ public class VCManager {
             Key.CLEAN_HYPE,
             false,
             SkyblockCleaner::refresh
-        ));
-
-        entries.add(VCEntry.dropdown(
-            "Mute List",
-            "Configure a list of sounds to mute in Skyblock. (Thunder, phantom, runes)",
-            "Configure",
-            VCDropdownEntry::getMuteListItems,
-            SkyblockCleaner::refresh
-        ));        
+        ));      
 
         entries.add(VCEntry.keybind(
-            "Hide Skyblock Gui Buttons",
+            "Hide / Block Skyblock Gui Buttons",
             "Set the key to hide Skyblock gui icons. Tap the key to add/remove\n hovered slots, peek and bypass block by holding shift.",
             Key.MOD_KEY_LOCK_GUISLOT,
             false,
@@ -738,9 +779,96 @@ public class VCManager {
             "%.2f",
                         value -> {
                 FishyConfig.setFloat(Key.DMG_SCALE, value);
-                FishyConfig.enable(Key.SCALE_CRIT, value > 0.0f);
+                FishyConfig.setState(Key.SCALE_CRIT, value > 0.0f);
                 ParticleVisuals.refreshCache();
             }
+        ));
+    }
+
+    /**
+     * Audio
+     */
+    private static void addAudio(List<VCEntry> entries) {
+        entries.add(VCEntry.header("── Audio ──", ""));
+
+        List<VCEntry> feroEntries = new ArrayList<>();
+        List<VCEntry> reelSubEntries = new ArrayList<>();
+
+        feroEntries.add(VCEntry.toggleSlider(
+            "Ferocity Volume §7(§8Set to 0 to disable§7)",
+            "Optional toggle to ignore Minecraft volume settings.",
+            Key.FERO_TRUE_VOLUME,
+            false,
+            Key.CUSTOM_FERO,
+            0.0f,
+            2.0f,
+            PERCENTAGE,
+            SkyblockCleaner::refresh
+            
+        ));
+
+        feroEntries.add(VCDropdownEntry.feroSoundToggle(
+            "Custom Ferocity Sound",
+            "Replace with custom sound. Double-click field to reset.",
+            Key.FERO_ALERT,
+            SkyblockCleaner::refresh
+        ));
+
+        entries.add(VCEntry.expandable(
+            "Ferocity Sound Customization",
+            "Change the volume and sound of ferocity proc feedback.",
+            feroEntries,
+            Arrays.asList(
+                Text.literal("Ferocity Sound:"),
+                Text.literal("- §8Replace default ferocity sound"),
+                Text.literal("- §8Configure volume")
+            )
+        ));        
+
+        entries.add(VCEntry.dropdown(
+            "Mute List",
+            "Configure a list of sounds to mute in Skyblock. (Thunder, phantom, runes)",
+            "Configure",
+            VCDropdownEntry::getMuteListItems,
+            SkyblockCleaner::refresh
+        ));          
+
+        reelSubEntries.add(VCEntry.toggleSlider(
+            "Custom Fishing Catch Volume §7(§8Set to 0 to disable§7)",
+            "Optional toggle to ignore Minecraft volume settings.",
+            Key.REEL_TRUE_VOLUME,
+            false,
+            Key.CUSTOM_REEL,
+            0.0f,
+            2.0f,
+            PERCENTAGE,
+            CatchAlert::refresh
+        ));
+
+        reelSubEntries.add(VCDropdownEntry.reelSoundToggle(
+            "Change Hypixel default alert",
+            "Replace with custom sound. Double-click field to reset.",
+            Key.REEL_ALERT,
+            CatchAlert::refresh
+        ));
+
+        reelSubEntries.add(VCEntry.toggle(
+            "Prevent soundset randomization",
+            "Enable to always use the first sound variant in the default soundset.",
+            Key.REEL_NORANDOM,
+            false,
+            CatchAlert::refresh
+        ));
+
+        entries.add(VCEntry.expandable(
+            "Fishing Reel / Fish Hooked Alert",
+            "Change the volume and sound of the fishing catch alarm.\nRequires Skyblock music to be off! §8/togglemusic",
+            reelSubEntries,
+            Arrays.asList(
+                Text.literal("Fishing Catch Sound:"),
+                Text.literal("- §8Replace default sound"),
+                Text.literal("- §8Configure volume")
+            )
         ));
     }
 
@@ -762,7 +890,7 @@ public class VCManager {
 
         hsptSubEntries.add(VCEntry.toggleSlider(
             "Hide Hotspot Holograms",
-            "Hides all fishing hotspots in this distance.",
+            "Hides all fishing hotspots starting from this distance.",
             Key.HIDE_HOTSPOT,
             false,
             Key.HOTSPOT_DISTANCE,
@@ -803,10 +931,10 @@ public class VCManager {
         ));
 
         entries.add(VCEntry.toggle2(
-            "Track catch data §7(§8Required for 'Catch Graph' and 'RNG Info'§7)",
+            "Track fishing data §7(§8Required for 'Catch Graph' and 'RNG Info'§7)",
             "Allows the mod to track sc catches. Optionally count\ndouble hooks as multiple catches (this will skew true catchrate).",
             Key.TRACK_SCS,
-            true,
+            false,
             "COUNT DH",
             Key.TRACK_SCS_WITH_DH,
             false,
@@ -818,17 +946,17 @@ public class VCManager {
 
         entries.add(VCDropdownEntry.scDisplayToggle(
             "Catch Graph",
-            "Displays a graph of catch statistics over time.\nRate: successful catches / attempts. Graph and Mean: sc's between catches.",
+            "Displays a graph of catch statistics over time while fishing.\nRate: successful catches / attempts. Graph and Mean: sc's between catches.",
             Key.HUD_CATCH_GRAPH_ENABLED,
             false,
             ScData::refresh
         ));
 
         entries.add(VCEntry.toggle(
-            "RNG Info §7(§8Sc's and vial§7)",
+            "Fishing RNG Info §7(§8Sc's and vial§7)",
             "Counts sea creatures between relevant catches and announces on catch.\nThis data can be checked anytime with /fa sc since.",
             Key.SC_SINCE,
-            true,          
+            false,          
             ActivityMonitor::refresh
         ));        
     }
@@ -843,7 +971,7 @@ public class VCManager {
         
         entries.add(VCEntry.toggleColorOrHud(
             "Custom Sea Creature Messages",
-            "Toggle and configure Sc Filter.",
+            "Toggle and configure Fishing / Sc Filter.",
             Key.CHAT_FILTER_SC_ENABLED,
             false,
             FilterConfig::refreshScRules,
@@ -869,7 +997,7 @@ public class VCManager {
 
         filterSubEntries.add(VCEntry.toggle(
             "Hide Autopet Messages",
-            "Hide autopet equip/summon messages from chat (pet display still tracks them).",
+            "Hide autopet equip / summon messages from chat (pet display still tracks them).",
             Key.CHAT_FILTER_HIDE_AUTOPET_MESSAGES,
             false,
             null

@@ -1,9 +1,10 @@
-package me.valkeea.fishyaddons.config;
+package me.valkeea.fishyaddons.feature.qol;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -11,6 +12,8 @@ import java.util.regex.Pattern;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
+
+import me.valkeea.fishyaddons.vconfig.config.impl.AlertConfig;
 
 public class FishyPresets {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
@@ -92,8 +95,8 @@ public class FishyPresets {
         ":tableflip:", "(╯°□°）╯︵ ┻━┻"
     );
 
-    public static final Map<String, FishyConfig.AlertData> EXAMPLE_ALERT_PRESET = Map.of(
-        "This is what will be detected from chat.", new FishyConfig.AlertData(
+    public static final Map<String, AlertConfig.AlertData> EXAMPLE_ALERT_PRESET = Map.of(
+        "This is what will be detected from chat.", new AlertConfig.AlertData(
             "this is what you will send in chat!",
             "Title Screen Alert",
             0xFF00FF,
@@ -127,12 +130,12 @@ public class FishyPresets {
         }
     }
 
-    public static Map<String, FishyConfig.AlertData> loadAlertPreset(String suffix) {
+    public static Map<String, AlertConfig.AlertData> loadAlertPreset(String suffix) {
         Path path = getPresetDir().resolve(ALERT_PRESET + suffix + JSON);
         if (!Files.exists(path)) return Map.of();
         try {
             String json = Files.readString(path);
-            return GSON.fromJson(json, new TypeToken<Map<String, FishyConfig.AlertData>>(){}.getType());
+            return GSON.fromJson(json, new TypeToken<Map<String, AlertConfig.AlertData>>(){}.getType());
         } catch (Exception e) {
             e.printStackTrace();
             return Map.of();
@@ -151,7 +154,7 @@ public class FishyPresets {
         }
     }
 
-    public static void saveAlertPreset(String suffix, Map<String, FishyConfig.AlertData> data) {
+    public static void saveAlertPreset(String suffix, Map<String, AlertConfig.AlertData> data) {
         Path path = getPresetDir().resolve(ALERT_PRESET + suffix + JSON);
         try {
             Files.createDirectories(path.getParent());
@@ -174,9 +177,37 @@ public class FishyPresets {
                 return;
             }
             
+            Files.createDirectories(target.getParent());
+            
+            String shippedJson = new String(inputStream.readAllBytes());
+            Map<String, AlertConfig.AlertData> shippedData = GSON.fromJson(
+                shippedJson, 
+                new TypeToken<Map<String, AlertConfig.AlertData>>(){}.getType()
+            );
+            
             if (!Files.exists(target)) {
-                Files.createDirectories(target.getParent());
-                Files.copy(inputStream, target);
+                Files.writeString(target, GSON.toJson(shippedData));
+
+            } else {
+                String existingJson = Files.readString(target);
+                Map<String, AlertConfig.AlertData> existingData = GSON.fromJson(
+                    existingJson,
+                    new TypeToken<Map<String, AlertConfig.AlertData>>(){}.getType()
+                );
+                
+                Map<String, AlertConfig.AlertData> mergedData = new HashMap<>(existingData);
+                
+                boolean hasChanges = false;
+                for (var entry : shippedData.entrySet()) {
+                    if (!mergedData.containsKey(entry.getKey())) {
+                        mergedData.put(entry.getKey(), entry.getValue());
+                        hasChanges = true;
+                    }
+                }
+                
+                if (hasChanges) {
+                    Files.writeString(target, GSON.toJson(mergedData));
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();

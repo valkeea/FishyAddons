@@ -1,10 +1,13 @@
-package me.valkeea.fishyaddons.config;
+package me.valkeea.fishyaddons.feature.filter;
 
+import java.io.FileWriter;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -12,17 +15,22 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
+import me.valkeea.fishyaddons.feature.filter.FilterConfig.Rule;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.util.Identifier;
 
 public class RuleFactory {
     private RuleFactory() {}
     private static final Gson GSON = new Gson();
-    private static SeaCreatureData cachedData = null;
+    private static final Object FILE_LOCK = new Object();
+
+    @SuppressWarnings("squid:S3077")
+    private static volatile SeaCreatureData cachedData = null;
     
-    private static boolean recreated = false;
-    private static boolean corrupted = false;
+    private static volatile boolean recreated = false;
+    private static volatile boolean corrupted = false;
     
     private static final String CFG = "config";
     private static final String FA = "fishyaddons";
@@ -79,11 +87,23 @@ public class RuleFactory {
         corrupted = false;
     }
     
+    /**
+     * Clears the cached data, forcing a reload on next access.
+     * Call this after manual config edits.
+     */
+    public static void clearCache() {
+        cachedData = null;
+    }
+    
     public static void ensureFile() {
-        var targetPath = getFilePath();
+        synchronized (FILE_LOCK) {
+            var targetPath = getFilePath();
 
-        if (!Files.exists(targetPath)) {
-            cloneToConfig(targetPath);
+            if (!Files.exists(targetPath)) {
+                cloneToConfig(targetPath);
+            } else {
+                updateFile(targetPath);
+            }
         }
     }
     
@@ -101,6 +121,100 @@ public class RuleFactory {
         } catch (Exception e) {
             System.err.println("[FishyAddons] Failed to copy sea_creatures.json: " + e.getMessage());
             e.printStackTrace();
+        }
+    }
+
+    private static void updateFile(Path targetPath) {
+        try {
+
+            SeaCreatureData assetData = loadFromAssets();
+            if (assetData == null || assetData.creatures == null) {
+                System.err.println("[FishyAddons] Cannot update: asset data unavailable");
+                return;
+            }
+
+            String json = Files.readString(targetPath);
+            SeaCreatureData userData = GSON.fromJson(json, SeaCreatureData.class);
+            
+            if (userData == null || userData.creatures == null) {
+                System.err.println("[FishyAddons] Cannot update: user config is invalid");
+                return;
+            }
+
+            boolean updated = mergeAssetDataIntoUserData(assetData, userData);
+
+            if (updated) {
+                writeUpdatedConfig(targetPath, userData);
+            }
+
+        } catch (Exception e) {
+            System.err.println("[FishyAddons] Failed to update sea_creatures.json: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+    
+    private static boolean mergeAssetDataIntoUserData(SeaCreatureData assetData, SeaCreatureData userData) {
+        boolean updated = false;
+        
+        Map<String, SeaCreatureData.CreatureConfig> existingCreatures = new LinkedHashMap<>();
+        for (var creature : userData.creatures) {
+            existingCreatures.put(creature.id, creature);
+        }
+        
+        for (var assetCreature : assetData.creatures) {
+            if (!existingCreatures.containsKey(assetCreature.id)) {
+                userData.creatures.add(assetCreature);
+                updated = true;
+            }
+        }
+        
+        if (userData.categories == null) {
+            userData.categories = new LinkedHashMap<>();
+        }
+        
+        if (assetData.categories != null) {
+            for (var entry : assetData.categories.entrySet()) {
+                if (!userData.categories.containsKey(entry.getKey())) {
+                    userData.categories.put(entry.getKey(), entry.getValue());
+                    updated = true;
+                }
+            }
+        }
+        
+        return updated;
+    }
+    
+    private static void writeUpdatedConfig(Path targetPath, SeaCreatureData userData) throws IOException {
+
+        createBackup(targetPath);
+        
+        Path tempPath = targetPath.getParent().resolve(SEA_CREATURES_FILE + ".tmp");
+        try (var writer = new FileWriter(tempPath.toFile(), StandardCharsets.UTF_8)) {
+            new GsonBuilder().setPrettyPrinting().create().toJson(userData, writer);
+        }
+        
+        Files.move(tempPath, targetPath, StandardCopyOption.REPLACE_EXISTING, 
+                  StandardCopyOption.ATOMIC_MOVE);
+        
+        cachedData = null;
+        deleteBackup(targetPath);
+    }
+    
+    private static void createBackup(Path targetPath) {
+        var backupPath = targetPath.getParent().resolve(SEA_CREATURES_FILE + ".backup");
+        try {
+            Files.copy(targetPath, backupPath, StandardCopyOption.REPLACE_EXISTING);
+        } catch (Exception e) {
+            System.err.println("[FishyAddons] Warning: Failed to create backup: " + e.getMessage());
+        }
+    }
+
+    private static void deleteBackup(Path targetPath) {
+        var backupPath = targetPath.getParent().resolve(SEA_CREATURES_FILE + ".backup");
+        try {
+            Files.deleteIfExists(backupPath);
+        } catch (Exception e) {
+            System.err.println("[FishyAddons] Failed to delete backup: " + e.getMessage());
         }
     }
     
@@ -156,13 +270,11 @@ public class RuleFactory {
     }
     
     public static SeaCreatureData loadSeaCreatureData() {
-        if (cachedData != null) {
-            return cachedData;
-        }
+        if (cachedData != null) return cachedData;
         
         ensureFile();
         
-        Path configPath = getFilePath();
+        var configPath = getFilePath();
         if (Files.exists(configPath)) {
             try {
                 String json = Files.readString(configPath);
@@ -197,12 +309,12 @@ public class RuleFactory {
         Map<String, FilterConfig.Rule> rules = new ConcurrentHashMap<>();
         SeaCreatureData data = loadSeaCreatureData();
         if (data == null || data.creatures == null || data.categories == null) {
-            System.err.println("[FishyAddons] Invalid sea creature data, skipping rule generation");
+            System.err.println("[FishyAddons] Invalid sc data, skipping rule generation");
             return rules;
         }
 
         for (String trigger : DH_TRIGGERS) {
-            rules.put("dh_trigger_" + trigger.toLowerCase().replaceAll("\\W+", "_"), new FilterConfig.Rule(
+            rules.put("dh_trigger_" + trigger.toLowerCase().replaceAll("\\W+", "_"), new Rule(
                 trigger,
                 "",
                 40,
@@ -212,7 +324,7 @@ public class RuleFactory {
         }
 
         for (var sc : data.creatures) {
-            SeaCreatureData.CategoryConfig category = data.categories.get(sc.category);
+            var category = data.categories.get(sc.category);
             if (category == null) {
                 System.err.println("[FishyAddons] Unknown category '" + sc.category + "' for creature " + sc.id);
                 continue;
@@ -220,7 +332,7 @@ public class RuleFactory {
             
             String formattedMessage = buildCreatureMessage(sc, category);
             String ruleName = "sc_" + sc.id;
-            FilterConfig.Rule existingUserRule = FilterConfig.getUserRules().get(ruleName);
+            Rule existingUserRule = FilterConfig.getUserRules().get(ruleName);
             String actualPrefix = category.doubleHookPrefix;
             String actualMessage = formattedMessage;
             boolean actualEnabled = category.enabled;
@@ -235,7 +347,7 @@ public class RuleFactory {
                 actualEnabled = existingUserRule.isEnabled();
             }
 
-            FilterConfig.Rule rule = new FilterConfig.Rule(
+            var rule = new FilterConfig.Rule(
                 sc.triggerText,
                 actualMessage,
                 actualPrefix,

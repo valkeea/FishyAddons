@@ -1,4 +1,4 @@
-package me.valkeea.fishyaddons.config;
+package me.valkeea.fishyaddons.feature.filter;
 
 import java.io.File;
 import java.io.FileReader;
@@ -14,6 +14,8 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import me.valkeea.fishyaddons.processor.BaseAnalysis;
+import me.valkeea.fishyaddons.vconfig.api.Config;
+import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
 import net.minecraft.client.MinecraftClient;
 
 public class FilterConfig {
@@ -225,19 +227,20 @@ public class FilterConfig {
      * Check if sea creature rules are needed by any feature
      */
     public static boolean usingScRules() {
-        return FishyConfig.getState(Key.CHAT_FILTER_SC_ENABLED, false) || 
-               FishyConfig.getState(Key.TRACK_SCS, false) ||
-               FishyConfig.getState(Key.HUD_SKILL_XP_ENABLED, false) ||
-               FishyConfig.getState(Key.CHAT_FILTER_SC_ENABLED, false);
+        return Config.get(BooleanKey.CHAT_FILTER_SC_ENABLED) || 
+               Config.get(BooleanKey.TRACK_SCS) ||
+               Config.get(BooleanKey.HUD_SKILL_XP) ||
+               Config.get(BooleanKey.CHAT_FILTER_SC_ENABLED);
     }
 
     /**
      * Refresh sea creature rules based on current feature states.
      */
     public static void refreshScRules() {
+        
         boolean needed = usingScRules();
         boolean loaded = areScRulesLoaded();
-        
+
         if (needed && !loaded) {
             Map<String, Rule> seaCreatureRules = RuleFactory.generateSeaCreatureRules();
             DEFAULT_RULES.putAll(seaCreatureRules);

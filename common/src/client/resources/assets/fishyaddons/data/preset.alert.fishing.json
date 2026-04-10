@@ -17,6 +17,15 @@
     "toggled": true,
     "startsWith": true
   },
+  "You've caused a disturbance in the loch. Could it be... Nessie?": {
+    "msg": "",
+    "onscreen": "§b§l§kA§r §{bold}§[chartreuse] 🦕 Nessie 🦕 §b§l§kA§",
+    "color": 1.5649516E7,
+    "soundId": "",
+    "volume": 1.0,
+    "toggled": true,
+    "startsWith": true
+  },  
   "This can't be! The manifestation of death himself!": {
     "msg": "",
     "onscreen": "§[sun]💀 Grim Reaper 💀",

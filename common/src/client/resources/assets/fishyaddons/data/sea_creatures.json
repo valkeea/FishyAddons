@@ -126,6 +126,15 @@
       "customMessage": "§b§l§kA§r §{bold}§[ruby] {emoji} {name} {emoji} §b§l§kA§"
     },
     {
+      "id": "nessie",
+      "triggerText": "You've caused a disturbance in the loch. Could it be... Nessie?",
+      "displayName": "Nessie",
+      "displayNamePlural": "two Nessies",
+      "category": "mythic",
+      "emoji": "🦕",
+      "customMessage": "§b§l§kA§r §{bold}§[chartreuse] {emoji} {name} {emoji} §b§l§kA§"
+    },    
+    {
       "id": "the_loch_emperor",
       "triggerText": "The Loch Emperor arises from the depths.",
       "displayName": "The Loch Emperor",

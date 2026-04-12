@@ -5,11 +5,13 @@ import java.util.List;
 import java.util.Map;
 
 import me.valkeea.fishyaddons.feature.visual.FaColors;
-import me.valkeea.fishyaddons.ui.ColorWheel;
-import me.valkeea.fishyaddons.ui.VCText;
-import me.valkeea.fishyaddons.ui.widget.FaButton;
-import me.valkeea.fishyaddons.ui.widget.VCTextField;
-import me.valkeea.fishyaddons.ui.widget.VCVisuals;
+import me.valkeea.fishyaddons.vconfig.config.impl.ColorConfig;
+import me.valkeea.fishyaddons.vconfig.ui.manager.ScreenManager;
+import me.valkeea.fishyaddons.vconfig.ui.render.VCText;
+import me.valkeea.fishyaddons.vconfig.ui.screen.ColorWheel;
+import me.valkeea.fishyaddons.vconfig.ui.widget.FaButton;
+import me.valkeea.fishyaddons.vconfig.ui.widget.VCTextField;
+import me.valkeea.fishyaddons.vconfig.ui.widget.VCVisuals;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
@@ -29,7 +31,6 @@ public class CustomFaColors extends Screen {
 
     private static final String COLOR_TEXT = "Color";
 
-    private final Screen parent;
     private final List<Entry> entries = new ArrayList<>();
 
     private boolean addMode = false;
@@ -37,21 +38,20 @@ public class CustomFaColors extends Screen {
 
     private int scrollOffset = 0;
     private int maxVisibleEntries = 0;
-    private int scrollbarThumbOffset = 0;
+    private int scrollKnobOffset = 0;
 
     private AddEntry addEntry = null;    
     private ButtonWidget addBtn = null;
 
-    public CustomFaColors(Screen parent) {
+    public CustomFaColors() {
         super(Text.literal("User Color Overrides"));
-        this.parent = parent;
     }
 
     @Override
     protected void init() {
         entries.clear();
         this.clearChildren();
-        for (Map.Entry<String, Integer> entry : me.valkeea.fishyaddons.config.FishyConfig.getFaC().entrySet()) {
+        for (Map.Entry<String, Integer> entry : ColorConfig.getFaC().entrySet()) {
             Entry e = new Entry(entry.getKey(), entry.getValue());
             entries.add(e);
             this.addDrawableChild(e.nameField);
@@ -90,7 +90,7 @@ public class CustomFaColors extends Screen {
         this.addDrawableChild(new FaButton(
             this.width / 2 - ENTRY_WIDTH / 2 + 80, this.height - 40, 80, 20,
             Text.literal("Back").styled(style -> style.withColor(0xFF808080)),
-            btn -> client.setScreen(parent)
+            btn -> ScreenManager.openConfigScreen()
         ));
 
         this.addDrawableChild(new FaButton(
@@ -190,8 +190,6 @@ public class CustomFaColors extends Screen {
                             CustomFaColors.this.remove(this.saveBtn);
                             CustomFaColors.this.remove(this.cancelBtn);
                             CustomFaColors.this.init();
-                        } else {
-                            MinecraftClient.getInstance().setScreen(CustomFaColors.this);
                         }
                     }))
             );
@@ -275,11 +273,11 @@ public class CustomFaColors extends Screen {
 
             if (mouseY >= thumbY && mouseY <= thumbY + thumbHeight) {
                 isDraggingScrollbar = true;
-                scrollbarThumbOffset = (int)mouseY - thumbY;
+                scrollKnobOffset = (int)mouseY - thumbY;
             } else {
                 isDraggingScrollbar = true;
-                scrollbarThumbOffset = thumbHeight / 2;
-                double trackClickY = mouseY - listTop - scrollbarThumbOffset;
+                scrollKnobOffset = thumbHeight / 2;
+                double trackClickY = mouseY - listTop - scrollKnobOffset;
                 double scrollPercent = trackClickY / (listHeight - thumbHeight);
                 int newScrollOffset = (int)(scrollPercent * (totalEntries - maxVisibleEntries));
                 scrollOffset = Math.clamp(newScrollOffset, 0, totalEntries - maxVisibleEntries);
@@ -314,7 +312,7 @@ public class CustomFaColors extends Screen {
             int listHeight = listBottom - listTop;
             int totalEntries = entries.size() + (addMode ? 1 : 0);
             int thumbHeight = Math.max((int)(10 * UI_SCALE), (maxVisibleEntries * listHeight) / totalEntries);
-            int mouseThumbY = (int)click.y() - listTop - scrollbarThumbOffset;
+            int mouseThumbY = (int)click.y() - listTop - scrollKnobOffset;
             double scrollPercent = mouseThumbY / (double)(listHeight - thumbHeight);
             int newScrollOffset = (int)(scrollPercent * (totalEntries - maxVisibleEntries));
             scrollOffset = Math.clamp(newScrollOffset, 0, totalEntries - maxVisibleEntries);
@@ -363,15 +361,14 @@ public class CustomFaColors extends Screen {
             this.colorBtn = new FaButton(
                 0, 0, COLOR_BTN_WIDTH, FIELD_HEIGHT,
                 Text.literal(COLOR_TEXT).styled(s -> s.withColor(color)),
-                btn -> {
+                btn -> 
                     MinecraftClient.getInstance().setScreen(new ColorWheel(CustomFaColors.this, this.color, selected -> {
                         this.color = selected;
                         btn.setMessage(Text.literal(COLOR_TEXT).styled(s -> s.withColor(this.color)));
                         MinecraftClient.getInstance().setScreen(CustomFaColors.this);
                         this.changed = true;
                         FaColors.saveUserEntry(this.originalName, this.color & 0xFFFFFFFF);
-                    }));
-                }
+                    }))
             );
             
             this.delBtn = new FaButton(

@@ -7,39 +7,39 @@ import com.google.gson.GsonBuilder;
 public class HeldItemModelData {
     
     // Position offsets (coordinates)
-    public float posOffsetX = 0.0f;
-    public float posOffsetY = 0.0f; 
-    public float posOffsetZ = 0.0f;
+    public double posOffsetX = 0.0;
+    public double posOffsetY = 0.0; 
+    public double posOffsetZ = 0.0;
     
     // Rotation offsets (degrees)
-    public float rotOffsetX = 0.0f;
-    public float rotOffsetY = 0.0f;
-    public float rotOffsetZ = 0.0f;
+    public double rotOffsetX = 0.0;
+    public double rotOffsetY = 0.0;
+    public double rotOffsetZ = 0.0;
     
     // Scale multiplier
-    public float scale = 1.0f;
+    public double scale = 1.0;
     
     // Swing animation intensity (0.0 to 1.0, where 1.0 = 100%)
-    public float swingIntensity = 0.5f;
+    public double swingIntensity = 0.5;
     
     // Equip animation intensity (0.0 to 1.0, where 1.0 = 100%)
-    public float equipIntensity = 0.5f;
+    public double equipIntensity = 0.5;
     
     // Main hand settings
-    public float mainHandPosX = 0.0f;
-    public float mainHandPosY = 0.0f;
-    public float mainHandPosZ = 0.0f;
-    public float mainHandRotX = 0.0f;
-    public float mainHandRotY = 0.0f;
-    public float mainHandRotZ = 0.0f;
+    public double mainHandPosX = 0.0;
+    public double mainHandPosY = 0.0;
+    public double mainHandPosZ = 0.0;
+    public double mainHandRotX = 0.0;
+    public double mainHandRotY = 0.0;
+    public double mainHandRotZ = 0.0;
     
     // Offhand settings
-    public float offHandPosX = 0.0f;
-    public float offHandPosY = 0.0f;
-    public float offHandPosZ = 0.0f;
-    public float offHandRotX = 0.0f;
-    public float offHandRotY = 0.0f;
-    public float offHandRotZ = 0.0f;
+    public double offHandPosX = 0.0;
+    public double offHandPosY = 0.0;
+    public double offHandPosZ = 0.0;
+    public double offHandRotX = 0.0;
+    public double offHandRotY = 0.0;
+    public double offHandRotZ = 0.0;
     
     // Toggle state
     public boolean separateHandSettings = false;
@@ -90,12 +90,15 @@ public class HeldItemModelData {
      */
     public static HeldItemModelData fromJson(String json) {
         if (json == null || json.trim().isEmpty()) {
+            System.err.println("Empty JSON string for HeldItemModelData, using defaults");
             return new HeldItemModelData();
         }
         
         try {
             return GSON.fromJson(json, HeldItemModelData.class);
         } catch (Exception e) {
+            System.err.println("Failed to parse HeldItemModelData from JSON: " + e.getMessage());
+            e.printStackTrace();
             return new HeldItemModelData();
         }
     }
@@ -104,17 +107,17 @@ public class HeldItemModelData {
      * Reset all values to defaults
      */
     public void reset() {
-        posOffsetX = posOffsetY = posOffsetZ = 0.0f;
-        rotOffsetX = rotOffsetY = rotOffsetZ = 0.0f;
-        scale = 1.0f;
-        swingIntensity = 0.5f;
-        equipIntensity = 0.5f;
+        posOffsetX = posOffsetY = posOffsetZ = 0.0;
+        rotOffsetX = rotOffsetY = rotOffsetZ = 0.0;
+        scale = 1.0;
+        swingIntensity = 0.5;
+        equipIntensity = 0.5;
         
-        mainHandPosX = mainHandPosY = mainHandPosZ = 0.0f;
-        mainHandRotX = mainHandRotY = mainHandRotZ = 0.0f;
+        mainHandPosX = mainHandPosY = mainHandPosZ = 0.0;
+        mainHandRotX = mainHandRotY = mainHandRotZ = 0.0;
         
-        offHandPosX = offHandPosY = offHandPosZ = 0.0f;
-        offHandRotX = offHandRotY = offHandRotZ = 0.0f;
+        offHandPosX = offHandPosY = offHandPosZ = 0.0;
+        offHandRotX = offHandRotY = offHandRotZ = 0.0;
         
         separateHandSettings = false;
     }
@@ -126,51 +129,51 @@ public class HeldItemModelData {
         
         HeldItemModelData that = (HeldItemModelData) obj;
         
-        return Float.compare(that.posOffsetX, posOffsetX) == 0 &&
-               Float.compare(that.posOffsetY, posOffsetY) == 0 &&
-               Float.compare(that.posOffsetZ, posOffsetZ) == 0 &&
-               Float.compare(that.rotOffsetX, rotOffsetX) == 0 &&
-               Float.compare(that.rotOffsetY, rotOffsetY) == 0 &&
-               Float.compare(that.rotOffsetZ, rotOffsetZ) == 0 &&
-               Float.compare(that.scale, scale) == 0 &&
-               Float.compare(that.swingIntensity, swingIntensity) == 0 &&
-               Float.compare(that.mainHandPosX, mainHandPosX) == 0 &&
-               Float.compare(that.mainHandPosY, mainHandPosY) == 0 &&
-               Float.compare(that.mainHandPosZ, mainHandPosZ) == 0 &&
-               Float.compare(that.mainHandRotX, mainHandRotX) == 0 &&
-               Float.compare(that.mainHandRotY, mainHandRotY) == 0 &&
-               Float.compare(that.mainHandRotZ, mainHandRotZ) == 0 &&
-               Float.compare(that.offHandPosX, offHandPosX) == 0 &&
-               Float.compare(that.offHandPosY, offHandPosY) == 0 &&
-               Float.compare(that.offHandPosZ, offHandPosZ) == 0 &&
-               Float.compare(that.offHandRotX, offHandRotX) == 0 &&
-               Float.compare(that.offHandRotY, offHandRotY) == 0 &&
-               Float.compare(that.offHandRotZ, offHandRotZ) == 0 &&
+        return Double.compare(that.posOffsetX, posOffsetX) == 0 &&
+               Double.compare(that.posOffsetY, posOffsetY) == 0 &&
+               Double.compare(that.posOffsetZ, posOffsetZ) == 0 &&
+               Double.compare(that.rotOffsetX, rotOffsetX) == 0 &&
+               Double.compare(that.rotOffsetY, rotOffsetY) == 0 &&
+               Double.compare(that.rotOffsetZ, rotOffsetZ) == 0 &&
+               Double.compare(that.scale, scale) == 0 &&
+               Double.compare(that.swingIntensity, swingIntensity) == 0 &&
+               Double.compare(that.mainHandPosX, mainHandPosX) == 0 &&
+               Double.compare(that.mainHandPosY, mainHandPosY) == 0 &&
+               Double.compare(that.mainHandPosZ, mainHandPosZ) == 0 &&
+               Double.compare(that.mainHandRotX, mainHandRotX) == 0 &&
+               Double.compare(that.mainHandRotY, mainHandRotY) == 0 &&
+               Double.compare(that.mainHandRotZ, mainHandRotZ) == 0 &&
+               Double.compare(that.offHandPosX, offHandPosX) == 0 &&
+               Double.compare(that.offHandPosY, offHandPosY) == 0 &&
+               Double.compare(that.offHandPosZ, offHandPosZ) == 0 &&
+               Double.compare(that.offHandRotX, offHandRotX) == 0 &&
+               Double.compare(that.offHandRotY, offHandRotY) == 0 &&
+               Double.compare(that.offHandRotZ, offHandRotZ) == 0 &&
                separateHandSettings == that.separateHandSettings;
     }
     
     @Override
     public int hashCode() {
-        int result = Float.hashCode(posOffsetX);
-        result = 31 * result + Float.hashCode(posOffsetY);
-        result = 31 * result + Float.hashCode(posOffsetZ);
-        result = 31 * result + Float.hashCode(rotOffsetX);
-        result = 31 * result + Float.hashCode(rotOffsetY);
-        result = 31 * result + Float.hashCode(rotOffsetZ);
-        result = 31 * result + Float.hashCode(scale);
-        result = 31 * result + Float.hashCode(swingIntensity);
-        result = 31 * result + Float.hashCode(mainHandPosX);
-        result = 31 * result + Float.hashCode(mainHandPosY);
-        result = 31 * result + Float.hashCode(mainHandPosZ);
-        result = 31 * result + Float.hashCode(mainHandRotX);
-        result = 31 * result + Float.hashCode(mainHandRotY);
-        result = 31 * result + Float.hashCode(mainHandRotZ);
-        result = 31 * result + Float.hashCode(offHandPosX);
-        result = 31 * result + Float.hashCode(offHandPosY);
-        result = 31 * result + Float.hashCode(offHandPosZ);
-        result = 31 * result + Float.hashCode(offHandRotX);
-        result = 31 * result + Float.hashCode(offHandRotY);
-        result = 31 * result + Float.hashCode(offHandRotZ);
+        int result = Double.hashCode(posOffsetX);
+        result = 31 * result + Double.hashCode(posOffsetY);
+        result = 31 * result + Double.hashCode(posOffsetZ);
+        result = 31 * result + Double.hashCode(rotOffsetX);
+        result = 31 * result + Double.hashCode(rotOffsetY);
+        result = 31 * result + Double.hashCode(rotOffsetZ);
+        result = 31 * result + Double.hashCode(scale);
+        result = 31 * result + Double.hashCode(swingIntensity);
+        result = 31 * result + Double.hashCode(mainHandPosX);
+        result = 31 * result + Double.hashCode(mainHandPosY);
+        result = 31 * result + Double.hashCode(mainHandPosZ);
+        result = 31 * result + Double.hashCode(mainHandRotX);
+        result = 31 * result + Double.hashCode(mainHandRotY);
+        result = 31 * result + Double.hashCode(mainHandRotZ);
+        result = 31 * result + Double.hashCode(offHandPosX);
+        result = 31 * result + Double.hashCode(offHandPosY);
+        result = 31 * result + Double.hashCode(offHandPosZ);
+        result = 31 * result + Double.hashCode(offHandRotX);
+        result = 31 * result + Double.hashCode(offHandRotY);
+        result = 31 * result + Double.hashCode(offHandRotZ);
         result = 31 * result + Boolean.hashCode(separateHandSettings);
         return result;
     }

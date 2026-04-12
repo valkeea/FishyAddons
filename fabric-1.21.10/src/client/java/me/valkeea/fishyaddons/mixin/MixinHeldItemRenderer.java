@@ -25,8 +25,7 @@ public class MixinHeldItemRenderer {
             return swingProgress;
         }
 
-        float intensity = HeldItems.getSwingIntensity();
-        return swingProgress * intensity;
+        return (float) (swingProgress * HeldItems.getSwingIntensity());
     }
 
     // Swing axis movement transforms
@@ -37,7 +36,7 @@ public class MixinHeldItemRenderer {
         if (!HeldItems.isEnabled()) {
             return x;
         }
-        return x * HeldItems.getSwingXMovement();
+        return (float) (x * HeldItems.getSwingXMovement());
     }
 
     @ModifyArg(method = "swingArm", at = @At(value = "INVOKE", 
@@ -47,7 +46,7 @@ public class MixinHeldItemRenderer {
         if (!HeldItems.isEnabled()) {
             return y;
         }
-        return y * HeldItems.getSwingYMovement();
+        return (float) (y * HeldItems.getSwingYMovement());
     }
 
     @ModifyArg(method = "swingArm", at = @At(value = "INVOKE", 
@@ -57,7 +56,7 @@ public class MixinHeldItemRenderer {
         if (!HeldItems.isEnabled()) {
             return z;
         }
-        return z * HeldItems.getSwingZMovement();
+        return (float) (z * HeldItems.getSwingZMovement());
     }    
 
     // Equip animation
@@ -68,7 +67,7 @@ public class MixinHeldItemRenderer {
         if (!HeldItems.isEnabled()) {
             return equipProgress;
         }
-        return equipProgress * HeldItems.getEquipIntensity();
+        return (float) (equipProgress * HeldItems.getEquipIntensity());
     }
 
     // Scale / rotation / position transforms

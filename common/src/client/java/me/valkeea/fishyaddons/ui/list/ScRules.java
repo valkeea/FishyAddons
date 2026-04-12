@@ -5,19 +5,22 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import me.valkeea.fishyaddons.config.FilterConfig;
-import me.valkeea.fishyaddons.config.FilterConfig.Rule;
-import me.valkeea.fishyaddons.config.FishyConfig;
-import me.valkeea.fishyaddons.config.Key;
-import me.valkeea.fishyaddons.config.RuleFactory;
-import me.valkeea.fishyaddons.ui.VCText;
-import me.valkeea.fishyaddons.ui.widget.FaButton;
-import me.valkeea.fishyaddons.ui.widget.VCButton;
-import me.valkeea.fishyaddons.ui.widget.VCLabelField;
-import me.valkeea.fishyaddons.ui.widget.VCTextField;
-import me.valkeea.fishyaddons.ui.widget.VCVisuals;
-import me.valkeea.fishyaddons.ui.widget.dropdown.TextFormatMenu;
+import org.lwjgl.glfw.GLFW;
+
+import me.valkeea.fishyaddons.feature.filter.FilterConfig;
+import me.valkeea.fishyaddons.feature.filter.RuleFactory;
+import me.valkeea.fishyaddons.feature.filter.FilterConfig.Rule;
+import me.valkeea.fishyaddons.ui.GuiUtil;
+import me.valkeea.fishyaddons.ui.element.TextFormatMenu;
 import me.valkeea.fishyaddons.util.text.Enhancer;
+import me.valkeea.fishyaddons.vconfig.ui.layout.UIScaleCalculator;
+import me.valkeea.fishyaddons.vconfig.ui.manager.ScreenManager;
+import me.valkeea.fishyaddons.vconfig.ui.render.VCText;
+import me.valkeea.fishyaddons.vconfig.ui.widget.FaButton;
+import me.valkeea.fishyaddons.vconfig.ui.widget.VCButton;
+import me.valkeea.fishyaddons.vconfig.ui.widget.VCLabelField;
+import me.valkeea.fishyaddons.vconfig.ui.widget.VCTextField;
+import me.valkeea.fishyaddons.vconfig.ui.widget.VCVisuals;
 import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
@@ -40,7 +43,6 @@ public class ScRules extends Screen {
     private static int fieldH;
     private static int btnH;
 
-    private final Screen parent;
     private final List<Entry> entries = new ArrayList<>();
     
     private TextFormatMenu formatMenu;
@@ -50,15 +52,14 @@ public class ScRules extends Screen {
     private boolean isDraggingScrollbar = false;
     private int scrollOffset = 0;
     private int maxVisibleEntries = 0;
-    private int scrollbarThumbOffset = 0;
+    private int scrollKnobOffset = 0;
 
     private Entry hoveredEntry = null;
     private long hoverStartTime = 0;
     private static final long TOOLTIP_DELAY = 250;
 
-    public ScRules(Screen parent) {
+    public ScRules() {
         super(Text.literal(TITLE_TEXT));
-        this.parent = parent;
     }  
 
     @Override
@@ -69,7 +70,7 @@ public class ScRules extends Screen {
         
         entries.clear();        
         this.clearChildren();
-        calcDimensions(FishyConfig.getFloat(Key.MOD_UI_SCALE, 0.8f), this.width);
+        calcDimensions(UIScaleCalculator.calculateUIScaleLegacy(), this.width);
 
         var allCreatures = FilterConfig.getSeaCreatureData();
         var categories = FilterConfig.getSeaCreatureCategories();
@@ -122,7 +123,7 @@ public class ScRules extends Screen {
         var backButton = new FaButton(
             this.width / 2 - entryW / 2 + btnW, this.height - 40, btnW, btnH,
             Text.literal("Back").styled(style -> style.withColor(0xFF808080)),
-            btn -> client.setScreen(parent)
+            btn -> ScreenManager.openConfigScreen()
         );
         backButton.setUIScale(uiScale);
         this.addDrawableChild(backButton);
@@ -208,7 +209,7 @@ public class ScRules extends Screen {
             return true;
         }
         
-        if (input.key() == 292) {
+        if (input.key() == GLFW.GLFW_KEY_F3) {
             toggleFormatMenu();
             return true;
         }
@@ -295,7 +296,7 @@ public class ScRules extends Screen {
 
         var title = VCText.header(TITLE_TEXT, Style.EMPTY.withBold(true));
 
-        VCText.drawScaledCenteredText(
+        GuiUtil.drawScaledCenteredText(
         context, this.textRenderer, title, this.width / 2, 15, 0xFF55FFFF, uiScale - 0.1f);
           
         addList(context);
@@ -315,7 +316,6 @@ public class ScRules extends Screen {
                     Text formattedPreview = Enhancer.parseFormattedText(previewText);
                     renderTooltip(context, mouseX, mouseY, formattedPreview, true);
                 } catch (Exception e) {
-                    System.err.println("[FishyAddons] Error rendering tooltip: " + e.getMessage());
                     e.printStackTrace();
                     renderTooltip(context, mouseX, mouseY, Text.literal("Error rendering preview"), false);
                 }
@@ -743,11 +743,11 @@ public class ScRules extends Screen {
             int thumbY = listTop + (scrollOffset * (listHeight - thumbHeight)) / (totalEntries - maxVisibleEntries);
             if (mouseY >= thumbY && mouseY <= thumbY + thumbHeight) {
                 isDraggingScrollbar = true;
-                scrollbarThumbOffset = (int)mouseY - thumbY;
+                scrollKnobOffset = (int)mouseY - thumbY;
             } else {
                 isDraggingScrollbar = true;
-                scrollbarThumbOffset = thumbHeight / 2;
-                double trackClickY = mouseY - listTop - scrollbarThumbOffset;
+                scrollKnobOffset = thumbHeight / 2;
+                double trackClickY = mouseY - listTop - scrollKnobOffset;
                 double scrollPercent = trackClickY / (listHeight - thumbHeight);
                 int newScrollOffset = (int)(scrollPercent * (totalEntries - maxVisibleEntries));
                 scrollOffset = Math.clamp(newScrollOffset, 0, totalEntries - maxVisibleEntries);
@@ -774,7 +774,7 @@ public class ScRules extends Screen {
             int listHeight = listBottom - listTop;
             int totalEntries = entries.size();
             int thumbHeight = Math.max((int)(10 * uiScale), (maxVisibleEntries * listHeight) / totalEntries);
-            int mouseThumbY = (int)click.y() - listTop - scrollbarThumbOffset;
+            int mouseThumbY = (int)click.y() - listTop - scrollKnobOffset;
             double scrollPercent = mouseThumbY / (double)(listHeight - thumbHeight);
             int newScrollOffset = (int)(scrollPercent * (totalEntries - maxVisibleEntries));
             scrollOffset = Math.clamp(newScrollOffset, 0, totalEntries - maxVisibleEntries);

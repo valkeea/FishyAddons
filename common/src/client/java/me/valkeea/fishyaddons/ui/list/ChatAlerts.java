@@ -5,21 +5,22 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-import me.valkeea.fishyaddons.config.FishyConfig;
-import me.valkeea.fishyaddons.config.FishyConfig.AlertData;
-import me.valkeea.fishyaddons.config.FishyPresets;
-import me.valkeea.fishyaddons.config.Key;
-import me.valkeea.fishyaddons.feature.qol.ChatAlert;
-import me.valkeea.fishyaddons.ui.VCPopup;
-import me.valkeea.fishyaddons.ui.VCRenderUtils;
-import me.valkeea.fishyaddons.ui.VCScreen;
-import me.valkeea.fishyaddons.ui.VCText;
-import me.valkeea.fishyaddons.ui.widget.FaButton;
-import me.valkeea.fishyaddons.ui.widget.VCButton;
-import me.valkeea.fishyaddons.ui.widget.VCLabelField;
-import me.valkeea.fishyaddons.ui.widget.VCTextField;
-import me.valkeea.fishyaddons.ui.widget.VCVisuals;
-import me.valkeea.fishyaddons.ui.widget.dropdown.DropdownMenu;
+import me.valkeea.fishyaddons.feature.qol.FishyPresets;
+import me.valkeea.fishyaddons.ui.GuiUtil;
+import me.valkeea.fishyaddons.ui.element.DropdownMenu;
+import me.valkeea.fishyaddons.ui.screen.AlertEditScreen;
+import me.valkeea.fishyaddons.vconfig.config.impl.AlertConfig;
+import me.valkeea.fishyaddons.vconfig.config.impl.AlertConfig.AlertData;
+import me.valkeea.fishyaddons.vconfig.ui.layout.UIScaleCalculator;
+import me.valkeea.fishyaddons.vconfig.ui.manager.ScreenManager;
+import me.valkeea.fishyaddons.vconfig.ui.render.RenderUtils;
+import me.valkeea.fishyaddons.vconfig.ui.render.VCPopup;
+import me.valkeea.fishyaddons.vconfig.ui.render.VCText;
+import me.valkeea.fishyaddons.vconfig.ui.widget.FaButton;
+import me.valkeea.fishyaddons.vconfig.ui.widget.VCButton;
+import me.valkeea.fishyaddons.vconfig.ui.widget.VCLabelField;
+import me.valkeea.fishyaddons.vconfig.ui.widget.VCTextField;
+import me.valkeea.fishyaddons.vconfig.ui.widget.VCVisuals;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
@@ -50,18 +51,18 @@ public class ChatAlerts extends Screen {
     private int uploadBtnY = 0;
     private int downloadBtnX = 0;
     private int downloadBtnY = 0;
-    private int scrollbarThumbOffset = 0;
-    
-    private Screen parent = null;  
+    private int scrollKnobOffset = 0;
+
+    private Screen parent;    
     private AddEntry addEntry = null;
     private FaButton addBtn = null;
     private DropdownMenu presetDropdown;
     private VCPopup popup = null;
     private VCTextField presetNameField = null;  
 
-    public ChatAlerts(Screen parent) {
+    public ChatAlerts() {
         super(Text.literal(TITLE_TEXT));
-        this.parent = parent;
+        parent = ScreenManager.getConfigOrCurrent();        
     }
 
     @Override
@@ -69,9 +70,9 @@ public class ChatAlerts extends Screen {
 
         entries.clear();        
         this.clearChildren();
-        calcDimensions(FishyConfig.getFloat(Key.MOD_UI_SCALE, 0.8f));
+        calcDimensions(UIScaleCalculator.calculateUIScaleLegacy());
 
-        for (Map.Entry<String, AlertData> entry : FishyConfig.getChatAlerts().entrySet()) {
+        for (Map.Entry<String, AlertData> entry : AlertConfig.getChatAlerts().entrySet()) {
             Entry e = new Entry(entry.getKey());
             entries.add(e);
             e.addToScreen();
@@ -112,13 +113,7 @@ public class ChatAlerts extends Screen {
         var backButton = new FaButton(
             this.width / 2 - entryW / 2 + btnW, this.height - 40, btnW, btnH,
             Text.literal("Back").styled(style -> style.withColor(0xFF808080)),
-            btn -> {
-                if (parent != null) {
-                    MinecraftClient.getInstance().setScreen(parent);
-                } else {
-                    client.setScreen(new VCScreen());
-                }
-            }
+            btn -> ScreenManager.openConfigScreen() 
         );
         backButton.setUIScale(uiScale);
         this.addDrawableChild(backButton);
@@ -177,12 +172,12 @@ public class ChatAlerts extends Screen {
             };
             for (String instruction : instructions) {
                 Text text = Text.literal(instruction);
-                VCText.drawScaledCenteredText(context, this.textRenderer, text.getString(),
+                GuiUtil.drawScaledCenteredText(context, this.textRenderer, text.getString(),
                     x, y, 0xFF55FFFF, uiScale - 0.1f);
                 y += lineHeight;
             }
         } else {
-            VCText.drawScaledCenteredText(
+            GuiUtil.drawScaledCenteredText(
                 context, this.textRenderer, VCText.header(TITLE_TEXT, Style.EMPTY.withBold(true)), this.width / 2, 15, 0xFF55FFFF, uiScale - 0.1f);
         }
 
@@ -201,7 +196,7 @@ public class ChatAlerts extends Screen {
         }
 
         if (isInside(downloadBtnX, downloadBtnY, btnW, btnH, mouseX, mouseY)) {
-            VCRenderUtils.preview(context, this.textRenderer, Arrays.asList(
+            RenderUtils.preview(context, this.textRenderer, Arrays.asList(
                 Text.literal("Download From File:"),
                 Text.literal("- §8Format: preset.alert.<name>.json"),
                 Text.literal("- §8All presets are stored in config/fishyaddons/preset"),
@@ -210,7 +205,7 @@ public class ChatAlerts extends Screen {
             ), downloadBtnX - 60, downloadBtnY - 60, VCVisuals.getThemeColor(), uiScale);
         }
         if (isInside(uploadBtnX, uploadBtnY, btnW, btnH, mouseX, mouseY)) {
-            VCRenderUtils.preview(context, this.textRenderer, Arrays.asList(
+            RenderUtils.preview(context, this.textRenderer, Arrays.asList(
                 Text.literal("Save as Preset:"),
                 Text.literal("- §8Creates a working preset with all current alerts."),
                 Text.literal("- §8Can be shared with others or saved for later use")
@@ -297,7 +292,7 @@ public class ChatAlerts extends Screen {
                         return;
                     }
                     if (!key.isEmpty()) {
-                        FishyConfig.setChatAlert(key, new AlertData());
+                        AlertConfig.setChatAlert(key, new AlertData());
                         abortEntry();
                     }
                 }
@@ -370,8 +365,8 @@ public class ChatAlerts extends Screen {
                 0, offScreenY, btnW, fieldH,
                 Text.literal("Edit").styled(s -> s.withColor(0xFFE2CAE9)),
                 btn -> {
-                    AlertData data = FishyConfig.getChatAlerts().get(key);
-                    MinecraftClient.getInstance().setScreen(new AlertEditScreen(key, data, ChatAlerts.this));
+                    AlertData data = AlertConfig.getChatAlerts().get(key);
+                    MinecraftClient.getInstance().setScreen(new AlertEditScreen(key, data));
                 },
                 uiScale - 0.1f
             );
@@ -380,8 +375,7 @@ public class ChatAlerts extends Screen {
                 0, offScreenY, delBtnW, fieldH,
                 Text.literal("🗑").setStyle(Style.EMPTY.withColor(0xFF808080)),
                 btn -> {
-                    FishyConfig.removeChatAlert(key);
-                    ChatAlert.refresh();
+                    AlertConfig.removeChatAlert(key);
                     entries.remove(this);
                     ChatAlerts.this.remove(this.keyField);
                     ChatAlerts.this.remove(this.editBtn);
@@ -391,13 +385,12 @@ public class ChatAlerts extends Screen {
                 }, uiScale
             );
 
-            boolean state = FishyConfig.isChatAlertToggled(key);
+            boolean state = AlertConfig.isChatAlertToggled(key);
             this.toggleBtn = VCButton.createMcToggle(
                 0, offScreenY, btnW, fieldH,
                 state,
                 btn -> {
-                    FishyConfig.toggleChatAlert(key, !state);
-                    ChatAlert.refresh();
+                    AlertConfig.toggleChatAlert(key, !state);
                     ChatAlerts.this.init();
                 },
                 uiScale - 0.1f
@@ -507,12 +500,12 @@ public class ChatAlerts extends Screen {
 
             if (mouseY >= thumbY && mouseY <= thumbY + thumbHeight) {
                 isDraggingScrollbar = true;
-                scrollbarThumbOffset = (int)mouseY - thumbY;
+                scrollKnobOffset = (int)mouseY - thumbY;
 
             } else {
                 isDraggingScrollbar = true;
-                scrollbarThumbOffset = thumbHeight / 2;
-                double trackClickY = mouseY - listTop - scrollbarThumbOffset;
+                scrollKnobOffset = thumbHeight / 2;
+                double trackClickY = mouseY - listTop - scrollKnobOffset;
                 double scrollPercent = trackClickY / (listHeight - thumbHeight);
                 int newScrollOffset = (int)(scrollPercent * (totalEntries - maxVisibleEntries));
                 scrollOffset = Math.clamp(newScrollOffset, 0, totalEntries - maxVisibleEntries);
@@ -538,7 +531,7 @@ public class ChatAlerts extends Screen {
             int listHeight = listBottom - listTop;
             int totalEntries = entries.size() + (addMode ? 1 : 0);
             int thumbHeight = Math.max((int)(10 * uiScale), (maxVisibleEntries * listHeight) / totalEntries);
-            int mouseThumbY = (int)click.y() - listTop - scrollbarThumbOffset;
+            int mouseThumbY = (int)click.y() - listTop - scrollKnobOffset;
             double scrollPercent = mouseThumbY / (double)(listHeight - thumbHeight);
             int newScrollOffset = (int)(scrollPercent * (totalEntries - maxVisibleEntries));
             scrollOffset = Math.clamp(newScrollOffset, 0, totalEntries - maxVisibleEntries);
@@ -581,10 +574,9 @@ public class ChatAlerts extends Screen {
     }
 
     private void loadPreset(String suffix) {
-        Map<String, FishyConfig.AlertData> map = FishyPresets.loadAlertPreset(suffix);
+        Map<String, AlertConfig.AlertData> map = FishyPresets.loadAlertPreset(suffix);
         if (map != null) {
-            FishyConfig.chatAlerts.getValues().putAll(map);
-            FishyConfig.save();
+            AlertConfig.setAlerts(map);
             init();
         }
     }
@@ -650,6 +642,11 @@ public class ChatAlerts extends Screen {
 
     private void savePreset(String suffix) {
         FishyPresets.saveAlertPreset(
-                suffix, FishyConfig.chatAlerts.getValues());
-    }    
+                suffix, AlertConfig.getChatAlerts());
+    }
+
+    @Override
+    public void close() {
+        this.client.setScreen(parent);
+    }
 }

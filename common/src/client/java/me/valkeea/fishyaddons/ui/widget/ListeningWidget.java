@@ -4,21 +4,23 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 import me.valkeea.fishyaddons.util.Keyboard;
+import me.valkeea.fishyaddons.vconfig.ui.widget.FaButton;
 import net.minecraft.client.gui.Click;
 import net.minecraft.client.input.KeyInput;
-import net.minecraft.text.Text;
 
 public class ListeningWidget extends FaButton {
     private boolean listening = false;
     private final Consumer<String> onKeySet;
     private String keyName;
-    private final Function<String, Text> labelProvider;
+    private final Function<String, net.minecraft.text.Text> labelProvider;
 
-    public ListeningWidget(int x, int y, int width, int height, String initialKey, Consumer<String> onKeySet, Function<String, Text> labelProvider) {
+    public ListeningWidget(int x, int y, int width, int height, String initialKey, Consumer<String> onKeySet,
+        Function<String, net.minecraft.text.Text> labelProvider
+    ) {
         super(x, y, width, height, labelProvider.apply(initialKey), btn -> {
             ListeningWidget widget = (ListeningWidget) btn;
             widget.listening = true;
-            widget.setMessage(Text.literal("Press any key...").styled(s -> s.withColor(0xFFFFFF80)));
+            widget.setMessage(net.minecraft.text.Text.literal("Press any key...").styled(s -> s.withColor(0xFFFFFF80)));
         });
         this.keyName = initialKey;
         this.onKeySet = onKeySet;

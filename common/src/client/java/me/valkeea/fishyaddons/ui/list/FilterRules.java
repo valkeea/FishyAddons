@@ -4,17 +4,19 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import me.valkeea.fishyaddons.config.FilterConfig;
-import me.valkeea.fishyaddons.config.FilterConfig.Rule;
-import me.valkeea.fishyaddons.config.FishyConfig;
-import me.valkeea.fishyaddons.config.Key;
-import me.valkeea.fishyaddons.ui.VCPopup;
-import me.valkeea.fishyaddons.ui.VCText;
-import me.valkeea.fishyaddons.ui.widget.FaButton;
-import me.valkeea.fishyaddons.ui.widget.VCButton;
-import me.valkeea.fishyaddons.ui.widget.VCLabelField;
-import me.valkeea.fishyaddons.ui.widget.VCTextField;
-import me.valkeea.fishyaddons.ui.widget.VCVisuals;
+import me.valkeea.fishyaddons.feature.filter.FilterConfig;
+import me.valkeea.fishyaddons.feature.filter.FilterConfig.Rule;
+import me.valkeea.fishyaddons.ui.GuiUtil;
+import me.valkeea.fishyaddons.ui.screen.FilterEditScreen;
+import me.valkeea.fishyaddons.vconfig.ui.layout.UIScaleCalculator;
+import me.valkeea.fishyaddons.vconfig.ui.manager.ScreenManager;
+import me.valkeea.fishyaddons.vconfig.ui.render.VCPopup;
+import me.valkeea.fishyaddons.vconfig.ui.render.VCText;
+import me.valkeea.fishyaddons.vconfig.ui.widget.FaButton;
+import me.valkeea.fishyaddons.vconfig.ui.widget.VCButton;
+import me.valkeea.fishyaddons.vconfig.ui.widget.VCLabelField;
+import me.valkeea.fishyaddons.vconfig.ui.widget.VCTextField;
+import me.valkeea.fishyaddons.vconfig.ui.widget.VCVisuals;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
@@ -36,29 +38,27 @@ public class FilterRules extends Screen {
     private static int fieldH;
     private static int btnH;
 
-    private final Screen parent;
     private final List<Entry> entries = new ArrayList<>();
 
     private boolean isDraggingScrollbar = false;
     private boolean addMode = false;
     private int scrollOffset = 0;
     private int maxVisibleEntries = 0;
-    private int scrollbarThumbOffset = 0;
+    private int scrollKnobOffset = 0;
 
     private AddEntry addEntry = null;
     private FaButton addBtn = null;
     private VCPopup popup = null;
 
-    public FilterRules(Screen parent) {
+    public FilterRules() {
         super(Text.literal(TITLE_TEXT));
-        this.parent = parent;
     }
 
     @Override
     protected void init() {
         entries.clear();        
         this.clearChildren();
-        calcDimensions(FishyConfig.getFloat(Key.MOD_UI_SCALE, 0.8f));
+        calcDimensions(UIScaleCalculator.calculateUIScaleLegacy());
 
         for (Map.Entry<String, Rule> entry : FilterConfig.getUserCreatedRules().entrySet()) {
             Entry e = new Entry(entry.getKey());
@@ -97,7 +97,7 @@ public class FilterRules extends Screen {
         var backButton = new FaButton(
             this.width / 2 - entryW / 2 + btnW, this.height - 40, btnW, btnH,
             Text.literal("Back").styled(style -> style.withColor(0xFF808080)),
-            btn -> client.setScreen(parent)
+            btn -> ScreenManager.openConfigScreen()
         );
         backButton.setUIScale(uiScale);
         this.addDrawableChild(backButton);
@@ -144,12 +144,12 @@ public class FilterRules extends Screen {
             };
             for (String instruction : instructions) {     
                 Text text = Text.literal(instruction);
-                VCText.drawScaledCenteredText(context, this.textRenderer, text.getString(),
+                GuiUtil.drawScaledCenteredText(context, this.textRenderer, text.getString(),
                     x, y, 0xFF55FFFF, uiScale - 0.1f);
                 y += lineHeight;
             }
         } else {
-            VCText.drawScaledCenteredText(
+            GuiUtil.drawScaledCenteredText(
                 context, this.textRenderer, title, this.width / 2, 15, 0xFF55FFFF, uiScale - 0.1f);
         }
        
@@ -452,11 +452,11 @@ public class FilterRules extends Screen {
             int thumbY = listTop + (scrollOffset * (listHeight - thumbHeight)) / (totalEntries - maxVisibleEntries);
             if (mouseY >= thumbY && mouseY <= thumbY + thumbHeight) {
                 isDraggingScrollbar = true;
-                scrollbarThumbOffset = (int)mouseY - thumbY;
+                scrollKnobOffset = (int)mouseY - thumbY;
             } else {
                 isDraggingScrollbar = true;
-                scrollbarThumbOffset = thumbHeight / 2;
-                double trackClickY = mouseY - listTop - scrollbarThumbOffset;
+                scrollKnobOffset = thumbHeight / 2;
+                double trackClickY = mouseY - listTop - scrollKnobOffset;
                 double scrollPercent = trackClickY / (listHeight - thumbHeight);
                 int newScrollOffset = (int)(scrollPercent * (totalEntries - maxVisibleEntries));
                 scrollOffset = Math.clamp(newScrollOffset, 0, totalEntries - maxVisibleEntries);
@@ -480,7 +480,7 @@ public class FilterRules extends Screen {
             int listHeight = listBottom - listTop;
             int totalEntries = entries.size() + (addMode ? 1 : 0);
             int thumbHeight = Math.max((int)(10 * uiScale), (maxVisibleEntries * listHeight) / totalEntries);
-            int mouseThumbY = (int)click.y() - listTop - scrollbarThumbOffset;
+            int mouseThumbY = (int)click.y() - listTop - scrollKnobOffset;
             double scrollPercent = mouseThumbY / (double)(listHeight - thumbHeight);
             int newScrollOffset = (int)(scrollPercent * (totalEntries - maxVisibleEntries));
             scrollOffset = Math.clamp(newScrollOffset, 0, totalEntries - maxVisibleEntries);

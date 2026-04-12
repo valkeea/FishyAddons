@@ -5,17 +5,15 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 
 import me.valkeea.fishyaddons.command.handler.CommandHandler;
-import me.valkeea.fishyaddons.command.handler.FgRoot;
 import me.valkeea.fishyaddons.command.handler.FaRoot;
+import me.valkeea.fishyaddons.command.handler.FgRoot;
 import me.valkeea.fishyaddons.command.handler.FpRoot;
 import me.valkeea.fishyaddons.command.handler.FwpRoot;
-import me.valkeea.fishyaddons.tool.GuiScheduler;
-import me.valkeea.fishyaddons.ui.VCScreen;
-import me.valkeea.fishyaddons.ui.VCState;
+import me.valkeea.fishyaddons.vconfig.ui.manager.ScreenManager;
+import me.valkeea.fishyaddons.vconfig.ui.screen.VCState;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
-import net.minecraft.client.MinecraftClient;
 
 public class CmdManager {
     private CmdManager() {}
@@ -50,15 +48,14 @@ public class CmdManager {
                     StringArgumentType.greedyString()
                 ).executes(context -> {
                     String query = StringArgumentType.getString(context, "query");
-                    VCState.setLastSearchText(query);
-                    GuiScheduler.scheduleGui(new VCScreen());
+                    VCState.setSearchTo(query);
+                    ScreenManager.openConfigScreen();
                     return 1;
                 })
             )
             .executes(context -> {
                 if (CmdHelper.checkGUI() == 1) return 1;
-                MinecraftClient.getInstance().execute(() ->
-                    GuiScheduler.scheduleGui(new VCScreen()));
+                ScreenManager.openConfigScreen();
                 return 1;
             });
         

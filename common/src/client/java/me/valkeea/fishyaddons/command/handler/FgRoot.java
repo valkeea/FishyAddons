@@ -4,13 +4,12 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 
 import me.valkeea.fishyaddons.command.CmdHelper;
-import me.valkeea.fishyaddons.config.ItemConfig;
-import me.valkeea.fishyaddons.feature.item.safeguard.ItemHandler;
-import me.valkeea.fishyaddons.tool.GuiScheduler;
+import me.valkeea.fishyaddons.feature.item.safeguard.FGUtil;
 import me.valkeea.fishyaddons.tool.ItemData;
-import me.valkeea.fishyaddons.ui.VCScreen;
-import me.valkeea.fishyaddons.ui.VCState;
 import me.valkeea.fishyaddons.util.FishyNotis;
+import me.valkeea.fishyaddons.vconfig.config.impl.ItemConfig;
+import me.valkeea.fishyaddons.vconfig.ui.manager.ScreenManager;
+import me.valkeea.fishyaddons.vconfig.ui.screen.VCState;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.MinecraftClient;
@@ -35,8 +34,8 @@ public class FgRoot implements CommandHandler {
             .then(cancelClearCmd())
             .then(helpCmd())
             .executes(context -> {
-                VCState.setLastSearchText("safeguard");
-                GuiScheduler.scheduleGui(new VCScreen());
+                VCState.setSearchTo("safeguard");
+                ScreenManager.openConfigScreen();
                 return 1;
             });
     }
@@ -65,7 +64,7 @@ public class FgRoot implements CommandHandler {
             }
 
             var name = held.getName();
-            ItemHandler.addToFg(uuid, name);
+            FGUtil.addToFg(uuid, name);
 
             FishyNotis.format(Text.literal("Your ").formatted(Formatting.GRAY)
                 .append(name)
@@ -163,7 +162,7 @@ public class FgRoot implements CommandHandler {
                     .append(name)
                     .append(Text.literal(" is no longer protected.").formatted(Formatting.GRAY)));
             }
-            ItemHandler.removeFromFg(uuid);
+            FGUtil.removeFromFg(uuid);
         }
         
         return isProtected;

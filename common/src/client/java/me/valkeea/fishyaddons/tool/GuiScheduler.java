@@ -13,9 +13,15 @@ public final class GuiScheduler {
     }
 
     public static void register() {
-        ClientTickEvents.END_CLIENT_TICK.register(client -> {
+        ClientTickEvents.END_CLIENT_TICK.register(mc -> {
             if (nextScreen != null) {
-                client.setScreen(nextScreen);
+
+                var current = mc.currentScreen;
+                if (current != null && current.equals(nextScreen)) {
+                    current.close();
+                }
+                
+                mc.setScreen(nextScreen);
                 nextScreen = null;
             }
         });

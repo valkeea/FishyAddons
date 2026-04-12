@@ -1,18 +1,15 @@
-package me.valkeea.fishyaddons.ui;
+package me.valkeea.fishyaddons.vconfig.ui.model;
 
 import net.minecraft.client.gui.DrawContext;
 
-/**
- * Parameter object to group rendering context
- */
-public class VCContext {
+public class BaseContext {
     public final DrawContext context;
     public final int mouseX;
     public final int mouseY;
     public final int entryX;
     public final int entryWidth;
 
-    public VCContext(DrawContext context, int mouseX, int mouseY, int entryX, int entryWidth) {
+    public BaseContext(DrawContext context, int mouseX, int mouseY, int entryX, int entryWidth) {
         this.context = context;
         this.mouseX = mouseX;
         this.mouseY = mouseY;

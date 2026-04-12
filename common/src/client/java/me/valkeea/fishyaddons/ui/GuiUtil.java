@@ -70,6 +70,63 @@ public class GuiUtil {
         return Text.literal(state).setStyle(Style.EMPTY.withColor(color));
     }
 
+    public static void drawScaledText(DrawContext context, TextRenderer textRenderer, String text, 
+                                    int x, int y, int color, float uiScale) {
+        var matrices = context.getMatrices();                                        
+        matrices.pushMatrix();
+        matrices.scale(uiScale, uiScale);
+        int scaledX = (int)(x / uiScale);
+        int scaledY = (int)(y / uiScale);
+        context.drawText(textRenderer, text, scaledX, scaledY, color, false);
+        matrices.popMatrix();
+    }    
+
+    public static void drawScaledText(DrawContext context, TextRenderer textRenderer, Text text, 
+                                    int x, int y, int color, float uiScale) {
+        var matrices = context.getMatrices();                                        
+        matrices.pushMatrix();
+        matrices.scale(uiScale, uiScale);
+        int scaledX = (int)(x / uiScale);
+        int scaledY = (int)(y / uiScale);
+        context.drawText(textRenderer, text, scaledX, scaledY, color, false);
+        matrices.popMatrix();
+    }
+
+    public static void drawScaledCenteredText(DrawContext context, TextRenderer textRenderer, String text, 
+                                            int centerX, int y, int color, float uiScale) {
+        var matrices = context.getMatrices();                                        
+        matrices.pushMatrix();
+        matrices.scale(uiScale, uiScale);
+        int scaledCenterX = (int)(centerX / uiScale);
+        int scaledY = (int)(y / uiScale);
+        int textWidth = getScaledTextWidth(textRenderer, text, uiScale);
+        int textX = scaledCenterX - textWidth / 2;
+        context.drawText(textRenderer, text, textX, scaledY, color, false);
+        matrices.popMatrix();
+    }
+
+    public static void drawScaledCenteredText(DrawContext context, TextRenderer textRenderer, Text text, 
+                                            int centerX, int y, int color, float uiScale) {
+        var matrices = context.getMatrices();                                        
+        matrices.pushMatrix();
+        matrices.scale(uiScale, uiScale);
+        int scaledCenterX = (int)(centerX / uiScale);
+        int scaledY = (int)(y / uiScale);
+        int textWidth = getScaledTextWidth(textRenderer, text.getString(), uiScale);
+        int textX = scaledCenterX - textWidth / 2;
+        context.drawText(textRenderer, text, textX, scaledY, color, false);
+        matrices.popMatrix();
+    }
+
+    /**
+     * Calculate scaled text dimensions
+     */
+    public static int getScaledTextWidth(TextRenderer textRenderer, String text, float uiScale) {
+        float baseWidth = textRenderer.getWidth(text);
+        float scaledWidth = baseWidth * uiScale;
+        return (int)Math.ceil(scaledWidth * 1.02f);
+    }    
+
     private GuiUtil() {
         throw new UnsupportedOperationException("Utility class");
     }

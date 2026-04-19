@@ -1,4 +1,4 @@
-package me.valkeea.fishyaddons.config;
+package me.valkeea.fishyaddons.tracker.profit;
 
 import java.io.FileWriter;
 import java.nio.file.Files;
@@ -13,7 +13,6 @@ import java.util.Map;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
-import me.valkeea.fishyaddons.tracker.profit.TrackedItemData;
 import me.valkeea.fishyaddons.util.FishyNotis;
 import net.minecraft.text.Text;
 

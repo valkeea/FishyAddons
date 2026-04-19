@@ -8,8 +8,6 @@ import org.jetbrains.annotations.Nullable;
 
 import me.valkeea.fishyaddons.api.skyblock.SkyblockAreas;
 import me.valkeea.fishyaddons.api.skyblock.SkyblockAreas.Island;
-import me.valkeea.fishyaddons.config.FishyConfig;
-import me.valkeea.fishyaddons.config.StatConfig;
 import me.valkeea.fishyaddons.event.impl.EnvironmentChangeEvent;
 import me.valkeea.fishyaddons.event.impl.FaEvents;
 import me.valkeea.fishyaddons.event.impl.ScCatchEvent;
@@ -17,6 +15,9 @@ import me.valkeea.fishyaddons.tool.RunDelayed;
 import me.valkeea.fishyaddons.tracker.monitoring.ActivityMonitor;
 import me.valkeea.fishyaddons.tracker.monitoring.Currently;
 import me.valkeea.fishyaddons.util.FishyNotis;
+import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
+import me.valkeea.fishyaddons.vconfig.api.Config;
+import me.valkeea.fishyaddons.vconfig.config.impl.StatConfig;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.decoration.ArmorStandEntity;
 import net.minecraft.text.Text;
@@ -73,9 +74,9 @@ public class ScStats {
     }
     
     public static void init() {
-        enabled = FishyConfig.getState(me.valkeea.fishyaddons.config.Key.TRACK_SCS, false);
-        countDh = FishyConfig.getState(me.valkeea.fishyaddons.config.Key.TRACK_SCS_WITH_DH, false);
-        announce = FishyConfig.getState(me.valkeea.fishyaddons.config.Key.SC_SINCE, false);
+        enabled = Config.get(BooleanKey.TRACK_SCS);
+        countDh = Config.get(BooleanKey.TRACK_SCS_WITH_DH);
+        announce = Config.get(BooleanKey.SC_SINCE);
 
         if (enabled) {
             ScStats instance = getInstance();

@@ -5,15 +5,20 @@ import java.util.List;
 
 import org.jetbrains.annotations.Nullable;
 
-import me.valkeea.fishyaddons.config.FishyConfig;
-import me.valkeea.fishyaddons.config.Key;
 import me.valkeea.fishyaddons.render.Beacon;
+import me.valkeea.fishyaddons.vconfig.annotation.VCInit;
+import me.valkeea.fishyaddons.vconfig.annotation.VCListener;
+import me.valkeea.fishyaddons.vconfig.annotation.VCModule;
+import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
+import me.valkeea.fishyaddons.vconfig.api.Config;
+import me.valkeea.fishyaddons.vconfig.api.IntKey;
 import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderContext;
 import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 
+@VCModule
 public class TempWaypoint {
     private TempWaypoint() {}
     private static final List<BeaconData> beacons = new ArrayList<>();
@@ -24,14 +29,15 @@ public class TempWaypoint {
     private static boolean hideNear = false;
     private static long duration = 60000;
 
+    @VCListener(value = BooleanKey.RENDER_COORD_HIDE_CLOSE, ints = IntKey.RENDER_COORD_MS)
     public static void refresh() {
-        duration = FishyConfig.getInt(Key.RENDER_COORD_MS, 60000) * 1000L;
-        hideNear = FishyConfig.getState(Key.RENDER_COORD_HIDE_CLOSE, true);
+        duration = Config.get(IntKey.RENDER_COORD_MS) * 1000L;
+        hideNear = Config.get(BooleanKey.RENDER_COORD_HIDE_CLOSE);
     }
 
+    @VCInit
     public static void init() {
         refresh();
-
         WorldRenderEvents.END_MAIN.register(context -> {
             if (beacons.isEmpty()) return;
 
@@ -130,7 +136,7 @@ public class TempWaypoint {
         
         beacons.removeIf(beacon -> beacon.getPos().equals(actualPos));
         
-        int color = FishyConfig.getInt(Key.RENDER_COORD_COLOR, -5653771);
+        int color = Config.get(IntKey.RENDER_COORD_COLOR);
         String label = (title != null && !title.isEmpty()) ? title : "";
         setBeacon(pos, color, label);
     }

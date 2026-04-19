@@ -4,12 +4,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import me.valkeea.fishyaddons.config.ItemConfig;
-import me.valkeea.fishyaddons.config.Key;
 import me.valkeea.fishyaddons.tool.FishyMode;
 import me.valkeea.fishyaddons.tracker.collection.CraftingRecipes.GoalRecipe;
 import me.valkeea.fishyaddons.tracker.profit.TrackedItemData;
 import me.valkeea.fishyaddons.util.text.StringUtils;
+import me.valkeea.fishyaddons.vconfig.api.Config;
+import me.valkeea.fishyaddons.vconfig.api.StringKey;
 import net.minecraft.text.Text;
 
 /**
@@ -175,12 +175,12 @@ public class GoalManager {
     }
    
     private void load() {
-        String saved = ItemConfig.getString(Key.ACTIVE_GOAL, "");
+        String saved = Config.get(StringKey.COLLECTION_GOAL);
         activeGoal = saved.isEmpty() ? null : saved;
     }
     
     private void save() {
-        ItemConfig.setString(Key.ACTIVE_GOAL, activeGoal == null ? "" : activeGoal);
+        Config.set(StringKey.COLLECTION_GOAL, activeGoal == null ? "" : activeGoal);
     }
     
     public void reset() {

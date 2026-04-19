@@ -7,13 +7,15 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 
 import me.valkeea.fishyaddons.api.hypixel.PriceService;
 import me.valkeea.fishyaddons.command.CommandBuilderUtils;
-import me.valkeea.fishyaddons.config.FishyConfig;
-import me.valkeea.fishyaddons.config.TrackerProfiles;
 import me.valkeea.fishyaddons.hud.elements.interactive.ProfitDisplay;
 import me.valkeea.fishyaddons.tracker.PriceUtil;
 import me.valkeea.fishyaddons.tracker.profit.ProfitTracker;
 import me.valkeea.fishyaddons.tracker.profit.TrackedItemData;
+import me.valkeea.fishyaddons.tracker.profit.TrackerProfiles;
 import me.valkeea.fishyaddons.util.FishyNotis;
+import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
+import me.valkeea.fishyaddons.vconfig.api.Config;
+import me.valkeea.fishyaddons.vconfig.api.StringKey;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.MinecraftClient;
@@ -135,11 +137,11 @@ public class FpRoot implements CommandHandler {
             .executes(ctx -> handleRestore(new String[]{RESTORE}) ? 1 : 0);
     }
 
-    private static final String KEY = me.valkeea.fishyaddons.config.Key.HUD_PROFIT_ENABLED;
+    private static final BooleanKey KEY = BooleanKey.HUD_PROFIT_ENABLED;
     
     private static boolean handleToggle() {
-        boolean newState = !FishyConfig.getState(KEY, false);
-        FishyConfig.setState(KEY, newState);
+        boolean newState = !Config.get(KEY);
+        Config.set(KEY, newState);
         String status = newState ? "§aenabled" : "§cdisabled";
         String msgStart = "§3Profit Tracker " + status;        
         me.valkeea.fishyaddons.tracker.PriceUtil.refresh();
@@ -175,7 +177,7 @@ public class FpRoot implements CommandHandler {
         }
 
         PriceService.setPriceType(newType);
-        FishyConfig.setString(me.valkeea.fishyaddons.config.Key.PRICE_TYPE, newType);
+        Config.set(StringKey.PRICE_TYPE, newType);
         PriceUtil.refreshPrices();
         FishyNotis.alert(Text.literal(String.format("§bPrice type set to §3%s", newType)));
         return true;
@@ -309,8 +311,8 @@ public class FpRoot implements CommandHandler {
     }
 
     private static boolean profileSwitchOrCreate(String profileName) {
-        if (!FishyConfig.getState(KEY, false)) {
-            FishyConfig.setState(KEY, true);
+        if (!Config.get(KEY)) {
+            Config.set(KEY, true);
         }
 
         var currentProfile = TrackerProfiles.getCurrentProfile();

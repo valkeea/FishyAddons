@@ -1,9 +1,9 @@
 package me.valkeea.fishyaddons.tracker;
 
-import me.valkeea.fishyaddons.config.StatConfig;
 import me.valkeea.fishyaddons.tracker.monitoring.ActivityMonitor;
 import me.valkeea.fishyaddons.tracker.monitoring.Currently;
 import me.valkeea.fishyaddons.util.FishyNotis;
+import me.valkeea.fishyaddons.vconfig.config.impl.StatConfig;
 import net.minecraft.text.Text;
 
 @SuppressWarnings("squid:S6548")
@@ -60,7 +60,7 @@ public class DianaStats {
     }
 
     public static void refresh() {
-        enabled = me.valkeea.fishyaddons.config.FishyConfig.getState(me.valkeea.fishyaddons.config.Key.TRACK_DIANA, false);
+        enabled = me.valkeea.fishyaddons.vconfig.api.Config.get(me.valkeea.fishyaddons.vconfig.api.BooleanKey.TRACK_DIANA);
     }
 
     public void setPaused(boolean pause) {

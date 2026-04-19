@@ -8,12 +8,13 @@ import java.util.Map;
 
 import me.valkeea.fishyaddons.api.skyblock.SkyblockAreas;
 import me.valkeea.fishyaddons.api.skyblock.SkyblockAreas.Island;
-import me.valkeea.fishyaddons.config.FishyConfig;
-import me.valkeea.fishyaddons.config.Key;
 import me.valkeea.fishyaddons.render.Beacon;
 import me.valkeea.fishyaddons.tool.FishyMode;
 import me.valkeea.fishyaddons.util.FishyNotis;
 import me.valkeea.fishyaddons.util.text.Color;
+import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
+import me.valkeea.fishyaddons.vconfig.api.Config;
+import me.valkeea.fishyaddons.vconfig.api.IntKey;
 import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderContext;
 import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents;
 import net.minecraft.client.MinecraftClient;
@@ -43,7 +44,7 @@ public class WaypointChains {
     private static String lastArea = null;
 
     static List<String> presets = List.of(
-        Key.WAYPOINT_CHAINS_SHOW_RELICS
+        BooleanKey.FWP_RELICS.getString()
     );
     
     public static void init() {
@@ -82,13 +83,13 @@ public class WaypointChains {
     
     public static void refresh() {
         ChainConfig.init();
-        enabled = FishyConfig.getState(Key.WAYPOINT_CHAINS_ENABLED, false);
-        compDistance = FishyConfig.getInt(Key.WAYPOINT_CHAINS_COMPLETION_DISTANCE, 3);
-        announce = FishyConfig.getState(Key.WAYPOINT_CHAINS_INFO, true);
+        enabled = Config.get(BooleanKey.FWP_ENABLED);
+        compDistance = Config.get(IntKey.FWP_DISTANCE);
+        announce = Config.get(BooleanKey.FWP_INFO);
 
         List<String> newEnabledPresets = new ArrayList<>();
         for (String presetKey : presets) {
-            boolean isEnabled = FishyConfig.getState(presetKey, false);
+            boolean isEnabled = Config.get(BooleanKey.FWP_RELICS);
             if (isEnabled) {
                 newEnabledPresets.add(presetKey);
                 if (!enabledPresets.contains(presetKey)) {
@@ -142,7 +143,6 @@ public class WaypointChains {
                 chains.add(userChain);
             }
         }
-        
         CACHED_USER_CHAINS.put(area, chains);
         return chains;
     }
@@ -318,7 +318,7 @@ public class WaypointChains {
         if (client.player != null) {
 
             var currentArea = SkyblockAreas.getIsland();
-            var chain = ChainConfig.getPresetChain(Key.WAYPOINT_CHAINS_SHOW_RELICS, currentArea.key());
+            var chain = ChainConfig.getPresetChain(BooleanKey.FWP_RELICS.getString(), currentArea.key());
 
             if (chain != null) {
                 Vec3d playerPos = client.player.getEntityPos();

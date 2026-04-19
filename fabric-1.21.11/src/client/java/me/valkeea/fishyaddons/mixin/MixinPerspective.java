@@ -3,7 +3,7 @@ package me.valkeea.fishyaddons.mixin;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 
-import me.valkeea.fishyaddons.config.FishyConfig;
+import me.valkeea.fishyaddons.vconfig.api.Config;
 import net.minecraft.client.option.Perspective;
 
 @Mixin(Perspective.class)
@@ -15,7 +15,7 @@ public abstract class MixinPerspective {
      */
     @Overwrite
     public Perspective next() {
-        if (!FishyConfig.getState(me.valkeea.fishyaddons.config.Key.SKIP_F5, false)) {
+        if (!Config.get(me.valkeea.fishyaddons.vconfig.api.BooleanKey.SKIP_F5)) {
             Perspective[] values = Perspective.values();
             return values[(((Perspective)(Object)this).ordinal() + 1) % values.length];
         }

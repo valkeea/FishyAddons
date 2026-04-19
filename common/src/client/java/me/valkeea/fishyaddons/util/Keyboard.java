@@ -7,10 +7,18 @@ import org.lwjgl.glfw.GLFW;
 
 import net.minecraft.client.input.KeyInput;
 import net.minecraft.client.util.InputUtil;
+import net.minecraft.util.Util;
+import net.minecraft.util.Util.OperatingSystem;
 
 public class Keyboard {
     private Keyboard() {}
     private static final Map<Integer, String> GLFW_KEY_NAMES = new HashMap<>();
+	private static final boolean ON_MAC_OS = Util.getOperatingSystem() == OperatingSystem.OSX;
+	private static final int CTRL_MODIFIER = ON_MAC_OS ? 8 : 2;
+    
+	public static boolean hasCtrlModifier(KeyInput input) {
+		return (input.modifiers() & CTRL_MODIFIER) != 0;
+	}
 
     static {
         GLFW_KEY_NAMES.put(GLFW.GLFW_KEY_A, "GLFW_KEY_A");
@@ -105,5 +113,5 @@ public class Keyboard {
             case "GLFW_KEY_RIGHT": return "→";
             default: return null;
         }
-    }    
+    }
 }

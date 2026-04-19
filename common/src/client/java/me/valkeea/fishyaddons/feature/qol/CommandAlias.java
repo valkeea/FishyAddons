@@ -3,17 +3,23 @@ package me.valkeea.fishyaddons.feature.qol;
 import java.util.HashMap;
 import java.util.Map;
 
-import me.valkeea.fishyaddons.config.FishyConfig;
+import me.valkeea.fishyaddons.vconfig.annotation.VCListener;
+import me.valkeea.fishyaddons.vconfig.annotation.VCModule;
+import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
+import me.valkeea.fishyaddons.vconfig.api.Config;
+import me.valkeea.fishyaddons.vconfig.config.impl.ShortcutsConfig;
 
+@VCModule
 public class CommandAlias {
     private CommandAlias() {}
     private static boolean enabled = false;
     private static final Map<String, String> cachedCommandAliases = new HashMap<>();
 
+    @VCListener(BooleanKey.ALIASES)
     public static void refresh() {
-        enabled = FishyConfig.getState(me.valkeea.fishyaddons.config.Key.ALIASES_ENABLED, false);
+        enabled = Config.get(BooleanKey.ALIASES);
         cachedCommandAliases.clear();
-        cachedCommandAliases.putAll(FishyConfig.getCommandAliases());
+        cachedCommandAliases.putAll(ShortcutsConfig.getAliases());
     }
 
     public static String getActualCommand(String input) {
@@ -28,7 +34,7 @@ public class CommandAlias {
             String alias = entry.getKey();
             String command = entry.getValue();
 
-            if (!FishyConfig.isCommandToggled(alias)) continue;
+            if (!ShortcutsConfig.isAliasToggled(alias)) continue;
 
             if ((input.equals(alias) || input.startsWith(alias + " ")) && alias.length() > bestMatchLength) {
                 bestMatchAlias = alias;

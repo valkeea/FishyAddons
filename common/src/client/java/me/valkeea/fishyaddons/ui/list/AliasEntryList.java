@@ -2,7 +2,7 @@ package me.valkeea.fishyaddons.ui.list;
 
 import java.util.Map;
 
-import me.valkeea.fishyaddons.config.FishyConfig;
+import me.valkeea.fishyaddons.vconfig.config.impl.ShortcutsConfig;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.Click;
@@ -18,27 +18,27 @@ public class AliasEntryList extends GenericEntryList {
 
     @Override
     public Map<String, String> getEntries() {
-        return FishyConfig.getCommandAliases();
+        return ShortcutsConfig.getAliases();
     }
 
     @Override
     public boolean isEntryToggled(String key) {
-        return FishyConfig.isCommandToggled(key);
+        return ShortcutsConfig.isAliasToggled(key);
     }
 
     @Override
     public void setEntry(String key, String value) {
-        FishyConfig.setCommandAlias(key, value);
+        ShortcutsConfig.setAlias(key, value);
     }
 
     @Override
     public void removeEntry(String key) {
-        FishyConfig.removeCommandAlias(key);
+        ShortcutsConfig.removeAlias(key);
     }
 
     @Override
     public void toggleEntry(String key, boolean toggled) {
-        FishyConfig.toggleCommand(key, toggled);
+        ShortcutsConfig.toggleAlias(key, toggled);
     }
 
     @Override
@@ -72,7 +72,7 @@ public class AliasEntryList extends GenericEntryList {
         return "OFF";
     }
 
-    public GenericEntryList.GenericEntry getHoveredCommandEntry() {
+    public GenericEntry getHoveredCommandEntry() {
         return this.getHoveredEntry();
     }
 

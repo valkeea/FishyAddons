@@ -2,8 +2,7 @@ package me.valkeea.fishyaddons.ui.list;
 
 import java.util.Map;
 
-import me.valkeea.fishyaddons.config.FishyConfig;
-import me.valkeea.fishyaddons.feature.qol.ChatReplacement;
+import me.valkeea.fishyaddons.vconfig.config.impl.ShortcutsConfig;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.Click;
@@ -19,27 +18,27 @@ public class ChatEntryList extends GenericEntryList {
 
     @Override
     public Map<String, String> getEntries() {
-        return FishyConfig.getChatReplacements();
+        return ShortcutsConfig.getChat();
     }
 
     @Override
     public boolean isEntryToggled(String key) {
-        return FishyConfig.isChatReplacementToggled(key);
+        return ShortcutsConfig.isChatToggled(key);
     }
 
     @Override
     public void setEntry(String key, String value) {
-        FishyConfig.setChatReplacement(key, value);
+        ShortcutsConfig.setChat(key, value);
     }
 
     @Override
     public void removeEntry(String key) {
-        FishyConfig.removeChatReplacement(key);
+        ShortcutsConfig.removeChat(key);
     }
 
     @Override
     public void toggleEntry(String key, boolean toggled) {
-        FishyConfig.toggleChatReplacement(key, toggled);
+        ShortcutsConfig.toggleChat(key, toggled);
     }
 
     @Override
@@ -48,7 +47,7 @@ public class ChatEntryList extends GenericEntryList {
         context.drawTextWithShadow(tr, Text.literal("Replaced in chat with:"), x + 110, y - 10, 0xFFAAAAAA);
     }     
 
-    public GenericEntryList.GenericEntry getHoveredChatEntry() {
+    public GenericEntry getHoveredChatEntry() {
         return this.getHoveredEntry();
     }
 

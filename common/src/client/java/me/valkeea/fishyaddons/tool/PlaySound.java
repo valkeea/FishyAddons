@@ -1,8 +1,9 @@
 package me.valkeea.fishyaddons.tool;
 
-import me.valkeea.fishyaddons.config.ItemConfig;
 import me.valkeea.fishyaddons.feature.skyblock.timer.ChatTimers;
 import me.valkeea.fishyaddons.impl.MutableSoundInstance;
+import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
+import me.valkeea.fishyaddons.vconfig.api.Config;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.registry.Registries;
 import net.minecraft.sound.SoundEvent;
@@ -16,19 +17,17 @@ public class PlaySound {
     private static MinecraftClient mc = MinecraftClient.getInstance();
 
     public static void protectTrigger() {
-        if (ItemConfig.isProtectNotiEnabled()) {
-            amethyst(1.0F);
-        }
+        amethyst(1.0F);
     }
 
     public static void playBindOrLock() {
-        if (mc.player != null && ItemConfig.isLockTriggerEnabled()) {
+        if (mc.player != null && Config.get(BooleanKey.SLOT_LOCK_AUDIO)) {
             amethyst(1.2F);
         }
     }
         
     public static void playUnbindOrUnlock() {
-        if (mc.player != null && ItemConfig.isLockTriggerEnabled()) {
+        if (mc.player != null && Config.get(BooleanKey.SLOT_LOCK_AUDIO)) {
             amethyst(0.8F);
         }
     }

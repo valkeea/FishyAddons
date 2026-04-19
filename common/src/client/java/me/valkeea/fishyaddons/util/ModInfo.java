@@ -2,9 +2,9 @@ package me.valkeea.fishyaddons.util;
 
 import java.util.Map;
 
-import me.valkeea.fishyaddons.config.FishyConfig;
-import me.valkeea.fishyaddons.config.Key;
 import me.valkeea.fishyaddons.hud.elements.custom.InfoDisplay;
+import me.valkeea.fishyaddons.vconfig.api.Config;
+import me.valkeea.fishyaddons.vconfig.api.StringKey;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.util.InputUtil;
 
@@ -83,7 +83,7 @@ public class ModInfo {
 
     private static void hideInfo() {
         InfoDisplay.getInstance().hide();
-        FishyConfig.setString(Key.INFO_ID, getInfoId());
+        Config.set(StringKey.INFO_ID, getInfoId());
         showInfo = false;
         displayStartTime = 0;
         wasClosePressed = false;
@@ -94,12 +94,12 @@ public class ModInfo {
     private static void check() {
         if (infoId == null || infoId.isEmpty()) return;
 
-        String lastId = FishyConfig.getString(Key.INFO_ID, "");
+        String lastId = Config.get(StringKey.INFO_ID);
         boolean foundId = lastId != null && !lastId.isEmpty();
         if (!foundId) {
             lastId = FOR_NEW ? "000000" : infoId;
             foundId = FOR_NEW;
-            FishyConfig.setString(Key.INFO_ID, lastId);
+            Config.set(StringKey.INFO_ID, lastId);
         }
 
         if (foundId) {

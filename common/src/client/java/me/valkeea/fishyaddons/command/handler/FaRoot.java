@@ -7,22 +7,17 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import me.valkeea.fishyaddons.api.skyblock.SlayerTables.SlayerType;
 import me.valkeea.fishyaddons.command.CmdHelper;
 import me.valkeea.fishyaddons.command.CommandBuilderUtils;
-import me.valkeea.fishyaddons.config.FishyConfig;
-import me.valkeea.fishyaddons.config.Key;
-import me.valkeea.fishyaddons.feature.qol.ChatAlert;
-import me.valkeea.fishyaddons.feature.qol.ChatReplacement;
-import me.valkeea.fishyaddons.feature.qol.CommandAlias;
-import me.valkeea.fishyaddons.feature.qol.KeyShortcut;
 import me.valkeea.fishyaddons.feature.qol.NetworkMetrics;
 import me.valkeea.fishyaddons.feature.skyblock.WeatherTracker;
-import me.valkeea.fishyaddons.feature.visual.RenderTweaks;
 import me.valkeea.fishyaddons.feature.waypoints.TempWaypoint;
 import me.valkeea.fishyaddons.tool.PlayerPosition;
 import me.valkeea.fishyaddons.tracker.SkillTracker;
 import me.valkeea.fishyaddons.tracker.SlayerStats;
-import me.valkeea.fishyaddons.ui.HudEditScreen;
 import me.valkeea.fishyaddons.ui.list.TabbedListScreen;
 import me.valkeea.fishyaddons.util.FishyNotis;
+import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
+import me.valkeea.fishyaddons.vconfig.api.Config;
+import me.valkeea.fishyaddons.vconfig.ui.screen.HudEditScreen;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.text.Text;
@@ -62,56 +57,50 @@ public class FaRoot implements CommandHandler {
     // --- Toggle commands with gui init ---
     
     private static LiteralArgumentBuilder<FabricClientCommandSource> cmdCommand() {
-        return CommandBuilderUtils.toggleCommand("cmd", Key.ALIASES_ENABLED, "Custom commands")
-            .onToggle(CommandAlias::refresh)
+        return CommandBuilderUtils.toggleCommand("cmd", BooleanKey.ALIASES, "Custom commands")
             .withGuiTab(TabbedListScreen.Tab.COMMANDS)
             .build();
     }
     
     private static LiteralArgumentBuilder<FabricClientCommandSource> chatCommand() {
-        return CommandBuilderUtils.toggleCommand("chat", Key.CHAT_REPLACEMENTS_ENABLED, "Chat replacements")
-            .onToggle(ChatReplacement::refresh)
+        return CommandBuilderUtils.toggleCommand("chat", BooleanKey.CHAT_REPLACEMENTS, "Chat replacements")
             .withGuiTab(TabbedListScreen.Tab.CHAT)
             .build();
     }
     
     private static LiteralArgumentBuilder<FabricClientCommandSource> keyCommand() {
-        return CommandBuilderUtils.toggleCommand("key", Key.KEY_SHORTCUTS_ENABLED, "Keybinds")
-            .onToggle(KeyShortcut::refresh)
+        return CommandBuilderUtils.toggleCommand("key", BooleanKey.KEY_SHORTCUTS, "Keybinds")
             .withGuiTab(TabbedListScreen.Tab.KEYBINDS)
             .build();
     }
     
     private static LiteralArgumentBuilder<FabricClientCommandSource> alertCommand() {
-        return CommandBuilderUtils.toggleCommand("alert", Key.CHAT_ALERTS_ENABLED, "Chat alerts")
-            .onToggle(ChatAlert::refresh)
-            .withGuiScreen(new me.valkeea.fishyaddons.ui.list.ChatAlerts(null))
+        return CommandBuilderUtils.toggleCommand("alert", BooleanKey.CHAT_ALERTS, "Chat alerts")
+            .withGuiScreen(new me.valkeea.fishyaddons.ui.list.ChatAlerts())
             .build();
     }
     
     // --- Toggle commands ---
     
     private static LiteralArgumentBuilder<FabricClientCommandSource> cameraCommand() {
-        return CommandBuilderUtils.toggleCommand("camera", Key.SKIP_F5, F5)
+        return CommandBuilderUtils.toggleCommand("camera", BooleanKey.SKIP_F5, F5)
             .withToggle()
             .withHelpMessage("Usage: §b/fa cam §8<§7 on §8| §7off §8| §7toggle §8>")
             .build();
     }
     
     private static LiteralArgumentBuilder<FabricClientCommandSource> lavaCommand() {
-        return CommandBuilderUtils.toggleCommand("lava", Key.FISHY_LAVA, "Clear Lava")
-            .onToggle(RenderTweaks::refresh)
+        return CommandBuilderUtils.toggleCommand("lava", BooleanKey.FISHY_LAVA, "Clear Lava")
             .withHelpMessage("Usage: §b/fa lava §8<§7on §8| §7off§8>")
             .build();
     }
     
     private static LiteralArgumentBuilder<FabricClientCommandSource> pingCommand() {
-        return CommandBuilderUtils.toggleCommand("ping", Key.HUD_PING_ENABLED, "Network Display")
-            .onToggle(NetworkMetrics::refresh)
+        return CommandBuilderUtils.toggleCommand("ping", BooleanKey.HUD_METRICS_ENABLED, "Network Display")
             .withDefaultAction(() -> {
                 NetworkMetrics.send();
                 var msg = Text.literal(NetworkMetrics.getPing() + " §8ms");
-                if (NetworkMetrics.shouldDisplay(Key.HUD_PING_SHOW_TPS)) {
+                if (NetworkMetrics.shouldDisplay(BooleanKey.METRICS_SHOW_TPS)) {
                     msg = msg.copy().append(Text.literal("§8, §7" + NetworkMetrics.getTpsString() + " §8TPS"));
                 }
                 FishyNotis.send(msg);
@@ -155,13 +144,13 @@ public class FaRoot implements CommandHandler {
         }))
         .then(ClientCommandManager.literal("on")
         .executes(context -> {
-            FishyConfig.toggle(Key.RAIN_NOTI, true);
+            Config.toggle(BooleanKey.RAIN_NOTI);
             FishyNotis.on("Rain notifications");
             return 1;
         }))
         .then(ClientCommandManager.literal("off")
         .executes(context -> {
-            FishyConfig.toggle(Key.RAIN_NOTI, false);
+            Config.toggle(BooleanKey.RAIN_NOTI);
             me.valkeea.fishyaddons.feature.skyblock.WeatherTracker.reset();
             FishyNotis.off("Rain notifications");
             return 1;
@@ -301,8 +290,8 @@ public class FaRoot implements CommandHandler {
         }))
         .then(ClientCommandManager.literal(TOGGLE)
         .executes(context -> {
-            boolean current = FishyConfig.getState(Key.HUD_SKILL_XP_ENABLED, false);
-            FishyConfig.toggle(Key.HUD_SKILL_XP_ENABLED, !current);
+            boolean current = Config.get(BooleanKey.HUD_SKILL_XP);
+            Config.toggle(BooleanKey.HUD_SKILL_XP);
             SkillTracker.refresh();
 
             if (!current) {

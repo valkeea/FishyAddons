@@ -5,8 +5,9 @@ import java.util.List;
 import java.util.Map;
 
 import me.valkeea.fishyaddons.ui.GuiUtil;
-import me.valkeea.fishyaddons.ui.VCRenderUtils;
-import me.valkeea.fishyaddons.ui.widget.FaButton;
+import me.valkeea.fishyaddons.vconfig.ui.render.RenderUtils;
+import me.valkeea.fishyaddons.vconfig.ui.widget.FaButton;
+import net.minecraft.client.gui.widget.ClickableWidget;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.Click;
@@ -99,6 +100,8 @@ public abstract class GenericEntryList extends EntryListWidget<GenericEntryList.
                 && ge.input.equals(key));
     }
 
+    private static final int edgeOffset = 30;
+
     public static class AddEntry extends GenericEntry {
         private final GenericEntryList entryList;
         private final TabbedListScreen parentScreen;
@@ -109,7 +112,7 @@ public abstract class GenericEntryList extends EntryListWidget<GenericEntryList.
             this.entryList = entryList;
             this.parentScreen = parentScreen;
             this.addButton = new FaButton(
-                0, -20, 100, 20,
+                edgeOffset, -20, 100, 20,
                 Text.literal(entryList.getAddButtonText()),
                 b -> {
                     if (parentScreen.addingNewEntry) {
@@ -119,8 +122,8 @@ public abstract class GenericEntryList extends EntryListWidget<GenericEntryList.
                     }
                     GenericEntry lastEntry = null;
                     for (EntryListWidget.Entry<?> entry : entryList.children()) {
-                        if (entry instanceof GenericEntryList.GenericEntry ce && ce.isNew) {
-                            lastEntry = ce;
+                        if (entry instanceof GenericEntryList.GenericEntry ge && ge.isNew) {
+                            lastEntry = ge;
                             break;
                         }
                     }
@@ -185,10 +188,10 @@ public abstract class GenericEntryList extends EntryListWidget<GenericEntryList.
         protected final GenericEntryList entryList;
         protected final TabbedListScreen parentScreen;
         protected final Object inputWidget;
-        protected final ButtonWidget extraButton;
 
         protected String pendingTooltip = null;
-        protected int tooltipX = 0, tooltipY = 0;
+        protected int tooltipX = 0;
+        protected int tooltipY = 0;
         protected List<Text> tooltipLines = null;
         protected boolean duplicatePopupShown = false;
 
@@ -205,7 +208,6 @@ public abstract class GenericEntryList extends EntryListWidget<GenericEntryList.
             this.saveButton = createSaveButton();
             this.deleteButton = createDeleteButton();
             this.toggleButton = createToggleButton();
-            this.extraButton = entryList.createExtraButton(this);
         }
 
         private TextFieldWidget createOutputField(String output) {
@@ -364,12 +366,13 @@ public abstract class GenericEntryList extends EntryListWidget<GenericEntryList.
 
         @Override
         public void render(DrawContext context, int mouseX, int mouseY, boolean hovered, float delta) {
-            int x = this.getX();
+            int aw = 100, ah = 20;
+            int x = this.getX() + edgeOffset;
             int y = this.getY();
             this.pendingTooltip = null;
 
-            int ax = x, ay = y, aw = 100, ah = 20;
-            int cx = x + 110, cy = y, cw = 200, ch = 20;
+            int ax = x, ay = y;
+            int cx = x + 110, cy = y, cw = 2 * aw, ch = 20;
 
             renderInputField(context, ax, ay, aw, ah, mouseX, mouseY, delta);
             renderOutputField(context, cx, cy, cw, ch, mouseX, mouseY, delta);
@@ -380,7 +383,7 @@ public abstract class GenericEntryList extends EntryListWidget<GenericEntryList.
         private void renderInputField(DrawContext context, int ax, int ay, int aw, int ah, int mouseX, int mouseY, float delta) {
             if (inputWidget instanceof TextFieldWidget field) {
                 int inputColor = field.isFocused() ? 0xFFE2CAE9 : 0xFF555555;
-                VCRenderUtils.border(context, ax, ay, aw, ah, inputColor);
+                RenderUtils.border(context, ax, ay, aw, ah, inputColor);
                 field.setX(ax + 2);
                 field.setY(ay + 5);
                 field.render(context, mouseX, mouseY, delta);
@@ -403,16 +406,15 @@ public abstract class GenericEntryList extends EntryListWidget<GenericEntryList.
             if (keyCode == 258) {
                 boolean shift = (modifiers & 0x1) != 0;
 
-                java.util.List<net.minecraft.client.gui.widget.ClickableWidget> widgets = new java.util.ArrayList<>();
+                List<ClickableWidget> widgets = new java.util.ArrayList<>();
 
                 if (inputWidget instanceof TextFieldWidget field) widgets.add(field);
                 widgets.add(outputField);
                 widgets.add(saveButton);
                 widgets.add(deleteButton);
                 widgets.add(toggleButton);
-                if (extraButton != null) widgets.add(extraButton);
 
-                net.minecraft.client.gui.widget.ClickableWidget focused = null;
+                ClickableWidget focused = null;
                 for (var w : widgets) {
                     if (w.isFocused()) {
                         focused = w;
@@ -443,16 +445,13 @@ public abstract class GenericEntryList extends EntryListWidget<GenericEntryList.
             if (toggleButton.isFocused()) {
                 return toggleButton.keyPressed(input);
             }
-            if (extraButton != null && extraButton.isFocused()) {
-                return extraButton.keyPressed(input);
-            }
 
             return false;
         }        
 
         private void renderOutputField(DrawContext context, int cx, int cy, int cw, int ch, int mouseX, int mouseY, float delta) {
             int outputColor = outputField.isFocused() ? 0xFFE2CAE9 : 0xFF555555;
-            VCRenderUtils.border(context, cx, cy, cw, ch, outputColor);
+            RenderUtils.border(context, cx, cy, cw, ch, outputColor);
             outputField.setX(cx + 2);
             outputField.setY(cy + 5);
             outputField.render(context, mouseX, mouseY, delta);
@@ -470,12 +469,6 @@ public abstract class GenericEntryList extends EntryListWidget<GenericEntryList.
             toggleButton.setX(x + 450);
             toggleButton.setY(y);
             toggleButton.render(context, mouseX, mouseY, delta);
-
-            if (extraButton != null) {
-                extraButton.setX(x + 495);
-                extraButton.setY(y);
-                extraButton.render(context, mouseX, mouseY, delta);
-            }
         }
 
         private void updateTooltipState(int cx, int cy, int cw, int ch, int mouseX, int mouseY) {
@@ -539,9 +532,5 @@ public abstract class GenericEntryList extends EntryListWidget<GenericEntryList.
         field.setMaxLength(256);
         field.setDrawsBackground(false);
         return field;
-    }
-
-    public ButtonWidget createExtraButton(GenericEntry entry) {
-        return null;
     }
 }

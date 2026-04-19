@@ -10,11 +10,14 @@ import org.jetbrains.annotations.Nullable;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import me.valkeea.fishyaddons.api.skyblock.GameMode;
-import me.valkeea.fishyaddons.config.FishyConfig;
-import me.valkeea.fishyaddons.config.Key;
 import me.valkeea.fishyaddons.event.impl.FaEvents;
 import me.valkeea.fishyaddons.util.ZoneUtils;
 import me.valkeea.fishyaddons.util.text.Enhancer;
+import me.valkeea.fishyaddons.vconfig.annotation.VCListener;
+import me.valkeea.fishyaddons.vconfig.annotation.VCModule;
+import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
+import me.valkeea.fishyaddons.vconfig.api.Config;
+import me.valkeea.fishyaddons.vconfig.config.impl.ColorConfig;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.PlainTextContent;
 import net.minecraft.text.StringVisitable;
@@ -23,6 +26,7 @@ import net.minecraft.text.Text;
 import net.minecraft.text.TextColor;
 import net.minecraft.text.TextContent;
 
+@VCModule
 public class FaColors {
     private static final Object2ObjectOpenHashMap<String, TextColor> global = new Object2ObjectOpenHashMap<>();
     private static final Object2ObjectOpenHashMap<String, TextColor> user = new Object2ObjectOpenHashMap<>();
@@ -39,17 +43,18 @@ public class FaColors {
     private static boolean useCustom = false;
     private static long lastFetchTime = 0;
 
+    @VCListener({BooleanKey.CUSTOM_FA_COLORS, BooleanKey.GLOBAL_FA_COLORS})    
     public static void init() {
-        if (FishyConfig.getState(Key.GLOBAL_FA_COLORS, false)) {
 
+        refresh();
+
+        if ((useGlobal || useCustom) && lastFetchTime == 0) {
             FaEvents.ENVIRONMENT_CHANGE.register(event -> {
                 if (event.gameModeChanged()) {
-                    combine(event.isSkyblock() || !FishyConfig.getState(Key.SB_ONLY_FAC, false));
+                    combine(event.isSkyblock() || !Config.get(BooleanKey.SB_ONLY_FAC));
                 }
             });
-
             fetchGlobal();
-            refresh();
         }
     }
 
@@ -88,16 +93,18 @@ public class FaColors {
         }
     }
 
+    @VCListener(BooleanKey.GLOBAL_FA_COLORS)
     public static void refreshGlobal() {
         fetchGlobal();
         refresh();
     }
-
+    
+    @VCListener({BooleanKey.CUSTOM_FA_COLORS, BooleanKey.SB_ONLY_FAC})
     public static void refresh() {
-        useGlobal = FishyConfig.getState(Key.GLOBAL_FA_COLORS, false);
-        useCustom = FishyConfig.getState(Key.CUSTOM_FA_COLORS, false);
+        useGlobal = Config.get(BooleanKey.GLOBAL_FA_COLORS);
+        useCustom = Config.get(BooleanKey.CUSTOM_FA_COLORS);
         loadUserMap();
-        combine(GameMode.skyblock() || !FishyConfig.getState(Key.SB_ONLY_FAC, false));
+        combine(GameMode.skyblock() || !Config.get(BooleanKey.SB_ONLY_FAC));
         clearCache();
     }
 
@@ -149,7 +156,7 @@ public class FaColors {
 
         List<Segment> segments;
 
-        if (input.contains("&") && FishyConfig.getState(Key.CHAT_FORMATTING, true)) {
+        if (input.contains("&") && Config.get(BooleanKey.CHAT_FORMATTING)) {
             try {
                 var parsed = Enhancer.parseFormattedText(input);
                 segments = findMatchedNames(parsed);
@@ -589,19 +596,19 @@ public class FaColors {
 
     public static void saveUserEntry(String key, int color) {
         user.put(key, TextColor.fromRgb(color));
-        FishyConfig.setFaC(key, color);
+        ColorConfig.setFaC(key, color);
         refresh();
     }
 
     public static void deleteUserEntry(String key) {
         user.remove(key);
-        FishyConfig.removeFaC(key);
+        ColorConfig.removeFaC(key);
         refresh();
     }
 
     public static void loadUserMap() {
         user.clear();
-        FishyConfig.getFaC().entrySet().stream()
+        ColorConfig.getFaC().entrySet().stream()
             .forEach(entry -> user.put(entry.getKey(), TextColor.fromRgb(entry.getValue())));
     }
 }

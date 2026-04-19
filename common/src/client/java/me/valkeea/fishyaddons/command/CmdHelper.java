@@ -4,10 +4,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import me.valkeea.fishyaddons.config.ItemConfig;
 import me.valkeea.fishyaddons.util.FishyNotis;
 import me.valkeea.fishyaddons.util.JsonUtil;
 import me.valkeea.fishyaddons.util.text.ChatButton;
+import me.valkeea.fishyaddons.vconfig.config.impl.ItemConfig;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ChatScreen;
 import net.minecraft.text.Text;

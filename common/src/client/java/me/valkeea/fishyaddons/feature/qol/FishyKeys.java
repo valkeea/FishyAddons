@@ -1,11 +1,13 @@
 package me.valkeea.fishyaddons.feature.qol;
 
-import me.valkeea.fishyaddons.config.FishyConfig;
-import me.valkeea.fishyaddons.config.Key;
+import me.valkeea.fishyaddons.feature.item.safeguard.FGUtil;
 import me.valkeea.fishyaddons.feature.item.safeguard.SlotHandler;
 import me.valkeea.fishyaddons.mixin.HandledScreenAccessor;
-import me.valkeea.fishyaddons.util.Keyboard;
 import me.valkeea.fishyaddons.util.ContainerScanner;
+import me.valkeea.fishyaddons.util.Keyboard;
+import me.valkeea.fishyaddons.vconfig.api.Config;
+import me.valkeea.fishyaddons.vconfig.api.StringKey;
+import me.valkeea.fishyaddons.vconfig.config.impl.ItemConfig;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ChatScreen;
@@ -55,8 +57,8 @@ public class FishyKeys {
 
     private static void configureIcons(MinecraftClient client, HandledScreen<?> screen) {
 
-        var guiKey = FishyConfig.getKeyString(Key.MOD_KEY_LOCK_GUISLOT);
-        if (guiKey == null || "NONE".equals(guiKey)) return;
+        var guiKey = Config.get(StringKey.KEY_HIDE_GUI);
+        if ("NONE".equals(guiKey)) return;
 
         int guiKeyCode = Keyboard.getKeyCodeFromString(guiKey);
         if (guiKeyCode == -1) return;
@@ -83,8 +85,8 @@ public class FishyKeys {
 
     private static void slotLocking(MinecraftClient client, HandledScreen<?> screen) {
 
-        var lockKey = FishyConfig.getKeyString(Key.MOD_KEY_LOCK);
-        if (lockKey == null || "NONE".equals(lockKey)) {
+        var lockKey = Config.get(StringKey.KEY_LOCK_SLOT);
+        if ("NONE".equals(lockKey)) {
             resetLockKeyState();
             return;
         }
@@ -135,11 +137,11 @@ public class FishyKeys {
         int slotId = SlotHandler.remap(screen, hovered.id);
         if (!isValidSlot(screen, slotId)) return;
 
-        if (SlotHandler.isSlotLocked(slotId)) {
+        if (FGUtil.isSlotLocked(slotId)) {
             SlotHandler.unlockSlot(slotId);
 
-        } else if (SlotHandler.isSlotBound(slotId)) {
-            int other = SlotHandler.getBoundSlot(slotId);
+        } else if (FGUtil.isSlotBound(slotId)) {
+            int other = ItemConfig.getBoundSlot(slotId);
             SlotHandler.unbindSlots(slotId, other);
 
         } else {

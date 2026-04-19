@@ -8,7 +8,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import me.valkeea.fishyaddons.config.ItemConfig;
+import me.valkeea.fishyaddons.feature.item.safeguard.FGUtil;
 import me.valkeea.fishyaddons.feature.item.safeguard.GuiHandler;
 import me.valkeea.fishyaddons.feature.visual.FaColors;
 import net.minecraft.client.MinecraftClient;
@@ -33,7 +33,7 @@ public abstract class MixinScreen {
         List<Text> originalTooltip = cir.getReturnValue();
 
         if (originalTooltip == null || originalTooltip.isEmpty()) return;
-        if (ItemConfig.isTooltipEnabled() && GuiHandler.isProtectedCached(stack)) {
+        if (FGUtil.tooltipEnabled() && GuiHandler.isProtectedCached(stack)) {
             
             int nbtIndex = IntStream.range(0, originalTooltip.size())
                 .filter(i -> originalTooltip.get(i).getString().startsWith("NBT:"))

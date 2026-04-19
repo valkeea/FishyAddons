@@ -2,8 +2,8 @@ package me.valkeea.fishyaddons.processor;
 
 import org.jetbrains.annotations.Nullable;
 
-import me.valkeea.fishyaddons.config.FilterConfig;
-import me.valkeea.fishyaddons.config.RuleFactory;
+import me.valkeea.fishyaddons.feature.filter.FilterConfig;
+import me.valkeea.fishyaddons.feature.filter.RuleFactory;
 import net.minecraft.text.Text;
 
 @SuppressWarnings("squid:S6548")

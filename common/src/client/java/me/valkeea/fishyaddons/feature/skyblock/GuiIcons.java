@@ -9,18 +9,24 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
-import me.valkeea.fishyaddons.config.ItemConfig;
 import me.valkeea.fishyaddons.event.EventPhase;
 import me.valkeea.fishyaddons.event.EventPriority;
 import me.valkeea.fishyaddons.event.impl.FaEvents;
 import me.valkeea.fishyaddons.mixin.HandledScreenAccessor;
 import me.valkeea.fishyaddons.util.ContainerScanner;
+import me.valkeea.fishyaddons.vconfig.annotation.VCInit;
+import me.valkeea.fishyaddons.vconfig.annotation.VCListener;
+import me.valkeea.fishyaddons.vconfig.annotation.VCModule;
+import me.valkeea.fishyaddons.vconfig.api.Config;
+import me.valkeea.fishyaddons.vconfig.api.StringKey;
+import me.valkeea.fishyaddons.vconfig.config.impl.ItemConfig;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.screen.slot.SlotActionType;
 
+@VCModule
 public class GuiIcons {
     private GuiIcons() {}
     
@@ -30,15 +36,17 @@ public class GuiIcons {
     private static String lastScreen = null;    
     private static boolean enabled = false;
 
+    @VCInit
     public static void init() {
         FaEvents.SCREEN_MOUSE_CLICK.register(event -> {
             if (checkClick(event.hoveredSlot, event.click.button(), event.screen)) {
                 event.setConsumed(true);
             }
-        }, EventPriority.NORMAL, EventPhase.PRE);
+        }, EventPriority.LOWEST, EventPhase.POST);
+        load();
     }
     
-    public static void onConfigLoaded() {
+    private static void load() {
         screenNames.clear();
         screenNames.addAll(ItemConfig.getGuiIconsScreenNames());
         
@@ -77,9 +85,9 @@ public class GuiIcons {
         return isBlocked(hovered.id);
     }
 
+    @VCListener(strings = StringKey.KEY_HIDE_GUI)    
     public static void refresh() {
-        String keyCode = me.valkeea.fishyaddons.config.FishyConfig.getKeyString(
-            me.valkeea.fishyaddons.config.Key.MOD_KEY_LOCK_GUISLOT);
+        String keyCode = Config.get(StringKey.KEY_HIDE_GUI);
         enabled = !screenNames.isEmpty() && !screenSlotMap.isEmpty() && keyCode != null && !keyCode.equals("NONE");
     }
 
@@ -129,9 +137,8 @@ public class GuiIcons {
 
         String key = screenName.toLowerCase(java.util.Locale.ROOT);
         Set<Integer> slots = screenSlotMap.get(key);
-        boolean exists = slots != null && slots.contains(slotId);
         
-        if (exists) {
+        if (slots != null && slots.contains(slotId)) {
             slots.remove(slotId);
             if (slots.isEmpty()) {
                 screenSlotMap.remove(key);

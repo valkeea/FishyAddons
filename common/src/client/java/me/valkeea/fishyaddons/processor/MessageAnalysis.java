@@ -4,8 +4,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import me.valkeea.fishyaddons.config.FilterConfig.Rule;
-import me.valkeea.fishyaddons.config.FishyConfig.AlertData;
+import me.valkeea.fishyaddons.feature.filter.FilterConfig.Rule;
+import me.valkeea.fishyaddons.vconfig.config.impl.AlertConfig.AlertData;
 
 /**
  * Contains the results of analyzing a chat message for both filter and alert patterns.

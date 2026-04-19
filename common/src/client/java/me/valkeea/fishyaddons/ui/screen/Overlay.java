@@ -1,6 +1,6 @@
 package me.valkeea.fishyaddons.ui.screen;
 
-import me.valkeea.fishyaddons.vconfig.ui.render.VCPopup;
+import me.valkeea.fishyaddons.vconfig.ui.widget.VCPopup;
 import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;

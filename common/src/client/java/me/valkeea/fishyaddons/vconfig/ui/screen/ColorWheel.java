@@ -1,11 +1,15 @@
-package me.valkeea.fishyaddons.ui;
+package me.valkeea.fishyaddons.vconfig.ui.screen;
 
 import java.util.function.Consumer;
 
-import me.valkeea.fishyaddons.config.FishyConfig;
-import me.valkeea.fishyaddons.config.Key;
-import me.valkeea.fishyaddons.ui.widget.FaButton;
-import me.valkeea.fishyaddons.ui.widget.VCTextField;
+import me.valkeea.fishyaddons.vconfig.api.Config;
+import me.valkeea.fishyaddons.vconfig.api.IntKey;
+import me.valkeea.fishyaddons.vconfig.ui.layout.UIScaleCalculator;
+import me.valkeea.fishyaddons.vconfig.ui.manager.ScreenManager;
+import me.valkeea.fishyaddons.vconfig.ui.render.RenderUtils;
+import me.valkeea.fishyaddons.vconfig.ui.render.VCText;
+import me.valkeea.fishyaddons.vconfig.ui.widget.FaButton;
+import me.valkeea.fishyaddons.vconfig.ui.widget.VCTextField;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.gui.Click;
@@ -22,13 +26,15 @@ public class ColorWheel extends Screen {
     private float red = 1.0f;
     private float green = 0.0f;
     private float blue = 0.0f;
-    private float hue = 0.0f;
+    private float hue = 0.5f;
     private float saturation = 1.0f;
     private float lightness = 0.5f;
     private int color = rgbToInt(new float[]{red, green, blue});
 
+    private IntKey callbackKey;
     private Consumer<Integer> onColorSelected;
-    private Screen parent;
+    private final Screen parent;
+
     private VCTextField hexField;
 
     private NativeImage wheelImage;
@@ -51,21 +57,25 @@ public class ColorWheel extends Screen {
     private boolean thick;
     private boolean draggingWheel = false;
     private boolean draggingBar = false;
-    private boolean hasDisable = false;
 
-    public ColorWheel(Screen parent, int initialColor, Consumer<Integer> onColorSelected) {
-        this(parent, initialColor, onColorSelected, false);
+    /** Open for a specific config key */
+    public ColorWheel(Screen parent, IntKey callbackKey) {
+        this(parent, callbackKey, Config.get(callbackKey), null);
     }
 
-    public ColorWheel(Screen parent, int initialColor,
-                        Consumer<Integer> onColorSelected,
-                        boolean hasDisable) {
+    /** Open with a custom callback instead of config key */
+    public ColorWheel(Screen parent, int initColor, Consumer<Integer> onColorSelected) {
+        this(parent, null, initColor, onColorSelected);
+    }
+
+    private ColorWheel(Screen parent, IntKey callbackKey, int initColor,Consumer<Integer> onColorSelected) {
 
         super(Text.literal("Color Picker"));
         this.parent = parent;
+        this.callbackKey = callbackKey;
         this.onColorSelected = onColorSelected;
-        this.hasDisable = hasDisable;
-        float[] rgb = intToRGB(initialColor);
+
+        float[] rgb = intToRGB(initColor);
 
         if (rgb.length == 3) {
             this.red = rgb[0];
@@ -76,7 +86,7 @@ public class ColorWheel extends Screen {
             this.saturation = hsl[1];
             this.lightness = hsl[2];
         } else {
-            this.hue = 0.0f;
+            this.hue = 0.5f;
             this.saturation = 1.0f;
             this.lightness = 0.5f;
             float[] fallback = hslToRgb(this.hue * 360, this.saturation, this.lightness);
@@ -86,18 +96,34 @@ public class ColorWheel extends Screen {
         }
     }
 
+    private static final int RADIUS = 70;
+    private static final int BAR_WIDTH = 140;
+    private static final int BAR_HEIGHT = 10;
+    private static final int WIDGET_HEIGHT = 20;
+    private static final int FIELD_WIDTH = 150;
+    private static final int CENTER_OFFSET_Y = 30;
+    private static final int BAR_OFFSET_Y = 25;
+    private static final int BUTTON_WIDTH = 45;
+    private static final int BASE_GAP = 5;
+    private static final int BG_PADDING_X = 20;
+    private static final int BG_PADDING_Y = 10;
+
+    private int scale(int base) {
+        return (int)(base * uiScale);
+    }
+
     private void calcDimensions() {
-        uiScale = Math.clamp(FishyConfig.getFloat(Key.MOD_UI_SCALE, 0.8f), 0.75f, 1.3f);
+        uiScale = UIScaleCalculator.calculateUIScaleLegacy();        
         thick = uiScale > 1.0f;
-        wheelRadius = (int)(70 * uiScale);
+        wheelRadius = scale(RADIUS);
         wheelCenterX = this.width / 2;
-        wheelCenterY = this.height / 2 - 30;
-        barWidth = (int)(140 * uiScale);
-        barHeight = (int)(10 * uiScale); 
-        widgetHeight = (int)(20 * uiScale);
-        fieldWidth = (int)(150 * uiScale);              
+        wheelCenterY = this.height / 2 - CENTER_OFFSET_Y;
+        barWidth = scale(BAR_WIDTH);
+        barHeight = scale(BAR_HEIGHT); 
+        widgetHeight = scale(WIDGET_HEIGHT);
+        fieldWidth = scale(FIELD_WIDTH);              
         barX = wheelCenterX - barWidth / 2;
-        barY = wheelCenterY + wheelRadius + (int)(25 * uiScale);
+        barY = wheelCenterY + wheelRadius + scale(BAR_OFFSET_Y);
     }
 
     @Override
@@ -108,7 +134,7 @@ public class ColorWheel extends Screen {
         updateRgbFromHsl();
         
         var tr = this.textRenderer;
-        fieldY = barY + barHeight + 20;
+        fieldY = barY + barHeight + WIDGET_HEIGHT;
         hexField = new VCTextField(tr, wheelCenterX - fieldWidth / 2, fieldY, fieldWidth, widgetHeight, Text.literal("Hex (e.g. #FF00FF)"));
         hexField.setMaxLength(9);
         hexField.setUIScale(uiScale);
@@ -116,26 +142,20 @@ public class ColorWheel extends Screen {
         updateHexField();
         this.addDrawableChild(hexField);
 
-        btnY = fieldY + 30;
+        btnY = fieldY + CENTER_OFFSET_Y;
         int cancelX = wheelCenterX - fieldWidth  / 2;
 
-        if (hasDisable) {
-            btnWidth = (int)(45 * uiScale); 
-            addCancelBtn(cancelX, btnY);
-            addDisableBtn(cancelX + btnWidth + 5, btnY);
-            addConfirmBtn(cancelX + (btnWidth + 5) * 2, btnY);
-        } else {
-            btnWidth = (int)(70 * uiScale);
-            addCancelBtn(cancelX, btnY);
-            addConfirmBtn(wheelCenterX + 5, btnY);
-         }
+        btnWidth = scale(BUTTON_WIDTH);
+        addCancelBtn(cancelX, btnY);
+        addDisableBtn(cancelX + btnWidth + BASE_GAP, btnY);
+        addConfirmBtn(cancelX + (btnWidth + BASE_GAP) * 2, btnY);
     }
 
     private void addCancelBtn(int x, int y) {
         var cancelBtn = new FaButton(
             x, y, btnWidth, widgetHeight,
             Text.literal("Cancel").setStyle(Style.EMPTY.withColor(0xFFAAAAAA)),
-            btn -> this.client.setScreen(parent)
+            btn -> navigateBack()
         );
         cancelBtn.setUIScale(uiScale);
         this.addDrawableChild(cancelBtn);
@@ -146,8 +166,8 @@ public class ColorWheel extends Screen {
             x, y, btnWidth, widgetHeight,
             Text.literal("Disable").setStyle(Style.EMPTY.withColor(0xFFFF8080)),
             btn -> {
-                onColorSelected.accept(0);
-                this.client.setScreen(parent);
+                updateColor(0);
+                navigateBack();
             }
         );
         disableBtn.setUIScale(uiScale);
@@ -163,16 +183,17 @@ public class ColorWheel extends Screen {
                 float[] rgb = new float[]{red, green, blue};
                 if (hex.matches("^#?[0-9a-fA-F]{6}$")) {
                     try {
-                        int color = Integer.parseInt(hex.replace("#", ""), 16);
-                        rgb[0] = ((color >> 16) & 0xFF) / 255f;
-                        rgb[1] = ((color >> 8) & 0xFF) / 255f;
-                        rgb[2] = (color & 0xFF) / 255f;
+                        int c = Integer.parseInt(hex.replace("#", ""), 16);
+                        rgb[0] = ((c >> 16) & 0xFF) / 255f;
+                        rgb[1] = ((c >> 8) & 0xFF) / 255f;
+                        rgb[2] = (c & 0xFF) / 255f;
                     } catch (NumberFormatException e) {
                         // Current RGB if parsing fails
                     }
                 }
-                onColorSelected.accept(rgbToInt(rgb));
-                this.client.setScreen(parent);
+
+                updateColor(rgbToInt(rgb));
+                navigateBack();
             }
         );
         confirmBtn.setUIScale(uiScale);
@@ -269,14 +290,14 @@ public class ColorWheel extends Screen {
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
 
-        int bgWidth = wheelRadius * 2 + 40;
-        int bgLeft = wheelCenterX - wheelRadius - 20;
+        int bgWidth = (wheelRadius + BG_PADDING_X) * 2;
+        int bgLeft = wheelCenterX - wheelRadius - BG_PADDING_X;
         int bgTop = wheelCenterY - wheelRadius - (int)(widgetHeight * 1.5f);
-        int bgBottom = btnY + widgetHeight + 10;
+        int bgBottom = btnY + widgetHeight + BG_PADDING_Y;
         int headerHeight = bgTop + (int)(widgetHeight * 0.5f);
 
         context.fill(bgLeft - 2, bgTop - 2, bgLeft + bgWidth + 2, bgBottom + 2, 0x70000000); 
-        VCRenderUtils.gradient(context, bgLeft, bgTop, bgWidth, bgBottom - bgTop, 0x30000000);          
+        RenderUtils.gradient(context, bgLeft, bgTop, bgWidth, bgBottom - bgTop, 0x30000000);          
         super.render(context, mouseX, mouseY, delta);
 
         context.drawText(
@@ -304,7 +325,7 @@ public class ColorWheel extends Screen {
             
             context.fill(barX + x, barY, barX + x + 1, barY + barHeight, c);
         }
-        VCRenderUtils.border(context, barX, barY, barWidth, barHeight, 0x95000000);
+        RenderUtils.border(context, barX, barY, barWidth, barHeight, 0x95000000);
     }
     
     private void selectionIndicators(DrawContext context) {
@@ -441,6 +462,14 @@ public class ColorWheel extends Screen {
         if (hexField != null) {
             hexField.setText(String.format("#%02X%02X%02X", (int)(red * 255), (int)(green * 255), (int)(blue * 255)));
             hexField.setEditableColor(color);
+        }
+    }
+
+    private void updateColor(int newColor) {
+        if (onColorSelected != null) {
+            onColorSelected.accept(newColor);
+        } else {
+            Config.set(callbackKey, newColor);
         }
     }
 
@@ -600,5 +629,9 @@ public class ColorWheel extends Screen {
             wheelImage = null;
         }
         super.close();
+    }
+
+    private void navigateBack() {
+        ScreenManager.navigateOrParent(this.parent);
     }
 }

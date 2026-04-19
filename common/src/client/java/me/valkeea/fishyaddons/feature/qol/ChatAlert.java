@@ -4,17 +4,21 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import me.valkeea.fishyaddons.api.skyblock.GameChat;
-import me.valkeea.fishyaddons.config.FishyConfig;
-import me.valkeea.fishyaddons.config.FishyConfig.AlertData;
 import me.valkeea.fishyaddons.hud.elements.simple.TitleDisplay;
 import me.valkeea.fishyaddons.processor.BaseAnalysis;
 import me.valkeea.fishyaddons.processor.ChatMessageContext;
 import me.valkeea.fishyaddons.tool.PlaySound;
 import me.valkeea.fishyaddons.tool.PlayerPosition;
 import me.valkeea.fishyaddons.util.ServerCommand;
+import me.valkeea.fishyaddons.vconfig.annotation.VCListener;
+import me.valkeea.fishyaddons.vconfig.annotation.VCModule;
+import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
+import me.valkeea.fishyaddons.vconfig.api.Config;
+import me.valkeea.fishyaddons.vconfig.config.impl.AlertConfig.AlertData;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.util.Identifier;
 
+@VCModule
 public class ChatAlert {
     private ChatAlert() {}
     private static boolean enabled = false;
@@ -22,8 +26,9 @@ public class ChatAlert {
     private static final long TRIGGER_COOLDOWN_MS = 1000;
     private static final Map<String, Long> lastTriggerTime = new ConcurrentHashMap<>();
 
+    @VCListener(BooleanKey.CHAT_ALERTS)
     public static void refresh() {
-        enabled = FishyConfig.getState(me.valkeea.fishyaddons.config.Key.CHAT_ALERTS_ENABLED, false);
+        enabled = Config.get(BooleanKey.CHAT_ALERTS);
         BaseAnalysis.clearCaches();
     }
 

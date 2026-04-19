@@ -94,8 +94,8 @@ public class PriceService {
     // --- Configuration ---
 
     private void initPriceType() {
-        String configuredType = me.valkeea.fishyaddons.config.FishyConfig.getString(
-            me.valkeea.fishyaddons.config.Key.PRICE_TYPE, SELL_PRICE
+        String configuredType = me.valkeea.fishyaddons.vconfig.api.Config.get(
+            me.valkeea.fishyaddons.vconfig.api.StringKey.PRICE_TYPE
         );
         setPriceType(configuredType);
     }
@@ -110,8 +110,8 @@ public class PriceService {
         }
 
         priceType = newType;
-        me.valkeea.fishyaddons.config.FishyConfig.setString(
-            me.valkeea.fishyaddons.config.Key.PRICE_TYPE, newType
+        me.valkeea.fishyaddons.vconfig.api.Config.set(
+            me.valkeea.fishyaddons.vconfig.api.StringKey.PRICE_TYPE, newType
         );
     }
 

@@ -3,14 +3,23 @@ package me.valkeea.fishyaddons.feature.qol;
 import java.util.HashSet;
 import java.util.Set;
 
-import me.valkeea.fishyaddons.config.FishyConfig;
-import me.valkeea.fishyaddons.config.Key;
 import me.valkeea.fishyaddons.event.EventPhase;
 import me.valkeea.fishyaddons.event.EventPriority;
 import me.valkeea.fishyaddons.event.impl.FaEvents;
 import me.valkeea.fishyaddons.hud.core.ElementRegistry;
 import me.valkeea.fishyaddons.hud.ui.SearchHudElement;
 import me.valkeea.fishyaddons.mixin.HandledScreenAccessor;
+import me.valkeea.fishyaddons.vconfig.annotation.UIContainer;
+import me.valkeea.fishyaddons.vconfig.annotation.UIHudRedirect;
+import me.valkeea.fishyaddons.vconfig.annotation.UISlider;
+import me.valkeea.fishyaddons.vconfig.annotation.UIToggle;
+import me.valkeea.fishyaddons.vconfig.annotation.VCInit;
+import me.valkeea.fishyaddons.vconfig.annotation.VCListener;
+import me.valkeea.fishyaddons.vconfig.annotation.VCModule;
+import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
+import me.valkeea.fishyaddons.vconfig.api.Config;
+import me.valkeea.fishyaddons.vconfig.api.DoubleKey;
+import me.valkeea.fishyaddons.vconfig.core.UICategory;
 import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
@@ -19,6 +28,7 @@ import net.minecraft.client.input.KeyInput;
 import net.minecraft.item.ItemStack;
 
 @SuppressWarnings("squid:S6548")
+@VCModule(UICategory.QOL)
 public class ItemSearchOverlay {
     private static ItemSearchOverlay instance;
     private Set<Integer> matchingSlots = new HashSet<>();
@@ -28,6 +38,7 @@ public class ItemSearchOverlay {
     private String lastSearchTerm = "";
     private int lastHash = 0;
     private boolean enabled = false;
+    private double opacity = DEFAULT_OVERLAY_OPACITY;
     
     private ItemSearchOverlay() {
         for (var element : ElementRegistry.getElements()) {
@@ -38,6 +49,7 @@ public class ItemSearchOverlay {
         }
     }
 
+    @VCInit
     public static void init() {
         FaEvents.SCREEN_MOUSE_CLICK.register(
             event -> getInstance().handleMouseClicked(event.click, event.doubled),
@@ -82,7 +94,9 @@ public class ItemSearchOverlay {
     }
 
     public static void refresh() {
-        getInstance().enabled = FishyConfig.getState(Key.INV_SEARCH, false);
+        var instance = getInstance();
+        instance.enabled = Config.get(BooleanKey.INV_SEARCH);
+        instance.opacity = Config.get(DoubleKey.INV_SEARCH_OPACITY);
     }
 
     private boolean matchesSearch(ItemStack stack, String searchTerm) {
@@ -112,7 +126,6 @@ public class ItemSearchOverlay {
 
     private void renderSegmentedOverlay(DrawContext ctx, int screenWidth, int screenHeight, Set<Rectangle> excludedAreas) {
 
-        float opacity = getOpacity();
         int alpha = (int)(opacity * 255) << 24;
         int overlayColor = alpha;
 
@@ -252,20 +265,46 @@ public class ItemSearchOverlay {
         return getInstance().enabled;
     }
     
-    public void setEnabled(boolean enabled) {
-        FishyConfig.setState(Key.INV_SEARCH, enabled);
-        if (!enabled) clearSearch();
-    }
-    
     public void setSearchField(SearchHudElement field) {
         this.searchField = field;
     }
 
-    public float getOpacity() {
-        return FishyConfig.getFloat(Key.INV_SEARCH_OPACITY, DEFAULT_OVERLAY_OPACITY);
+    @UIContainer(
+        name = "Inventory Search",
+        order = 1,
+        description = {
+            "Scan your inventory items by name or lore.",
+            "Right-click the search field to toggle search mode."
+        }
+    )
+    private static final boolean INVSEARCH = false;
+
+    @UIToggle(
+        key = BooleanKey.INV_SEARCH,
+        name = "Main Toggle",
+        description = "Enables a HUD textfield for inventory search.",
+        parent = "Inventory Search"
+    )
+    @UIHudRedirect
+    private static boolean invSearchEnabled;
+
+    @UISlider(
+        key = DoubleKey.INV_SEARCH_OPACITY,
+        name = "Overlay Opacity",
+        description = "Adjust the darkness of the search overlay when highlighting items.",
+        min = 0.0, max = 1.0, format = "%.0f%%",
+        parent = "Inventory Search"
+    )
+    private static double invSearchOpacity;
+
+    @VCListener(BooleanKey.INV_SEARCH)
+    private void onInvSearchChanged(boolean newValue) {
+        enabled = newValue;
+        if (!newValue) clearSearch();
     }
-    
-    public void setOpacity(float opacity) {
-        FishyConfig.setFloat(Key.INV_SEARCH_OPACITY, Math.clamp(opacity, 0.0f, 1.0f));
-    }    
+
+    @VCListener(doubles = DoubleKey.INV_SEARCH_OPACITY)
+    private void onOpacityChanged(double newOpacity) {
+        opacity = newOpacity;
+    }
 }

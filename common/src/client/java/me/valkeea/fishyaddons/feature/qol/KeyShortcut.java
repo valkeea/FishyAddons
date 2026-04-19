@@ -6,11 +6,16 @@ import java.util.Set;
 
 import org.lwjgl.glfw.GLFW;
 
-import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.util.ServerCommand;
+import me.valkeea.fishyaddons.vconfig.annotation.VCListener;
+import me.valkeea.fishyaddons.vconfig.annotation.VCModule;
+import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
+import me.valkeea.fishyaddons.vconfig.api.Config;
+import me.valkeea.fishyaddons.vconfig.config.impl.ShortcutsConfig;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.util.InputUtil;
 
+@VCModule
 public class KeyShortcut {
     private KeyShortcut() {}
 
@@ -20,10 +25,11 @@ public class KeyShortcut {
     private static Map<String, String> cachedKeybinds = Map.of();
     private static boolean enabled = false;
     private static long lastChatClose = 0;
-    
+
+    @VCListener(BooleanKey.KEY_SHORTCUTS) 
     public static void refresh() {
-        enabled = FishyConfig.getState(me.valkeea.fishyaddons.config.Key.KEY_SHORTCUTS_ENABLED, true);
-        cachedKeybinds = Map.copyOf(FishyConfig.getKeybinds());
+        enabled = Config.get(BooleanKey.KEY_SHORTCUTS);
+        cachedKeybinds = Map.copyOf(ShortcutsConfig.getKeybinds());
     }    
 
     public static void notifyChatClosed() {
@@ -42,7 +48,7 @@ public class KeyShortcut {
             String key = entry.getKey();
             String command = entry.getValue();
             
-            if (!FishyConfig.isKeybindToggled(key)) continue;
+            if (!ShortcutsConfig.isKeybindToggled(key)) continue;
             
             boolean isPressed = false;
             if (key.startsWith("MOUSE")) {

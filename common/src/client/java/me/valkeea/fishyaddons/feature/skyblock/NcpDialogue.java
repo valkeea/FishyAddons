@@ -3,9 +3,10 @@ package me.valkeea.fishyaddons.feature.skyblock;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
-import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.tool.RunDelayed;
 import me.valkeea.fishyaddons.util.text.FromText;
+import me.valkeea.fishyaddons.vconfig.api.Config;
+import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
@@ -53,6 +54,6 @@ public class NcpDialogue {
     }
 
     public static boolean enabled() {
-        return FishyConfig.getState(me.valkeea.fishyaddons.config.Key.ACCEPT_NPC, false);
+        return Config.get(BooleanKey.ACCEPT_NPC);
     }    
 }

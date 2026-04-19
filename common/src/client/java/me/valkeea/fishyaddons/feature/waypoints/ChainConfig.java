@@ -95,12 +95,12 @@ public class ChainConfig {
         save();
     }
 
-    public static void clearPresetFor(String name) {
-        var target = PRESET_CHAINS.get(name);
+    public static void clearPresetFor(String areaKey) {
+        var target = PRESET_CHAINS.get(areaKey);
         if (target != null) {
-            String key = target.area + "_" + name;
-            if (PRESET_VISITED_WAYPOINTS.containsKey(key)) {
-                PRESET_VISITED_WAYPOINTS.remove(key);
+            String name = target.name();
+            if (PRESET_VISITED_WAYPOINTS.containsKey(name)) {
+                PRESET_VISITED_WAYPOINTS.remove(name);
                 save();
             }
         }

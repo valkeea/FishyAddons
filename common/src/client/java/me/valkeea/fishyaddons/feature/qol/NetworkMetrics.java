@@ -5,15 +5,18 @@ import java.util.Deque;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import me.valkeea.fishyaddons.config.FishyConfig;
-import me.valkeea.fishyaddons.config.Key;
 import me.valkeea.fishyaddons.feature.skyblock.PetInfo;
+import me.valkeea.fishyaddons.vconfig.annotation.VCListener;
+import me.valkeea.fishyaddons.vconfig.annotation.VCModule;
+import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
+import me.valkeea.fishyaddons.vconfig.api.Config;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.network.packet.c2s.query.QueryPingC2SPacket;
 import net.minecraft.network.packet.s2c.query.PingResultS2CPacket;
 import net.minecraft.util.Util;
 
+@VCModule
 public class NetworkMetrics {
     private NetworkMetrics() {}
     
@@ -144,27 +147,7 @@ public class NetworkMetrics {
         baselineMs = START_BASELINE_MS;
         calcTicks(baselineMs);
         lowestDetectedDelta = Long.MAX_VALUE;
-    }    
-
-    public static void refresh() {
-        enabled = FishyConfig.getState(me.valkeea.fishyaddons.config.Key.HUD_PING_ENABLED, false);
-        tpsOn = FishyConfig.getState(me.valkeea.fishyaddons.config.Key.HUD_PING_SHOW_TPS, true);
-        fpsOn = FishyConfig.getState(me.valkeea.fishyaddons.config.Key.HUD_PING_SHOW_FPS, true);
-        pingOn = FishyConfig.getState(me.valkeea.fishyaddons.config.Key.HUD_PING_SHOW_PING, true);
     }
-
-    public static boolean shouldDisplay(String key) {
-        switch (key) {
-            case Key.HUD_PING_SHOW_PING:
-                return pingOn;
-            case Key.HUD_PING_SHOW_TPS:
-                return tpsOn;
-            case Key.HUD_PING_SHOW_FPS:
-                return fpsOn;
-            default:
-                return true;
-        }
-    }    
 
     public static boolean isOn() {
         return enabled;
@@ -186,5 +169,29 @@ public class NetworkMetrics {
     public static String getTpsString() {
         double tps = getTps();
         return tps == -1 ? "?" : String.format(java.util.Locale.US, "%.2f", tps);
+    }
+
+    public static boolean shouldDisplay(BooleanKey key) {
+        switch (key) {
+            case BooleanKey.METRICS_SHOW_PING:
+                return pingOn;
+            case BooleanKey.METRICS_SHOW_TPS:
+                return tpsOn;
+            case BooleanKey.METRICS_SHOW_FPS:
+                return fpsOn;
+            default:
+                return true;
+        }
     }    
+
+    @VCListener({
+        BooleanKey.HUD_METRICS_ENABLED, BooleanKey.METRICS_SHOW_TPS,
+        BooleanKey.METRICS_SHOW_FPS, BooleanKey.METRICS_SHOW_PING
+    })    
+    public static void refresh() {
+        enabled = Config.get(BooleanKey.HUD_METRICS_ENABLED);
+        tpsOn = Config.get(BooleanKey.METRICS_SHOW_TPS);
+        fpsOn = Config.get(BooleanKey.METRICS_SHOW_FPS);
+        pingOn = Config.get(BooleanKey.METRICS_SHOW_PING);
+    }
 }

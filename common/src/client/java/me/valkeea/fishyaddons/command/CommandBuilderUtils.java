@@ -1,14 +1,14 @@
 package me.valkeea.fishyaddons.command;
 
-import java.util.Optional;
 import java.util.function.IntSupplier;
 
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 
-import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.tool.GuiScheduler;
 import me.valkeea.fishyaddons.ui.list.TabbedListScreen;
 import me.valkeea.fishyaddons.util.FishyNotis;
+import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
+import me.valkeea.fishyaddons.vconfig.api.Config;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.MinecraftClient;
@@ -19,14 +19,12 @@ public class CommandBuilderUtils {
     
     public static class ToggleCommandBuilder {
         private final String literalName;
-        private final String configKey;
+        private final BooleanKey configKey;
         private final String label;
         private boolean includeToggle = false;
-        private Runnable onEnableCallback;
-        private Runnable onDisableCallback;
         private IntSupplier defaultAction;
         
-        public ToggleCommandBuilder(String literalName, String configKey, String label) {
+        public ToggleCommandBuilder(String literalName, BooleanKey configKey, String label) {
             this.literalName = literalName;
             this.configKey = configKey;
             this.label = label;
@@ -35,25 +33,6 @@ public class CommandBuilderUtils {
         /** Include a "toggle" subcommand that switches between on/off. */
         public ToggleCommandBuilder withToggle() {
             this.includeToggle = true;
-            return this;
-        }
-        
-        /** Callback to run when the feature is enabled. */
-        public ToggleCommandBuilder onEnable(Runnable callback) {
-            this.onEnableCallback = callback;
-            return this;
-        }
-        
-        /** Callback to run when the feature is disabled. */
-        public ToggleCommandBuilder onDisable(Runnable callback) {
-            this.onDisableCallback = callback;
-            return this;
-        }
-        
-        /** Callback to run on both enable and disable. */
-        public ToggleCommandBuilder onToggle(Runnable callback) {
-            this.onEnableCallback = callback;
-            this.onDisableCallback = callback;
             return this;
         }
         
@@ -94,8 +73,6 @@ public class CommandBuilderUtils {
                 configKey,
                 label,
                 includeToggle,
-                Optional.ofNullable(onEnableCallback),
-                Optional.ofNullable(onDisableCallback),
                 defaultAction
             );
         }
@@ -103,42 +80,36 @@ public class CommandBuilderUtils {
     
     protected static LiteralArgumentBuilder<FabricClientCommandSource> createToggleCommand(
             String literalName,
-            String key,
+            BooleanKey key,
             String label,
             boolean includeToggle,
-            Optional<Runnable> onEnableCallback,
-            Optional<Runnable> onDisableCallback,
             IntSupplier defaultAction) {
         
         LiteralArgumentBuilder<FabricClientCommandSource> builder = ClientCommandManager.literal(literalName);
         
         builder.then(ClientCommandManager.literal("on")
             .executes(context -> {
-                FishyConfig.setState(key, true);
+                Config.set(key, true);
                 FishyNotis.on(label);
-                onEnableCallback.ifPresent(Runnable::run);
                 return 1;
             }));
         
         builder.then(ClientCommandManager.literal("off")
             .executes(context -> {
-                FishyConfig.disable(key);
+                Config.set(key, false);
                 FishyNotis.off(label);
-                onDisableCallback.ifPresent(Runnable::run);
                 return 1;
             }));
         
         if (includeToggle) {
             builder.then(ClientCommandManager.literal("toggle")
                 .executes(context -> {
-                    boolean current = FishyConfig.getState(key, false);
-                    FishyConfig.setState(key, !current);
+                    boolean current = Config.get(key);
+                    Config.set(key, !current);
                     if (!current) {
                         FishyNotis.on(label);
-                        onEnableCallback.ifPresent(Runnable::run);
                     } else {
                         FishyNotis.off(label);
-                        onDisableCallback.ifPresent(Runnable::run);
                     }
                     return 1;
                 }));
@@ -152,7 +123,7 @@ public class CommandBuilderUtils {
     // --- Builders ---
 
     /** Create a new ToggleCommandBuilder for command construction. */
-    public static ToggleCommandBuilder toggleCommand(String literalName, String configKey, String label) {
+    public static ToggleCommandBuilder toggleCommand(String literalName, BooleanKey configKey, String label) {
         return new ToggleCommandBuilder(literalName, configKey, label);
     }    
     
@@ -190,8 +161,7 @@ public class CommandBuilderUtils {
         return () -> {
             if (CmdHelper.checkGUI() == 1) return 1;
             MinecraftClient.getInstance().execute(() -> 
-                GuiScheduler.scheduleGui(new TabbedListScreen(
-                    MinecraftClient.getInstance().currentScreen, tab))
+                GuiScheduler.scheduleGui(new TabbedListScreen(tab))
             );
             return 1;
         };

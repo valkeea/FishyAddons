@@ -7,15 +7,19 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 import me.valkeea.fishyaddons.api.skyblock.GameMode;
-import me.valkeea.fishyaddons.config.FishyConfig;
-import me.valkeea.fishyaddons.config.Key;
 import me.valkeea.fishyaddons.util.TabScanner;
 import me.valkeea.fishyaddons.util.text.Color;
 import me.valkeea.fishyaddons.util.text.Enhancer;
+import me.valkeea.fishyaddons.vconfig.annotation.VCListener;
+import me.valkeea.fishyaddons.vconfig.annotation.VCModule;
+import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
+import me.valkeea.fishyaddons.vconfig.api.Config;
+import me.valkeea.fishyaddons.vconfig.api.IntKey;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 
+@VCModule
 public class PetInfo {
     private PetInfo() {}
 
@@ -57,9 +61,13 @@ public class PetInfo {
         return false;
     }
 
-    public static void refresh() {
-        isOn = FishyConfig.getState(Key.HUD_PET_ENABLED, false);
-        color = FishyConfig.getInt(Key.HUD_PETXP_COLOR, -9961480);
+    @VCListener(
+        value = {BooleanKey.HUD_PET_ENABLED, BooleanKey.PET_INCLUDEXP},
+        ints = IntKey.HUD_PETXP_COLOR
+    ) 
+    public static void init() {
+        isOn = Config.get(BooleanKey.HUD_PET_ENABLED);
+        color = Config.get(IntKey.HUD_PETXP_COLOR);
         ActivePet.forceUpdate();
     }    
 
@@ -96,7 +104,7 @@ public class PetInfo {
     public static void setTablistReady(boolean ready) { tablistReady = ready; }
     public static boolean isTablistReady() { return tablistReady; }
     public static boolean isOn() { return isOn; }
-    public static boolean shouldIncludeXp() { return FishyConfig.getState(Key.HUD_PETXP, false); }
+    public static boolean shouldIncludeXp() { return Config.get(BooleanKey.PET_INCLUDEXP); }
 
     public static class ActivePet {
         private static Text l1;

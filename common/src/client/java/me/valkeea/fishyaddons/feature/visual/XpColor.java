@@ -1,11 +1,15 @@
 package me.valkeea.fishyaddons.feature.visual;
 
-import me.valkeea.fishyaddons.config.FishyConfig;
-import me.valkeea.fishyaddons.config.Key;
+import me.valkeea.fishyaddons.vconfig.annotation.VCListener;
+import me.valkeea.fishyaddons.vconfig.annotation.VCModule;
+import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
+import me.valkeea.fishyaddons.vconfig.api.Config;
+import me.valkeea.fishyaddons.vconfig.api.IntKey;
 
+@VCModule
 public class XpColor {
     private XpColor() {}
-    private static int color = 0x80FF20;
+    private static int color = IntKey.XP_COLOR.getDefault();
     private static boolean isEnabled = false;
     private static boolean isOutlineEnabled = false;
 
@@ -13,15 +17,13 @@ public class XpColor {
     public static boolean isEnabled() { return isEnabled; }
     public static boolean isOutlineEnabled() { return isOutlineEnabled; }
 
+    @VCListener(
+        value = {BooleanKey.XP_OUTLINE, BooleanKey.XP_COLOR_ON},
+        ints = IntKey.XP_COLOR
+    )
     public static void refresh() {
-        color = FishyConfig.getInt(Key.XP_COLOR);
-        isEnabled = FishyConfig.getState(Key.XP_COLOR_ON, false); 
-        isOutlineEnabled = FishyConfig.getState(Key.XP_OUTLINE, false);
-    }
-
-    public static void set(int newColor) {
-        color = newColor;
-        FishyConfig.setInt(Key.XP_COLOR, newColor);
-        refresh();
+        color = Config.get(IntKey.XP_COLOR);
+        isEnabled = Config.get(BooleanKey.XP_COLOR_ON); 
+        isOutlineEnabled = Config.get(BooleanKey.XP_OUTLINE);
     }
 }

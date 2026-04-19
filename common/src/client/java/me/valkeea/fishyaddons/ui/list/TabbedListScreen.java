@@ -3,18 +3,18 @@ package me.valkeea.fishyaddons.ui.list;
 import java.util.List;
 import java.util.Map;
 
-import me.valkeea.fishyaddons.config.FishyConfig;
-import me.valkeea.fishyaddons.config.FishyPresets;
 import me.valkeea.fishyaddons.feature.qol.ChatReplacement;
 import me.valkeea.fishyaddons.feature.qol.CommandAlias;
+import me.valkeea.fishyaddons.feature.qol.FishyPresets;
 import me.valkeea.fishyaddons.feature.qol.KeyShortcut;
 import me.valkeea.fishyaddons.ui.GuiUtil;
-import me.valkeea.fishyaddons.ui.VCScreen;
-import me.valkeea.fishyaddons.ui.VCText;
-import me.valkeea.fishyaddons.ui.widget.FaButton;
-import me.valkeea.fishyaddons.ui.widget.FaTextField;
-import me.valkeea.fishyaddons.ui.widget.FishyPopup;
-import me.valkeea.fishyaddons.ui.widget.dropdown.DropdownMenu;
+import me.valkeea.fishyaddons.ui.element.DropdownMenu;
+import me.valkeea.fishyaddons.ui.element.FishyPopup;
+import me.valkeea.fishyaddons.vconfig.config.impl.ShortcutsConfig;
+import me.valkeea.fishyaddons.vconfig.ui.manager.ScreenManager;
+import me.valkeea.fishyaddons.vconfig.ui.render.VCText;
+import me.valkeea.fishyaddons.vconfig.ui.widget.FaButton;
+import me.valkeea.fishyaddons.vconfig.ui.widget.FaTextField;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
@@ -31,8 +31,7 @@ public class TabbedListScreen extends Screen {
     private AliasEntryList commandEntryList;
     private KeybindEntryList keybindEntryList;
     private ChatEntryList chatEntryList;
-    private final Screen parent;
-    private static final String TITLE = "Aliases, Keybinds, Chat Replacement";
+    private static final String HEADER = "Aliases, Keybinds, Chat Replacement";
 
     protected boolean addingNewEntry = false;
     protected FishyPopup fishyPopup = null;
@@ -40,43 +39,37 @@ public class TabbedListScreen extends Screen {
 
     private TextFieldWidget presetNameField;
 
-    public TabbedListScreen(Screen parent, Tab tab) {
-        super(Text.literal(TITLE));
-        this.parent = parent;
+    public TabbedListScreen(Tab tab) {
+        super(Text.literal(HEADER));
         this.currentTab = tab;
-    }
-
-    public static void keyTab() {
-        MinecraftClient client = MinecraftClient.getInstance();
-        client.setScreen(new TabbedListScreen(client.currentScreen, TabbedListScreen.Tab.KEYBINDS));
-    }
-
-    public static void cmdTab() {
-        MinecraftClient client = MinecraftClient.getInstance();
-        client.setScreen(new TabbedListScreen(client.currentScreen, TabbedListScreen.Tab.COMMANDS));
-    }
-
-    public static void chatTab() {
-        MinecraftClient client = MinecraftClient.getInstance();
-        client.setScreen(new TabbedListScreen(client.currentScreen, TabbedListScreen.Tab.CHAT));
     }
 
     @Override
     protected void init() {
-        int listWidth = 700;
+        int listWidth = 550;
         int listHeight = height - 120;
         int listY = 90;
 
+        int w = 80;
+        int h = 20;
+        int tabBtnY = 40;
+
         // Tab buttons
-        addDrawableChild(new FaButton(width / 2 - 140, 40, 80, 20,
+        int tx = width / 2 - w - w / 2 - h;
+
+        addDrawableChild(new FaButton(tx, tabBtnY, w, h,
             Text.literal("Commands"),
             btn -> switchTab(Tab.COMMANDS))
         );
-        addDrawableChild(new FaButton(width / 2 - 40, 40, 80, 20,
+        tx += w + h;
+
+        addDrawableChild(new FaButton(tx, tabBtnY, w, h,
             Text.literal("Keybinds"),
             btn -> switchTab(Tab.KEYBINDS))
         );
-        addDrawableChild(new FaButton(width / 2 + 60, 40, 80, 20,
+        tx += w + h;
+
+        addDrawableChild(new FaButton(tx, tabBtnY, w, h,
             Text.literal("Chat"),
             btn -> switchTab(Tab.CHAT))
         );
@@ -100,35 +93,42 @@ public class TabbedListScreen extends Screen {
         
         updateTabVisibility();
 
-        // Bottom buttons
-        addDrawableChild(new FaButton(width / 2 - 80, height - 30, 80, 20,
+        int x = width / 2 - w;
+        int y = height - 30;
+        
+        addDrawableChild(new FaButton(x, y, w, h,
             Text.literal("Back").styled(style -> style.withColor(0xFFB0B0B0)),
-            b -> this.client.setScreen(new VCScreen())
+            b -> ScreenManager.openConfigScreen()
         ));
-        addDrawableChild(new FaButton(width / 2, height - 30, 80, 20,
+        x += w;
+
+        addDrawableChild(new FaButton(x, y, w, h,
             Text.literal("Close").styled(style -> style.withColor(0xFFB0B0B0)),
-            b -> this.client.setScreen(null)
+            b -> this.close()
         ));
-        addDrawableChild(new FaButton(width / 2 + 205, height - 30, 100, 20,
-            Text.literal("Load From Preset").styled(style -> style.withColor(0xFFE2CAE9)),
+        x += w;
+
+        addDrawableChild(new FaButton(x, y, w, h,
+            Text.literal("Load Preset").styled(style -> style.withColor(0xFFE2CAE9)),
             b -> showPresetDropdown()
         ));
-        addDrawableChild(new FaButton(width / 2 + 105, height - 30, 100, 20,
-            Text.literal("Save as Preset").styled(style -> style.withColor(0xFFB0FFB0)),
+        x += w;
+
+        addDrawableChild(new FaButton(x, y, w, h,
+            Text.literal("Save Preset").styled(style -> style.withColor(0xFFB0FFB0)),
             b -> showSavePresetPopup()
         ));
-        // Refresh the entry list to ensure it's up-to-date
+
         this.client.execute(this::refreshEntryList);
     }
 
     private void switchTab(Tab tab) {
         this.currentTab = tab;
         if (fishyPopup != null) {
-            fishyPopup = null; // Close any open popup when switching tabs
+            fishyPopup = null;
         }
         updateTabVisibility();
         this.client.execute(this::refreshEntryList);
-        // Reset focused element to avoid issues when switching tabs
         this.setFocused(null);
     }
 
@@ -150,55 +150,38 @@ public class TabbedListScreen extends Screen {
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         super.render(context, mouseX, mouseY, delta);
 
-        var title = VCText.header(TITLE, null);
-        VCText.drawScaledCenteredText(context, textRenderer, title, width / 2, 20, 0xFFFFFFFF, 1.0f);
+        var title = VCText.header(HEADER, null);
+        GuiUtil.drawScaledCenteredText(context, textRenderer, title, width / 2, 20, 0xFFFFFFFF, 1.0f);
 
         if (presetDropdown != null && presetDropdown.isVisible()) {
             presetDropdown.render(context, this, mouseX, mouseY);
         }
 
         if (fishyPopup == null) {
-            if (currentTab == Tab.COMMANDS) {
-                commandEntryList.getGuideText(context, this.textRenderer, width - 740, 85);
-                for (var entry : commandEntryList.children()) {
-                    if (entry instanceof GenericEntryList.GenericEntry ge && ge.pendingTooltip != null) {
-                        GuiUtil.fishyTooltip(context, this.textRenderer, ge.tooltipLines != null ? ge.tooltipLines : List.of(Text.literal(ge.pendingTooltip)), ge.tooltipX, ge.tooltipY);
-                        break;
-                    }
-                }
-            } else if (currentTab == Tab.KEYBINDS) {
-                keybindEntryList.getGuideText(context, this.textRenderer, width - 740, 85);                
-                for (var entry : keybindEntryList.children()) {
-                    if (entry instanceof GenericEntryList.GenericEntry ge && ge.pendingTooltip != null) {
-                        GuiUtil.fishyTooltip(context, this.textRenderer, ge.tooltipLines != null ? ge.tooltipLines : List.of(Text.literal(ge.pendingTooltip)), ge.tooltipX, ge.tooltipY);
-                        break;
-                    }
-                }
-            } else if (currentTab == Tab.CHAT) {
-                chatEntryList.getGuideText(context, this.textRenderer, width - 740, 85);
-                for (var entry : chatEntryList.children()) {
-                    if (entry instanceof GenericEntryList.GenericEntry ge && ge.pendingTooltip != null) {
-                        GuiUtil.fishyTooltip(context, this.textRenderer, ge.tooltipLines != null ? ge.tooltipLines : List.of(Text.literal(ge.pendingTooltip)), ge.tooltipX, ge.tooltipY);
-                        break;
-                    }
-                }
-            } 
-        }
-
-        if (fishyPopup != null) {
+            findAndDrawTooltip(context);
+        } else {
             fishyPopup.render(context, this.textRenderer, mouseX, mouseY, delta);
+            if (presetNameField != null) {
+                presetNameField.setX(fishyPopup.getX() + (fishyPopup.getWidth() - presetNameField.getWidth()) / 2);
+                presetNameField.setY(fishyPopup.getY() + 35);
+                presetNameField.render(context, mouseX, mouseY, delta);
+            }            
         }
+    }
 
-        if (fishyPopup != null && presetNameField != null) {
-            presetNameField.setX(fishyPopup.getX() + (fishyPopup.getWidth() - presetNameField.getWidth()) / 2);
-            presetNameField.setY(fishyPopup.getY() + 35);
-            presetNameField.render(context, mouseX, mouseY, delta);
+    private void findAndDrawTooltip(DrawContext context) {
+        var activeList = getActiveList();
+        activeList.getGuideText(context, this.textRenderer, width - 710, 85);
+        for (var entry : activeList.children()) {
+            if (entry instanceof GenericEntryList.GenericEntry ge && ge.pendingTooltip != null) {
+                GuiUtil.fishyTooltip(context, this.textRenderer, ge.tooltipLines != null ? ge.tooltipLines : List.of(Text.literal(ge.pendingTooltip)), ge.tooltipX, ge.tooltipY);
+                break;
+            }
         }
     }
 
     @Override
     public boolean mouseClicked(Click click, boolean doubled) {
-
         if (fishyPopup != null && presetNameField != null && presetNameField.mouseClicked(click, doubled)) {
             presetNameField.setFocused(true);
             this.setFocused(presetNameField);
@@ -206,17 +189,7 @@ public class TabbedListScreen extends Screen {
         }
 
         if (presetDropdown != null && presetDropdown.isVisible()) {
-            if (presetDropdown.mouseClicked(click)) return true;
-            
-            int x = presetDropdown.getX(); 
-            int y = presetDropdown.getY(); 
-            int w = presetDropdown.getWidth();
-            int h = presetDropdown.getEntryHeight() * presetDropdown.getEntries().size();
-
-            if (!(click.x() >= x && click.x() <= x + w && click.y() >= y && click.y() <= y + h)) {
-                presetDropdown.setVisible(false);
-                return true;
-            }
+            return handlePresetClicks(click);
         }
 
         if (fishyPopup != null) {
@@ -234,19 +207,27 @@ public class TabbedListScreen extends Screen {
         return super.mouseClicked(click, doubled);
     }
 
+    private boolean handlePresetClicks(Click click) {
+        if (presetDropdown.mouseClicked(click)) return true;
+        
+        int x = presetDropdown.getX(); 
+        int y = presetDropdown.getY(); 
+        int w = presetDropdown.getWidth();
+        int h = presetDropdown.getEntryHeight() * presetDropdown.getEntries().size();
+
+        if (!(click.x() >= x && click.x() <= x + w && click.y() >= y && click.y() <= y + h)) {
+            presetDropdown.setVisible(false);
+            return true;
+        }
+        return false;
+    }
+
     @Override
     public boolean keyPressed(KeyInput input) {
         if (fishyPopup != null && presetNameField != null) {
             return presetNameField.keyPressed(input);
         }
-        GenericEntryList.GenericEntry entry = null;
-        if (currentTab == Tab.COMMANDS) {
-            entry = commandEntryList.getFocused();
-        } else if (currentTab == Tab.KEYBINDS) {
-            entry = keybindEntryList.getFocused();
-        } else if (currentTab == Tab.CHAT) {
-            entry = chatEntryList.getFocused();
-        }
+        var entry = getActiveList().getFocused();
         if (entry != null) {
             if (entry.outputField.isFocused() && entry.outputField.keyPressed(input)) return true;
             if (entry.inputWidget instanceof TextFieldWidget field && field.isFocused() && field.keyPressed(input)) return true;
@@ -261,19 +242,11 @@ public class TabbedListScreen extends Screen {
         if (fishyPopup != null && presetNameField != null) {
             return presetNameField.charTyped(chr);
         }
-        if (currentTab == Tab.COMMANDS) {
-            if (commandEntryList.getFocused() instanceof GenericEntryList.GenericEntry entry) {
-                if (entry.outputField.isFocused() && entry.outputField.charTyped(chr)) return true;
-                if (entry.inputWidget instanceof TextFieldWidget field && field.isFocused() && field.charTyped(chr)) return true;
-            }
-        } else if (currentTab == Tab.KEYBINDS) {
-            if (keybindEntryList.getFocused() instanceof GenericEntryList.GenericEntry entry) {
-                if (entry.outputField.isFocused() && entry.outputField.charTyped(chr)) return true;
-                if (entry.inputWidget instanceof TextFieldWidget field && field.isFocused() && field.charTyped(chr)) return true;
-            }
-        } else if (currentTab == Tab.CHAT && chatEntryList.getFocused() instanceof GenericEntryList.GenericEntry entry) {
+        var entry = getActiveList().getFocused();
+        if (entry != null) {
             if (entry.outputField.isFocused() && entry.outputField.charTyped(chr)) return true;
             if (entry.inputWidget instanceof TextFieldWidget field && field.isFocused() && field.charTyped(chr)) return true;
+            if (entry.inputWidget instanceof ButtonWidget btn && btn.isFocused() && btn.charTyped(chr)) return true;
         }
         return super.charTyped(chr);
     }
@@ -318,33 +291,39 @@ public class TabbedListScreen extends Screen {
         }
     }
 
+    private GenericEntryList getActiveList() {
+        return switch (currentTab) {
+            case COMMANDS -> commandEntryList;
+            case KEYBINDS -> keybindEntryList;
+            case CHAT -> chatEntryList;
+        };
+    }
+
     private void loadPresetForCurrentTab(String suffix) {
         switch (currentTab) {
             case COMMANDS -> {
                 Map<String, String> map = FishyPresets.loadStringPreset(FishyPresets.PresetType.COMMANDS, suffix);
                 if (map != null) {
-                    FishyConfig.commandAliases.getValues().putAll(map);
-                    FishyConfig.save();
+                    ShortcutsConfig.getAliases().putAll(map);
                     commandEntryList.refreshWithAdd();
                 }
             }
             case KEYBINDS -> {
                 Map<String, String> map = FishyPresets.loadStringPreset(FishyPresets.PresetType.KEYBINDS, suffix);
                 if (map != null) {
-                    FishyConfig.keybinds.getValues().putAll(map);
-                    FishyConfig.save();
+                    ShortcutsConfig.getKeybinds().putAll(map);
                     keybindEntryList.refreshWithAdd();
                 }
             }
             case CHAT -> {
                 Map<String, String> map = FishyPresets.loadStringPreset(FishyPresets.PresetType.CHAT, suffix);
                 if (map != null) {
-                    FishyConfig.chatReplacements.getValues().putAll(map);
-                    FishyConfig.save();
+                    ShortcutsConfig.getChat().putAll(map);
                     chatEntryList.refreshWithAdd();
                 }
             }
         }
+        ShortcutsConfig.save();
     }
 
     private void showSavePresetPopup() {
@@ -378,11 +357,11 @@ public class TabbedListScreen extends Screen {
     private void saveCurrentTabAsPreset(String suffix) {
         switch (currentTab) {
             case COMMANDS -> FishyPresets.saveStringPreset(
-                FishyPresets.PresetType.COMMANDS, suffix, FishyConfig.commandAliases.getValues());
+                FishyPresets.PresetType.COMMANDS, suffix, ShortcutsConfig.getAliases());
             case KEYBINDS -> FishyPresets.saveStringPreset(
-                FishyPresets.PresetType.KEYBINDS, suffix, FishyConfig.keybinds.getValues());
+                FishyPresets.PresetType.KEYBINDS, suffix, ShortcutsConfig.getKeybinds());
             case CHAT -> FishyPresets.saveStringPreset(
-                FishyPresets.PresetType.CHAT, suffix, FishyConfig.chatReplacements.getValues());
+                FishyPresets.PresetType.CHAT, suffix, ShortcutsConfig.getChat());
         }
     }
 }

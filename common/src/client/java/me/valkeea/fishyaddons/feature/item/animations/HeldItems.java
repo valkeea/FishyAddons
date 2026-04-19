@@ -1,18 +1,25 @@
 package me.valkeea.fishyaddons.feature.item.animations;
 
-import me.valkeea.fishyaddons.config.FishyConfig;
-import me.valkeea.fishyaddons.config.ItemConfig;
-import me.valkeea.fishyaddons.config.Key;
+import java.util.function.DoubleConsumer;
+
+import me.valkeea.fishyaddons.ui.screen.HeldItemScreen;
+import me.valkeea.fishyaddons.vconfig.annotation.UIRedirect;
+import me.valkeea.fishyaddons.vconfig.annotation.UIToggle;
+import me.valkeea.fishyaddons.vconfig.annotation.VCInit;
+import me.valkeea.fishyaddons.vconfig.annotation.VCListener;
+import me.valkeea.fishyaddons.vconfig.annotation.VCModule;
+import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
+import me.valkeea.fishyaddons.vconfig.api.Config;
+import me.valkeea.fishyaddons.vconfig.api.StringKey;
+import me.valkeea.fishyaddons.vconfig.core.UICategory;
+import me.valkeea.fishyaddons.vconfig.ui.manager.ScreenManager;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.RotationAxis;
 
+@VCModule(UICategory.ITEMS)
 public class HeldItems {
     private HeldItems() {}
-    
-    public static void init() {
-        load();
-    }
 
     public static void applyAllTransformations(MatrixStack matrices, Hand hand) {
         if (!isEnabled()) {
@@ -50,7 +57,7 @@ public class HeldItems {
      * Apply scale transformations
      */
     private static void scale(MatrixStack matrices) {
-        float scale = getScale();
+        float scale = (float) getScale();
         matrices.scale(scale, scale, scale);
     }
 
@@ -76,13 +83,13 @@ public class HeldItems {
         boolean isMainHand = hand == Hand.MAIN_HAND;
 
         if (isMainHand) {
-            matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees(getMainHandRotX()));
-            matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(getMainHandRotY()));
-            matrices.multiply(RotationAxis.POSITIVE_Z.rotationDegrees(getMainHandRotZ()));
+            matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees((float) getMainHandRotX()));
+            matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees((float) getMainHandRotY()));
+            matrices.multiply(RotationAxis.POSITIVE_Z.rotationDegrees((float) getMainHandRotZ()));
         } else {
-            matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees(getOffHandRotX()));
-            matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(getOffHandRotY()));
-            matrices.multiply(RotationAxis.POSITIVE_Z.rotationDegrees(getOffHandRotZ()));
+            matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees((float) getOffHandRotX()));
+            matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees((float) getOffHandRotY()));
+            matrices.multiply(RotationAxis.POSITIVE_Z.rotationDegrees((float) getOffHandRotZ()));
         }
     }
 
@@ -95,28 +102,26 @@ public class HeldItems {
     }
 
     private static void globalRotation(MatrixStack matrices) {
-        matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees(getRotOffsetX()));
-        matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(getRotOffsetY()));
-        matrices.multiply(RotationAxis.POSITIVE_Z.rotationDegrees(getRotOffsetZ()));
+        matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees((float) getRotOffsetX()));
+        matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees((float) getRotOffsetY()));
+        matrices.multiply(RotationAxis.POSITIVE_Z.rotationDegrees((float) getRotOffsetZ()));
     }
 
 
     private static HeldItemModelData runtimeConfig = new HeldItemModelData();
-    private static final String CONFIG_DATA_KEY = "heldItemConfigData";
     
-    public static void load() {
-        String jsonData = ItemConfig.getString(CONFIG_DATA_KEY, "");
+    @VCInit
+    public static void init() {
+        enabled = Config.get(BooleanKey.HELD_ITEM_TRANSFORMS);
+        String jsonData = Config.get(StringKey.ITEM_CONFIG);
         runtimeConfig = HeldItemModelData.fromJson(jsonData);
-        boolean configState = FishyConfig.getState(Key.HELD_ITEM_TRANSFORMS, false);
-        enabled = configState;
     }
-    
 
     // Convenience method for UI components
-    public static java.util.function.Consumer<Float> createSetter(java.util.function.Consumer<Float> setter) {
+    public static DoubleConsumer createSetter(DoubleConsumer setter) {
         return value -> {
             setter.accept(value);
-            saveConfig();
+            configChanged = true;
         };
     }
 
@@ -138,16 +143,16 @@ public class HeldItems {
         runtimeConfig.offHandRotY = runtimeConfig.rotOffsetY;
         runtimeConfig.offHandRotZ = runtimeConfig.rotOffsetZ;
         
-        saveConfig();
+        configChanged = true;
     }
 
     /**
      * Get cached or calculate swing direction based on current rotation settings
      */
     private static SwingDirection getSwingDirection() {
-        float rotX = isSeparateHandSettings() ? getMainHandRotX() : getRotOffsetX();
-        float rotY = isSeparateHandSettings() ? getMainHandRotY() : getRotOffsetY();
-        float rotZ = isSeparateHandSettings() ? getMainHandRotZ() : getRotOffsetZ();
+        float rotX = (float) (isSeparateHandSettings() ? getMainHandRotX() : getRotOffsetX());
+        float rotY = (float) (isSeparateHandSettings() ? getMainHandRotY() : getRotOffsetY());
+        float rotZ = (float) (isSeparateHandSettings() ? getMainHandRotZ() : getRotOffsetZ());
         boolean separateSettings = isSeparateHandSettings();
         
         if (cachedSwingDirection == null || 
@@ -234,182 +239,141 @@ public class HeldItems {
     private static float lastRotY = Float.NaN;
     private static float lastRotZ = Float.NaN;
     private static boolean lastSeparateHandSettings = false;    
-    
-    // --- Config API ---
-    
-    public static HeldItemModelData getConfigData() {
-        return runtimeConfig;
-    }
-    
-    public static void setConfigData(HeldItemModelData newConfig) {
-        runtimeConfig = new HeldItemModelData(newConfig);
-        saveConfig();
-        refresh();
-    }
-    
-    public static void saveConfig() {
-        String jsonData = runtimeConfig.toJson();
-        ItemConfig.settings.set(CONFIG_DATA_KEY, jsonData);
-        ItemConfig.save();
-        invalidateSwingCache();
-    }
-    
-    private static void invalidateSwingCache() {
-        cachedSwingDirection = null;
-    }
-
-    private static boolean enabled = false;
-
-    public static boolean isEnabled() {
-        if (!enabled) {
-            refresh();
-        }
-        return enabled;
-    }
-    
-    public static void refresh() {
-        enabled = FishyConfig.getState(Key.HELD_ITEM_TRANSFORMS, false);
-    }
-    
-    public static void reset() {
-        runtimeConfig.reset();
-        saveConfig();
-    }
 
     // Position
-    public static float getPosOffsetX() { return runtimeConfig.posOffsetX; }
-    public static float getPosOffsetY() { return runtimeConfig.posOffsetY; }
-    public static float getPosOffsetZ() { return runtimeConfig.posOffsetZ; }
+    public static double getPosOffsetX() { return runtimeConfig.posOffsetX; }
+    public static double getPosOffsetY() { return runtimeConfig.posOffsetY; }
+    public static double getPosOffsetZ() { return runtimeConfig.posOffsetZ; }
 
-    public static void setPosOffsetX(float value) {
+    public static void setPosOffsetX(double value) {
         runtimeConfig.posOffsetX = value;
     }
-    public static void setPosOffsetY(float value) {
+    public static void setPosOffsetY(double value) {
         runtimeConfig.posOffsetY = value;
     }
-    public static void setPosOffsetZ(float value) {
+    public static void setPosOffsetZ(double value) {
         runtimeConfig.posOffsetZ = value;
     }
     
     // Rotation
-    public static float getRotOffsetX() { return runtimeConfig.rotOffsetX; }
-    public static float getRotOffsetY() { return runtimeConfig.rotOffsetY; }
-    public static float getRotOffsetZ() { return runtimeConfig.rotOffsetZ; }
+    public static double getRotOffsetX() { return runtimeConfig.rotOffsetX; }
+    public static double getRotOffsetY() { return runtimeConfig.rotOffsetY; }
+    public static double getRotOffsetZ() { return runtimeConfig.rotOffsetZ; }
 
-    public static void setRotOffsetX(float value) {
+    public static void setRotOffsetX(double value) {
         runtimeConfig.rotOffsetX = value;
-        saveConfig();
+        configChanged = true;
     }
-    public static void setRotOffsetY(float value) {
+    public static void setRotOffsetY(double value) {
         runtimeConfig.rotOffsetY = value;
-        saveConfig();
+        configChanged = true;
     }
-    public static void setRotOffsetZ(float value) {
+    public static void setRotOffsetZ(double value) {
         runtimeConfig.rotOffsetZ = value;
-        saveConfig();
+        configChanged = true;
     }
     
     // Unified scale
-    public static float getScale() { return runtimeConfig.scale; }
+    public static double getScale() { return runtimeConfig.scale; }
     
-    public static void setScale(float value) { 
+    public static void setScale(double value) { 
         runtimeConfig.scale = value; 
-        saveConfig();
+        configChanged = true;
     }
     
     // Unified Animation Intensities
-    public static float getSwingIntensity() { return runtimeConfig.swingIntensity; }
-    public static float getEquipIntensity() { return runtimeConfig.equipIntensity; }
+    public static double getSwingIntensity() { return runtimeConfig.swingIntensity; }
+    public static double getEquipIntensity() { return runtimeConfig.equipIntensity; }
 
-    public static float getSwingXMovement() {
+    public static double getSwingXMovement() {
         SwingDirection direction = getSwingDirection();
         return direction.xFactor * runtimeConfig.swingIntensity;
     }
 
-    public static float getSwingYMovement() {
+    public static double getSwingYMovement() {
         SwingDirection direction = getSwingDirection();
         return direction.yFactor * runtimeConfig.swingIntensity;
     }
 
-    public static float getSwingZMovement() {
+    public static double getSwingZMovement() {
         SwingDirection direction = getSwingDirection();
         return direction.zFactor * runtimeConfig.swingIntensity;
     }
 
-    public static void setSwingIntensity(float value) { 
-        runtimeConfig.swingIntensity = Math.clamp(value, 0.0f, 1.0f); 
-        saveConfig();
+    public static void setSwingIntensity(double value) { 
+        runtimeConfig.swingIntensity = Math.clamp(value, 0.0, 1.0); 
+        configChanged = true;
     }
     
-    public static void setEquipIntensity(float value) { 
-        runtimeConfig.equipIntensity = Math.clamp(value, 0.0f, 1.0f); 
-        saveConfig();
+    public static void setEquipIntensity(double value) { 
+        runtimeConfig.equipIntensity = Math.clamp(value, 0.0, 1.0); 
+        configChanged = true;
     }
     
     // Main hand
-    public static float getMainHandPosX() { return runtimeConfig.mainHandPosX; }
-    public static float getMainHandPosY() { return runtimeConfig.mainHandPosY; }
-    public static float getMainHandPosZ() { return runtimeConfig.mainHandPosZ; }
-    public static float getMainHandRotX() { return runtimeConfig.mainHandRotX; }
-    public static float getMainHandRotY() { return runtimeConfig.mainHandRotY; }
-    public static float getMainHandRotZ() { return runtimeConfig.mainHandRotZ; }
+    public static double getMainHandPosX() { return runtimeConfig.mainHandPosX; }
+    public static double getMainHandPosY() { return runtimeConfig.mainHandPosY; }
+    public static double getMainHandPosZ() { return runtimeConfig.mainHandPosZ; }
+    public static double getMainHandRotX() { return runtimeConfig.mainHandRotX; }
+    public static double getMainHandRotY() { return runtimeConfig.mainHandRotY; }
+    public static double getMainHandRotZ() { return runtimeConfig.mainHandRotZ; }
     
-    public static void setMainHandPosX(float value) { 
+    public static void setMainHandPosX(double value) { 
         runtimeConfig.mainHandPosX = value; 
-        saveConfig();
+        configChanged = true;
     }
-    public static void setMainHandPosY(float value) { 
+    public static void setMainHandPosY(double value) { 
         runtimeConfig.mainHandPosY = value; 
-        saveConfig();
+        configChanged = true;
     }
-    public static void setMainHandPosZ(float value) { 
+    public static void setMainHandPosZ(double value) { 
         runtimeConfig.mainHandPosZ = value; 
-        saveConfig();
+        configChanged = true;
     }
-    public static void setMainHandRotX(float value) { 
+    public static void setMainHandRotX(double value) { 
         runtimeConfig.mainHandRotX = value; 
-        saveConfig();
+        configChanged = true;
     }
-    public static void setMainHandRotY(float value) { 
+    public static void setMainHandRotY(double value) { 
         runtimeConfig.mainHandRotY = value; 
-        saveConfig();
+        configChanged = true;
     }
-    public static void setMainHandRotZ(float value) { 
+    public static void setMainHandRotZ(double value) { 
         runtimeConfig.mainHandRotZ = value; 
-        saveConfig();
+        configChanged = true;
     }
     
     // Offhand
-    public static float getOffHandPosX() { return runtimeConfig.offHandPosX; }
-    public static float getOffHandPosY() { return runtimeConfig.offHandPosY; }
-    public static float getOffHandPosZ() { return runtimeConfig.offHandPosZ; }
-    public static float getOffHandRotX() { return runtimeConfig.offHandRotX; }
-    public static float getOffHandRotY() { return runtimeConfig.offHandRotY; }
-    public static float getOffHandRotZ() { return runtimeConfig.offHandRotZ; }
+    public static double getOffHandPosX() { return runtimeConfig.offHandPosX; }
+    public static double getOffHandPosY() { return runtimeConfig.offHandPosY; }
+    public static double getOffHandPosZ() { return runtimeConfig.offHandPosZ; }
+    public static double getOffHandRotX() { return runtimeConfig.offHandRotX; }
+    public static double getOffHandRotY() { return runtimeConfig.offHandRotY; }
+    public static double getOffHandRotZ() { return runtimeConfig.offHandRotZ; }
     
-    public static void setOffHandPosX(float value) { 
+    public static void setOffHandPosX(double value) { 
         runtimeConfig.offHandPosX = value; 
-        saveConfig();
+        configChanged = true;
     }
-    public static void setOffHandPosY(float value) { 
+    public static void setOffHandPosY(double value) { 
         runtimeConfig.offHandPosY = value; 
-        saveConfig();
+        configChanged = true;
     }
-    public static void setOffHandPosZ(float value) { 
+    public static void setOffHandPosZ(double value) { 
         runtimeConfig.offHandPosZ = value; 
-        saveConfig();
+        configChanged = true;
     }
-    public static void setOffHandRotX(float value) { 
+    public static void setOffHandRotX(double value) { 
         runtimeConfig.offHandRotX = value; 
-        saveConfig();
+        configChanged = true;
     }
-    public static void setOffHandRotY(float value) { 
+    public static void setOffHandRotY(double value) { 
         runtimeConfig.offHandRotY = value; 
-        saveConfig();
+        configChanged = true;
     }
-    public static void setOffHandRotZ(float value) { 
+    public static void setOffHandRotZ(double value) { 
         runtimeConfig.offHandRotZ = value; 
-        saveConfig();
+        configChanged = true;
     }
     
     // Mode
@@ -417,6 +381,53 @@ public class HeldItems {
     
     public static void setSeparateHandSettings(boolean enabled) { 
         runtimeConfig.separateHandSettings = enabled; 
-        saveConfig();
+        configChanged = true;
+    }
+    
+    private static boolean enabled = false;
+    
+    @UIToggle(
+        key = BooleanKey.HELD_ITEM_TRANSFORMS,
+        name = "Held Item Size and *Animations*",
+        description = {"Configure the behavior and attributes of held items such as position,",
+        "rotation, scale and swing."}
+    )
+    @UIRedirect(method = "openEditor", buttonText = "Edit")
+    private static boolean heldItemTransforms;
+
+    protected static void openEditor() {
+        ScreenManager.navigateConfigScreen(new HeldItemScreen());
+    }
+    
+    @VCListener(BooleanKey.HELD_ITEM_TRANSFORMS)
+    private static void onChanged(boolean newValue) {
+        enabled = newValue;
+        if (runtimeConfig == null) init();
+    }
+
+    // --- Config API ---
+
+    private static boolean configChanged = false;
+    
+    public static void saveChanges() {
+        if (configChanged) {
+            String jsonData = runtimeConfig.toJson();
+            Config.set(StringKey.ITEM_CONFIG, jsonData);
+            invalidateSwingCache();
+            configChanged = false;
+        }
+    }
+    
+    private static void invalidateSwingCache() {
+        cachedSwingDirection = null;
+    }
+    
+    public static boolean isEnabled() {
+        return enabled;
+    }
+    
+    public static void reset() {
+        runtimeConfig.reset();
+        saveChanges();
     }    
 }

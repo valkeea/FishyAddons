@@ -6,11 +6,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import me.valkeea.fishyaddons.config.FishyConfig;
-import me.valkeea.fishyaddons.config.Key;
-import me.valkeea.fishyaddons.config.StatConfig;
 import me.valkeea.fishyaddons.util.FishyNotis;
 import me.valkeea.fishyaddons.util.text.StringUtils;
+import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
+import me.valkeea.fishyaddons.vconfig.api.Config;
+import me.valkeea.fishyaddons.vconfig.config.impl.StatConfig;
 import net.minecraft.text.Text;
 
 public class ScData {
@@ -48,8 +48,8 @@ public class ScData {
     }
 
     public static void refresh() {
-        enabled = FishyConfig.getState(Key.HUD_CATCH_GRAPH_ENABLED, false) && 
-                  FishyConfig.getState(Key.TRACK_SCS, false);
+        enabled = Config.get(BooleanKey.HUD_CATCH_GRAPH_ENABLED) && 
+                  Config.get(BooleanKey.TRACK_SCS);
     }
 
     public static boolean isEnabled() {

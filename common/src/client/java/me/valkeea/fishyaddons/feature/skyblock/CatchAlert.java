@@ -2,9 +2,13 @@ package me.valkeea.fishyaddons.feature.skyblock;
 
 import org.jetbrains.annotations.Nullable;
 
-import me.valkeea.fishyaddons.config.FishyConfig;
-import me.valkeea.fishyaddons.config.Key;
 import me.valkeea.fishyaddons.impl.MutableSoundInstance;
+import me.valkeea.fishyaddons.vconfig.annotation.VCListener;
+import me.valkeea.fishyaddons.vconfig.annotation.VCModule;
+import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
+import me.valkeea.fishyaddons.vconfig.api.Config;
+import me.valkeea.fishyaddons.vconfig.api.DoubleKey;
+import me.valkeea.fishyaddons.vconfig.api.StringKey;
 import net.minecraft.client.sound.SoundInstance;
 import net.minecraft.registry.Registries;
 import net.minecraft.util.Identifier;
@@ -13,10 +17,11 @@ import net.minecraft.util.Identifier;
  * Replaces Hypixel's fishing catch sound.
  * Validation is done by recording the pitch of incoming sound packets and bobber render state.
  */
+@VCModule
 public class CatchAlert {
     private CatchAlert() {}
 
-    private static final String DEF = "block.note_block.pling";
+    private static final String DEF = StringKey.REEL_OVERRIDE_ID.getDefault();
     private static final float PITCH_REF = 1.0f;    
     private static final int DROP_WINDOW = 15;
     private static final int RENDER_TIMEOUT = 5;
@@ -30,10 +35,6 @@ public class CatchAlert {
     private static boolean trueVol = false;
     private static String id = DEF;
 
-    public static void init() {
-        refresh();
-    }    
-
     public static void tick() {
         if (isEnabled()) {
             if (catchCd > 0) catchCd--;
@@ -42,7 +43,7 @@ public class CatchAlert {
     }
 
     /**
-     * Called every frame when player's fishing line is being rendered.
+     * Called every frame when player's bobber is being rendered.
      */
     public static void onFishingLineRendered() {
         sinceRender = 0;
@@ -67,7 +68,6 @@ public class CatchAlert {
         if (!isFishing() || !isFishingPling(soundId.getPath())) return null;
 
         catchCd = DROP_WINDOW;
-
         var soundIdentifier = Identifier.tryParse(id);
         if (soundIdentifier == null) return null;
 
@@ -92,10 +92,18 @@ public class CatchAlert {
         return matches;
     }
 
+    @VCListener(
+        value = {BooleanKey.REEL_NORANDOM, BooleanKey.REEL_TRUEVOL},
+        strings = StringKey.REEL_OVERRIDE_ID
+    )    
     public static void refresh() {
-        volume = FishyConfig.getFloat(Key.CUSTOM_REEL, PITCH_REF);
-        id = FishyConfig.getString(Key.REEL_ALERT, DEF);
-        noRandom = FishyConfig.getState(Key.REEL_NORANDOM, false);
-        trueVol = FishyConfig.getState(Key.REEL_TRUE_VOLUME, false);
+        id = Config.get(StringKey.REEL_OVERRIDE_ID);
+        noRandom = Config.get(BooleanKey.REEL_NORANDOM);
+        trueVol = Config.get(BooleanKey.REEL_TRUEVOL);
+    }
+
+    @VCListener(doubles = DoubleKey.REEL_OVERRIDE)
+    private static void onReelTrueVolumeChanged(double newValue) {
+        volume = (float) newValue;
     }
 }

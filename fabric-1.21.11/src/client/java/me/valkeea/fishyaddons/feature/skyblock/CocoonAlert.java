@@ -8,8 +8,6 @@ import java.util.UUID;
 
 import me.valkeea.fishyaddons.api.skyblock.GameChat;
 import me.valkeea.fishyaddons.api.skyblock.SkyblockAreas.Island;
-import me.valkeea.fishyaddons.config.FishyConfig;
-import me.valkeea.fishyaddons.config.Key;
 import me.valkeea.fishyaddons.event.impl.FaEvents;
 import me.valkeea.fishyaddons.hud.elements.simple.TitleDisplay;
 import me.valkeea.fishyaddons.tool.RunDelayed;
@@ -17,6 +15,8 @@ import me.valkeea.fishyaddons.tracker.profit.ValuableMobs;
 import me.valkeea.fishyaddons.util.FishyNotis;
 import me.valkeea.fishyaddons.util.text.ChatButton;
 import me.valkeea.fishyaddons.util.text.StringUtils;
+import me.valkeea.fishyaddons.vconfig.api.Config;
+import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.component.DataComponentTypes;
@@ -272,7 +272,7 @@ public class CocoonAlert {
 
         FishyNotis.send(msg);
         
-        if (FishyConfig.getState(Key.ALERT_COCOON, false)) {
+        if (Config.get(BooleanKey.ALERT_COCOON)) {
             alert();
         }
     }    
@@ -305,6 +305,6 @@ public class CocoonAlert {
     }
 
     public static void refresh() {
-        enabled = FishyConfig.getState(Key.TRACK_COCOON, false);
+        enabled = Config.get(BooleanKey.TRACK_COCOON);
     }
 }

@@ -9,12 +9,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import me.valkeea.fishyaddons.api.skyblock.SkillLevelTables;
-import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.event.impl.FaEvents;
 import me.valkeea.fishyaddons.event.impl.ScCatchEvent;
 import me.valkeea.fishyaddons.hud.elements.custom.SkillXpDisplay;
 import me.valkeea.fishyaddons.util.FishyNotis;
 import me.valkeea.fishyaddons.util.TabScanner;
+import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
+import me.valkeea.fishyaddons.vconfig.api.Config;
 
 public class SkillTracker {
     
@@ -71,7 +72,7 @@ public class SkillTracker {
     }
 
     public static void refresh() {
-        enabled = FishyConfig.getState(me.valkeea.fishyaddons.config.Key.HUD_SKILL_XP_ENABLED, false);
+        enabled = Config.get(BooleanKey.HUD_SKILL_XP);
     }
 
     public static boolean isEnabled() {

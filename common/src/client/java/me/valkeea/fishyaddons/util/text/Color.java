@@ -18,6 +18,13 @@ public class Color {
         return new float[]{r, g, b, a};
     }
 
+    public static int rgbToInt(float r, float g, float b) {
+        int ri = Math.min(255, (int)(r * 255));
+        int gi = Math.min(255, (int)(g * 255));
+        int bi = Math.min(255, (int)(b * 255));
+        return (0xFF << 24) | (ri << 16) | (gi << 8) | bi;
+    }
+
     /**
      * Multiply the RGB components of a color by a factor, keeping alpha unchanged.
      * 

@@ -2,16 +2,22 @@ package me.valkeea.fishyaddons.feature.qol;
 
 import java.util.Map;
 
-import me.valkeea.fishyaddons.config.FishyConfig;
+import me.valkeea.fishyaddons.vconfig.annotation.VCListener;
+import me.valkeea.fishyaddons.vconfig.annotation.VCModule;
+import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
+import me.valkeea.fishyaddons.vconfig.api.Config;
+import me.valkeea.fishyaddons.vconfig.config.impl.ShortcutsConfig;
 
+@VCModule
 public class ChatReplacement {
     private ChatReplacement() {}
     private static boolean enabled = false;
     private static Map<String, String> cached = Map.of();
 
+    @VCListener(BooleanKey.CHAT_REPLACEMENTS)
     public static void refresh() {
-        enabled = FishyConfig.getState(me.valkeea.fishyaddons.config.Key.CHAT_REPLACEMENTS_ENABLED, false);
-        cached = Map.copyOf(FishyConfig.getChatReplacements());
+        enabled = Config.get(BooleanKey.CHAT_REPLACEMENTS);
+        cached = Map.copyOf(ShortcutsConfig.getChat());
     }
 
     public static String apply(String message) {
@@ -19,7 +25,7 @@ public class ChatReplacement {
 
         var result = message;
         for (Map.Entry<String, String> entry : cached.entrySet()) {
-            if (FishyConfig.isChatReplacementToggled(entry.getKey()) && result.contains(entry.getKey())) {
+            if (ShortcutsConfig.isChatToggled(entry.getKey()) && result.contains(entry.getKey())) {
                 result = result.replace(entry.getKey(), entry.getValue());
             }
         }

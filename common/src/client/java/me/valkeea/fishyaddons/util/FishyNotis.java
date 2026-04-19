@@ -1,11 +1,10 @@
 package me.valkeea.fishyaddons.util;
 
-import me.valkeea.fishyaddons.config.FishyConfig;
-import me.valkeea.fishyaddons.config.ItemConfig;
-import me.valkeea.fishyaddons.config.Key;
 import me.valkeea.fishyaddons.tool.FishyMode;
-import me.valkeea.fishyaddons.ui.VCText;
 import me.valkeea.fishyaddons.util.text.Color;
+import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
+import me.valkeea.fishyaddons.vconfig.api.Config;
+import me.valkeea.fishyaddons.vconfig.ui.render.VCText;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
@@ -108,18 +107,13 @@ public class FishyNotis {
         }
     }        
 
-    public static void protectNoti() {
-        if (!ItemConfig.isProtectNotiEnabled()) return;
-        send("Item protected");
-    }
-
     public static void ccNoti() {
         if (!me.valkeea.fishyaddons.feature.qol.CopyChat.isNotiOn()) return;
         send("Copied to clipboard");
     }
 
     public static void bookNoti(Text styledItemName) {
-        if (FishyConfig.getState(Key.TRACKER_NOTIS, false)) {
+        if (Config.get(BooleanKey.TRACKER_NOTIS)) {
             var prefix = VCText.header("BOOK DROP! ", Style.EMPTY.withBold(true));
             var message = prefix.copy().append(styledItemName);
             FishyNotis.alert(message);
@@ -127,7 +121,7 @@ public class FishyNotis {
     }
     
     public static void trackerNoti(Text styledItemName, int quantity) {
-        if (FishyConfig.getState(Key.TRACKER_NOTIS, false)) {
+        if (Config.get(BooleanKey.TRACKER_NOTIS)) {
             var prefix = VCText.header("TRACKED DROP! ", Style.EMPTY.withBold(true));
             var message = prefix.copy().append(styledItemName).append(Text.literal(quantity > 1 ? " §8x" + quantity : ""));
             FishyNotis.alert(message);

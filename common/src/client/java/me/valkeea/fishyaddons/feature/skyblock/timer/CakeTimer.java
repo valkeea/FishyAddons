@@ -15,12 +15,16 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 
-import me.valkeea.fishyaddons.config.FishyConfig;
-import me.valkeea.fishyaddons.config.Key;
 import me.valkeea.fishyaddons.util.FishyNotis;
 import me.valkeea.fishyaddons.util.text.TextUtils;
+import me.valkeea.fishyaddons.vconfig.api.Config;
+import me.valkeea.fishyaddons.vconfig.annotation.VCInit;
+import me.valkeea.fishyaddons.vconfig.annotation.VCListener;
+import me.valkeea.fishyaddons.vconfig.annotation.VCModule;
+import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
 import net.minecraft.client.MinecraftClient;
 
+@VCModule
 @SuppressWarnings("squid:S6548")
 public class CakeTimer {
     private static final CakeTimer INSTANCE = new CakeTimer();    
@@ -42,18 +46,21 @@ public class CakeTimer {
         return INSTANCE;
     }
 
-    public static void refresh() {
-        enabled = FishyConfig.getState(Key.HUD_CENTURY_CAKE_ENABLED, false);
+    @VCListener(BooleanKey.HUD_CENTURY_CAKE_ENABLED)    
+    public static void refresh(boolean newValue) {
+        enabled = newValue;
     }
 
     public static boolean isEnabled() {
         return enabled;
     }
     
-    public void init() {
-        refresh();
-        loadTimers();
-        scheduleNoti();
+    @VCInit
+    public static void init() {
+        getInstance();
+        enabled = Config.get(BooleanKey.HUD_CENTURY_CAKE_ENABLED);
+        INSTANCE.loadTimers();
+        INSTANCE.scheduleNoti();
     }
 
     public boolean handleChat(String message) {
@@ -78,7 +85,7 @@ public class CakeTimer {
     }
     
     public void onLoad() {
-        if (!FishyConfig.getState(Key.CAKE_NOTI, false)) {
+        if (!Config.get(BooleanKey.CAKE_NOTI)) {
             return;
         }
         
@@ -106,7 +113,7 @@ public class CakeTimer {
         if (scheduledCheck) return;
         scheduledCheck = true;
 
-        if (!FishyConfig.getState(Key.CAKE_NOTI, false)) return;
+        if (!Config.get(BooleanKey.CAKE_NOTI)) return;
 
         scheduler.scheduleAtFixedRate(() -> {
 

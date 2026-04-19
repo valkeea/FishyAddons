@@ -2,14 +2,15 @@ package me.valkeea.fishyaddons.processor.handlers;
 
 import java.util.regex.Pattern;
 
-import me.valkeea.fishyaddons.config.FishyConfig;
-import me.valkeea.fishyaddons.config.Key;
 import me.valkeea.fishyaddons.feature.waypoints.TempWaypoint;
 import me.valkeea.fishyaddons.processor.ChatHandler;
 import me.valkeea.fishyaddons.processor.ChatHandlerResult;
 import me.valkeea.fishyaddons.processor.ChatMessageContext;
 import me.valkeea.fishyaddons.util.text.ChatButton;
 import me.valkeea.fishyaddons.util.text.TextUtils;
+import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
+import me.valkeea.fishyaddons.vconfig.api.Config;
+import me.valkeea.fishyaddons.vconfig.api.IntKey;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
 
@@ -43,10 +44,10 @@ public class CoordinateHandler implements ChatHandler {
             String rawMessage = context.getRawString();
             Text originalMessage = context.getOriginalText();
 
-            if (FishyConfig.getState(Key.RENDER_COORDS, true)) {
+            if (Config.get(BooleanKey.RENDER_COORDS)) {
                 initBeaconFor(rawMessage);
 
-                if (FishyConfig.getState(Key.CHAT_FILTER_COORDS_ENABLED, true)) {
+                if (Config.get(BooleanKey.CHAT_FILTER_COORDS_ENABLED)) {
                     Text enhanced = addButtons(originalMessage);
                     
                     if (!enhanced.equals(originalMessage)) {
@@ -70,8 +71,8 @@ public class CoordinateHandler implements ChatHandler {
     
     @Override
     public boolean isEnabled() {
-        return FishyConfig.getState(Key.RENDER_COORDS, true) || 
-               FishyConfig.getState(Key.CHAT_FILTER_COORDS_ENABLED, true);
+        return Config.get(BooleanKey.RENDER_COORDS) || 
+               Config.get(BooleanKey.CHAT_FILTER_COORDS_ENABLED);
     }
     
     private void initBeaconFor(String rawMessage) {
@@ -95,7 +96,7 @@ public class CoordinateHandler implements ChatHandler {
             
             TempWaypoint.setBeacon(
                 newPos,
-                FishyConfig.getInt(Key.RENDER_COORD_COLOR, -5653771), 
+                Config.get(IntKey.RENDER_COORD_COLOR), 
                 label
             );
         } catch (NumberFormatException e) {

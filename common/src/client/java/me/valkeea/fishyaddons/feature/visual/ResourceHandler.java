@@ -3,7 +3,10 @@ package me.valkeea.fishyaddons.feature.visual;
 import java.util.ArrayList;
 import java.util.List;
 
-import me.valkeea.fishyaddons.config.FishyConfig;
+import me.valkeea.fishyaddons.vconfig.annotation.VCInit;
+import me.valkeea.fishyaddons.vconfig.annotation.VCModule;
+import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
+import me.valkeea.fishyaddons.vconfig.api.Config;
 import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
 import net.fabricmc.fabric.api.resource.ResourcePackActivationType;
 import net.fabricmc.loader.api.FabricLoader;
@@ -11,6 +14,7 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.resource.ResourcePackProfile;
 import net.minecraft.util.Identifier;
 
+@VCModule
 public class ResourceHandler {
     private ResourceHandler() {}
     public static final String MOD_ID = "fishyaddons";
@@ -18,7 +22,8 @@ public class ResourceHandler {
     public static final Identifier FISHY_GUI = Identifier.of(MOD_ID, "fishy_gui");
     public static final Identifier FIRE_OVERLAY = Identifier.of(MOD_ID, "fire_overlay");
 
-    public static void register() {
+    @VCInit
+    public static void init() {
         FabricLoader.getInstance().getModContainer(MOD_ID).ifPresent(modContainer -> {
             ResourceManagerHelper.registerBuiltinResourcePack(
                 HD_FONT,
@@ -39,19 +44,19 @@ public class ResourceHandler {
     }
 
     public static void updateFontPack() {
-        updateBuiltinPack("hdFont", "fishyaddons:hd_font");
+        updateBuiltinPack(BooleanKey.HD_FONT, "fishyaddons:hd_font");
     }
 
     public static void updateGuiPack() {
-        updateBuiltinPack("fishyGui", "fishyaddons:fishy_gui");
+        updateBuiltinPack(BooleanKey.FISHY_GUI, "fishyaddons:fishy_gui");
     }
 
     public static void updateFirePack() {
-        updateBuiltinPack("fireOverlay", "fishyaddons:fire_overlay");
+        updateBuiltinPack(BooleanKey.FIRE_OVERLAY, "fishyaddons:fire_overlay");
     }
 
-    private static void updateBuiltinPack(String configKey, String packId) {
-        boolean enabled = FishyConfig.getState(configKey, false);
+    private static void updateBuiltinPack(BooleanKey configKey, String packId) {
+        boolean enabled = Config.get(configKey);
         var mc = MinecraftClient.getInstance();
         var options = mc.options;
 

@@ -1,10 +1,10 @@
 package me.valkeea.fishyaddons.feature.skyblock;
 
-import me.valkeea.fishyaddons.config.FishyConfig;
-import me.valkeea.fishyaddons.config.Key;
 import me.valkeea.fishyaddons.tool.PlaySound;
 import me.valkeea.fishyaddons.util.FishyNotis;
 import me.valkeea.fishyaddons.util.ZoneUtils;
+import me.valkeea.fishyaddons.vconfig.api.Config;
+import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
@@ -19,11 +19,12 @@ public class WeatherTracker {
      * --> passed as !raining.
      */
     public static void onRainStateChange(boolean isRaining) {
-        if (!FishyConfig.getState(Key.RAIN_NOTI, true)) { return; }
+        if (!Config.get(BooleanKey.RAIN_NOTI)) { return; }
         if (!initialized && !ZoneUtils.checkDenOrPark()) { return; }
 
         if (lastRainState && !isRaining) {
-            if (MinecraftClient.getInstance().player != null && MinecraftClient.getInstance().player.getY() == 69) {
+            var mc = MinecraftClient.getInstance();
+            if (mc.player != null && mc.player.getY() == 69) {
                 Text message = Text.literal("Warning: rain tracking is disabled in water with no sky access.")
                     .formatted(Formatting.DARK_GRAY, Formatting.ITALIC);
                 FishyNotis.send(message);
@@ -81,7 +82,7 @@ public class WeatherTracker {
     }
     
     private static void stopped() {
-        if (!FishyConfig.getState(Key.RAIN_NOTI, true)) {
+        if (!Config.get(BooleanKey.RAIN_NOTI)) {
             return;
         }
         
@@ -90,7 +91,7 @@ public class WeatherTracker {
     }
     
     private static void started() {
-        if (!FishyConfig.getState(Key.RAIN_NOTI, true)) {
+        if (!Config.get(BooleanKey.RAIN_NOTI)) {
             return;
         }
         

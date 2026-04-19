@@ -1,6 +1,6 @@
 package me.valkeea.fishyaddons.api.skyblock;
 
-import me.valkeea.fishyaddons.config.StatConfig;
+import me.valkeea.fishyaddons.vconfig.config.impl.StatConfig;
 
 /**
  * Tracks the current chat mode on Hypixel (all, party, guild).

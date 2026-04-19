@@ -31,10 +31,10 @@ public class CollectionTracker {
     private static SlotStackProvider provider = null;        
 
     public static void initIfNeeded(boolean newState) {
+        enabled = newState;
+
         if (!newState || initialized) return;
 
-        enabled = newState;
-        
         CollectionData.init();
         CraftingRecipes.load();
         
@@ -75,7 +75,7 @@ public class CollectionTracker {
 
         provider = createSlotProvider(handler);
         
-        if (recipe)  RecipeScanner.scanRecipeGui(provider);
+        if (recipe) RecipeScanner.scanRecipeGui(provider);
         else ProgressScanner.scanCollectionGui(title, provider);
     }
 

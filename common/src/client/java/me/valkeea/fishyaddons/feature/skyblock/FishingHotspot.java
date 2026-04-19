@@ -6,19 +6,22 @@ import java.util.List;
 import java.util.Set;
 
 import me.valkeea.fishyaddons.api.skyblock.GameChat;
-import me.valkeea.fishyaddons.config.FishyConfig;
-import me.valkeea.fishyaddons.config.Key;
 import me.valkeea.fishyaddons.feature.waypoints.TempWaypoint;
 import me.valkeea.fishyaddons.tracker.fishing.ScStats;
 import me.valkeea.fishyaddons.util.FishyNotis;
 import me.valkeea.fishyaddons.util.NearbyEntities;
 import me.valkeea.fishyaddons.util.text.ChatButton;
+import me.valkeea.fishyaddons.vconfig.api.Config;
+import me.valkeea.fishyaddons.vconfig.annotation.VCListener;
+import me.valkeea.fishyaddons.vconfig.annotation.VCModule;
+import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.decoration.ArmorStandEntity;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
 
+@VCModule
 public class FishingHotspot {
     private FishingHotspot() {}
 
@@ -28,10 +31,13 @@ public class FishingHotspot {
     private static boolean trackActivity = false;
     private static boolean announce = false;
 
+    @VCListener(
+        {BooleanKey.HOTSPOT_TRACK, BooleanKey.HOTSPOT_COORDS, BooleanKey.HOTSPOT_ANNOUNCE}
+    )    
     public static void refresh() {
-        track = FishyConfig.getState(Key.TRACK_HOTSPOT, false);
-        trackActivity = FishyConfig.getState(Key.TRACK_HOTSPOT, false) || FishyConfig.getState(Key.TRACK_SCS, false);
-        announce = FishyConfig.getState(Key.ANNOUNCE_HOTSPOT, false);
+        track = Config.get(BooleanKey.HOTSPOT_TRACK);
+        trackActivity = Config.get(BooleanKey.HOTSPOT_TRACK) || Config.get(BooleanKey.TRACK_SCS);
+        announce = Config.get(BooleanKey.HOTSPOT_ANNOUNCE);
         visited.clear();
     }
 
@@ -228,7 +234,7 @@ public class FishingHotspot {
             MinecraftClient.getInstance().player.networkHandler.sendChatMessage(
                 "/pc " + coords + " " + labelText);
 
-        } else if (FishyConfig.getState(Key.HSPT_COORDS, false)) {
+        } else if (Config.get(BooleanKey.HOTSPOT_COORDS)) {
             var pos = String.format("%.0f %.0f %.0f", x, y, z);
 
             String chatCmd = GameChat.channelPrefix() + coords + " " + labelText;

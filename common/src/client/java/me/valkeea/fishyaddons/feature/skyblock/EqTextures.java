@@ -6,10 +6,10 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import me.valkeea.fishyaddons.config.FishyConfig;
-import me.valkeea.fishyaddons.config.ItemConfig;
-import me.valkeea.fishyaddons.config.Key;
 import me.valkeea.fishyaddons.util.JsonUtil;
+import me.valkeea.fishyaddons.vconfig.api.Config;
+import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
+import me.valkeea.fishyaddons.vconfig.config.impl.ItemConfig;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.ProfileComponent;
@@ -18,7 +18,7 @@ import net.minecraft.item.Items;
 
 public class EqTextures {
     private EqTextures() {}
-    private static final Logger LOGGER = LoggerFactory.getLogger("FishyAddons/SkullTexture");
+    private static final Logger LOGGER = LoggerFactory.getLogger(EqTextures.class);
     
     private static final Map<Integer, ItemStack> skullItemStacks = new HashMap<>();
     private static final Map<Integer, ProfileComponent> skullProfiles = new HashMap<>();
@@ -37,7 +37,7 @@ public class EqTextures {
      * Save the skull texture and profile for the given equipment slot
      */
     public static void saveSkullTexture(int slotIndex, ItemStack itemStack) {
-        if (!FishyConfig.getState(Key.EQ_DISPLAY, false)) return;
+        if (!Config.get(BooleanKey.EQ_DISPLAY)) return;
         
         var profile = itemStack.getOrDefault(DataComponentTypes.PROFILE, null);
         if (profile != null) {
@@ -58,7 +58,7 @@ public class EqTextures {
      * Mark the given equipment slot as empty
      */
     public static void saveEmptySlot(int slotIndex) {
-        if (!FishyConfig.getState(Key.EQ_DISPLAY, false)) return;
+        if (!Config.get(BooleanKey.EQ_DISPLAY)) return;
         
         skullItemStacks.remove(slotIndex);
         skullProfiles.remove(slotIndex);

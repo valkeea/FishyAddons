@@ -3,9 +3,9 @@ package me.valkeea.fishyaddons.feature.skyblock;
 import java.util.HashMap;
 import java.util.Map;
 
-import me.valkeea.fishyaddons.config.FishyConfig;
-import me.valkeea.fishyaddons.config.Key;
 import me.valkeea.fishyaddons.event.impl.FaEvents;
+import me.valkeea.fishyaddons.vconfig.api.Config;
+import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
 import net.minecraft.client.gui.screen.ingame.GenericContainerScreen;
 import net.minecraft.item.ItemStack;
 import net.minecraft.screen.slot.Slot;
@@ -28,7 +28,7 @@ public class EqDetector {
     }
 
     public static void onScreen(GenericContainerScreen screen, String title) {
-        if (!FishyConfig.getState(Key.EQ_DISPLAY, false) || !isEqScreen(title)) return;
+        if (!Config.get(BooleanKey.EQ_DISPLAY) || !isEqScreen(title)) return;
         
         isEqScreen = true;
         currentEqScreen = screen;
@@ -60,7 +60,7 @@ public class EqDetector {
     }
     
     private static void scanEquipmentSlots(GenericContainerScreen screen, boolean forceUpdate) {
-        if (!FishyConfig.getState(Key.EQ_DISPLAY, false)) return;
+        if (!Config.get(BooleanKey.EQ_DISPLAY)) return;
 
         var handler = screen.getScreenHandler();
         if (handler == null) return;

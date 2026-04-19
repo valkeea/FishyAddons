@@ -7,13 +7,13 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import me.valkeea.fishyaddons.config.FilterConfig;
-import me.valkeea.fishyaddons.config.FilterConfig.Rule;
-import me.valkeea.fishyaddons.config.FishyConfig;
-import me.valkeea.fishyaddons.config.FishyConfig.AlertData;
+import me.valkeea.fishyaddons.feature.filter.FilterConfig;
+import me.valkeea.fishyaddons.feature.filter.FilterConfig.Rule;
 import me.valkeea.fishyaddons.processor.MessageAnalysis.AlertMatch;
 import me.valkeea.fishyaddons.processor.MessageAnalysis.FilterMatch;
 import me.valkeea.fishyaddons.util.text.TextUtils;
+import me.valkeea.fishyaddons.vconfig.config.impl.AlertConfig;
+import me.valkeea.fishyaddons.vconfig.config.impl.AlertConfig.AlertData;
 
 /**
  * Single-pass message analysis for chat filter and alerts
@@ -200,7 +200,7 @@ public class BaseAnalysis {
             resultCache.clear();
         }
         
-        Map<String, AlertData> currentAlerts = FishyConfig.getChatAlerts();
+        Map<String, AlertData> currentAlerts = AlertConfig.getChatAlerts();
         long currentAlertVersion = currentAlerts.hashCode();
         if (currentAlertVersion != lastAlertConfigVersion) {
             cachedAlertData.clear();

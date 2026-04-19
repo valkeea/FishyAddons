@@ -6,10 +6,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.tracker.DianaStats;
 import me.valkeea.fishyaddons.tracker.SlayerStats;
 import me.valkeea.fishyaddons.tracker.fishing.ScStats;
+import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
+import me.valkeea.fishyaddons.vconfig.api.Config;
 
 public class ActivityMonitor {
     private static ActivityMonitor instance = null;
@@ -259,9 +260,9 @@ public class ActivityMonitor {
      * Enable or disable activity monitoring
      */
     public static void refresh() {
-        enabled = FishyConfig.getState(me.valkeea.fishyaddons.config.Key.TRACK_SCS, false) ||
-                  FishyConfig.getState(me.valkeea.fishyaddons.config.Key.TRACK_DIANA, false) ||
-                  FishyConfig.getState(me.valkeea.fishyaddons.config.Key.TRACK_SLAYER, false);
+        enabled = Config.get(BooleanKey.TRACK_SCS) ||
+                  Config.get(BooleanKey.TRACK_DIANA) ||
+                  Config.get(BooleanKey.TRACK_SLAYER);
 
         ScStats.init();
         DianaStats.refresh();

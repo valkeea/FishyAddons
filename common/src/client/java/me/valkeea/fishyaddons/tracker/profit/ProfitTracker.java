@@ -1,11 +1,10 @@
 package me.valkeea.fishyaddons.tracker.profit;
 
-import me.valkeea.fishyaddons.config.TrackerProfiles;
 import me.valkeea.fishyaddons.tracker.collection.CollectionTracker;
-import me.valkeea.fishyaddons.ui.VCOverlay;
-import me.valkeea.fishyaddons.ui.VCPopup;
+import me.valkeea.fishyaddons.ui.screen.Overlay;
 import me.valkeea.fishyaddons.util.FishyNotis;
 import me.valkeea.fishyaddons.util.text.FromText;
+import me.valkeea.fishyaddons.vconfig.ui.widget.VCPopup;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.text.Text;
 
@@ -100,7 +99,7 @@ public class ProfitTracker {
 			scale
 		);
         var cl = MinecraftClient.getInstance();
-        cl.setScreen(new VCOverlay(cl.currentScreen, popup));
+        cl.setScreen(new Overlay(cl.currentScreen, popup));
 	}
     
     private ProfitTracker() {

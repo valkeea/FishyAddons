@@ -9,12 +9,12 @@ import java.util.stream.IntStream;
 
 import me.valkeea.fishyaddons.api.skyblock.SkyblockAreas;
 import me.valkeea.fishyaddons.api.skyblock.SkyblockAreas.Island;
-import me.valkeea.fishyaddons.config.FishyConfig;
-import me.valkeea.fishyaddons.config.Key;
 import me.valkeea.fishyaddons.tool.GuiScheduler;
-import me.valkeea.fishyaddons.ui.ColorWheel;
 import me.valkeea.fishyaddons.util.FishyNotis;
 import me.valkeea.fishyaddons.util.ZoneUtils;
+import me.valkeea.fishyaddons.vconfig.api.Config;
+import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
+import me.valkeea.fishyaddons.vconfig.ui.screen.ColorWheel;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ChatScreen;
 import net.minecraft.text.Text;
@@ -402,8 +402,8 @@ public class WaypointCmd {
 
     public static int toggle() {
         
-        boolean newState = !FishyConfig.getState(Key.WAYPOINT_CHAINS_ENABLED, false);
-        FishyConfig.setState(Key.WAYPOINT_CHAINS_ENABLED, newState);
+        boolean newState = !Config.get(BooleanKey.FWP_ENABLED);
+        Config.set(BooleanKey.FWP_ENABLED, newState);
         WaypointChains.refresh();
 
         if (newState) FishyNotis.on("Waypoint Chains");

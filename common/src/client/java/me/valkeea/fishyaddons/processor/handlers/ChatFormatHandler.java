@@ -2,13 +2,13 @@ package me.valkeea.fishyaddons.processor.handlers;
 
 import java.util.regex.Pattern;
 
-import me.valkeea.fishyaddons.config.FishyConfig;
-import me.valkeea.fishyaddons.config.Key;
 import me.valkeea.fishyaddons.processor.ChatHandler;
 import me.valkeea.fishyaddons.processor.ChatHandlerResult;
 import me.valkeea.fishyaddons.processor.ChatMessageContext;
 import me.valkeea.fishyaddons.util.text.ChatButton;
 import me.valkeea.fishyaddons.util.text.Enhancer;
+import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
+import me.valkeea.fishyaddons.vconfig.api.Config;
 import net.minecraft.text.Text;
 
 public class ChatFormatHandler implements ChatHandler {
@@ -59,8 +59,8 @@ public class ChatFormatHandler implements ChatHandler {
     
     @Override
     public boolean isEnabled() {
-        return FishyConfig.getState(Key.CHAT_FILTER_PARTYBTN, false) || 
-               FishyConfig.getState(Key.CHAT_FORMATTING, true);
+        return Config.get(BooleanKey.CHAT_FILTER_PARTYBTN) || 
+               Config.get(BooleanKey.CHAT_FORMATTING);
     }
     
     private boolean containsIdentifiers(String message) {
@@ -113,11 +113,11 @@ public class ChatFormatHandler implements ChatHandler {
     }
 
     private Text addFormatting(Text newLine, Text original, String raw) {
-        if (hasFormattingCodes(raw) && FishyConfig.getState(Key.CHAT_FORMATTING, true)) {
+        if (hasFormattingCodes(raw) && Config.get(BooleanKey.CHAT_FORMATTING)) {
             newLine = Enhancer.parseExistingStyle(original);
         }
 
-        if (!FishyConfig.getState(Key.CHAT_FILTER_PARTYBTN, false) || !hasLfgTag(raw)) {
+        if (!Config.get(BooleanKey.CHAT_FILTER_PARTYBTN) || !hasLfgTag(raw)) {
             return newLine;
         }
 

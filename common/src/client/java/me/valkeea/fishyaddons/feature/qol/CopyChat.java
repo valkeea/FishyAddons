@@ -2,14 +2,17 @@ package me.valkeea.fishyaddons.feature.qol;
 
 import java.util.List;
 
-import me.valkeea.fishyaddons.config.FishyConfig;
-import me.valkeea.fishyaddons.config.Key;
 import me.valkeea.fishyaddons.mixin.ChatHudAccessor;
 import me.valkeea.fishyaddons.util.FishyNotis;
+import me.valkeea.fishyaddons.vconfig.api.Config;
+import me.valkeea.fishyaddons.vconfig.annotation.VCListener;
+import me.valkeea.fishyaddons.vconfig.annotation.VCModule;
+import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.hud.ChatHudLine;
 import net.minecraft.client.util.InputUtil;
 
+@VCModule
 public class CopyChat {
     private CopyChat() {}
     private static boolean isOn = true;
@@ -17,9 +20,10 @@ public class CopyChat {
     public static boolean isOn() { return isOn; }
     public static boolean isNotiOn() { return isNotiOn; }
 
+    @VCListener({BooleanKey.COPY_CHAT, BooleanKey.COPY_NOTI})    
     public static void refresh() {
-        isOn = FishyConfig.getState(Key.COPY_CHAT, true);
-        isNotiOn = FishyConfig.getState(Key.COPY_NOTI, true);
+        isOn = Config.get(BooleanKey.COPY_CHAT);
+        isNotiOn = Config.get(BooleanKey.COPY_NOTI);
     }
 
     public static void tryCopyChat(MinecraftClient client, double mouseX, double mouseY) {
@@ -61,8 +65,8 @@ public class CopyChat {
         return accessor.invokeGetMessageLineIndex(chatLineX, chatLineY);
     }
 
-    private static boolean isValid(int lineIdx, ChatHudAccessor accessor) {
-        return lineIdx >= 0 && lineIdx < accessor.getVisibleMessages().size();
+    private static boolean isValid(int lineIdx, ChatHudAccessor cha) {
+        return lineIdx >= 0 && lineIdx < cha.getVisibleMessages().size();
     }
 
     private static String extractVisible(ChatHudLine.Visible line) {

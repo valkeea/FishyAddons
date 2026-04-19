@@ -1,26 +1,26 @@
 package me.valkeea.fishyaddons.tracker;
 
 import me.valkeea.fishyaddons.api.hypixel.PriceServiceManager;
-import me.valkeea.fishyaddons.config.FishyConfig;
-import me.valkeea.fishyaddons.config.Key;
 import me.valkeea.fishyaddons.tracker.collection.CollectionTracker;
 import me.valkeea.fishyaddons.tracker.profit.ProfitTracker;
 import me.valkeea.fishyaddons.tracker.profit.SackDropParser;
+import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
+import me.valkeea.fishyaddons.vconfig.api.Config;
 
 public class PriceUtil {
     private PriceUtil() {}
 
     public static void refresh() {
         
-        boolean profit = FishyConfig.getState(Key.HUD_PROFIT_ENABLED, false);
-        boolean pricePerItem = FishyConfig.getState(Key.PER_ITEM, false);
-        boolean collection = FishyConfig.getState(Key.HUD_COLLECTION_ENABLED, false);
-        boolean sack = (FishyConfig.getState(Key.TRACK_SACK, false) && profit) || collection; 
+        boolean profit = Config.get(BooleanKey.HUD_PROFIT_ENABLED);
+        boolean pricePerItem = Config.get(BooleanKey.PER_ITEM);
+        boolean collection = Config.get(BooleanKey.HUD_COLLECTION_ENABLED);
+        boolean sack = (Config.get(BooleanKey.TRACK_SACK) && profit) || collection; 
 
         if (!PriceServiceManager.isInitialized() && (profit || collection))  {
             PriceServiceManager.initialize();
         }
-
+        
         CollectionTracker.initIfNeeded(collection); 
         SackDropParser.setTracking(sack);
         ProfitTracker.setConfig(profit, sack, pricePerItem);

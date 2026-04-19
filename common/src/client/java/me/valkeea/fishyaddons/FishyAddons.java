@@ -2,40 +2,10 @@ package me.valkeea.fishyaddons;
 
 import me.valkeea.fishyaddons.api.skyblock.GameChat;
 import me.valkeea.fishyaddons.command.CmdManager;
-import me.valkeea.fishyaddons.config.FilterConfig;
-import me.valkeea.fishyaddons.config.FishyConfig;
-import me.valkeea.fishyaddons.config.FishyPresets;
-import me.valkeea.fishyaddons.config.ItemConfig;
-import me.valkeea.fishyaddons.config.StatConfig;
-import me.valkeea.fishyaddons.feature.item.animations.HeldItems;
-import me.valkeea.fishyaddons.feature.item.safeguard.GuiHandler;
-import me.valkeea.fishyaddons.feature.item.safeguard.SlotHandler;
-import me.valkeea.fishyaddons.feature.qol.ChatAlert;
-import me.valkeea.fishyaddons.feature.qol.ChatReplacement;
-import me.valkeea.fishyaddons.feature.qol.CommandAlias;
-import me.valkeea.fishyaddons.feature.qol.CopyChat;
+import me.valkeea.fishyaddons.feature.filter.FilterConfig;
+import me.valkeea.fishyaddons.feature.item.safeguard.BlacklistManager;
 import me.valkeea.fishyaddons.feature.qol.FishyKeys;
-import me.valkeea.fishyaddons.feature.qol.ItemSearchOverlay;
-import me.valkeea.fishyaddons.feature.qol.KeyShortcut;
-import me.valkeea.fishyaddons.feature.qol.NetworkMetrics;
-import me.valkeea.fishyaddons.feature.skyblock.CatchAlert;
-import me.valkeea.fishyaddons.feature.skyblock.CocoonAlert;
-import me.valkeea.fishyaddons.feature.skyblock.EqDetector;
-import me.valkeea.fishyaddons.feature.skyblock.FishingHotspot;
-import me.valkeea.fishyaddons.feature.skyblock.GuiIcons;
-import me.valkeea.fishyaddons.feature.skyblock.PetInfo;
-import me.valkeea.fishyaddons.feature.skyblock.SkyblockCleaner;
-import me.valkeea.fishyaddons.feature.skyblock.TransLava;
-import me.valkeea.fishyaddons.feature.skyblock.timer.CakeTimer;
-import me.valkeea.fishyaddons.feature.skyblock.timer.ChatTimers;
-import me.valkeea.fishyaddons.feature.skyblock.timer.EffectTimers;
-import me.valkeea.fishyaddons.feature.visual.FaColors;
-import me.valkeea.fishyaddons.feature.visual.MobAnimations;
-import me.valkeea.fishyaddons.feature.visual.ParticleVisuals;
-import me.valkeea.fishyaddons.feature.visual.RenderTweaks;
-import me.valkeea.fishyaddons.feature.visual.ResourceHandler;
-import me.valkeea.fishyaddons.feature.visual.XpColor;
-import me.valkeea.fishyaddons.feature.waypoints.TempWaypoint;
+import me.valkeea.fishyaddons.feature.qol.FishyPresets;
 import me.valkeea.fishyaddons.feature.waypoints.WaypointChains;
 import me.valkeea.fishyaddons.hud.core.ElementRegistry;
 import me.valkeea.fishyaddons.hud.ui.FishyToast;
@@ -46,23 +16,21 @@ import me.valkeea.fishyaddons.listener.ClientTick;
 import me.valkeea.fishyaddons.listener.ModifyChat;
 import me.valkeea.fishyaddons.listener.WorldEvent;
 import me.valkeea.fishyaddons.processor.ChatHandlerRegistry;
-import me.valkeea.fishyaddons.tool.FishyMode;
 import me.valkeea.fishyaddons.tool.GuiScheduler;
 import me.valkeea.fishyaddons.tool.ModCheck;
 import me.valkeea.fishyaddons.tool.PlaySound;
-import me.valkeea.fishyaddons.tracker.PriceUtil;
-import me.valkeea.fishyaddons.tracker.SkillTracker;
-import me.valkeea.fishyaddons.tracker.fishing.ScData;
-import me.valkeea.fishyaddons.tracker.monitoring.ActivityMonitor;
 import me.valkeea.fishyaddons.tracker.profit.InventorySnapshot;
 import me.valkeea.fishyaddons.tracker.profit.ValuableMobs;
 import me.valkeea.fishyaddons.util.ContainerScanner;
 import me.valkeea.fishyaddons.util.CustomSounds;
 import me.valkeea.fishyaddons.util.text.GradientRenderer;
+import me.valkeea.fishyaddons.vconfig.api.Config;
+import me.valkeea.fishyaddons.vconfig.core.ConfigRegistry;
+import me.valkeea.fishyaddons.vconfig.core.ConfigScanner;
+import me.valkeea.fishyaddons.vconfig.ui.manager.ScreenManager;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.registry.Registries;
@@ -74,72 +42,36 @@ public class FishyAddons implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
 
-        FishyConfig.init();
-        StatConfig.init();
-        ItemConfig.init();
-        FilterConfig.init();
+        Config.init();
+        FilterConfig.init(); 
+        ConfigScanner.scanDefaultPackages();
+        ConfigRegistry.initializeAll();
 
         GameChat.init();
         GradientRenderer.init();
-
-        KeyShortcut.refresh();
-        ChatReplacement.refresh();
-        CommandAlias.refresh();
-        GuiIcons.refresh();
-        ParticleVisuals.refreshCache();
-        ChatAlert.refresh();
-        CopyChat.refresh();
-        PetInfo.refresh();
-        XpColor.refresh();
-        ScData.refresh();
-        RenderTweaks.refresh();
-        MobAnimations.refresh();
-        SkyblockCleaner.refresh();
-        CatchAlert.refresh();
         ValuableMobs.refresh();
-        NetworkMetrics.refresh();
-        TempWaypoint.refresh();
-        FishingHotspot.refresh();
-        ActivityMonitor.refresh();
-        ChatTimers.getInstance().refresh();
-
-        SkillTracker.init();        
-        CocoonAlert.init();        
-        PriceUtil.refresh();
-        EqDetector.init();
-        ContainerScanner.getInstance().init();   
-        TransLava.init();      
-        HeldItems.init();        
-        CustomSounds.init();
-        FaColors.init();
-        FishyMode.init();
-        ClientTick.init();
         ModifyChat.init();
+
+        ContainerScanner.getInstance().init();       
+        CustomSounds.init();
+        ClientTick.init();
         WorldEvent.init();
         ClientStop.init();
         ClientConnected.init();
         ClientDisconnected.init();
-        GuiHandler.init();
-        SlotHandler.init();
-        ItemSearchOverlay.init();
         InventorySnapshot.init();
-        GuiIcons.init();
-        CakeTimer.getInstance().init();
-        EffectTimers.getInstance().init();
-        TempWaypoint.init();
-        CatchAlert.init();
         ChatHandlerRegistry.init();
         FishyToast.init();
         ModCheck.init();
-        ElementRegistry.init();       
 
+        ElementRegistry.init();       
         FishyPresets.ensureDefaultPresets();
         WaypointChains.init();
         
         FishyKeys.register();        
         GuiScheduler.register();
-        CmdManager.register();  
-        ResourceHandler.register();
+        CmdManager.register();
+        BlacklistManager.init(); 
         
         Registry.register(Registries.SOUND_EVENT,
             PlaySound.PROTECT_TRIGGER_ID,
@@ -152,9 +84,7 @@ public class FishyAddons implements ClientModInitializer {
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             while (mainKey.wasPressed()) {
-                MinecraftClient.getInstance().setScreen(
-                    new me.valkeea.fishyaddons.ui.VCScreen()
-                );
+                ScreenManager.openConfigScreen();
             }
         });
     }

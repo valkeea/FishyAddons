@@ -6,13 +6,13 @@ import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import me.valkeea.fishyaddons.config.FishyConfig;
-import me.valkeea.fishyaddons.config.Key;
 import me.valkeea.fishyaddons.feature.skyblock.timer.EffectRegistry;
 import me.valkeea.fishyaddons.feature.skyblock.timer.EffectTimers;
 import me.valkeea.fishyaddons.processor.ChatHandler;
 import me.valkeea.fishyaddons.processor.ChatHandlerResult;
 import me.valkeea.fishyaddons.processor.ChatMessageContext;
+import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
+import me.valkeea.fishyaddons.vconfig.api.Config;
 
 public class TimerHandler implements ChatHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger("FishyAddons/EffectTimerChatHandler");
@@ -93,6 +93,6 @@ public class TimerHandler implements ChatHandler {
 
     @Override
     public boolean isEnabled() {
-        return FishyConfig.getState(Key.HUD_EFFECTS_ENABLED, false);
+        return Config.get(BooleanKey.HUD_EFFECTS_ENABLED);
     }
 }

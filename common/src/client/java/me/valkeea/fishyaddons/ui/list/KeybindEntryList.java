@@ -2,13 +2,14 @@ package me.valkeea.fishyaddons.ui.list;
 
 import java.util.Map;
 
-import me.valkeea.fishyaddons.config.FishyConfig;
-import me.valkeea.fishyaddons.feature.qol.KeyShortcut;
 import me.valkeea.fishyaddons.util.Keyboard;
+import me.valkeea.fishyaddons.vconfig.config.impl.ShortcutsConfig;
+import me.valkeea.fishyaddons.vconfig.ui.widget.FaButton;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.input.KeyInput;
@@ -29,27 +30,27 @@ public class KeybindEntryList extends GenericEntryList {
 
     @Override
     public Map<String, String> getEntries() {
-        return FishyConfig.getKeybinds();
+        return ShortcutsConfig.getKeybinds();
     }
 
     @Override
     public boolean isEntryToggled(String key) {
-        return FishyConfig.isKeybindToggled(key);
+        return ShortcutsConfig.isKeybindToggled(key);
     }
 
     @Override
     public void setEntry(String key, String value) {
-        FishyConfig.setKeybind(key, value);
+        ShortcutsConfig.setKeybind(key, value);
     }
 
     @Override
     public void removeEntry(String key) {
-        FishyConfig.removeKeybind(key);
+        ShortcutsConfig.removeKeybind(key);
     }
 
     @Override
     public void toggleEntry(String key, boolean toggled) {
-        FishyConfig.toggleKeybind(key, toggled);
+        ShortcutsConfig.toggleKeybind(key, toggled);
     }
 
     @Override
@@ -83,12 +84,12 @@ public class KeybindEntryList extends GenericEntryList {
         return "OFF";
     }
 
-    public GenericEntryList.GenericEntry getHoveredKeybindEntry() {
+    public GenericEntry getHoveredKeybindEntry() {
         return this.getHoveredEntry();
     }
 
     @Override
-    public void appendClickableNarrations(net.minecraft.client.gui.screen.narration.NarrationMessageBuilder builder) {
+    public void appendClickableNarrations(NarrationMessageBuilder builder) {
         // Access
     }
 
@@ -104,20 +105,19 @@ public class KeybindEntryList extends GenericEntryList {
     }
 
     
-    public static class KeybindButtonWidget extends ButtonWidget {
+    public static class KeybindButtonWidget extends FaButton {
         private boolean listening = false;
         private String keyValue;
-        private final GenericEntryList.GenericEntry entry;
+        private final GenericEntry entry;
         private final KeybindEntryList entryList;
         private final TabbedListScreen parentScreen;
         private final PressAction customPress;
 
-        public KeybindButtonWidget(String keyValue, GenericEntryList.GenericEntry entry, KeybindEntryList entryList, TabbedListScreen parentScreen) {
+        public KeybindButtonWidget(String keyValue, GenericEntry entry, KeybindEntryList entryList, TabbedListScreen parentScreen) {
             super(
                 - 40, 5, 100, 20,
-                Text.literal(keyValue.isEmpty() ? "Set Key" : Keyboard.getDisplayNameFor(keyValue)),
-                b -> {},
-                DEFAULT_NARRATION_SUPPLIER
+                net.minecraft.text.Text.literal(keyValue.isEmpty() ? "Set Key" : Keyboard.getDisplayNameFor(keyValue)),
+                b -> {}
             );
             this.keyValue = keyValue;
             this.entry = entry;
@@ -126,7 +126,7 @@ public class KeybindEntryList extends GenericEntryList {
             this.customPress = b -> {
                 this.setFocused(true);
                 listening = true;
-                this.setMessage(Text.literal(PROMPT));
+                this.setMessage(net.minecraft.text.Text.literal(PROMPT));
             };
         }
 
@@ -148,7 +148,7 @@ public class KeybindEntryList extends GenericEntryList {
                 }
                 handleKeyChange();
                 listening = false;
-                this.setMessage(Text.literal(Keyboard.getDisplayNameFor(keyValue)));
+                this.setMessage(net.minecraft.text.Text.literal(Keyboard.getDisplayNameFor(keyValue)));
                 if (parentScreen != null) parentScreen.refreshEntryList();
                 this.setFocused(false);
                 return true;
@@ -174,19 +174,19 @@ public class KeybindEntryList extends GenericEntryList {
         private void handleKeyChange() {
 
             boolean duplicateExists = entryList.children().stream()
-                .anyMatch(e -> e instanceof GenericEntryList.GenericEntry ge
+                .anyMatch(e -> e instanceof GenericEntry ge
                     && ge != entry
                     && !ge.isNew
                     && ge.input.equals(keyValue));
 
             if (duplicateExists) {
                 parentScreen.showFishyPopup(
-                    Text.literal("Keybind '" + keyValue + "' already exists!"),
-                    Text.literal("Overwrite Existing"), () -> {
+                    net.minecraft.text.Text.literal("Keybind '" + keyValue + "' already exists!"),
+                    net.minecraft.text.Text.literal("Overwrite Existing"), () -> {
 
                         entryList.removeEntry(keyValue);
                         entryList.children().stream()
-                            .filter(e -> e instanceof GenericEntryList.GenericEntry ge && !ge.isNew && ge.input.equals(keyValue))
+                            .filter(e -> e instanceof GenericEntry ge && !ge.isNew && ge.input.equals(keyValue))
                             .findFirst()
                             .ifPresent(entryList::removeEntry);
                         updateEntryAndConfig();
@@ -196,7 +196,7 @@ public class KeybindEntryList extends GenericEntryList {
                             entry.outputField.setFocused(true);
                         }
                     },
-                    Text.literal("Discard Change"), () -> {
+                    net.minecraft.text.Text.literal("Discard Change"), () -> {
                         entryList.removeEntry(entry);
                         parentScreen.addingNewEntry = false;
                         parentScreen.fishyPopup = null;
@@ -212,17 +212,16 @@ public class KeybindEntryList extends GenericEntryList {
         private void updateEntryAndConfig() {
             String oldKey = entry.input;
             if (!oldKey.equals(keyValue) && !oldKey.isEmpty()) {
-                FishyConfig.removeKeybind(oldKey);
+                ShortcutsConfig.removeKeybind(oldKey);
             }
             entry.input = keyValue;
-            FishyConfig.setKeybind(keyValue, entry.output);
+            ShortcutsConfig.setKeybind(keyValue, entry.output);
 
             if (entry.isNew) {
                 entry.isNew = false;
                 if (parentScreen != null) parentScreen.addingNewEntry = false;
             }
             if (parentScreen != null) parentScreen.refreshEntryList();
-            KeyShortcut.refresh();
         }
 
         public String getKeyValue() {
@@ -231,7 +230,7 @@ public class KeybindEntryList extends GenericEntryList {
     }
 
     public boolean handleMouseClicked(Click click, TabbedListScreen screen) {
-        GenericEntryList.GenericEntry entry = getHoveredKeybindEntry();
+        GenericEntry entry = getHoveredKeybindEntry();
 
         if (entry == null) return false;
         if (entry.inputWidget instanceof TextFieldWidget field) {

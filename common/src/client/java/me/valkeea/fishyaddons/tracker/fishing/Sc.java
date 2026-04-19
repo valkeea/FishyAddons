@@ -18,6 +18,7 @@ public class Sc {
     public static final String YETI = "yeti";
     public static final String ENT = "ent";
     public static final String EMP = "the_loch_emperor";
+    public static final String NESSIE = "nessie";
     public static final String TITANOBOA = "titanoboa";
     public static final String WATER_HYDRA = "water_hydra";
     public static final String NIGHT_SQUID = "night_squid";

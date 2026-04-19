@@ -5,10 +5,11 @@ import org.slf4j.LoggerFactory;
 
 import me.valkeea.fishyaddons.api.skyblock.SlayerTables;
 import me.valkeea.fishyaddons.api.skyblock.SlayerTables.SlayerType;
-import me.valkeea.fishyaddons.config.StatConfig;
 import me.valkeea.fishyaddons.tracker.monitoring.ActivityMonitor;
 import me.valkeea.fishyaddons.tracker.monitoring.Currently;
 import me.valkeea.fishyaddons.util.FishyNotis;
+import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
+import me.valkeea.fishyaddons.vconfig.config.impl.StatConfig;
 import net.minecraft.text.Text;
 
 @SuppressWarnings("squid:S6548")
@@ -60,7 +61,7 @@ public class SlayerStats {
     }
 
     public static void refresh() {
-        enabled = me.valkeea.fishyaddons.config.FishyConfig.getState(me.valkeea.fishyaddons.config.Key.TRACK_SLAYER, false);
+        enabled = me.valkeea.fishyaddons.vconfig.api.Config.get(BooleanKey.TRACK_SLAYER);
     }
 
     // --- Internal methods ---

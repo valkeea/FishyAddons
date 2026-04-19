@@ -1,24 +1,28 @@
 package me.valkeea.fishyaddons.feature.visual;
 
 import me.valkeea.fishyaddons.api.skyblock.GameMode;
-import me.valkeea.fishyaddons.config.FishyConfig;
-import me.valkeea.fishyaddons.config.Key;
 import me.valkeea.fishyaddons.feature.skyblock.TransLava;
+import me.valkeea.fishyaddons.vconfig.annotation.VCListener;
+import me.valkeea.fishyaddons.vconfig.annotation.VCModule;
+import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
+import me.valkeea.fishyaddons.vconfig.api.Config;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.enums.CameraSubmersionType;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.Camera;
 import net.minecraft.util.math.BlockPos;
 
+@VCModule
 public class RenderTweaks {
     private static boolean lavaOn = false;
     private static boolean waterOn = false;
     private static boolean fireFov = false;
 
+    @VCListener({BooleanKey.FISHY_LAVA, BooleanKey.FISHY_WATER, BooleanKey.FIRE_OVERLAY})
     public static void refresh() {
-        lavaOn = FishyConfig.getState(Key.FISHY_LAVA, false);
-        waterOn = FishyConfig.getState(Key.FISHY_WATER, false);
-        fireFov = FishyConfig.getState(Key.FISHY_FIRE_OVERLAY, false);
+        lavaOn = Config.get(BooleanKey.FISHY_LAVA);
+        waterOn = Config.get(BooleanKey.FISHY_WATER);
+        fireFov = Config.get(BooleanKey.FIRE_OVERLAY);
     }
 
     public static boolean shouldRemoveWaterFog(Camera camera) {

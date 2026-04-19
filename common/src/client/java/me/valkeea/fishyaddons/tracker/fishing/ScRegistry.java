@@ -9,9 +9,9 @@ import java.util.Map;
 import java.util.Set;
 
 import me.valkeea.fishyaddons.api.skyblock.SkyblockAreas.Island;
-import me.valkeea.fishyaddons.config.StatConfig;
 import me.valkeea.fishyaddons.tracker.monitoring.ActivityMonitor;
 import me.valkeea.fishyaddons.tracker.monitoring.Currently;
+import me.valkeea.fishyaddons.vconfig.config.impl.StatConfig;
 
 /**
  * Registry for sc spawn requirements.
@@ -175,6 +175,9 @@ public class ScRegistry {
 
         registerCreature(Sc.EMP, "§6Loch Emperor", 
             Set.of(Island.GAL), List.of(always), true);
+
+        registerCreature(Sc.NESSIE, "§dNessie", 
+            Set.of(Island.GAL), List.of(always), true);            
         
         // Bayou, Ch, Park
         registerCreature(Sc.TITANOBOA, "§dTitanoboa", 

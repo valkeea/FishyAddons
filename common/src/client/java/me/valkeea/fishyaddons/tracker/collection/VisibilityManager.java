@@ -3,8 +3,8 @@ package me.valkeea.fishyaddons.tracker.collection;
 import java.util.HashSet;
 import java.util.Set;
 
-import me.valkeea.fishyaddons.config.ItemConfig;
-import me.valkeea.fishyaddons.config.Key;
+import me.valkeea.fishyaddons.vconfig.api.Config;
+import me.valkeea.fishyaddons.vconfig.api.StringKey;
 
 /**
  * Manages visibility state for collection items in the display.
@@ -55,7 +55,7 @@ public class VisibilityManager {
     }
     
     private void load() {
-        String hidden = ItemConfig.getString(Key.HIDDEN_COLLECTIONS, "");
+        String hidden = Config.get(StringKey.EXCLUDED_COLLECTIONS);
         hiddenCollections.clear();
         if (!hidden.isEmpty()) {
             for (String item : hidden.split(",")) {
@@ -69,7 +69,7 @@ public class VisibilityManager {
     
     private void save() {
         String hidden = String.join(",", hiddenCollections);
-        ItemConfig.setString(Key.HIDDEN_COLLECTIONS, hidden);
+        Config.set(StringKey.EXCLUDED_COLLECTIONS, hidden);
     }
     
     public void reset() {

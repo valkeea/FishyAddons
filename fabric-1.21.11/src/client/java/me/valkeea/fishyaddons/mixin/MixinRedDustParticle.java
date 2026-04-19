@@ -26,9 +26,10 @@ public abstract class MixinRedDustParticle extends BillboardParticle {
                         double vx, double vy, double vz,
                         DustParticleEffect parameters, SpriteProvider spriteProvider,
                         CallbackInfo ci) {
+               
+        float[] color = ParticleVisuals.getCustomColor(this.red, this.green, this.blue);
 
-        var color = ParticleVisuals.getCustomColor();
-        if (color != null && color.length == 3) {
+        if (color.length == 3) {
             this.red = color[0];
             this.green = color[1];
             this.blue = color[2];

@@ -9,9 +9,9 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import me.valkeea.fishyaddons.config.FilterConfig.MessageContext;
 import me.valkeea.fishyaddons.event.impl.GameMessageEvent;
-import me.valkeea.fishyaddons.feature.qol.ChatFilter;
+import me.valkeea.fishyaddons.feature.filter.ChatFilter;
+import me.valkeea.fishyaddons.feature.filter.FilterConfig.MessageContext;
 import net.minecraft.text.Text;
 
 @SuppressWarnings("squid:S6548")

@@ -1,9 +1,13 @@
 package me.valkeea.fishyaddons.feature.skyblock.timer;
 
-import me.valkeea.fishyaddons.config.Key;
 import me.valkeea.fishyaddons.hud.ui.FishyToast;
 import me.valkeea.fishyaddons.tool.PlaySound;
+import me.valkeea.fishyaddons.vconfig.annotation.VCListener;
+import me.valkeea.fishyaddons.vconfig.annotation.VCModule;
+import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
+import me.valkeea.fishyaddons.vconfig.api.Config;
 
+@VCModule
 @SuppressWarnings("squid:S6548")
 public class ChatTimers {
     private static final ChatTimers INSTANCE = new ChatTimers();
@@ -48,9 +52,11 @@ public class ChatTimers {
         } else if (timer > 0)  timerAlerted = false;
     }
 
-    public void refresh() {
-        alarmEnabled = me.valkeea.fishyaddons.config.FishyConfig.getState(Key.BEACON_ALARM, false);
-        hudEnabled = me.valkeea.fishyaddons.config.FishyConfig.getState(Key.HUD_TIMER_ENABLED, false);
+    @VCListener({BooleanKey.BEACON_ALARM, BooleanKey.HUD_TIMER_ENABLED})
+    public static void refresh() {
+        getInstance();
+        INSTANCE.alarmEnabled = Config.get(BooleanKey.BEACON_ALARM);
+        INSTANCE.hudEnabled = Config.get(BooleanKey.HUD_TIMER_ENABLED);
     }
 
     public boolean isBeaconAlarmOn() {

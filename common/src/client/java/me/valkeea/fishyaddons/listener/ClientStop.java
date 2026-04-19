@@ -71,8 +71,7 @@ public class ClientStop {
 
     private static void saveEffectTimers() {
         try {
-            if (me.valkeea.fishyaddons.config.FishyConfig.getState(
-                me.valkeea.fishyaddons.config.Key.HUD_EFFECTS_ENABLED, false)) {
+            if (me.valkeea.fishyaddons.vconfig.api.Config.get(me.valkeea.fishyaddons.vconfig.api.BooleanKey.HUD_EFFECTS_ENABLED)) {
                 me.valkeea.fishyaddons.feature.skyblock.timer.EffectTimers.getInstance().shutdown();
             }
         } catch (Exception e) {

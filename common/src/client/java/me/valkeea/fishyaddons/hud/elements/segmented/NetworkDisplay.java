@@ -3,10 +3,10 @@ package me.valkeea.fishyaddons.hud.elements.segmented;
 import java.util.ArrayList;
 import java.util.List;
 
-import me.valkeea.fishyaddons.config.Key;
 import me.valkeea.fishyaddons.feature.qol.NetworkMetrics;
 import me.valkeea.fishyaddons.hud.base.SegmentedTextElement;
 import me.valkeea.fishyaddons.util.text.Color;
+import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.text.Text;
 
@@ -14,7 +14,7 @@ public class NetworkDisplay extends SegmentedTextElement {
     
     public NetworkDisplay() {
         super(
-            Key.HUD_PING_ENABLED,
+            BooleanKey.HUD_METRICS_ENABLED,
             "Network Display",
             5, 5,
             12,
@@ -37,9 +37,9 @@ public class NetworkDisplay extends SegmentedTextElement {
         int ping = NetworkMetrics.getPing();
         int fps = mc.getCurrentFps();
         
-        boolean showPing = NetworkMetrics.shouldDisplay(Key.HUD_PING_SHOW_PING);
-        boolean showTps = NetworkMetrics.shouldDisplay(Key.HUD_PING_SHOW_TPS);
-        boolean showFps = NetworkMetrics.shouldDisplay(Key.HUD_PING_SHOW_FPS);
+        boolean showPing = NetworkMetrics.shouldDisplay(BooleanKey.METRICS_SHOW_PING);
+        boolean showTps = NetworkMetrics.shouldDisplay(BooleanKey.METRICS_SHOW_TPS);
+        boolean showFps = NetworkMetrics.shouldDisplay(BooleanKey.METRICS_SHOW_FPS);
 
         if (!isEditingMode() && !showPing && !showTps && !showFps) return new Component[0];
         if (!isEditingMode() && showPing && ping < 0) return new Component[0];

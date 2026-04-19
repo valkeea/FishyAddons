@@ -6,9 +6,9 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import me.valkeea.fishyaddons.config.FishyConfig;
-import me.valkeea.fishyaddons.config.Key;
 import me.valkeea.fishyaddons.feature.skyblock.EqTextures;
+import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
+import me.valkeea.fishyaddons.vconfig.api.Config;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.gui.DrawContext;
@@ -122,7 +122,7 @@ public class EqDisplay {
      * Render a secondary armor display on the inventory screen
      */
     public static void render(DrawContext context, InventoryScreen screen) {
-        if (!FishyConfig.getState(Key.EQ_DISPLAY, false) || !shouldRender()) {
+        if (!Config.get(BooleanKey.EQ_DISPLAY) || !shouldRender()) {
             return;
         }
         
@@ -176,7 +176,7 @@ public class EqDisplay {
     
     private static boolean shouldRender() {
         if (!shouldRender) {
-            if (!FishyConfig.getState(Key.EQ_DISPLAY, false)) {
+            if (!Config.get(BooleanKey.EQ_DISPLAY)) {
                 shouldRender = false;
             }
             for (int i = 0; i < 4; i++) {

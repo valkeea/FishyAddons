@@ -60,7 +60,7 @@ public class FishyToast implements Toast {
 
                 event.getContext().drawTexture(
                     RenderPipelines.GUI_TEXTURED,
-                    Identifier.of("fishyaddons", "textures/gui/" + FishyMode.getTheme() + "/fatoast.png"),
+                    Identifier.of("fishyaddons", "textures/gui/" + FishyMode.themeName() + "/fatoast.png"),
                     x, y, 0, 0, toastWidth, toastHeight, 160, 32
                 );
 

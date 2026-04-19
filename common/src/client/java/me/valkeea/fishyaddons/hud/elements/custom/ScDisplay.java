@@ -6,8 +6,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import me.valkeea.fishyaddons.api.skyblock.SkyblockAreas.Island;
-import me.valkeea.fishyaddons.config.FishyConfig;
-import me.valkeea.fishyaddons.config.Key;
 import me.valkeea.fishyaddons.hud.core.HudElement;
 import me.valkeea.fishyaddons.hud.core.HudElementState;
 import me.valkeea.fishyaddons.render.OutlinedText;
@@ -19,6 +17,8 @@ import me.valkeea.fishyaddons.tracker.monitoring.ActivityMonitor;
 import me.valkeea.fishyaddons.tracker.monitoring.Currently;
 import me.valkeea.fishyaddons.util.text.Color;
 import me.valkeea.fishyaddons.util.text.TextUtils;
+import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
+import me.valkeea.fishyaddons.vconfig.config.impl.HudConfig;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.text.Text;
@@ -39,7 +39,7 @@ public class ScDisplay implements HudElement {
     
     private static final float AXIS_FONT_SCALE = 0.75f;
 
-    private static final String HUD_KEY = Key.HUD_CATCH_GRAPH_ENABLED;    
+    private static final String HUD_KEY = BooleanKey.HUD_CATCH_GRAPH_ENABLED.getString();    
     
     // Reusable Text objects and operations
     private static final Text EMPTY_MEAN_TEXT = Text.literal("§7Mean: §f--");
@@ -109,16 +109,15 @@ public class ScDisplay implements HudElement {
             lastDataVersion = currentDataVersion;
         }
 
-        int x = getHudX();
-        int y = getHudY();
-        int size = getHudSize();
+        var state = getCachedState();
+        int size = state.size;
         float scale = size / 100.0f;
 
         context.getMatrices().pushMatrix();
         context.getMatrices().scale(scale, scale);
 
-        int scaledX = (int) (x / scale);
-        int scaledY = (int) (y / scale);
+        int scaledX = (int) (state.x / scale);
+        int scaledY = (int) (state.y / scale);
 
         if (editingMode) {
             renderEditMode(context, mc, scaledX, scaledY);
@@ -494,32 +493,42 @@ public class ScDisplay implements HudElement {
 
     @Override
     public void setHudPosition(int x, int y) {
-        FishyConfig.setHudX(HUD_KEY, x);
-        FishyConfig.setHudY(HUD_KEY, y);
+        HudConfig.setHudX(HUD_KEY, x);
+        HudConfig.setHudY(HUD_KEY, y);
         invalidateCache();
     }
 
     @Override
     public void setHudSize(int size) {
-        FishyConfig.setHudSize(HUD_KEY, size);
+        HudConfig.setHudSize(HUD_KEY, size);
         invalidateCache();
     }
 
     @Override
     public void setHudColor(int color) {
-        FishyConfig.setHudColor(HUD_KEY, color);
+        HudConfig.setHudColor(HUD_KEY, color);
         invalidateCache();
     }
 
     @Override
     public void setHudOutline(boolean outline) {
-        FishyConfig.setHudOutline(HUD_KEY, outline);
+        HudConfig.setHudOutline(HUD_KEY, outline);
         invalidateCache();
     }
 
     @Override
     public void setHudBg(boolean bg) {
-        FishyConfig.setHudBg(HUD_KEY, bg);
+        HudConfig.setHudBg(HUD_KEY, bg);
+        invalidateCache();
+    }
+
+    @Override
+    public void resetAll() {
+        setHudPosition(570, 25);
+        setHudSize(80);
+        setHudColor(10155196);
+        setHudOutline(true);
+        setHudBg(true);
         invalidateCache();
     }
     
@@ -533,12 +542,12 @@ public class ScDisplay implements HudElement {
     }    
 
     @Override public void invalidateCache() { cachedState = null; }    
-    @Override public int getHudX() { return FishyConfig.getHudX(HUD_KEY, 570); }
-    @Override public int getHudY() { return FishyConfig.getHudY(HUD_KEY, 25); }
-    @Override public int getHudSize() { return FishyConfig.getHudSize(HUD_KEY, 80); }
-    @Override public int getHudColor() { return FishyConfig.getHudColor(HUD_KEY, 10155196); }
-    @Override public boolean getHudOutline() { return FishyConfig.getHudOutline(HUD_KEY, true); }
-    @Override public boolean getHudBg() { return FishyConfig.getHudBg(HUD_KEY, true); }
+    @Override public int getHudX() { return HudConfig.getHudX(HUD_KEY, 570); }
+    @Override public int getHudY() { return HudConfig.getHudY(HUD_KEY, 25); }
+    @Override public int getHudSize() { return HudConfig.getHudSize(HUD_KEY, 80); }
+    @Override public int getHudColor() { return HudConfig.getHudColor(HUD_KEY, 10155196); }
+    @Override public boolean getHudOutline() { return HudConfig.getHudOutline(HUD_KEY, true); }
+    @Override public boolean getHudBg() { return HudConfig.getHudBg(HUD_KEY, true); }
     @Override public void setEditingMode(boolean editing) { this.editingMode = editing; }
     @Override public String getDisplayName() { return "Catch Graphs"; }    
 }

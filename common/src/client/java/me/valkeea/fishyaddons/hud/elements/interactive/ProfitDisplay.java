@@ -7,10 +7,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.IntStream;
 
-import me.valkeea.fishyaddons.config.FishyConfig;
-import me.valkeea.fishyaddons.config.ItemConfig;
-import me.valkeea.fishyaddons.config.Key;
-import me.valkeea.fishyaddons.config.TrackerProfiles;
 import me.valkeea.fishyaddons.event.EventPhase;
 import me.valkeea.fishyaddons.event.EventPriority;
 import me.valkeea.fishyaddons.event.impl.FaEvents;
@@ -23,10 +19,16 @@ import me.valkeea.fishyaddons.tracker.profit.HudDisplayCache;
 import me.valkeea.fishyaddons.tracker.profit.HudDisplayCache.CachedHudData;
 import me.valkeea.fishyaddons.tracker.profit.ProfitTracker;
 import me.valkeea.fishyaddons.tracker.profit.TrackedItemData;
-import me.valkeea.fishyaddons.ui.widget.dropdown.VCToggleMenu;
-import me.valkeea.fishyaddons.ui.widget.dropdown.item.ToggleMenuItem;
+import me.valkeea.fishyaddons.tracker.profit.TrackerProfiles;
 import me.valkeea.fishyaddons.util.FishyNotis;
 import me.valkeea.fishyaddons.util.text.Color;
+import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
+import me.valkeea.fishyaddons.vconfig.api.Config;
+import me.valkeea.fishyaddons.vconfig.api.DoubleKey;
+import me.valkeea.fishyaddons.vconfig.api.IntKey;
+import me.valkeea.fishyaddons.vconfig.api.StringKey;
+import me.valkeea.fishyaddons.vconfig.ui.widget.dropdown.VCToggleMenu;
+import me.valkeea.fishyaddons.vconfig.ui.widget.dropdown.item.ToggleMenuItem;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
@@ -41,7 +43,7 @@ public class ProfitDisplay extends InteractiveHudElement {
 
     private ProfitDisplay() {
         super(
-            Key.HUD_PROFIT_ENABLED,
+            BooleanKey.HUD_PROFIT_ENABLED,
             "Profit Tracker",
             20,
             40,
@@ -127,8 +129,8 @@ public class ProfitDisplay extends InteractiveHudElement {
     }
     
     @Override
-    protected String getMaxLinesConfigKey() {
-        return Key.HUD_PROFIT_LINES;
+    protected IntKey getMaxLinesConfigKey() {
+        return IntKey.HUD_PROFIT_LINES;
     }
     
     @Override
@@ -195,8 +197,8 @@ public class ProfitDisplay extends InteractiveHudElement {
 
         Set<String> excludedItems = getExcludedItems();
 
-        boolean useMinValueFilter = FishyConfig.getState(Key.VALUE_FILTER, false);
-        float minItemValue = FishyConfig.getFloat(Key.FILTER_MIN_VALUE, 0);
+        boolean useMinValueFilter = Config.get(BooleanKey.VALUE_FILTER);
+        double minItemValue = Config.get(DoubleKey.FILTER_MIN_VALUE);
 
         displayData.items.entrySet().forEach(entry -> {
             String itemName = entry.getKey();
@@ -245,7 +247,7 @@ public class ProfitDisplay extends InteractiveHudElement {
     }
 
     private Set<String> getExcludedItems() {
-        var excludedStr = ItemConfig.getString(Key.EXCLUDED_ITEMS, "");
+        var excludedStr = Config.get(StringKey.EXCLUDED_ITEMS);
         if (excludedStr.isEmpty()) {
             return new HashSet<>();
         }
@@ -274,7 +276,7 @@ public class ProfitDisplay extends InteractiveHudElement {
                 int profileButtonX = hudX + 4 * (buttonWidth + buttonSpacing);
                 int menuX = profileButtonX;
                 int menuY = hudY;
-                profileMenu.setPosition(menuX, menuY);
+                profileMenu.setPosition(menuX, menuY, screen.height);
                 profileMenu.render(context, screen, mouseX, mouseY, scale);
             }
 
@@ -392,8 +394,8 @@ public class ProfitDisplay extends InteractiveHudElement {
                 }
                 break;
             case 3:
-                boolean state = FishyConfig.getState(Key.TRACK_SACK, false);
-                FishyConfig.setState(Key.TRACK_SACK, false);
+                boolean state = Config.get(BooleanKey.TRACK_SACK);
+                Config.set(BooleanKey.TRACK_SACK, !state);
                 PriceUtil.refresh();
                 if (state) FishyNotis.on("Sack tracking");
                 else FishyNotis.off("Sack tracking");
@@ -424,7 +426,7 @@ public class ProfitDisplay extends InteractiveHudElement {
     
     private void saveExcludedItems(Set<String> excluded) {
         var excludedStr = String.join(",", excluded);
-        ItemConfig.setString(Key.EXCLUDED_ITEMS, excludedStr);
+        Config.set(StringKey.EXCLUDED_ITEMS, excludedStr);
         refreshDisplay();
     }
 

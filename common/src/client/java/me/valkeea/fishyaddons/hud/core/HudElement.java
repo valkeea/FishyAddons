@@ -27,4 +27,15 @@ public interface HudElement {
     default boolean isConfigurable() {
         return true;
     }
+
+    default void resetAll() {
+        if (isConfigurable()) {
+            setHudPosition(5, 5);
+            setHudSize(12);
+            setHudColor(0xFFFFFFFF);
+            setHudOutline(false);
+            setHudBg(false);
+            invalidateCache();
+        }
+    }    
 }

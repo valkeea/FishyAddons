@@ -2,12 +2,12 @@ package me.valkeea.fishyaddons.hud.elements.simple;
 
 import java.util.Map;
 
-import me.valkeea.fishyaddons.config.FishyConfig;
-import me.valkeea.fishyaddons.config.Key;
 import me.valkeea.fishyaddons.feature.skyblock.timer.CakeTimer;
 import me.valkeea.fishyaddons.hud.base.SimpleHudElement;
 import me.valkeea.fishyaddons.tool.FishyMode;
 import me.valkeea.fishyaddons.util.SpriteUtil;
+import me.valkeea.fishyaddons.vconfig.api.Config;
+import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 
@@ -15,7 +15,7 @@ public class CakeDisplay extends SimpleHudElement {
 
     public CakeDisplay() {
         super(
-            Key.HUD_CENTURY_CAKE_ENABLED,
+            BooleanKey.HUD_CENTURY_CAKE_ENABLED,
             "Century Cake Timer",
             50, 5,
             12,
@@ -27,7 +27,7 @@ public class CakeDisplay extends SimpleHudElement {
 
     @Override
     protected boolean shouldRender() {
-        return FishyConfig.getState(Key.HUD_CENTURY_CAKE_ENABLED, false);
+        return Config.get(BooleanKey.HUD_CENTURY_CAKE_ENABLED);
     }
     
     @Override
@@ -56,6 +56,6 @@ public class CakeDisplay extends SimpleHudElement {
 
     @Override
     protected Identifier getIcon() {
-        return SpriteUtil.createModSprite("gui/" + FishyMode.getTheme() + "/cake");
+        return SpriteUtil.createModSprite("gui/" + FishyMode.themeName() + "/cake");
     }
 }

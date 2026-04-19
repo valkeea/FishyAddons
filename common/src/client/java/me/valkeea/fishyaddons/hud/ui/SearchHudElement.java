@@ -8,7 +8,9 @@ import me.valkeea.fishyaddons.hud.base.InteractiveHudElement;
 import me.valkeea.fishyaddons.hud.core.HudElementState;
 import me.valkeea.fishyaddons.tool.FishyMode;
 import me.valkeea.fishyaddons.ui.GuiUtil;
-import me.valkeea.fishyaddons.ui.widget.VCTextField;
+import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
+import me.valkeea.fishyaddons.vconfig.api.IntKey;
+import me.valkeea.fishyaddons.vconfig.ui.widget.VCTextField;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
@@ -18,7 +20,6 @@ import net.minecraft.text.Text;
 public class SearchHudElement extends InteractiveHudElement {
     private static final String SEARCH_PLACEHOLDER = "right-click to search...";
     private static final String EDITING_MODE_TEXT = "Search Field";
-    private static final String HUD_CONFIG_KEY = "search";
     
     private static SearchHudElement instance = null;    
     private VCTextField searchField;
@@ -27,7 +28,7 @@ public class SearchHudElement extends InteractiveHudElement {
     private static boolean isContainer = false;
     
     public SearchHudElement() {
-        super(HUD_CONFIG_KEY, "Item Search", 100, 10, 20, 0xFFFFFFFF, false, true);
+        super(BooleanKey.INV_SEARCH, "Item Search", 100, 10, 20, 0xFFFFFFFF, false, true);
         var client = MinecraftClient.getInstance();
         if (client != null && client.textRenderer != null) {
             searchField = new VCTextField(client.textRenderer, 10, 10, 150, 15, Text.literal(SEARCH_PLACEHOLDER));
@@ -247,8 +248,13 @@ public class SearchHudElement extends InteractiveHudElement {
     }
 
     @Override
-    protected String getMaxLinesConfigKey() {
-        return null;
+    protected IntKey getMaxLinesConfigKey() {
+        return IntKey.NONE;
+    }
+
+    @Override
+    protected String getHudKey() {
+        return "search";
     }
     
     @Override

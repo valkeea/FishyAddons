@@ -2,19 +2,20 @@ package me.valkeea.fishyaddons.hud.elements.custom;
 
 import java.awt.Rectangle;
 
-import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.hud.core.HudDrawer;
 import me.valkeea.fishyaddons.hud.core.HudElement;
 import me.valkeea.fishyaddons.hud.core.HudElementState;
 import me.valkeea.fishyaddons.hud.core.HudUtils;
 import me.valkeea.fishyaddons.tracker.SkillTracker;
+import me.valkeea.fishyaddons.util.text.Color;
+import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
+import me.valkeea.fishyaddons.vconfig.config.impl.HudConfig;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.text.Text;
-import me.valkeea.fishyaddons.util.text.Color;
 
 public class SkillXpDisplay implements HudElement {
-    private static final String HUD_KEY = me.valkeea.fishyaddons.config.Key.HUD_SKILL_XP_ENABLED;
+    private static final String HUD_KEY = BooleanKey.HUD_SKILL_XP.getString();
     private static final String RATE_SUFFIX = "§8/h ";
     private static final String TOTAL_FORMAT = "§8(§7%,d§8) ";
         
@@ -339,17 +340,27 @@ public class SkillXpDisplay implements HudElement {
         cachedState = null;
     }
 
-    @Override public int getHudX() { return FishyConfig.getHudX(HUD_KEY, 300); }
-    @Override public int getHudY() { return FishyConfig.getHudY(HUD_KEY, 100); }
-    @Override public void setHudPosition(int x, int y) { FishyConfig.setHudX(HUD_KEY, x); FishyConfig.setHudY(HUD_KEY, y); }
-    @Override public int getHudSize() { return FishyConfig.getHudSize(HUD_KEY, 12); }
-    @Override public void setHudSize(int size) { FishyConfig.setHudSize(HUD_KEY, size); }
-    @Override public int getHudColor() { return FishyConfig.getHudColor(HUD_KEY, 0xFFCCFFB9); }
-    @Override public void setHudColor(int color) { FishyConfig.setHudColor(HUD_KEY, color); }
-    @Override public boolean getHudOutline() { return FishyConfig.getHudOutline(HUD_KEY, false); }
-    @Override public void setHudOutline(boolean outline) { FishyConfig.setHudOutline(HUD_KEY, outline); }   
-    @Override public boolean getHudBg() { return FishyConfig.getHudBg(HUD_KEY, false); }
-    @Override public void setHudBg(boolean bg) { FishyConfig.setHudBg(HUD_KEY, bg); }
+    @Override
+    public void resetAll() {
+        setHudPosition(300, 100);
+        setHudSize(12);
+        setHudColor(0xFFCCFFB9);
+        setHudOutline(false);
+        setHudBg(false);
+        invalidateCache();
+    }
+
+    @Override public int getHudX() { return HudConfig.getHudX(HUD_KEY, 300); }
+    @Override public int getHudY() { return HudConfig.getHudY(HUD_KEY, 100); }
+    @Override public void setHudPosition(int x, int y) { HudConfig.setHudX(HUD_KEY, x); HudConfig.setHudY(HUD_KEY, y); }
+    @Override public int getHudSize() { return HudConfig.getHudSize(HUD_KEY, 12); }
+    @Override public void setHudSize(int size) { HudConfig.setHudSize(HUD_KEY, size); }
+    @Override public int getHudColor() { return HudConfig.getHudColor(HUD_KEY, 0xFFCCFFB9); }
+    @Override public void setHudColor(int color) { HudConfig.setHudColor(HUD_KEY, color); }
+    @Override public boolean getHudOutline() { return HudConfig.getHudOutline(HUD_KEY, false); }
+    @Override public void setHudOutline(boolean outline) { HudConfig.setHudOutline(HUD_KEY, outline); }   
+    @Override public boolean getHudBg() { return HudConfig.getHudBg(HUD_KEY, false); }
+    @Override public void setHudBg(boolean bg) { HudConfig.setHudBg(HUD_KEY, bg); }
     @Override public void setEditingMode(boolean editing) { this.editingMode = editing; }
     @Override public String getDisplayName() { return "Skill XP Tracker"; }
 }

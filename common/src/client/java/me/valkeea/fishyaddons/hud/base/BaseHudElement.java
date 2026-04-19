@@ -2,11 +2,12 @@ package me.valkeea.fishyaddons.hud.base;
 
 import java.awt.Rectangle;
 
-import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.hud.core.HudDrawer;
 import me.valkeea.fishyaddons.hud.core.HudElement;
 import me.valkeea.fishyaddons.hud.core.HudElementState;
 import me.valkeea.fishyaddons.hud.core.HudUtils;
+import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
+import me.valkeea.fishyaddons.vconfig.config.impl.HudConfig;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 
@@ -24,10 +25,10 @@ public abstract class BaseHudElement implements HudElement {
     private HudElementState cachedState = null;
 
     @SuppressWarnings("java:S107")
-    protected BaseHudElement(String hudKey, String displayName, 
+    protected BaseHudElement(BooleanKey hudKey, String displayName, 
                            int defaultX, int defaultY, int defaultSize, int defaultColor,
                            boolean defaultOutline, boolean defaultBg) {
-        this.hudKey = hudKey;
+        this.hudKey = hudKey.getString();
         this.displayName = displayName;
         this.defaultX = defaultX;
         this.defaultY = defaultY;
@@ -114,12 +115,12 @@ public abstract class BaseHudElement implements HudElement {
     public final HudElementState getCachedState() {
         if (cachedState == null) {
             cachedState = new HudElementState(
-                FishyConfig.getHudX(hudKey, defaultX),
-                FishyConfig.getHudY(hudKey, defaultY),
-                FishyConfig.getHudSize(hudKey, defaultSize),
-                FishyConfig.getHudColor(hudKey, defaultColor),
-                FishyConfig.getHudOutline(hudKey, defaultOutline),
-                FishyConfig.getHudBg(hudKey, defaultBg)
+                getHudX(),
+                getHudY(),
+                getHudSize(),
+                getHudColor(),
+                getHudOutline(),
+                getHudBg()
             );
             onCacheRefresh();
         }
@@ -131,17 +132,32 @@ public abstract class BaseHudElement implements HudElement {
         cachedState = null;
     }
 
-    @Override public final int getHudX() { return FishyConfig.getHudX(hudKey, defaultX); }
-    @Override public final int getHudY() { return FishyConfig.getHudY(hudKey, defaultY); }
-    @Override public final void setHudPosition(int x, int y) { FishyConfig.setHudX(hudKey, x); FishyConfig.setHudY(hudKey, y); }
-    @Override public final int getHudSize() { return FishyConfig.getHudSize(hudKey, defaultSize); }
-    @Override public final void setHudSize(int size) { FishyConfig.setHudSize(hudKey, size); }
-    @Override public final int getHudColor() { return FishyConfig.getHudColor(hudKey, defaultColor); }
-    @Override public final void setHudColor(int color) { FishyConfig.setHudColor(hudKey, color); }
-    @Override public final boolean getHudOutline() { return FishyConfig.getHudOutline(hudKey, defaultOutline); }
-    @Override public final void setHudOutline(boolean outline) { FishyConfig.setHudOutline(hudKey, outline); }
-    @Override public final boolean getHudBg() { return FishyConfig.getHudBg(hudKey, defaultBg); }
-    @Override public final void setHudBg(boolean bg) { FishyConfig.setHudBg(hudKey, bg); }
+    /** The key used for state getters/setters */
+    protected String getHudKey() {
+        return hudKey;
+    }
+
+    @Override
+    public void resetAll() {
+        setHudPosition(defaultX, defaultY);
+        setHudSize(defaultSize);
+        setHudColor(defaultColor);
+        setHudOutline(defaultOutline);
+        setHudBg(defaultBg);
+        invalidateCache();
+    }
+
+    @Override public final int getHudX() { return HudConfig.getHudX(getHudKey(), defaultX); }
+    @Override public final int getHudY() { return HudConfig.getHudY(getHudKey(), defaultY); }
+    @Override public final void setHudPosition(int x, int y) { HudConfig.setHudX(getHudKey(), x); HudConfig.setHudY(getHudKey(), y); }
+    @Override public final int getHudSize() { return HudConfig.getHudSize(getHudKey(), defaultSize); }
+    @Override public final void setHudSize(int size) { HudConfig.setHudSize(getHudKey(), size); }
+    @Override public final int getHudColor() { return HudConfig.getHudColor(getHudKey(), defaultColor); }
+    @Override public final void setHudColor(int color) { HudConfig.setHudColor(getHudKey(), color); }
+    @Override public final boolean getHudOutline() { return HudConfig.getHudOutline(getHudKey(), defaultOutline); }
+    @Override public final void setHudOutline(boolean outline) { HudConfig.setHudOutline(getHudKey(), outline); }
+    @Override public final boolean getHudBg() { return HudConfig.getHudBg(getHudKey(), defaultBg); }
+    @Override public final void setHudBg(boolean bg) { HudConfig.setHudBg(getHudKey(), bg); }
     @Override public final void setEditingMode(boolean editing) { this.editingMode = editing; }
     @Override public final String getDisplayName() { return displayName; }
     

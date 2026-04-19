@@ -9,8 +9,8 @@ import me.valkeea.fishyaddons.event.impl.MouseClickEvent;
 import me.valkeea.fishyaddons.tool.FishyMode;
 import me.valkeea.fishyaddons.tracker.collection.CollectionTracker;
 import me.valkeea.fishyaddons.tracker.collection.RecipeScanner;
-import me.valkeea.fishyaddons.ui.VCRenderUtils;
 import me.valkeea.fishyaddons.util.ContainerScanner;
+import me.valkeea.fishyaddons.vconfig.ui.render.RenderUtils;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ingame.GenericContainerScreen;
@@ -71,7 +71,7 @@ public class GoalButton  {
         btn.render(context, mouseX, mouseY);
 
         if (btn.isMouseOver(mouseX, mouseY)) {
-            VCRenderUtils.preview(
+            RenderUtils.preview(
                 context,
                 gcs.getTextRenderer(),
                 tooltip,

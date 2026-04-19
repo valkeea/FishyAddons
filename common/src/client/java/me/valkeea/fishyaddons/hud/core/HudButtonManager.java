@@ -127,7 +127,7 @@ public class HudButtonManager {
     }
     
     /** Combined width of all buttons */
-    public int getTotalWidth() {
+    public int getTotalW() {
         if (buttons.isEmpty()) return 0;
         return buttons.size() * buttonWidth + (buttons.size() - 1) * buttonSpacing;
     }
@@ -139,7 +139,7 @@ public class HudButtonManager {
     public LineCountControlRegions renderLineCountControl(MinecraftClient mc, HudDrawer drawer,
                                                             int elementWidth, int stateColor, int currentValue, 
                                                             double mouseX, double mouseY) {
-        int buttonsWidth = getTotalWidth();
+        int buttonsWidth = getTotalW();
         boolean under = buttonsWidth > elementWidth;
         int controlX = baseX + buttonSpacing + (under ? elementWidth : buttonsWidth);
         int controlY = under ? baseY + (int)(4 * scale) : baseY - buttonHeight;

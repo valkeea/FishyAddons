@@ -3,20 +3,20 @@ package me.valkeea.fishyaddons.hud.elements.custom;
 import java.awt.Rectangle;
 import java.util.List;
 
-import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.hud.core.HudDrawer;
 import me.valkeea.fishyaddons.hud.core.HudElement;
 import me.valkeea.fishyaddons.hud.core.HudElementState;
 import me.valkeea.fishyaddons.tracker.profit.ValuableMobs;
 import me.valkeea.fishyaddons.tracker.profit.ValuableMobs.ValuableMobInfo;
-import me.valkeea.fishyaddons.ui.VCRenderUtils;
+import me.valkeea.fishyaddons.vconfig.config.impl.HudConfig;
+import me.valkeea.fishyaddons.vconfig.ui.render.RenderUtils;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.text.Text;
 
 public class HealthDisplay implements HudElement {
     private boolean editingMode = false;
-    private static final String HUD_KEY = me.valkeea.fishyaddons.config.Key.HUD_HEALTH_ENABLED;
+    private static final String HUD_KEY = me.valkeea.fishyaddons.vconfig.api.BooleanKey.HUD_HEALTH_ENABLED.getString();
     private HudElementState cachedState = null;
 
     @Override
@@ -109,7 +109,7 @@ public class HealthDisplay implements HudElement {
     private void drawHealthBar(DrawContext context, int x, int y, int width, int height, int healthPercent) {
 
         context.fill(x, y, x + width, y + height, 0x80000000);
-        VCRenderUtils.border(context, x, y, width, height + 1, 0xFF000000);
+        RenderUtils.border(context, x, y, width, height + 1, 0xFF000000);
 
         if (healthPercent > 0) {
             int healthWidth = width * healthPercent / 100;
@@ -191,12 +191,12 @@ public class HealthDisplay implements HudElement {
     public HudElementState getCachedState() {
         if (cachedState == null) {
             cachedState = new HudElementState(
-                FishyConfig.getHudX(HUD_KEY, 5),
-                FishyConfig.getHudY(HUD_KEY, 5),
-                FishyConfig.getHudSize(HUD_KEY, 12),
-                FishyConfig.getHudColor(HUD_KEY, 0xFFFFFFFF),
-                FishyConfig.getHudOutline(HUD_KEY, false),
-                FishyConfig.getHudBg(HUD_KEY, true)
+                getHudX(),
+                getHudY(),
+                getHudSize(),
+                getHudColor(),
+                getHudOutline(),
+                getHudBg()
             );
         }
         return cachedState;
@@ -207,17 +207,27 @@ public class HealthDisplay implements HudElement {
         cachedState = null;
     }
 
-    @Override public int getHudX() { return FishyConfig.getHudX(HUD_KEY, 5); }
-    @Override public int getHudY() { return FishyConfig.getHudY(HUD_KEY, 5); }
-    @Override public void setHudPosition(int x, int y) { FishyConfig.setHudX(HUD_KEY, x); FishyConfig.setHudY(HUD_KEY, y); }
-    @Override public int getHudSize() { return FishyConfig.getHudSize(HUD_KEY, 12); }
-    @Override public void setHudSize(int size) { FishyConfig.setHudSize(HUD_KEY, size); }
-    @Override public int getHudColor() { return FishyConfig.getHudColor(HUD_KEY, 0xFF6FFF98); }
-    @Override public void setHudColor(int color) { FishyConfig.setHudColor(HUD_KEY, color); }
-    @Override public boolean getHudOutline() { return FishyConfig.getHudOutline(HUD_KEY, false); }
-    @Override public void setHudOutline(boolean outline) { FishyConfig.setHudOutline(HUD_KEY, outline); }   
-    @Override public boolean getHudBg() { return FishyConfig.getHudBg(HUD_KEY, true); }
-    @Override public void setHudBg(boolean bg) { FishyConfig.setHudBg(HUD_KEY, bg); }
+    @Override
+    public void resetAll() {
+        setHudPosition(5, 5);
+        setHudSize(12);
+        setHudColor(0xFF6FFF98);
+        setHudOutline(false);
+        setHudBg(true);
+        invalidateCache();
+    }
+
+    @Override public int getHudX() { return HudConfig.getHudX(HUD_KEY, 5); }
+    @Override public int getHudY() { return HudConfig.getHudY(HUD_KEY, 5); }
+    @Override public void setHudPosition(int x, int y) { HudConfig.setHudX(HUD_KEY, x); HudConfig.setHudY(HUD_KEY, y); }
+    @Override public int getHudSize() { return HudConfig.getHudSize(HUD_KEY, 12); }
+    @Override public void setHudSize(int size) { HudConfig.setHudSize(HUD_KEY, size); }
+    @Override public int getHudColor() { return HudConfig.getHudColor(HUD_KEY, 0xFF6FFF98); }
+    @Override public void setHudColor(int color) { HudConfig.setHudColor(HUD_KEY, color); }
+    @Override public boolean getHudOutline() { return HudConfig.getHudOutline(HUD_KEY, false); }
+    @Override public void setHudOutline(boolean outline) { HudConfig.setHudOutline(HUD_KEY, outline); }   
+    @Override public boolean getHudBg() { return HudConfig.getHudBg(HUD_KEY, true); }
+    @Override public void setHudBg(boolean bg) { HudConfig.setHudBg(HUD_KEY, bg); }
     @Override public void setEditingMode(boolean editing) { this.editingMode = editing; }
     @Override public String getDisplayName() { return "Health Display"; }
 }

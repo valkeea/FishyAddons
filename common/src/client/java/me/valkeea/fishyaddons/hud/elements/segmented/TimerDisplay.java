@@ -1,15 +1,15 @@
 package me.valkeea.fishyaddons.hud.elements.segmented;
 
-import me.valkeea.fishyaddons.config.Key;
 import me.valkeea.fishyaddons.feature.skyblock.timer.ChatTimers;
 import me.valkeea.fishyaddons.hud.base.SegmentedTextElement;
+import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
 import net.minecraft.text.Text;
 
 public class TimerDisplay extends SegmentedTextElement {
     
     public TimerDisplay() {
         super(
-            Key.HUD_TIMER_ENABLED,
+            BooleanKey.HUD_TIMER_ENABLED,
             "Moonglade: ",
             5, 5,
             12,

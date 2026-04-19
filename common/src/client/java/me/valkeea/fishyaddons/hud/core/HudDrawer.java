@@ -2,10 +2,10 @@ package me.valkeea.fishyaddons.hud.core;
 
 import java.util.List;
 
-import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.render.OutlinedText;
-import me.valkeea.fishyaddons.ui.VCRenderUtils;
-import me.valkeea.fishyaddons.ui.widget.VCVisuals;
+import me.valkeea.fishyaddons.vconfig.api.Config;
+import me.valkeea.fishyaddons.vconfig.ui.render.RenderUtils;
+import me.valkeea.fishyaddons.vconfig.ui.widget.VCVisuals;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.gui.DrawContext;
@@ -22,7 +22,7 @@ public class HudDrawer {
         this.mc = mc;
         this.context = context;
         this.state = state;
-        this.isShadow = FishyConfig.getState(me.valkeea.fishyaddons.config.Key.HUD_TEXT_SHADOW, true);
+        this.isShadow = Config.get(me.valkeea.fishyaddons.vconfig.api.BooleanKey.HUD_TEXT_SHADOW);
     }
 
     /**
@@ -52,7 +52,7 @@ public class HudDrawer {
     }
 
     public void drawBorder(int x, int y, int width, int height, int color) {
-        VCRenderUtils.border(context, x, y, width, height, color);
+        RenderUtils.border(context, x, y, width, height, color);
     }
 
     public void drawIcon(Identifier iconId, int x, int y, int width, int height) {
@@ -72,8 +72,8 @@ public class HudDrawer {
         int bgColor = VCVisuals.bgHex(hovered, enabled);
         int borderColor = VCVisuals.borderHex(hovered, enabled);
 
-        VCRenderUtils.gradient(context, x, y, width, height, bgColor);
-        VCRenderUtils.border(context, x, y, width, height, borderColor);
+        RenderUtils.gradient(context, x, y, width, height, bgColor);
+        RenderUtils.border(context, x, y, width, height, borderColor);
 
         drawText(text, x + (width - mc.textRenderer.getWidth(text)) / 2, y + (height - 9) / 2, 0xFFFFFFFF);
     }
@@ -94,11 +94,11 @@ public class HudDrawer {
         if (mouseX + w > screen.getScaledWidth()) mouseX = screen.getScaledWidth() - w - 5;
         if (mouseY + h > screen.getScaledHeight()) mouseY = screen.getScaledHeight() - h - 5;
 
-        VCRenderUtils.preview(context, mc.textRenderer, tooltip, mouseX, mouseY, themeColor, 1.0F);
+        RenderUtils.preview(context, mc.textRenderer, tooltip, mouseX, mouseY, themeColor, 1.0F);
     }
 
     public static boolean isShadow() {
-        return FishyConfig.getState(me.valkeea.fishyaddons.config.Key.HUD_TEXT_SHADOW, true);
+        return Config.get(me.valkeea.fishyaddons.vconfig.api.BooleanKey.HUD_TEXT_SHADOW);
     }
 
     /** 

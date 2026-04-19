@@ -3,13 +3,14 @@ package me.valkeea.fishyaddons.hud.elements.segmented;
 import java.awt.Rectangle;
 import java.util.List;
 
-import me.valkeea.fishyaddons.config.FishyConfig;
-import me.valkeea.fishyaddons.config.Key;
 import me.valkeea.fishyaddons.feature.skyblock.timer.EffectTimers;
 import me.valkeea.fishyaddons.hud.core.ElementRegistry;
 import me.valkeea.fishyaddons.hud.core.HudDrawer;
 import me.valkeea.fishyaddons.hud.core.HudElement;
 import me.valkeea.fishyaddons.hud.core.HudElementState;
+import me.valkeea.fishyaddons.vconfig.api.Config;
+import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
+import me.valkeea.fishyaddons.vconfig.config.impl.HudConfig;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.gui.DrawContext;
@@ -17,13 +18,13 @@ import net.minecraft.text.Text;
 
 public class EffectDisplay implements HudElement {
     private boolean editingMode = false;
-    private static final String HUD_KEY = Key.HUD_EFFECTS_ENABLED;
+    private static final String HUD_KEY = BooleanKey.HUD_EFFECTS_ENABLED.getString();
     private HudElementState cachedState = null;
     private boolean intersects = false;
 
     @Override
     public void render(DrawContext context, MinecraftClient mc, int mouseX, int mouseY) {
-        if (!editingMode && !FishyConfig.getState(HUD_KEY, false)) return;
+        if (!editingMode && !Config.get(BooleanKey.HUD_EFFECTS_ENABLED)) return;
 
         var state = getCachedState();
         int hudX = state.x;
@@ -143,30 +144,40 @@ public class EffectDisplay implements HudElement {
     public HudElementState getCachedState() {
         if (cachedState == null) {
             cachedState = new HudElementState(
-                FishyConfig.getHudX(HUD_KEY, 6),
-                FishyConfig.getHudY(HUD_KEY, 28),
-                FishyConfig.getHudSize(HUD_KEY, 12),
-                FishyConfig.getHudColor(HUD_KEY, 0xFFFFFF),
-                FishyConfig.getHudOutline(HUD_KEY, false),
-                FishyConfig.getHudBg(HUD_KEY, true)
+                getHudX(),
+                getHudY(),
+                getHudSize(),
+                getHudColor(),
+                getHudOutline(),
+                getHudBg()
             );
             updateSpace();
         }
         return cachedState;
     }
 
+    @Override
+    public void resetAll() {
+        setHudPosition(6, 28);
+        setHudSize(12);
+        setHudColor(0xFFFFFFFF);
+        setHudOutline(true);
+        setHudBg(false);
+        invalidateCache();
+    }
+
     @Override public void invalidateCache() { cachedState = null; }
-    @Override public int getHudX() { return FishyConfig.getHudX(HUD_KEY, 6); }
-    @Override public int getHudY() { return FishyConfig.getHudY(HUD_KEY, 28); }
-    @Override public void setHudPosition(int x, int y) { FishyConfig.setHudX(HUD_KEY, x); FishyConfig.setHudY(HUD_KEY, y); }
-    @Override public int getHudSize() { return FishyConfig.getHudSize(HUD_KEY, 12); }
-    @Override public void setHudSize(int size) { FishyConfig.setHudSize(HUD_KEY, size); }
-    @Override public int getHudColor() { return FishyConfig.getHudColor(HUD_KEY, 0xFFFFFFFF); }
-    @Override public void setHudColor(int color) { FishyConfig.setHudColor(HUD_KEY, color); }
-    @Override public boolean getHudOutline() { return FishyConfig.getHudOutline(HUD_KEY, true); }
-    @Override public void setHudOutline(boolean outline) { FishyConfig.setHudOutline(HUD_KEY, outline); }
-    @Override public boolean getHudBg() { return FishyConfig.getHudBg(HUD_KEY, false); }
-    @Override public void setHudBg(boolean bg) { FishyConfig.setHudBg(HUD_KEY, bg); }
+    @Override public int getHudX() { return HudConfig.getHudX(HUD_KEY, 6); }
+    @Override public int getHudY() { return HudConfig.getHudY(HUD_KEY, 28); }
+    @Override public void setHudPosition(int x, int y) { HudConfig.setHudX(HUD_KEY, x); HudConfig.setHudY(HUD_KEY, y); }
+    @Override public int getHudSize() { return HudConfig.getHudSize(HUD_KEY, 12); }
+    @Override public void setHudSize(int size) { HudConfig.setHudSize(HUD_KEY, size); }
+    @Override public int getHudColor() { return HudConfig.getHudColor(HUD_KEY, 0xFFFFFFFF); }
+    @Override public void setHudColor(int color) { HudConfig.setHudColor(HUD_KEY, color); }
+    @Override public boolean getHudOutline() { return HudConfig.getHudOutline(HUD_KEY, true); }
+    @Override public void setHudOutline(boolean outline) { HudConfig.setHudOutline(HUD_KEY, outline); }
+    @Override public boolean getHudBg() { return HudConfig.getHudBg(HUD_KEY, false); }
+    @Override public void setHudBg(boolean bg) { HudConfig.setHudBg(HUD_KEY, bg); }
     @Override public void setEditingMode(boolean editing) { editingMode = editing; }
     @Override public String getDisplayName() { return HUD_KEY; }
 }

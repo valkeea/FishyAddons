@@ -3,7 +3,6 @@ package me.valkeea.fishyaddons.hud.elements.interactive;
 import java.util.ArrayList;
 import java.util.List;
 
-import me.valkeea.fishyaddons.config.Key;
 import me.valkeea.fishyaddons.event.EventPhase;
 import me.valkeea.fishyaddons.event.EventPriority;
 import me.valkeea.fishyaddons.event.impl.FaEvents;
@@ -18,10 +17,12 @@ import me.valkeea.fishyaddons.tracker.collection.CraftingRecipes;
 import me.valkeea.fishyaddons.tracker.collection.GoalManager;
 import me.valkeea.fishyaddons.tracker.collection.RecipeScanner;
 import me.valkeea.fishyaddons.tracker.collection.VisibilityManager;
-import me.valkeea.fishyaddons.ui.widget.dropdown.VCToggleMenu;
-import me.valkeea.fishyaddons.ui.widget.dropdown.item.ToggleMenuItem;
 import me.valkeea.fishyaddons.util.text.Color;
 import me.valkeea.fishyaddons.util.text.StringUtils;
+import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
+import me.valkeea.fishyaddons.vconfig.api.IntKey;
+import me.valkeea.fishyaddons.vconfig.ui.widget.dropdown.VCToggleMenu;
+import me.valkeea.fishyaddons.vconfig.ui.widget.dropdown.item.ToggleMenuItem;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
@@ -43,7 +44,7 @@ public class CollectionDisplay extends InteractiveHudElement {
     
     private CollectionDisplay() {
         super(
-            Key.HUD_COLLECTION_ENABLED,
+            BooleanKey.HUD_COLLECTION_ENABLED,
             "Collection Tracker",
             20, 280,
             12,
@@ -105,8 +106,8 @@ public class CollectionDisplay extends InteractiveHudElement {
     }
     
     @Override
-    protected String getMaxLinesConfigKey() {
-        return Key.HUD_COLLECTION_LINES;
+    protected IntKey getMaxLinesConfigKey() {
+        return IntKey.HUD_COLLECTION_LINES;
     }
     
     @Override
@@ -322,7 +323,7 @@ public class CollectionDisplay extends InteractiveHudElement {
                 int toggleButtonX = hudX + 2 * (buttonWidth + buttonSpacing);
                 int menuX = toggleButtonX;
                 int menuY = hudY + 2;
-                toggleMenu.setPosition(menuX, menuY);
+                toggleMenu.setPosition(menuX, menuY, screen.height);
                 toggleMenu.render(context, screen, mouseX, mouseY, scale);
             }
             
@@ -331,7 +332,7 @@ public class CollectionDisplay extends InteractiveHudElement {
                 int goalsButtonX = hudX + 3 * (buttonWidth + buttonSpacing);
                 int menuX = goalsButtonX;
                 int menuY = hudY + 2;
-                goalToggleMenu.setPosition(menuX, menuY);
+                goalToggleMenu.setPosition(menuX, menuY, screen.height);
                 goalToggleMenu.render(context, screen, mouseX, mouseY, scale);
             }
 

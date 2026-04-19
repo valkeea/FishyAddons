@@ -3,6 +3,7 @@ package me.valkeea.fishyaddons.hud.base;
 import me.valkeea.fishyaddons.hud.core.HudDrawer;
 import me.valkeea.fishyaddons.hud.core.HudElementState;
 import me.valkeea.fishyaddons.tool.FishyMode;
+import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
@@ -11,8 +12,9 @@ import net.minecraft.util.Identifier;
  * Elements with a text component and optional icon, with ability to add custom rendering
  */
 public abstract class SimpleHudElement extends BaseHudElement {
-
-    protected SimpleHudElement(String hudKey, String displayName,
+    
+    @SuppressWarnings("java:S107")
+    protected SimpleHudElement(BooleanKey hudKey, String displayName,
                                 int defaultX, int defaultY, int defaultSize, int defaultColor,
                                 boolean defaultOutline, boolean defaultBg) {
         super(hudKey, displayName, defaultX, defaultY, defaultSize, defaultColor, defaultOutline, defaultBg);

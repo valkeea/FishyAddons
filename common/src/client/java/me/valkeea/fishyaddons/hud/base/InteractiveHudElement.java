@@ -3,13 +3,15 @@ package me.valkeea.fishyaddons.hud.base;
 import java.util.ArrayList;
 import java.util.List;
 
-import me.valkeea.fishyaddons.config.FishyConfig;
 import me.valkeea.fishyaddons.hud.core.ClickableRegionManager;
 import me.valkeea.fishyaddons.hud.core.HudButtonManager;
 import me.valkeea.fishyaddons.hud.core.HudDrawer;
 import me.valkeea.fishyaddons.hud.core.HudElementState;
 import me.valkeea.fishyaddons.hud.core.HudUtils;
-import me.valkeea.fishyaddons.ui.widget.dropdown.VCToggleMenu;
+import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
+import me.valkeea.fishyaddons.vconfig.api.Config;
+import me.valkeea.fishyaddons.vconfig.api.IntKey;
+import me.valkeea.fishyaddons.vconfig.ui.widget.dropdown.VCToggleMenu;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
@@ -37,8 +39,9 @@ public abstract class InteractiveHudElement extends BaseHudElement {
     private final List<VCToggleMenu> toggleMenus = new ArrayList<>();
     
     private ClickableRegionManager lineCountRegionManager;
-    
-    protected InteractiveHudElement(String hudKey, String displayName,
+
+    @SuppressWarnings("java:S107")    
+    protected InteractiveHudElement(BooleanKey hudKey, String displayName,
                                    int defaultX, int defaultY, int defaultSize, int defaultColor,
                                    boolean defaultOutline, boolean defaultBg) {
         super(hudKey, displayName, defaultX, defaultY, defaultSize, defaultColor, defaultOutline, defaultBg);
@@ -61,7 +64,7 @@ public abstract class InteractiveHudElement extends BaseHudElement {
      * Get config key for max visible lines setting.
      * Return null to disable line count control.
      */
-    protected abstract String getMaxLinesConfigKey();
+    protected abstract IntKey getMaxLinesConfigKey();
     
     /**
      * Get total number of lines available for display.
@@ -77,19 +80,19 @@ public abstract class InteractiveHudElement extends BaseHudElement {
      * Load max visible lines from config
      */
     protected void loadMaxVisibleLines() {
-        String key = getMaxLinesConfigKey();
-        if (key != null) {
-            maxVisibleLines = FishyConfig.getInt(key, 10);
-        }
+        IntKey key = getMaxLinesConfigKey();
+        if (!key.equals(IntKey.NONE)) {
+            maxVisibleLines = Config.get(key);
+        } else maxVisibleLines = -1;
     }
     
     /**
      * Save max visible lines to config
      */
     protected void saveMaxVisibleLines() {
-        String key = getMaxLinesConfigKey();
-        if (key != null) {
-            FishyConfig.setInt(key, maxVisibleLines);
+        IntKey key = getMaxLinesConfigKey();
+        if (!key.equals(IntKey.NONE)) {
+            Config.set(key, maxVisibleLines);
         }
     }
     
@@ -284,7 +287,7 @@ public abstract class InteractiveHudElement extends BaseHudElement {
      * Render line count control
      */
     protected void renderLineCountControl(DrawContext context, MinecraftClient mc, HudElementState state, int mouseX, int mouseY) {
-        if (getMaxLinesConfigKey() == null || buttonManager == null) return;
+        if (maxVisibleLines < 0 || getMaxLinesConfigKey() == null || buttonManager == null) return;
         
         var drawer = new HudDrawer(mc, context, state);
         var regions = buttonManager.renderLineCountControl(
@@ -375,7 +378,7 @@ public abstract class InteractiveHudElement extends BaseHudElement {
         if (shouldShowButtons(mc) && buttonManager != null && buttonManager.size() > 0) {
             float scale = state.size / 12.0F;
             int buttonAreaY = state.y - (int)(21 * scale);
-            int buttonAreaWidth = buttonManager.getTotalWidth();
+            int buttonAreaWidth = buttonManager.getTotalW();
             
             minY = Math.min(minY, buttonAreaY - padding);
             maxX = Math.max(maxX, state.x + buttonAreaWidth + padding);

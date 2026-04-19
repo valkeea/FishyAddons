@@ -2,8 +2,8 @@ package me.valkeea.fishyaddons.hud.core;
 
 import java.util.List;
 
-import me.valkeea.fishyaddons.ui.VCRenderUtils;
-import me.valkeea.fishyaddons.ui.widget.VCVisuals;
+import me.valkeea.fishyaddons.vconfig.ui.render.RenderUtils;
+import me.valkeea.fishyaddons.vconfig.ui.widget.VCVisuals;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.gui.DrawContext;
@@ -57,8 +57,8 @@ public class HudUtils {
         int bgColor = VCVisuals.bgHex(hovered, enabled);
         int borderColor = VCVisuals.borderHex(hovered, enabled);
 
-        VCRenderUtils.gradient(ctx, x, y, width, height, bgColor);
-        VCRenderUtils.border(ctx, x, y, width, height, borderColor);
+        RenderUtils.gradient(ctx, x, y, width, height, bgColor);
+        RenderUtils.border(ctx, x, y, width, height, borderColor);
 
         int iconX = x + (width - 16) / 2;
         int iconY = y + (height - 16) / 2;

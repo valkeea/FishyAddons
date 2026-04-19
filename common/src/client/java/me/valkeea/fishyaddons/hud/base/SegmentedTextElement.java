@@ -1,7 +1,8 @@
 package me.valkeea.fishyaddons.hud.base;
 
-import me.valkeea.fishyaddons.hud.core.HudElementState;
 import me.valkeea.fishyaddons.hud.core.HudDrawer;
+import me.valkeea.fishyaddons.hud.core.HudElementState;
+import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.text.Text;
 
@@ -10,7 +11,8 @@ import net.minecraft.text.Text;
  */
 public abstract class SegmentedTextElement extends BaseHudElement {
     
-    protected SegmentedTextElement(String hudKey, String displayName,
+    @SuppressWarnings("java:S107")    
+    protected SegmentedTextElement(BooleanKey hudKey, String displayName,
                                      int defaultX, int defaultY, int defaultSize, int defaultColor,
                                      boolean defaultOutline, boolean defaultBg) {
         super(hudKey, displayName, defaultX, defaultY, defaultSize, defaultColor, defaultOutline, defaultBg);

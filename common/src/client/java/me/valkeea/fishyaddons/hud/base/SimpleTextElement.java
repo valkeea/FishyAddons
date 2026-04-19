@@ -5,6 +5,7 @@ import java.awt.Rectangle;
 import me.valkeea.fishyaddons.hud.core.HudDrawer;
 import me.valkeea.fishyaddons.hud.core.HudElementState;
 import me.valkeea.fishyaddons.hud.core.HudUtils;
+import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.text.Text;
@@ -17,7 +18,7 @@ public abstract class SimpleTextElement extends BaseHudElement {
     private final String placeholderText;
 
     @SuppressWarnings("java:S107")
-    protected SimpleTextElement(String hudKey, String displayName, String placeholderText,
+    protected SimpleTextElement(BooleanKey hudKey, String displayName, String placeholderText,
                                  int defaultX, int defaultY, int defaultSize, int defaultColor,
                                  boolean defaultOutline, boolean defaultBg) {
         super(hudKey, displayName, defaultX, defaultY, defaultSize, defaultColor, defaultOutline, defaultBg);

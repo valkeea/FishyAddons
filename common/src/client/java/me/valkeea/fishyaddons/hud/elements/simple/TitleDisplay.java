@@ -3,6 +3,7 @@ package me.valkeea.fishyaddons.hud.elements.simple;
 import me.valkeea.fishyaddons.hud.base.SimpleTextElement;
 import me.valkeea.fishyaddons.tool.FishyMode;
 import me.valkeea.fishyaddons.util.text.Enhancer;
+import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
 import net.minecraft.text.Text;
 
 public class TitleDisplay extends SimpleTextElement {
@@ -13,7 +14,7 @@ public class TitleDisplay extends SimpleTextElement {
 
         public TitleDisplay() {
             super(
-                "titleHud",
+                BooleanKey.HUD_TITLE_ENABLED,
                 "Title Display",
                 "Alert Title",
                 300, 120,

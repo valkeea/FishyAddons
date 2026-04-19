@@ -1,18 +1,21 @@
-package me.valkeea.fishyaddons.ui;
+package me.valkeea.fishyaddons.vconfig.ui.screen;
 
 import java.awt.Rectangle;
 
-import me.valkeea.fishyaddons.config.FishyConfig;
-import me.valkeea.fishyaddons.config.Key;
 import me.valkeea.fishyaddons.hud.base.SimpleTextElement;
 import me.valkeea.fishyaddons.hud.core.ElementRegistry;
 import me.valkeea.fishyaddons.hud.core.HudElement;
 import me.valkeea.fishyaddons.hud.core.ScreenRenderContext;
 import me.valkeea.fishyaddons.hud.elements.simple.PetDisplay;
 import me.valkeea.fishyaddons.hud.elements.simple.TitleDisplay;
+import me.valkeea.fishyaddons.hud.ui.UIFeedback;
 import me.valkeea.fishyaddons.tool.FishyMode;
+import me.valkeea.fishyaddons.ui.GuiUtil;
 import me.valkeea.fishyaddons.ui.list.ChatAlerts;
-import me.valkeea.fishyaddons.ui.widget.FaButton;
+import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
+import me.valkeea.fishyaddons.vconfig.api.Config;
+import me.valkeea.fishyaddons.vconfig.ui.widget.FaButton;
+import me.valkeea.fishyaddons.vconfig.ui.widget.VCPopup;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
@@ -22,6 +25,7 @@ import net.minecraft.text.Text;
 
 public class HudEditScreen extends Screen {
     private static final String OUTLINE = "Outline"; 
+    private Screen parent;
     private String targetElementName;
     private VCPopup popup = null;
     private HudElement dragging = null;
@@ -37,93 +41,144 @@ public class HudEditScreen extends Screen {
         this.targetElementName = null;
     }
     
-    public HudEditScreen(String targetElementName) {
+    public HudEditScreen(BooleanKey target, Screen parent) {
         super(Text.literal("Edit HUD Elements"));
-        this.targetElementName = targetElementName;
+        this.targetElementName = target.toString();
+        this.parent = parent;
     }
 
     @Override
     protected void init() {
-        // Prevent double rendering - HudEditScreen handles all element rendering
         ScreenRenderContext.setEditMode(true);
         
         if (targetElementName != null) {
-            for (HudElement element : ElementRegistry.getConfigurable()) {
-                if (targetElementName.equals(element.getDisplayName())) {
-                    selectedElement = element;
+            for (HudElement e : ElementRegistry.getConfigurable()) {
+                if (targetElementName.equals(e.getDisplayName())) {
+                    selectedElement = e;
                     break;
                 }
             }
         }
-        
+
+        int y = this.height - 40;
+        int w = 80;
+        int h = 20;
+
+        addResets(y, w, h);
+        addButtons(y, w, h);
+    }
+
+    private void addResets(int y, int w, int h) {
         addDrawableChild(new FaButton(
-            this.width / 2 - 40, this.height - 40, 80, 20,
+            10, y, w, h,
+            Text.literal("Reset"),
+            btn -> {
+                String msg = null;
+                int sx = this.width / 2;
+                int sy = this.height / 2;
+
+                if (selectedElement != null) {
+                    sx = selectedElement.getHudX();
+                    sy = selectedElement.getHudY();
+                    selectedElement.resetAll();
+                    msg = "Reset " + selectedElement.getDisplayName() + " to default settings.";
+                }
+
+                UIFeedback.getInstance().set(
+                    msg == null ? "No element selected to reset!" : msg,
+                    300, sx, sy, null
+                );
+            }
+        ));
+
+        addDrawableChild(new FaButton(
+            10, y - h, w, h,
+            Text.literal("Reset All"),
+            btn -> {
+                for (HudElement e : ElementRegistry.getConfigurable()) {
+                    e.resetAll();
+                }
+                UIFeedback.getInstance().set(
+                    "Reset all elements to default settings.",
+                    300, this.width / 2, this.height / 2, null
+                );
+            }
+        ));
+    }
+
+    private void addButtons(int y, int w, int h) {
+        addDrawableChild(new FaButton(
+            this.width / 2 - w / 2, y, w, h,
             Text.literal("Exit"),
             btn -> {
-                for (HudElement element : ElementRegistry.getConfigurable()) {
-                    element.setEditingMode(false);
+                for (HudElement e : ElementRegistry.getConfigurable()) {
+                    e.setEditingMode(false);
                 }
                 MinecraftClient.getInstance().setScreen(null);
             }
         ));
-
-        colorBtn();
+        y -= 20;
+        
+        colorBtn(y, w, h);
+        y -= 20;
 
         outlineBtn = new FaButton(
-            this.width / 2 - 40, this.height - 80, 80, 20,
+            this.width / 2 - w / 2, y, w, h,
             GuiUtil.onOffLabel(OUTLINE, selectedElement != null && selectedElement.getHudOutline()),
             btn -> {
-                HudElement element = selectedElement;
-                if (element != null) {
-                    boolean outlined = element.getHudOutline();
-                    element.setHudOutline(!outlined);
-                    element.invalidateCache();
+                HudElement e = selectedElement;
+                if (e != null) {
+                    boolean outlined = e.getHudOutline();
+                    e.setHudOutline(!outlined);
+                    e.invalidateCache();
                     btn.setMessage(GuiUtil.onOffLabel(OUTLINE, !outlined));
                 }
             }
         );
         addDrawableChild(outlineBtn);
+        y -= 20;
 
         bgBtn = new FaButton(
-            this.width / 2 - 40, this.height - 100, 80, 20,
+            this.width / 2 - w / 2, y, w, h,
             GuiUtil.onOffLabel("BG", selectedElement != null && selectedElement.getHudBg()),
             btn -> {
-                HudElement element = selectedElement;
-                if (element != null) {
-                    boolean bg = element.getHudBg();
-                    element.setHudBg(!bg);
-                    element.invalidateCache();
+                HudElement e = selectedElement;
+                if (e != null) {
+                    boolean bg = e.getHudBg();
+                    e.setHudBg(!bg);
+                    e.invalidateCache();
                     btn.setMessage(GuiUtil.onOffLabel("BG", !bg));
                 }
             }
         );
         addDrawableChild(bgBtn);
+        y -= 40;
         
         addDrawableChild(new FaButton(
-            this.width / 2 - 50, this.height - 140, 100, 20,
-            GuiUtil.onOffLabel("Shadow", FishyConfig.getState(Key.HUD_TEXT_SHADOW, true)),
+            this.width / 2 - (w + 20) / 2, y, w + 20, h,
+            GuiUtil.onOffLabel("Shadow", Config.get(BooleanKey.HUD_TEXT_SHADOW)),
             btn -> {
-                FishyConfig.toggle(Key.HUD_TEXT_SHADOW, true);
-                btn.setMessage(GuiUtil.onOffLabel("Shadow", FishyConfig.getState(Key.HUD_TEXT_SHADOW, true)));
-                for (HudElement element : ElementRegistry.getConfigurable()) {
-                    element.invalidateCache();
+                Config.toggle(BooleanKey.HUD_TEXT_SHADOW);
+                btn.setMessage(GuiUtil.onOffLabel("Shadow", Config.get(BooleanKey.HUD_TEXT_SHADOW)));
+                for (HudElement e : ElementRegistry.getConfigurable()) {
+                    e.invalidateCache();
                 }
             }
         ));
     }
 
-    private void colorBtn() {
-        colorBtn =new FaButton(
-            this.width / 2 - 40, this.height - 60, 80, 20,
+    private void colorBtn(int y, int w, int h) {
+        colorBtn = new FaButton(
+            this.width / 2 - w / 2, y, w, h,
             Text.literal("Color"),
             btn -> {
-                HudElement element = selectedElement;
-                if (element == null) {
+                HudElement e = selectedElement;
+                if (e == null) {
                     var elements = ElementRegistry.getConfigurable();
                     if (elements.isEmpty()) return;
-                    element = elements.get(0);
+                    e = elements.get(0);
                 }
-                if (element instanceof TitleDisplay) {
+                if (e instanceof TitleDisplay) {
                     this.popup = new VCPopup(
                         Text.literal("Alert color is set in the alert editor!"),
                         "Back", () -> {
@@ -131,7 +186,7 @@ public class HudEditScreen extends Screen {
                             this.popup = null;
                         },
                         "GO", () -> {
-                            this.client.setScreen(new ChatAlerts(client.currentScreen));
+                            this.client.setScreen(new ChatAlerts());
                             this.popup = null;
                         },
                         1.0f
@@ -140,7 +195,7 @@ public class HudEditScreen extends Screen {
                     return;
                 }
 
-                final HudElement finalElement = element;
+                final HudElement finalElement = e;
                 int color = finalElement.getHudColor();
                 MinecraftClient.getInstance().setScreen(
                     new ColorWheel(this, color, newColor -> {
@@ -157,12 +212,12 @@ public class HudEditScreen extends Screen {
         if (popup != null && popup.mouseClicked(click)) return true;
 
         var mc = MinecraftClient.getInstance();
-        for (HudElement element : ElementRegistry.getConfigurable()) {
-            Rectangle bounds = element.getBounds(mc);
+        for (HudElement e : ElementRegistry.getConfigurable()) {
+            Rectangle bounds = e.getBounds(mc);
             if (bounds.contains(click.x(), click.y())) {
-                dragging = element;
-                selectedElement = element;
-                dragOffsetX = getDragOffsetX(element, bounds, click);
+                dragging = e;
+                selectedElement = e;
+                dragOffsetX = getDragOffsetX(e, bounds, click);
                 dragOffsetY = (int)click.y() - bounds.y;
                 return true;
             }
@@ -214,6 +269,12 @@ public class HudEditScreen extends Screen {
     @Override
     public boolean keyPressed(KeyInput input) {
         if (popup != null && popup.keyPressed(input)) return true;
+        if (input.isEscape()) {
+            if (this.client != null) {
+                this.client.setScreen(parent);
+            }
+            return true;
+        }
         return super.keyPressed(input);
     }
 
@@ -221,11 +282,13 @@ public class HudEditScreen extends Screen {
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
 
         var mc = MinecraftClient.getInstance();
-        for (HudElement element : ElementRegistry.getConfigurable()) {
-            element.setEditingMode(true);
-            element.render(context, mc, mouseX, mouseY);
-            GuiUtil.wireRect(context, element.getBounds(mc), 0x80FFFFFF);
+        for (HudElement e : ElementRegistry.getConfigurable()) {
+            e.setEditingMode(true);
+            e.render(context, mc, mouseX, mouseY);
+            GuiUtil.wireRect(context, e.getBounds(mc), 0x80FFFFFF);
         }
+
+        UIFeedback.getInstance().render(context, mc, mouseX, mouseY);
 
         if (selectedElement != null) {
             Rectangle bounds = selectedElement.getBounds(mc);
@@ -278,10 +341,9 @@ public class HudEditScreen extends Screen {
 
     @Override
     public void removed() {
-        // Re-enable normal HUD rendering
         ScreenRenderContext.setEditMode(false);
-        for (HudElement element : ElementRegistry.getConfigurable()) {
-            element.setEditingMode(false);
+        for (HudElement e : ElementRegistry.getConfigurable()) {
+            e.setEditingMode(false);
         }
     }
 

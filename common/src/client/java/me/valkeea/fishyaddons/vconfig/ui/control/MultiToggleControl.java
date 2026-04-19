@@ -57,7 +57,7 @@ public class MultiToggleControl extends AbstractUIControl {
         );
     }
     
-    private void openDropdown() {
+    private void openDropdown(ClickContext ctx) {
         if (lastBounds == null) return;
         
         List<ToggleMenuItem> items = menuProvider.get();
@@ -76,8 +76,8 @@ public class MultiToggleControl extends AbstractUIControl {
         );
         
         var mc = MinecraftClient.getInstance();
-        int screenH = mc.getWindow().getHeight();
-        int available = screenH - lastBounds.y - BASE_HEIGHT * 2;      
+        int screenH = (int) Math.floor(mc.getWindow().getHeight() / ctx.uiScale);
+        int available = screenH - lastBounds.y - BASE_HEIGHT * 2;
         activeDropdown.setMaxVisibleEntries(Dimensions.SCALE, available);
     }
     
@@ -112,7 +112,7 @@ public class MultiToggleControl extends AbstractUIControl {
         if (lastBounds == null || !ctx.isLeftClick()) return false;
         if (!lastBounds.contains(ctx.mouseX, ctx.mouseY)) return false;
         
-        openDropdown();
+        openDropdown(ctx);
         return true;
     }    
     

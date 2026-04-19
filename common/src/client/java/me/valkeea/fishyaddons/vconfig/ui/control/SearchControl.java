@@ -33,7 +33,7 @@ public class SearchControl extends AbstractUIControl {
     /**
      * Create a dropdown of value options that filters based on a search field.
      * 
-     * @param fieldBinding {@link StringBinding} for the search field value
+     * @param fieldBinding {@link StringBinding} for the config value
      * @param itemSupplier Supplier for dropdown menu items
      * @param tooltip Tooltip text for the control
      */
@@ -86,7 +86,7 @@ public class SearchControl extends AbstractUIControl {
 
             var handled = field.mouseClicked(ctx.click, false);
             if (handled && field.isFocused()) {
-                openDropdown();
+                openDropdown(ctx);
             }
             return handled;
         }
@@ -94,7 +94,7 @@ public class SearchControl extends AbstractUIControl {
         return false;
     }
     
-    private void openDropdown() {
+    private void openDropdown(ClickContext ctx) {
         if (fieldBounds == null) return;
         
         List<ToggleMenuItem> items = itemSupplier.get();
@@ -113,7 +113,7 @@ public class SearchControl extends AbstractUIControl {
         );
         
         var mc = MinecraftClient.getInstance();
-        int screenH = mc.getWindow().getHeight();
+        int screenH = (int) Math.floor(mc.getWindow().getHeight() / ctx.uiScale);
         int available = screenH - dropdownY - BASE_HEIGHT * 2;
         activeDropdown.setMaxVisibleEntries(Dimensions.SCALE, available);
     }

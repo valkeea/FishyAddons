@@ -175,11 +175,13 @@ public final class UIGenerator {
     private static UIControl createRedirect(FieldInfo fieldInfo, UIMetadata meta, UIRedirect redirect) {
         MethodHandle redirectHandle;
         Object instance = fieldInfo.getInstance();
+        final boolean isStatic;
         
         try {
             Class<?> moduleClass = fieldInfo.getField().getDeclaringClass();
             Method redirectMethod = moduleClass.getDeclaredMethod(redirect.method());
             redirectHandle = ReflectionUtil.tryFirst(redirectMethod);
+            isStatic = java.lang.reflect.Modifier.isStatic(redirectMethod.getModifiers());
         } catch (NoSuchMethodException e) {
             LOGGER.error("Redirect method not found: {} in {}", redirect.method(), fieldInfo.getField().getDeclaringClass().getSimpleName());
             return null;
@@ -194,7 +196,9 @@ public final class UIGenerator {
             buttonText,
             () -> {
                 try {
-                    if (instance != null) {
+                    if (isStatic) {
+                        redirectHandle.invokeExact();
+                    } else if (instance != null) {
                         redirectHandle.invoke(instance);
                     } else {
                         redirectHandle.invoke();

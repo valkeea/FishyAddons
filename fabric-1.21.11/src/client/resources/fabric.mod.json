@@ -33,7 +33,7 @@
 		"fishyaddons.mixins.json"
 	],
 	"depends": {
-		"fabricloader": "${loader_version}",
+		"fabricloader": ">=${loader_version}",
 		"minecraft": "~1.21.11",
 		"java": ">=21",
 		"fabric-api": "${fabric_version}"

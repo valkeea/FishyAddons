@@ -5,9 +5,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import me.valkeea.fishyaddons.feature.item.safeguard.GuiHandler;
-import me.valkeea.fishyaddons.feature.item.safeguard.ItemHandler;
-import me.valkeea.fishyaddons.feature.item.safeguard.SlotHandler;
+import me.valkeea.fishyaddons.feature.item.safeguard.FGUtil;
 import me.valkeea.fishyaddons.util.ZoneUtils;
 import net.minecraft.client.network.ClientPlayerEntity;
 
@@ -15,23 +13,23 @@ import net.minecraft.client.network.ClientPlayerEntity;
 public class MixinClientPlayerEntity {
     @Inject(method = "dropSelectedItem", at = @At("HEAD"), cancellable = true)
     private void onDropSelectedItem(boolean entireStack, CallbackInfoReturnable<Boolean> cir) {
-
         if (ZoneUtils.isInDungeon()) return;
 
         var player = (ClientPlayerEntity) (Object) this;
-        var stack = player.getMainHandStack();
 
         int selectedSlot = ((PlayerInventoryAccessor) player.getInventory()).getSelectedSlot();
-        int guiSlotId = 36 + selectedSlot;
+        int slotIdx = 36 + selectedSlot;
 
-        if (SlotHandler.isSlotLocked(guiSlotId) || SlotHandler.isSlotBound(guiSlotId)) {
+        if (FGUtil.preventSlotClick(slotIdx)) {
             cir.setReturnValue(false);
             return;
         }
 
-        if (ItemHandler.isProtected(stack)) {
+        var stack = player.getMainHandStack();
+
+        if (FGUtil.isProtected(stack)) {
             cir.setReturnValue(false);
-            GuiHandler.triggerProtection();
+            FGUtil.triggerProtection();
         }
     }
 }

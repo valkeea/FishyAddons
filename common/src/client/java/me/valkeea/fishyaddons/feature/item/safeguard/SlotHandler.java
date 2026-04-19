@@ -1,11 +1,11 @@
 package me.valkeea.fishyaddons.feature.item.safeguard;
 
-import me.valkeea.fishyaddons.config.ItemConfig;
 import me.valkeea.fishyaddons.event.EventPhase;
 import me.valkeea.fishyaddons.event.EventPriority;
 import me.valkeea.fishyaddons.event.impl.FaEvents;
 import me.valkeea.fishyaddons.tool.PlaySound;
 import me.valkeea.fishyaddons.util.ContainerScanner;
+import me.valkeea.fishyaddons.vconfig.config.impl.ItemConfig;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.gui.screen.ingame.InventoryScreen;
@@ -29,18 +29,18 @@ public class SlotHandler {
     }
 
     private static boolean isLockedClick(HandledScreen<?> screen, Slot hovered) {
+        if (!FGUtil.isKeyBound()) return false;
         int index = hovered.id;
         int invIndex = remap(screen, index);
         if (invIndex == -1) return false;
-        return isSlotLocked(invIndex);
+        return FGUtil.isSlotLocked(invIndex);
     }
 
     private static boolean isBoundClick(HandledScreen<?> screen, Slot hovered, int index, int invIndex) {
+        if (isInvalidContext(screen, invIndex)) return false;
+        if (!isShiftDown()) return true;
 
-        if (!isSlotBound(invIndex) || !ContainerScanner.isGuiOrInv()) return false;
-        if (!isShiftDown() || !(screen instanceof InventoryScreen)) return true;
-
-        int boundSlotId = getBoundSlot(invIndex);
+        int boundSlotId = ItemConfig.getBoundSlot(invIndex);
         var handler = screen.getScreenHandler();
         if (handler == null || remapInventory(boundSlotId) == -1) {
             return false;
@@ -61,11 +61,16 @@ public class SlotHandler {
         );
     }
 
+    private static boolean isInvalidContext(HandledScreen<?> screen, int invIndex) {
+        return !FGUtil.isKeyBound() || !FGUtil.isSlotBound(invIndex) || !ContainerScanner.isGuiOrInv() ||
+        !(screen instanceof InventoryScreen);
+    }
+
     private static boolean isShiftDown() {
-        var cl = MinecraftClient.getInstance();
-        if (cl.options == null) return false;
-        int keyCode = cl.options.sneakKey.getDefaultKey().getCode();
-        return InputUtil.isKeyPressed(cl.getWindow(), keyCode);
+        var mc = MinecraftClient.getInstance();
+        if (mc.options == null) return false;
+        int keyCode = mc.options.sneakKey.getDefaultKey().getCode();
+        return InputUtil.isKeyPressed(mc.getWindow(), keyCode);
     } 
 
     private static boolean canInsertItems(Slot hovered, Slot boundSlot, ItemStack hoveredStack, ItemStack boundStack) {
@@ -73,53 +78,43 @@ public class SlotHandler {
             && (boundStack.isEmpty() || hovered.canInsert(boundStack));
     }
 
-    private static boolean swapOrMoveItems(MinecraftClient client, ScreenHandler handler, int invIndex, int boundSlotId, int index, ItemStack hoveredStack, ItemStack boundStack) {
+    private static boolean swapOrMoveItems(MinecraftClient mc, ScreenHandler handler, int invIndex, int boundSlotId, int index, ItemStack hoveredStack, ItemStack boundStack) {
 
-        if (!hoveredStack.isEmpty() && !boundStack.isEmpty()) {
-            client.interactionManager.clickSlot(handler.syncId, invIndex, 0, SlotActionType.PICKUP, client.player);
-            client.interactionManager.clickSlot(handler.syncId, boundSlotId, 0, SlotActionType.PICKUP, client.player);
-            client.interactionManager.clickSlot(handler.syncId, invIndex, 0, SlotActionType.PICKUP, client.player);
-            return true;
+        boolean hasHoveredStack = !hoveredStack.isEmpty();
+        boolean hasBoundStack = !boundStack.isEmpty();
+        if (!hasHoveredStack && !hasBoundStack) {
+            return false;
         }
 
-        if (!hoveredStack.isEmpty() && boundStack.isEmpty()) {
-            client.interactionManager.clickSlot(handler.syncId, invIndex, 0, SlotActionType.PICKUP, client.player);
-            client.interactionManager.clickSlot(handler.syncId, boundSlotId, 0, SlotActionType.PICKUP, client.player);
-            return true;
+        int syncId = handler.syncId;
+        var interactionManager = mc.interactionManager;
+        var player = mc.player;
+
+        if (hasHoveredStack) {
+            interactionManager.clickSlot(syncId, invIndex, 0, SlotActionType.PICKUP, player);
+            interactionManager.clickSlot(syncId, boundSlotId, 0, SlotActionType.PICKUP, player);
+            if (hasBoundStack) {
+                interactionManager.clickSlot(syncId, invIndex, 0, SlotActionType.PICKUP, player);
+            }
+        } else {
+            interactionManager.clickSlot(syncId, boundSlotId, 0, SlotActionType.PICKUP, player);
+            interactionManager.clickSlot(syncId, index, 0, SlotActionType.PICKUP, player);
         }
 
-        if (hoveredStack.isEmpty() && !boundStack.isEmpty()) {
-            client.interactionManager.clickSlot(handler.syncId, boundSlotId, 0, SlotActionType.PICKUP, client.player);
-            client.interactionManager.clickSlot(handler.syncId, index, 0, SlotActionType.PICKUP, client.player);
-            return true;
-        }
-        
-        return false;
-    }    
-
-    public static boolean isSlotLocked(int slot) {
-        return ItemConfig.isSlotLocked(slot);
-    }
-
-    public static boolean isSlotBound(int slot) {
-        return ItemConfig.getBoundSlot(slot) != -1;
-    }
-
-    public static int getBoundSlot(int slot) {
-        return ItemConfig.getBoundSlot(slot);
+        return true;
     }
 
     // --- Lock/Unlock ---
 
     public static void lockSlot(int slot) {
-        if (!isSlotLocked(slot)) {
+        if (!FGUtil.isSlotLocked(slot)) {
             ItemConfig.toggleSlotLock(slot);
             PlaySound.playBindOrLock();
         }
     }
 
     public static void unlockSlot(int slot) {
-        if (isSlotLocked(slot)) {
+        if (FGUtil.isSlotLocked(slot)) {
             ItemConfig.toggleSlotLock(slot);
             PlaySound.playUnbindOrUnlock();
         }
@@ -128,14 +123,14 @@ public class SlotHandler {
     // --- Bind/Unbind ---
 
     public static void bindSlots(int slotA, int slotB) {
-        if (!isSlotBound(slotA) && !isSlotBound(slotB)) {
+        if (!FGUtil.isSlotBound(slotA) && !FGUtil.isSlotBound(slotB)) {
             ItemConfig.bindSlots(slotA, slotB);
             PlaySound.playBindOrLock();
         }
     }
 
     public static void unbindSlots(int slotA, int slotB) {
-        if (isSlotBound(slotA) && isSlotBound(slotB) && getBoundSlot(slotA) == slotB) {
+        if (FGUtil.isSlotBound(slotA) && FGUtil.isSlotBound(slotB) && ItemConfig.getBoundSlot(slotA) == slotB) {
             ItemConfig.unbindSlots(slotA, slotB);
             PlaySound.playUnbindOrUnlock();
         }

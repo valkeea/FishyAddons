@@ -5,6 +5,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import me.valkeea.fishyaddons.feature.item.safeguard.FGUtil;
 import me.valkeea.fishyaddons.feature.item.safeguard.GuiHandler;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.Click;
@@ -37,7 +38,7 @@ public abstract class MixinHandledScreenMouseRelease {
         boolean notOverSlot = accessor.getFocusedSlot() == null;        
         if (GuiHandler.isProtectedCached(stack) &&
             outsideGui && notOverSlot) {
-            GuiHandler.triggerProtection();
+            FGUtil.triggerProtection();
             cir.setReturnValue(false);
         }
     }

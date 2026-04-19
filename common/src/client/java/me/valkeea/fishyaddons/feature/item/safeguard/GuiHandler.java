@@ -3,15 +3,16 @@ package me.valkeea.fishyaddons.feature.item.safeguard;
 import java.util.HashMap;
 import java.util.Map;
 
-import me.valkeea.fishyaddons.config.ItemConfig;
 import me.valkeea.fishyaddons.event.EventPhase;
 import me.valkeea.fishyaddons.event.EventPriority;
 import me.valkeea.fishyaddons.event.impl.FaEvents;
 import me.valkeea.fishyaddons.event.impl.ScreenClickEvent;
 import me.valkeea.fishyaddons.tool.ItemData;
-import me.valkeea.fishyaddons.tool.PlaySound;
-import me.valkeea.fishyaddons.util.FishyNotis;
+import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
+import me.valkeea.fishyaddons.vconfig.api.Config;
+import me.valkeea.fishyaddons.vconfig.config.impl.ItemConfig;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.screen.ingame.GenericContainerScreen;
 import net.minecraft.item.ItemStack;
 
 public class GuiHandler {
@@ -40,15 +41,13 @@ public class GuiHandler {
             stack = mc.player.currentScreenHandler.getCursorStack();
         }
 
-        if (stack == null || stack.isEmpty()) return false;
-        if (!isProtectedCached(stack)) return false;
-
-        if (BlacklistMatcher.isBlacklistedGUI(event.screen, event.screen.getClass().getName()) && 
-            ItemConfig.isSellProtectionEnabled()) {
-            
+        if (stack == null || stack.isEmpty() || !isProtectedCached(stack)) return false;
+        if (!(event.screen instanceof GenericContainerScreen gcs)) return false;
+        
+        if (BlacklistMatcher.isBlacklistedGUI(gcs) && Config.get(BooleanKey.FG_GUI_PROTECTION)) {
             int remapped = SlotHandler.remap(event.screen, slotId);
             if (remapped != -1) {
-                triggerProtection();
+                FGUtil.triggerProtection();
                 return true;
             }
         }
@@ -70,16 +69,7 @@ public class GuiHandler {
             uuid, ItemConfig::isProtected
         );
     }
-
-    public static void triggerProtection() {
-        if (ItemConfig.isProtectTriggerEnabled()) {
-            PlaySound.protectTrigger();
-        }
-        if (ItemConfig.isProtectNotiEnabled()) {
-            FishyNotis.protectNoti();
-        }
-    }
-
+    
     public static void clearCache() {
         protectionCache.clear();
     }

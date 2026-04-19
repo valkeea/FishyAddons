@@ -5,8 +5,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import me.valkeea.fishyaddons.feature.item.safeguard.GuiHandler;
-import me.valkeea.fishyaddons.feature.item.safeguard.ItemHandler;
+import me.valkeea.fishyaddons.feature.item.safeguard.FGUtil;
 import me.valkeea.fishyaddons.feature.item.safeguard.SlotHandler;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
@@ -27,18 +26,17 @@ public abstract class MixinHandledScreenKey {
 
         boolean isThrowKey = mc.options.dropKey.matchesKey(input);
         int slotId = hoveredSlot.id;
-        int invIndex = SlotHandler.remap(gui, slotId);
-        if (invIndex == -1) return;
+        int invIdx = SlotHandler.remap(gui, slotId);
+        if (invIdx == -1) return;
 
-        if (isThrowKey && (SlotHandler.isSlotLocked(invIndex)
-                || SlotHandler.isSlotBound(invIndex))) {
+        if (isThrowKey && FGUtil.preventSlotClick(invIdx)) {
             cir.setReturnValue(true);
             return;
         }
 
         var stack = hoveredSlot.getStack();
-        if (isThrowKey && ItemHandler.isProtected(stack)) {
-            GuiHandler.triggerProtection();
+        if (isThrowKey && FGUtil.isProtected(stack)) {
+            FGUtil.triggerProtection();
             cir.setReturnValue(true);
         }
     }

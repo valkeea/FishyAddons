@@ -5,15 +5,20 @@ import java.util.Set;
 import org.jetbrains.annotations.Nullable;
 
 import me.valkeea.fishyaddons.api.skyblock.GameMode;
-import me.valkeea.fishyaddons.config.FishyConfig;
-import me.valkeea.fishyaddons.config.Key;
 import me.valkeea.fishyaddons.impl.MutableSoundInstance;
 import me.valkeea.fishyaddons.tracker.profit.ValuableMobs;
+import me.valkeea.fishyaddons.vconfig.annotation.VCListener;
+import me.valkeea.fishyaddons.vconfig.annotation.VCModule;
+import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
+import me.valkeea.fishyaddons.vconfig.api.Config;
+import me.valkeea.fishyaddons.vconfig.api.DoubleKey;
+import me.valkeea.fishyaddons.vconfig.api.StringKey;
 import net.minecraft.client.sound.SoundInstance;
 import net.minecraft.registry.Registries;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.Identifier;
 
+@VCModule
 public class SkyblockCleaner {
     private static boolean hypeOn = false;
     private static boolean phantomOn = false;
@@ -21,11 +26,12 @@ public class SkyblockCleaner {
     private static boolean thunderOn = false;
     private static boolean hideHotspot = false;
     private static boolean feroTrueVol = false;    
+    private static boolean emanOn = false;
     private static float hotspotDistance = 0.0f;
     private static float feroOn = 0.0f;    
     private static String feroPath = "";
 
-    private static final String FERO = "entity.zombie.break_wooden_door";
+    private static final String FERO = StringKey.FERO_OVERRIDE_ID.getDefault();
 
     private static final Set<Identifier> HYPE_SOUNDS = Set.of(
         Registries.SOUND_EVENT.getId(SoundEvents.ENTITY_GENERIC_EXPLODE.value()),
@@ -44,6 +50,12 @@ public class SkyblockCleaner {
     private static boolean thunderSound(String path) {
         return path.contains("lightning_bolt") ||
                 path.contains("guardian");
+    }
+
+    private static boolean emanSound(String path) {
+        return path.contains("entity.enderman.death") ||
+                path.contains("entity.enderman.hurt") ||
+                path.contains("entity.enderman.scream");
     }
 
     /**
@@ -82,7 +94,7 @@ public class SkyblockCleaner {
 
             var path = soundId.getPath();
             return muteHype(soundId) || mutePhantom(path) ||
-                    muteRune(path) || muteThunder(path);
+                    muteRune(path) || muteThunder(path) || muteEman(path);
 
         } catch (Exception e) {
             // Ignore
@@ -100,6 +112,10 @@ public class SkyblockCleaner {
 
     public static boolean muteRune(String path) {
         return runeOn && runeSound(path);
+    }
+
+    public static boolean muteEman(String path) {
+        return emanOn && emanSound(path);
     }
 
     private static long thunderCalled = 0;
@@ -148,19 +164,30 @@ public class SkyblockCleaner {
         return hotspotDistance;
     }
 
-    public static void refresh() {
-        hypeOn = FishyConfig.getState(Key.CLEAN_HYPE, false);
-        phantomOn = FishyConfig.getState(Key.MUTE_PHANTOM, false);
-        runeOn = FishyConfig.getState(Key.MUTE_RUNE, false);
-        thunderOn = FishyConfig.getState(Key.MUTE_THUNDER, false);
-        hideHotspot = FishyConfig.getState(Key.HIDE_HOTSPOT, false);
-        feroTrueVol = FishyConfig.getState(Key.FERO_TRUE_VOLUME, false);
-        hotspotDistance = FishyConfig.getFloat(Key.HOTSPOT_DISTANCE, 7.0f);
-        feroOn = FishyConfig.getFloat(Key.CUSTOM_FERO, 0.0f);
-        feroPath = FishyConfig.getString(Key.FERO_ALERT, FERO);
-    }    
-
-    private SkyblockCleaner() {
-        throw new UnsupportedOperationException("Utility class");
+    @VCListener(
+        doubles = DoubleKey.FERO_OVERRIDE,
+        strings = StringKey.FERO_OVERRIDE_ID,
+        value = {
+            BooleanKey.FERO_TRUEVOL, BooleanKey.MUTE_PHANTOM, BooleanKey.MUTE_EMAN,
+            BooleanKey.MUTE_RUNE, BooleanKey.MUTE_THUNDER, BooleanKey.CLEAN_HYPE
+        }       
+    )
+    public static void refreshAudio() {
+        hypeOn = Config.get(BooleanKey.CLEAN_HYPE);
+        phantomOn = Config.get(BooleanKey.MUTE_PHANTOM);
+        runeOn = Config.get(BooleanKey.MUTE_RUNE);
+        thunderOn = Config.get(BooleanKey.MUTE_THUNDER);
+        emanOn = Config.get(BooleanKey.MUTE_EMAN);
+        feroTrueVol = Config.get(BooleanKey.FERO_TRUEVOL);
+        feroOn = (float) Config.get(DoubleKey.FERO_OVERRIDE);
+        feroPath = Config.get(StringKey.FERO_OVERRIDE_ID);
     }
+
+    @VCListener(value = BooleanKey.HOTSPOT_HIDE, doubles = DoubleKey.HOTSPOT_DISTANCE)
+    private static void refreshHotspot() {
+        hideHotspot = Config.get(BooleanKey.HOTSPOT_HIDE);
+        hotspotDistance = (float) Config.get(DoubleKey.HOTSPOT_DISTANCE);        
+    }
+
+    private SkyblockCleaner() {}
 }

@@ -1,43 +1,58 @@
 package me.valkeea.fishyaddons.tool;
 
-import me.valkeea.fishyaddons.config.FishyConfig;
-import me.valkeea.fishyaddons.config.Key;
+import me.valkeea.fishyaddons.vconfig.api.Config;
+import me.valkeea.fishyaddons.vconfig.api.IntKey;
+import me.valkeea.fishyaddons.vconfig.ui.widget.VCVisuals;
 
 public class FishyMode {
     private FishyMode() {}
     private static final FishyMode INSTANCE = new FishyMode();
-    private String cachedTheme = "default";
-    private int cachedColor = 0xFFDABCEB;
+
+    private int cachedTheme = 0;
+    private int cachedColor = 0xFFDABCEB;    
 
     public static void init() {
         getInstance();
-        INSTANCE.cachedTheme = FishyConfig.getString(me.valkeea.fishyaddons.config.Key.THEME_MODE, "default");
+        INSTANCE.cachedTheme = Config.get(IntKey.THEME_MODE);
         INSTANCE.cachedColor = getThemeColor(INSTANCE.cachedTheme);
-        me.valkeea.fishyaddons.ui.widget.VCVisuals.set(INSTANCE.cachedColor);
+        VCVisuals.set(INSTANCE.cachedColor);
     }
 
     private static FishyMode getInstance() {
         return INSTANCE;
     }
 
-    private static int getThemeColor(String theme) {
-        return switch (theme.toLowerCase()) {
-            case "purple" -> 0xFFC694E4;
-            case "blue" -> 0xFFA2C8FF;
-            case "white" -> 0xFFE5E5FF;
-            case "green" -> 0xFFA2FFA2;
+    private static int getThemeColor(int theme) {
+        return switch (theme) {
+            case 1 -> 0xFFC694E4;
+            case 2 -> 0xFFA2C8FF;
+            case 3 -> 0xFFE5E5FF;
+            case 4 -> 0xFFA2FFA2;
+            case 5 -> 0xFFFFBDC4;
             default -> 0xFFDABCEB;
         };
     }
 
     public static int getCmdColor() {
-        String theme = INSTANCE.cachedTheme;
-        return switch (theme.toLowerCase()) {
-            case "purple" -> 0xFF770EF8;
-            case "blue" -> 0xFFA2C8FF;
-            case "white" -> 0xFFE5F2FF;
-            case "green" -> 0xFFA2FFA2;
+        int theme = INSTANCE.cachedTheme;
+        return switch (theme) {
+            case 1 -> 0xFF770EF8;
+            case 2 -> 0xFFA2C8FF;
+            case 3 -> 0xFFE5F2FF;
+            case 4 -> 0xFFA2FFA2;
+            case 5 -> 0xFFFFBDC4;
             default -> 0xFF7FFFD4;
+        };
+    }
+
+    public static String themeName() {
+        return switch (INSTANCE.cachedTheme) {
+            case 1 -> "purple";
+            case 2 -> "blue";
+            case 3 -> "white";
+            case 4 -> "green";
+            case 5 -> "rose";
+            default -> "default";
         };
     }
 
@@ -45,15 +60,14 @@ public class FishyMode {
         return INSTANCE.cachedColor;
     }
 
-    public static String getTheme() {
+    public static int getTheme() {
         return INSTANCE.cachedTheme;
     }    
 
-    public static void setTheme(String mode) {
-        FishyConfig.setString(Key.THEME_MODE, mode);
+    public static void setTheme(int mode) {
         int color = getThemeColor(mode);
         setColor(color);
-        me.valkeea.fishyaddons.ui.widget.VCVisuals.set(color);
+        VCVisuals.set(color);
         INSTANCE.cachedTheme = mode;
     }
 

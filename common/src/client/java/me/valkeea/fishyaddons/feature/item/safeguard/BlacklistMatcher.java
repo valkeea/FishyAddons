@@ -1,62 +1,72 @@
 package me.valkeea.fishyaddons.feature.item.safeguard;
 
+import java.util.ArrayList;
 import java.util.List;
 
-import me.valkeea.fishyaddons.feature.item.safeguard.BlacklistManager.GuiBlacklistEntry;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.ingame.HandledScreen;
+import net.minecraft.client.gui.screen.ingame.GenericContainerScreen;
 import net.minecraft.item.Item.TooltipContext;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.tooltip.TooltipType;
-import net.minecraft.screen.slot.Slot;
 import net.minecraft.text.Text;
 
 public class BlacklistMatcher {
     private BlacklistMatcher() {}
 
-    public static boolean isBlacklistedGUI(HandledScreen<?> gui, String screenClassName) {
-        String guiTitle = getGuiTitle(gui);
-        return isBlacklistedByTitle(guiTitle) || isBlacklistedBySlots(gui, screenClassName);
+    public static boolean isBlacklistedGUI(GenericContainerScreen gui) {
+        var guiTitle = getGuiTitle(gui);
+        if (isBlacklistedByTitle(guiTitle)) return true;
+        return isBlacklistedByItems(gui);
     }
 
     private static boolean isBlacklistedByTitle(String guiTitle) {
-        if (guiTitle == null) return false;
-        for (BlacklistManager.GuiBlacklistEntry entry : getMergedBlacklist()) {
-            if (!entry.isEnabled()) continue;
-            if (entry.checkTitle && containsIdentifier(guiTitle, entry.identifiers)) {
+        if (guiTitle == null) return false;       
+        for (var entry : BlacklistManager.getEnabledEntries()) {
+            if (entry.checkTitle && containsAnyPattern(guiTitle, entry.matchPatterns)) {
                 return true;
             }
         }
         return false;
     }
 
-    private static boolean containsIdentifier(String guiTitle, List<String> identifiers) {
-        String lowerGuiTitle = guiTitle.toLowerCase();
-        for (String identifier : identifiers) {
-            String stripped = stripColor(identifier);
-            if (stripped == null) continue;
-            String cleanIdentifier = stripped.toLowerCase().trim();
-            if (guiTitle.equalsIgnoreCase(cleanIdentifier) || lowerGuiTitle.contains(cleanIdentifier)) {
+    private static boolean containsAnyPattern(String guiTitle, List<String> patterns) {
+        var lowerGuiTitle = guiTitle.toLowerCase();
+        for (var pattern : patterns) {
+            var stripped = stripColor(pattern);
+            if (stripped.isEmpty()) continue;
+            var cleanPattern = stripped.toLowerCase().trim();
+            if (guiTitle.equalsIgnoreCase(cleanPattern) || lowerGuiTitle.contains(cleanPattern)) {
                 return true;
             }
         }
         return false;
     }
 
-    private static boolean isBlacklistedBySlots(HandledScreen<?> gui, String screenClassName) {
-        for (Slot slot : gui.getScreenHandler().slots) {
+    private static boolean isBlacklistedByItems(GenericContainerScreen gui) {
+        List<BlacklistManager.BlacklistEntry> itemCheckEntries = new ArrayList<>();
+        for (var entry : BlacklistManager.getEnabledEntries()) {
+            if (!entry.checkTitle) {
+                itemCheckEntries.add(entry);
+            }
+        }
+        
+        if (itemCheckEntries.isEmpty()) {
+            return false;
+        }
+        
+        for (int i = 0; i < Math.min(gui.getScreenHandler().slots.size(), 54); i++) {
+            var slot = gui.getScreenHandler().slots.get(i);
             var stack = slot.getStack();
             if (stack == null || stack.isEmpty()) continue;
-            if (isBlacklistedItem(stack, screenClassName)) {
+            
+            if (isBlacklistedItem(stack, itemCheckEntries)) {
                 return true;
             }
         }
         return false;
     }
 
-    public static boolean isBlacklistedItem(ItemStack stack, String screenClassName) {
-        if (stack == null || stack.isEmpty()) return false;
-
+    private static boolean isBlacklistedItem(ItemStack stack, List<BlacklistManager.BlacklistEntry> entries) {
         var client = MinecraftClient.getInstance();
         List<Text> tooltip;
 
@@ -66,32 +76,28 @@ public class BlacklistMatcher {
             return false;
         }
 
-        for (GuiBlacklistEntry entry : getMergedBlacklist()) {
-            if (!entry.isEnabled()) continue;
-            if (matchesAnyIdentifier(entry, stack, tooltip, screenClassName)) {
+        List<Text> limitedTooltip = tooltip.subList(0, Math.min(5, tooltip.size()));
+
+        for (var entry : entries) {
+            if (matchesItemAgainstPatterns(stack, limitedTooltip, entry.matchPatterns)) {
                 return true;
             }
         }
-
         return false;
     }
 
-    private static boolean matchesAnyIdentifier(GuiBlacklistEntry entry, ItemStack stack, List<Text> tooltip, String screenClassName) {
-        if (entry.identifiers == null || entry.identifiers.isEmpty()) {
+    private static boolean matchesItemAgainstPatterns(ItemStack stack, List<Text> tooltip, List<String> patterns) {
+        if (patterns == null || patterns.isEmpty()) {
             return false;
         }
-        
-        for (String identifier : entry.identifiers) {
-            String cleanIdentifier = getCleanIdentifier(identifier);
-            if (cleanIdentifier == null) continue;
+        for (var pattern : patterns) {
+            var cleanPattern = getCleanIdentifier(pattern);
+            if (cleanPattern == null) continue;
 
-            if (entry.checkTitle && matchesScreenClassName(screenClassName, cleanIdentifier)) {
+            if (matchesCustomName(stack, cleanPattern)) {
                 return true;
             }
-            if (matchesCustomName(stack, cleanIdentifier)) {
-                return true;
-            }
-            if (matchesTooltip(tooltip, cleanIdentifier)) {
+            if (matchesTooltip(tooltip, cleanPattern)) {
                 return true;
             }
         }
@@ -99,19 +105,16 @@ public class BlacklistMatcher {
     }
 
     private static String getCleanIdentifier(String identifier) {
-        String stripped = stripColor(identifier);
-        return stripped == null ? null : stripped.toLowerCase().trim();
-    }
-
-    private static boolean matchesScreenClassName(String screenClassName, String cleanIdentifier) {
-        return screenClassName != null && screenClassName.toLowerCase().contains(cleanIdentifier);
+        var stripped = stripColor(identifier);
+        return stripped.isEmpty() ? null : stripped.toLowerCase().trim();
     }
 
     private static boolean matchesCustomName(ItemStack stack, String cleanIdentifier) {
-        if (stack.getCustomName() != null) {
-            String strippedName = stripColor(stack.getCustomName().getString());
-            if (strippedName != null) {
-                String cleanName = strippedName.toLowerCase().trim();
+        var name = stack.getCustomName();
+        if (name != null) {
+            var strippedName = stripColor(name.getString());
+            if (!strippedName.isEmpty()) {
+                var cleanName = strippedName.toLowerCase().trim();
                 return cleanName.contains(cleanIdentifier);
             }
         }
@@ -120,9 +123,9 @@ public class BlacklistMatcher {
 
     private static boolean matchesTooltip(List<Text> tooltip, String cleanIdentifier) {
         for (Text line : tooltip) {
-            String strippedLine = stripColor(line.getString());
-            if (strippedLine != null) {
-                String cleanLine = strippedLine.toLowerCase().trim();
+            var strippedLine = stripColor(line.getString());
+            if (!strippedLine.isEmpty()) {
+                var cleanLine = strippedLine.toLowerCase().trim();
                 if (cleanLine.contains(cleanIdentifier)) {
                     return true;
                 }
@@ -131,8 +134,7 @@ public class BlacklistMatcher {
         return false;
     }
 
-
-    public static String getGuiTitle(HandledScreen<?> gui) {
+    public static String getGuiTitle(GenericContainerScreen gui) {
         try {
             return gui.getTitle().getString();
         } catch (Exception e) {
@@ -141,10 +143,6 @@ public class BlacklistMatcher {
     }
 
     public static String stripColor(String input) {
-        return input == null ? null : input.replaceAll("(?i)§[0-9a-fklmnor]", "");
-    }
-
-    public static List<BlacklistManager.GuiBlacklistEntry> getMergedBlacklist() {
-        return BlacklistManager.getMergedBlacklist();
+        return input == null ? "" : input.replaceAll("(?i)§[0-9a-fklmnor]", "");
     }
 }

@@ -2,173 +2,120 @@ package me.valkeea.fishyaddons.feature.item.safeguard;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.Set;
 
-import me.valkeea.fishyaddons.config.ItemConfig;
+import me.valkeea.fishyaddons.vconfig.api.Config;
+import me.valkeea.fishyaddons.vconfig.api.StringKey;
 
 public class BlacklistManager {
     private BlacklistManager() {}
-    
-    // --- Entry class ---
-    public static class GuiBlacklistEntry {
-        public final List<String> identifiers;
-        private boolean enabled;
+
+    public static class BlacklistEntry {
+        public final String identifier;
+        public final String displayName;
+        public final List<String> matchPatterns;
         public final boolean checkTitle;
 
-        public GuiBlacklistEntry(List<String> identifiers, boolean enabled, boolean checkTitle) {
-            this.identifiers = identifiers;
-            this.enabled = enabled;
+        public BlacklistEntry(String identifier, String displayName, List<String> matchPatterns, boolean checkTitle) {
+            this.identifier = identifier;
+            this.displayName = displayName;
+            this.matchPatterns = matchPatterns;
             this.checkTitle = checkTitle;
         }
-        
+
         public boolean isEnabled() {
-            return enabled;
-        }
-        
-        public void setEnabled(boolean enabled) {
-            this.enabled = enabled;
+            return !getDisabledIdentifiers().contains(identifier);
         }
     }
 
-    // --- Blacklist data ---
-    private static final List<GuiBlacklistEntry> defaultBlacklist = new ArrayList<>();
-    private static final List<GuiBlacklistEntry> userBlacklist = new CopyOnWriteArrayList<>();
-    private static boolean loaded = false;
+    private static final List<BlacklistEntry> ALL_ENTRIES = new ArrayList<>();
 
-    static {
-        defaultBlacklist.add(new GuiBlacklistEntry(Arrays.asList("Create Auction", "Create BIN Auction", "Find items for sale by players"), true, true));
-        defaultBlacklist.add(new GuiBlacklistEntry(Arrays.asList("Coins Transaction"), true, false));
-        defaultBlacklist.add(new GuiBlacklistEntry(Arrays.asList("Salvage Items"), true, true));
-        defaultBlacklist.add(new GuiBlacklistEntry(Arrays.asList("Click items in your inventory to sell", "Click to buyback"), true, false));
-        loadUserBlacklist();
+    public static void init() {
+        ALL_ENTRIES.add(new BlacklistEntry(
+            "auction_house",
+            "Auction House",
+            Arrays.asList("Create Auction", "Create BIN Auction", "Co-op Auction House", "Auction House"),
+            true
+        ));
+        ALL_ENTRIES.add(new BlacklistEntry(
+            "player_trades",
+            "Player Trades",
+            Arrays.asList("Coins Transaction"),
+            false
+        ));
+        ALL_ENTRIES.add(new BlacklistEntry(
+            "salvaging",
+            "Salvaging",
+            Arrays.asList("Salvage Items"),
+            true
+        ));
+        ALL_ENTRIES.add(new BlacklistEntry(
+            "npc_sales",
+            "NPC Sales",
+            Arrays.asList("Click items in your inventory to sell", "Click to buyback"),
+            false
+        ));
     }
 
-    // --- Blacklist logic ---
-    public static List<GuiBlacklistEntry> getMergedBlacklist() {
-        
-        List<GuiBlacklistEntry> merged = new ArrayList<>();
-        for (GuiBlacklistEntry def : defaultBlacklist) {
-            GuiBlacklistEntry override = findUserOverride(def);
-            if (override != null) {
-                merged.add(new GuiBlacklistEntry(def.identifiers, override.isEnabled(), def.checkTitle));
-            } else {
-                merged.add(def);
+    /**
+     * Returns all GUI blacklist entries.
+     */
+    public static List<BlacklistEntry> getAllEntries() {
+        return new ArrayList<>(ALL_ENTRIES);
+    }
+
+    /**
+     * Returns only the enabled GUI blacklist entries.
+     */
+    public static List<BlacklistEntry> getEnabledEntries() {
+        Set<String> disabled = getDisabledIdentifiers();
+        List<BlacklistEntry> enabled = new ArrayList<>();
+        for (var entry : ALL_ENTRIES) {
+            if (!disabled.contains(entry.identifier)) {
+                enabled.add(entry);
             }
         }
+        return enabled;
+    }
 
-        for (GuiBlacklistEntry userEntry : userBlacklist) {
-            if (userEntry.identifiers == null || userEntry.identifiers.isEmpty()) {
-                continue;
-            }
-            
-            boolean overridesExisting = false;
-            for (GuiBlacklistEntry def : defaultBlacklist) {
-                if (matchesIdentifier(def, userEntry.identifiers.get(0))) {
-                    overridesExisting = true;
-                    break;
+    /**
+     * Checks if a GUI identifier is currently enabled (not disabled).
+     */
+    public static boolean isEnabled(String identifier) {
+        return !getDisabledIdentifiers().contains(identifier);
+    }
+
+    /**
+     * Toggles the enabled state of a GUI identifier.
+     */
+    public static void toggle(String identifier) {
+        Set<String> disabled = getDisabledIdentifiers();
+        if (disabled.contains(identifier)) {
+            disabled.remove(identifier);
+        } else {
+            disabled.add(identifier);
+        }
+        saveDisabledIdentifiers(disabled);
+    }
+
+    private static Set<String> getDisabledIdentifiers() {
+        String raw = Config.get(StringKey.BLACKLIST_EXCEPTIONS);
+        Set<String> disabled = new HashSet<>();
+        if (raw != null && !raw.isEmpty()) {
+            for (String s : raw.split(",")) {
+                String trimmed = s.trim();
+                if (!trimmed.isEmpty()) {
+                    disabled.add(trimmed);
                 }
             }
-            if (!overridesExisting) {
-                merged.add(userEntry);
-            }
         }
-        return merged;
+        return disabled;
     }
 
-    public static List<GuiBlacklistEntry> getUserBlacklist() {
-        ensureLoaded();
-        return new ArrayList<>(userBlacklist);
-    }
-
-    public static void updateBlacklistEntry(String identifier, boolean enabled) {
-        ensureLoaded();
-        for (GuiBlacklistEntry entry : userBlacklist) {
-            for (String id : entry.identifiers) {
-                if (id.equalsIgnoreCase(identifier)) {
-                    entry.setEnabled(enabled);
-                    saveUserBlacklist();
-                    return;
-                }
-            }
-        }
-        userBlacklist.add(new GuiBlacklistEntry(Collections.singletonList(identifier), enabled, false));
-        saveUserBlacklist();
-    }
-
-    private static GuiBlacklistEntry findUserOverride(GuiBlacklistEntry def) {
-        for (String id : def.identifiers) {
-            for (GuiBlacklistEntry userEntry : userBlacklist) {
-                if (matchesIdentifier(userEntry, id)) {
-                    return userEntry;
-                }
-            }
-        }
-        return null;
-    }
-
-    private static boolean matchesIdentifier(GuiBlacklistEntry entry, String identifier) {
-        if (entry.identifiers == null || entry.identifiers.isEmpty() || identifier == null) {
-            return false;
-        }
-        
-        for (String id : entry.identifiers) {
-            if (id != null && id.equalsIgnoreCase(identifier)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public static void saveUserBlacklist() {
-        getUserBlacklist();
-        ItemConfig.save();
-    }  
-
-    public static synchronized void loadUserBlacklist() {
-        userBlacklist.clear();
-        loaded = true;
-    }
-
-    // --- JSON helpers ---
-    public static List<Map<String, Object>> getUserBlacklistAsJson() {
-        ensureLoaded();
-        List<Map<String, Object>> jsonList = new ArrayList<>();
-        for (GuiBlacklistEntry entry : userBlacklist) {
-            Map<String, Object> map = new HashMap<>();
-            map.put("identifiers", entry.identifiers);
-            map.put("enabled", entry.isEnabled());
-            map.put("checkTitle", entry.checkTitle);
-            jsonList.add(map);
-        }
-        return jsonList;
-    }
-
-    public static void loadUserBlacklistFromJson(List<Map<String, Object>> jsonEntries) {
-
-        userBlacklist.clear();
-
-        for (Map<String, Object> entry : jsonEntries) {
-
-            Object idObj = entry.get("identifiers");
-            List<String> identifiers = new ArrayList<>();
-            if (idObj instanceof List<?> idList) {
-                for (Object id : idList) {
-                    if (id instanceof String idStr) identifiers.add(idStr);
-                }
-            }
-
-            boolean enabled = Boolean.TRUE.equals(entry.get("enabled"));
-            boolean checkTitle = Boolean.TRUE.equals(entry.get("checkTitle"));
-            userBlacklist.add(new GuiBlacklistEntry(identifiers, enabled, checkTitle));
-        }
-        loaded = true;
-    }
-
-    private static void ensureLoaded() {
-        if (!loaded) loadUserBlacklist();
+    private static void saveDisabledIdentifiers(Set<String> disabled) {
+        String joined = String.join(",", disabled);
+        Config.set(StringKey.BLACKLIST_EXCEPTIONS, joined);
     }
 }

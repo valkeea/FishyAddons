@@ -326,38 +326,70 @@ public final class VCScreen extends AdjustedScreen {
     }
 
     private void restoreState() {
-
         var savedState = VCState.getPreviousState();
-        var lastFiltered = savedState.filtered();
+        var savedNames = savedState.filteredNames();
         var lastExpanded = savedState.expanded();
 
         if (savedState.searchText() != null && !savedState.searchText().isEmpty()) {
             onSearchChanged(savedState.searchText());
-            System.out.println("Restored search text: " + savedState.searchText());
-        } else if (!lastFiltered.isEmpty() || !lastExpanded.isEmpty()) {
-            scrollState.offset = savedState.offset();
-            lastSearch = savedState.searchText();
-            activeCategory = savedState.category();
-            expandedEntries = lastExpanded;
-            filteredEntries = lastFiltered;
-            System.out.println("Restored previous state with offset: " + savedState.offset() + ", category: " + savedState.category());
+            return;
+        } else if (savedState.tabIndex() > 0) {
+            tabManager.navigateToTab(savedState.tabIndex());
         }
+
+        if (savedNames != null && !savedNames.isEmpty()) {
+            filteredEntries = resolveSavedFiltered(savedNames);
+            activeCategory = null;
+        } else {
+            activeCategory = null;
+            filteredEntries = new ArrayList<>(configEntries);
+        }
+
+        if (lastExpanded != null && !lastExpanded.isEmpty()) {
+            restoreExpanded(lastExpanded);
+            markExpandedDirty();
+        }
+
+        var visible = getAllFiltered();
+        int maxVisible = layout.calcAllowedEntries(visible, this::isSubEntry);
+        scrollState.offset = layout.clampScrollOffset(savedState.offset(), visible.size(), maxVisible);
 
         VCState.clear();
         invalidateAllControlCaches();
     }
 
+    private List<VCEntry> resolveSavedFiltered(List<String> savedNames) {
+        List<VCEntry> restored = new ArrayList<>();
+
+        for (String name : savedNames) {
+            for (VCEntry e : configEntries) {
+                if (e.name.equals(name)) {
+                    restored.add(e);
+                    break;
+                }
+            }
+        }
+        return restored.isEmpty() ? new ArrayList<>(configEntries) : restored;
+    }
+
     public void preserveState() {
+        List<String> filteredNames = filteredEntries != null 
+            ? new ArrayList<>(filteredEntries.stream().map(e -> e.name).toList())
+            : new ArrayList<>();
+
+        Map<String, Boolean> expanded = expandedEntries == null
+            ? new HashMap<>()
+            : new HashMap<>(expandedEntries);
+
         VCState.preserveState(
             new VCState.StateSnapshot(
                 scrollState.offset,
                 lastSearch,
-                activeCategory,
-                filteredEntries,
-                expandedEntries
+                tabManager.getActiveTabIndex(),
+                filteredNames,
+                expanded
             )
         );
-        System.out.println("State preserved with offset: " + scrollState.offset + ", search: " + lastSearch + ", category: " + activeCategory);
     }
     
     /**
@@ -370,8 +402,8 @@ public final class VCScreen extends AdjustedScreen {
 
     private VCTextField createSearchField(int entryX, int searchY, int entryWidth, int searchH) {
         var vctf = new VCTextField(textRenderer, entryX, searchY, entryWidth, searchH, Text.empty());
-        vctf.setChangedListener(this::onSearchChanged);
         vctf.setText(lastSearch);
+        vctf.setChangedListener(this::onSearchChanged);
         return vctf;
     }
 
@@ -584,8 +616,6 @@ public final class VCScreen extends AdjustedScreen {
                 scrollState.offset = 0;
                 expandMatching(searchText);
                 recordedSearch = timeStamp;
-            } else {
-                System.out.println("Search input filtering canceled during cooldown: " + newSearch);
             }
         }
 
@@ -622,6 +652,10 @@ public final class VCScreen extends AdjustedScreen {
             }
         }
         invalidateCache();
+    }
+
+    private void restoreExpanded(Map<String, Boolean> saved) {
+        saved.forEach((entryName, isExpanded) -> expandedEntries.put(entryName, isExpanded));
     }
 
     private boolean anyContainerMatches(VCEntry e, String searchText) {
@@ -1063,7 +1097,6 @@ public final class VCScreen extends AdjustedScreen {
 
     private void openColorWheel(ColorControl entry) {
         ScreenManager.navigateConfigScreen(new ColorWheel(this, entry.getColorBinding().getKey()));
-        ScreenManager.markStale();
     }
 
     // --- DI helpers ---
@@ -1271,6 +1304,7 @@ public final class VCScreen extends AdjustedScreen {
     @Override
     public void close() {
         preserveState();
+        ScreenManager.invalidateCache();
         super.close();
     }
 }

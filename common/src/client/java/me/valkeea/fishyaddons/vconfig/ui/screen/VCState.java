@@ -5,15 +5,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import me.valkeea.fishyaddons.vconfig.core.UICategory;
-import me.valkeea.fishyaddons.vconfig.ui.model.VCEntry;
-
 public final class VCState {
     private static StateSnapshot savedState = empty();
 
     public record StateSnapshot(
-        int offset, String searchText, UICategory category,
-        List<VCEntry> filtered, Map<String, Boolean> expanded
+        int offset, String searchText, int tabIndex,
+        List<String> filteredNames, Map<String, Boolean> expanded
     ) {}
 
     public static void preserveState(StateSnapshot snapshot) {
@@ -29,7 +26,7 @@ public final class VCState {
     }
 
     private static StateSnapshot empty() {
-        return new StateSnapshot(0, "", null, new ArrayList<>(), new HashMap<>());
+        return new StateSnapshot(0, "", 0, new ArrayList<>(), new HashMap<>());
     }
 
     public static void setSearchTo(String searchText) {
@@ -37,7 +34,7 @@ public final class VCState {
         savedState = new StateSnapshot(
             wasSaved ? savedState.offset() : 0,
             searchText,
-            null,
+            0,
             new ArrayList<>(),
             wasSaved ? savedState.expanded() : new HashMap<>()
         );

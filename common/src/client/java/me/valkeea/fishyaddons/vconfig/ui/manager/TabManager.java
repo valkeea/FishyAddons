@@ -179,12 +179,10 @@ public class TabManager {
             } else {
                 tab.showDropdown();
             }
-
         } else {
             navigateToTab(index);
-            tab.showDropdown();
         }
-
+        
         return false;
     }
     
@@ -206,6 +204,7 @@ public class TabManager {
 
         navigationCallback.filterByCategory(tab.category);
         navigationCallback.clearSearch();
+        tab.showDropdown();
     }
     
     /**

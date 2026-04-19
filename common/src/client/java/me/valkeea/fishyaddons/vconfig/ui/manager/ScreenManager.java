@@ -12,9 +12,6 @@ public class ScreenManager {
     // Cached screen instance
     private static VCScreen instance = null;
     
-    // Flag to track if screen needs reinitialization
-    private static boolean stale = false;
-    
     /**
      * Get the config screen instance, creating it if necessary.
      * Returns cached instance if available and valid.
@@ -22,19 +19,9 @@ public class ScreenManager {
      * @return The VCScreen instance
      */
     public static VCScreen getOrCreateConfigScreen() {
-        
-        if (instance != null) {
-            if (!stale) {
-                return instance;
-            } else { 
-                instance.refreshLayout();
-                stale = false;
-                return instance;
-            }
+        if (instance == null) {
+            instance = new VCScreen();
         }
-        
-        instance = new VCScreen();
-        stale = false;
         return instance;
     }
     
@@ -47,11 +34,6 @@ public class ScreenManager {
     
     public static void invalidateCache() {
         instance = null;
-        stale = false;
-    }
-
-    public static void markStale() {
-        stale = true;
     }
     
     public static boolean hasCachedScreen() {

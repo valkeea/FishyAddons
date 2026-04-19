@@ -1,13 +1,16 @@
 package me.valkeea.fishyaddons.listener;
 
-import me.valkeea.fishyaddons.config.FishyConfig;
-import me.valkeea.fishyaddons.config.ItemConfig;
-import me.valkeea.fishyaddons.config.RuleFactory;
+import java.util.HashSet;
+import java.util.Set;
+
+import me.valkeea.fishyaddons.feature.filter.RuleFactory;
 import me.valkeea.fishyaddons.feature.skyblock.timer.CakeTimer;
 import me.valkeea.fishyaddons.feature.waypoints.ChainConfig;
 import me.valkeea.fishyaddons.feature.waypoints.WaypointChains;
 import me.valkeea.fishyaddons.hud.elements.custom.InfoDisplay;
 import me.valkeea.fishyaddons.util.FishyNotis;
+import me.valkeea.fishyaddons.vconfig.api.Config;
+import me.valkeea.fishyaddons.vconfig.config.BaseConfig;
 import net.fabricmc.fabric.api.client.networking.v1.ClientLoginConnectionEvents;
 
 public class ClientConnected {
@@ -19,6 +22,9 @@ public class ClientConnected {
     private static boolean rulesCorrupted = false;
     private static boolean pendingInfo = false;
     private static boolean pendingAlert = false;
+    private static boolean migrationFailed = false;
+    private static Set<String> restored = new HashSet<>();
+    private static Set<String> recreated = new HashSet<>();
 
     public static void init() {
         ClientLoginConnectionEvents.INIT.register((handler, client) -> onClientConnected());
@@ -26,17 +32,21 @@ public class ClientConnected {
 
     private static void onClientConnected() {
 
-        boolean r1 = FishyConfig.isRecreated();
-        boolean r2 = ItemConfig.isRecreated();
-        boolean r3 = ChainConfig.isRecreated();
-        boolean r4 = RuleFactory.isRecreated();
-        boolean a1 = me.valkeea.fishyaddons.util.ModInfo.shouldShowInfo();
+        var registered = Config.getConfigs().values();
+        for (BaseConfig file : registered) {
+            if (file != null) {
+                if (file.isRestored()) restored.add(file.getConfigName());
+                if (file.isRecreated()) recreated.add(file.getConfigName());
+            }
+        }
 
-        firstLoad = r1 && r2 && r3;
-        anyRecreated = r1 || r2 || r3 || r4;
-        anyRestored = FishyConfig.isRestored() || ItemConfig.isRestored() || ChainConfig.isRestored();
+        int amount = registered.size();
+
+        firstLoad = recreated.size() == amount;
+        anyRecreated = !recreated.isEmpty() || RuleFactory.isRecreated() || ChainConfig.isRecreated();
+        anyRestored = !restored.isEmpty() || ChainConfig.isRestored();
         rulesCorrupted = RuleFactory.isCorrupted();
-        pendingInfo = a1;
+        pendingInfo = me.valkeea.fishyaddons.util.ModInfo.shouldShowInfo();
         pendingAlert = firstLoad || anyRecreated || anyRestored || rulesCorrupted || pendingInfo;
 
         onInitialLoad();
@@ -50,23 +60,58 @@ public class ClientConnected {
             if (firstLoad) {
                 FishyNotis.guideNoti();
             } else {
-                if (anyRecreated) {
-                    FishyNotis.notice("One or more configuration files and their backups were missing, replaced with default.");
+                if (migrationFailed) {
+                    migrationFailed();
+                    return;
                 }
-                if (anyRestored) {
-                    FishyNotis.notice("One or more configuration files were corrupted and have been restored from backups.");
-                }
-                if (rulesCorrupted) {
-                    FishyNotis.notice("Sea creatures data file is corrupted. Using default. Fix or delete config/fishyaddons/data/sea_creatures.json to regenerate.");
-                }
+                if (anyRecreated) recreatedMsg();
+                if (anyRestored) restoredMsg();
+                if (rulesCorrupted) rulesCorruptedMsg();
             }
             resetFlags();
         }
     }
 
+    private static void recreatedMsg() {
+        String files = String.join(", ", recreated);
+        FishyNotis.notice("""
+            The following configuration files were missing and have been replaced with defaults:
+            """ + files + ". Any existing backups were corrupted or missing."
+        );
+    }
+
+    private static void restoredMsg() {
+        FishyNotis.notice("""
+            The following configuration files were corrupted and have been restored from backup:
+            """ + String.join(", ", restored) + "."
+        );
+    }
+
+    private static void rulesCorruptedMsg() {
+        FishyNotis.notice("""
+            Detected corruption in config/fishyaddons/data/sea_creatures.json.
+            You can either fix the format or delete the file to regenerate it.
+            """
+        );
+    }
+
+    private static void migrationFailed() {
+        FishyNotis.notice("""
+            §4CRITICAL: Migration failed for one or more config files.
+            If you were using an older version of FishyAddons, some settings may not have been migrated.
+            You can either re-config your mod, post an issue or downgrade to an older version to preserve your settings
+            until the migration issues are resolved.
+            Sorry for the inconvenience!
+            """
+        );
+    }
+
+    public static void notifyMigrationIssues() {
+        migrationFailed = true;
+    }
+
     private static void resetFlags() {
-        ItemConfig.resetFlags();
-        FishyConfig.resetFlags();
+        Config.resetFlags();
         ChainConfig.resetFlags();
         RuleFactory.resetFlags();
         firstLoad = false;
@@ -75,6 +120,7 @@ public class ClientConnected {
         rulesCorrupted = false;
         pendingInfo = false;
         pendingAlert = false;
+        migrationFailed = false;
     }
 
     private static void onInitialLoad() {

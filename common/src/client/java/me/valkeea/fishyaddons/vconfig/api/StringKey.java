@@ -11,7 +11,7 @@ public enum StringKey implements ConfigKey<String> {
     PRICE_TYPE("priceType", "sellPrice"),
     KEY_HIDE_GUI("lockGuiSlotKey", "NONE"),
     INFO_ID("infoId"),
-    REEL_OVERRIDE_ID("reelAlert", "minecraft:block.note_block.pling"),
+    REEL_OVERRIDE_ID("reelAlert", "block.note_block.pling"),
     FERO_OVERRIDE_ID("feroAlert", "entity.zombie.break_wooden_door"),
     ITEM_CONFIG("heldItemConfigData"),
     EXCLUDED_ITEMS("trackerExcludedItems"),

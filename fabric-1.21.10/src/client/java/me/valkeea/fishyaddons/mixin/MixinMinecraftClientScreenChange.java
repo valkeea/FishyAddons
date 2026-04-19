@@ -11,6 +11,7 @@ import me.valkeea.fishyaddons.event.impl.ScreenCloseEvent;
 import me.valkeea.fishyaddons.event.impl.ScreenOpenEvent;
 import me.valkeea.fishyaddons.hud.core.ScreenRenderContext;
 import me.valkeea.fishyaddons.hud.ui.SearchHudElement;
+import me.valkeea.fishyaddons.vconfig.ui.manager.ScreenManager;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.GenericContainerScreen;
@@ -59,5 +60,6 @@ public class MixinMinecraftClientScreenChange {
     @Inject(method = "onResolutionChanged", at = @At("HEAD"))
     private void onResolutionChanged(CallbackInfo ci) {
         me.valkeea.fishyaddons.hud.core.ElementRegistry.clearAllCaches();
+        ScreenManager.refreshCurrentScreen();
     }
 }

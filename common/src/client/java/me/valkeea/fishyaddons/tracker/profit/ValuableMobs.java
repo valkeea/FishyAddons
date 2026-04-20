@@ -23,7 +23,7 @@ public class ValuableMobs {
     private static final List<String> TRACKED_NAMES = List.of(
         "ragnarok", "minos inquisitor", "titanoboa",
         "wiki tiki", "sphinx", "king minos", "manticore", "sven alpha", "sven follower",
-        "yeti", "reindrake", "scuttler"
+        "yeti", "reindrake", "scuttler", "littlefoot", "nessie"
     );
 
     // --- Recent Mob Deaths ---
@@ -70,7 +70,7 @@ public class ValuableMobs {
     private ValuableMobs() {}
 
     public static void refresh() {
-        enabled = me.valkeea.fishyaddons.config.FishyConfig.getState(me.valkeea.fishyaddons.config.Key.HUD_HEALTH_ENABLED, false);
+        enabled = me.valkeea.fishyaddons.vconfig.api.Config.get(me.valkeea.fishyaddons.vconfig.api.BooleanKey.HUD_HEALTH_ENABLED);
     }
 
     public static boolean displayOn() {

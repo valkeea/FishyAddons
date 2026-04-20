@@ -253,9 +253,15 @@ public class CollectionData {
         long calculated = oldBaseline + currentGain;
         long difference = scannedTotal - calculated;
 
-        if (difference == 0) {
+        boolean noBaseline = oldBaseline == 0L;
+
+        if (noBaseline || difference == 0) {
             baselineStale.put(itemName, false);
             lastUpdated.put(itemName, System.currentTimeMillis());
+            if (noBaseline) {
+                baselines.put(itemName, scannedTotal);
+                inform("Saved total collection for §b" + itemName + "§r: " + scannedTotal);
+            }
             return;
         }
                     

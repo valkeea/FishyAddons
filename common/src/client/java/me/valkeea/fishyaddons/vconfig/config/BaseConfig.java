@@ -31,6 +31,7 @@ public abstract class BaseConfig {
     
     private boolean recreatedConfig = false;
     private boolean restoredConfig = false;
+    private boolean isRestoring = false;
     
     protected BaseConfig(String filename) {
         File root = new File(MinecraftClient.getInstance().runDirectory, "config/fishyaddons");
@@ -151,14 +152,12 @@ public abstract class BaseConfig {
             
         } catch (JsonSyntaxException | JsonIOException e) {
             logError("Malformed JSON: " + e.getMessage());
-            saveBackup(); // Save corrupted file as backup for debugging
             tryRestore();
         } catch (IOException e) {
             logError("Failed to read config: " + e.getMessage());
             tryRestore();
         } catch (Exception e) {
             logError("Unexpected error loading config: " + e.getMessage());
-            saveBackup();
             tryRestore();
         }
     }
@@ -211,16 +210,17 @@ public abstract class BaseConfig {
                 File backupFile = new File(datedBackupDir, configFile.getName());
                 Files.copy(configFile.toPath(), backupFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
 
+                int maxBackups = 10;
                 File[] backups = backupDir.listFiles(File::isDirectory);
-                if (backups != null && backups.length > 5) {
-                    java.util.Arrays.sort(backups, (a, b) -> a.getName().compareTo(b.getName())); // oldest first
-                    for (int i = 0; i < backups.length - 5; i++) {
+                if (backups != null && backups.length > maxBackups) {
+                    java.util.Arrays.sort(backups, (a, b) -> a.getName().compareTo(b.getName()));
+                    for (int i = 0; i < backups.length - maxBackups; i++) {
                         deleteDirectory(backups[i]);
                     }
                 }
             }
         } catch (IOException e) {
-            logError("Failed to create backup");
+            logError("Failed to create backup", e);
         }
     }
 
@@ -264,36 +264,46 @@ public abstract class BaseConfig {
      * Restore from backup if it exists, otherwise create new config.
      */
     protected void tryRestore() {
-        File[] backups = backupDir.listFiles(File::isDirectory);
+        if (isRestoring) {
+            recreatedConfig = true;
+            save();
+            return;
+        }
 
-        if (backups != null && backups.length > 0) {
-            java.util.Arrays.sort(backups, (a, b) -> b.getName().compareTo(a.getName()));
+        isRestoring = true;
+        try {
+            File[] backups = backupDir.listFiles(File::isDirectory);
+
             boolean restored = false;
+            if (backups != null && backups.length > 0) {
+                java.util.Arrays.sort(backups, (a, b) -> b.getName().compareTo(a.getName()));
 
-            for (File datedBackup : backups) {
-
-                File backupFile = new File(datedBackup, configFile.getName());
-                if (backupFile.exists()) {
-                    try {
-                        Files.copy(backupFile.toPath(), configFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-                        restoredConfig = true;
-                        load();
-                        warn("Restored from backup: " + datedBackup.getName());
-                        restored = true;
-                        break;
-                    } catch (IOException e) {
-                        logError("Backup restore failed for " + datedBackup.getName());
+                for (File datedBackup : backups) {
+                    File backupFile = new File(datedBackup, configFile.getName());
+                    if (backupFile.exists()) {
+                        try {
+                            Files.copy(backupFile.toPath(), configFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                            restoredConfig = true;
+                            load();
+                            warn("Restored from backup: " + datedBackup.getName());
+                            restored = true;
+                            break;
+                        } catch (IOException e) {
+                            logError("Backup restore failed for " + datedBackup.getName(), e);
+                        }
                     }
                 }
+
             }
+
             if (!restored) {
                 recreatedConfig = true;
                 save();
+                warn("No valid backup found, recreated config with defaults");
             }
-
-        } else {
-            recreatedConfig = true;
-            save();
+            
+        } finally {
+            isRestoring = false;
         }
     }
     

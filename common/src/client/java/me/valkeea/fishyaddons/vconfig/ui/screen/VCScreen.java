@@ -10,8 +10,10 @@ import java.util.stream.Stream;
 
 import org.lwjgl.glfw.GLFW;
 
+import me.valkeea.fishyaddons.hud.elements.custom.InfoDisplay;
 import me.valkeea.fishyaddons.tool.FishyMode;
 import me.valkeea.fishyaddons.util.Keyboard;
+import me.valkeea.fishyaddons.util.ModInfo;
 import me.valkeea.fishyaddons.vconfig.core.UICategory;
 import me.valkeea.fishyaddons.vconfig.ui.control.AbstractUIControl;
 import me.valkeea.fishyaddons.vconfig.ui.control.ColorControl;
@@ -38,6 +40,7 @@ import me.valkeea.fishyaddons.vconfig.ui.render.VCRenderContext;
 import me.valkeea.fishyaddons.vconfig.ui.render.VCText;
 import me.valkeea.fishyaddons.vconfig.ui.widget.VCButton;
 import me.valkeea.fishyaddons.vconfig.ui.widget.VCTextField;
+import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
@@ -235,6 +238,35 @@ public final class VCScreen extends AdjustedScreen {
         }
     }
 
+    private class ModIcon {
+        Bounds bounds;
+        String msg = ModInfo.getInfoMessage();
+        boolean show = false;
+
+        public void render(DrawContext ctx, TextRenderer tr, Identifier icon, int x, int y, int s) {
+            if (bounds == null) bounds = new Bounds(x, y, s, s);
+
+            ctx.drawTexture(
+                RenderPipelines.GUI_TEXTURED,
+                icon, x, y, 0, 0, s, s, s, s
+            );
+
+            if (!msg.isEmpty()) {
+                int dotSize = s / 4;
+                ctx.drawText(tr, "●", x + s - dotSize, y, Colors.DISABLED_RED, false);
+                if (show) InfoDisplay.getInstance().externalDisplay(ctx, tr, msg);
+            }
+        }
+
+        public boolean handleClick(double mouseX, double mouseY) {
+            if (bounds != null && bounds.contains(mouseX, mouseY)) {
+                show = !show;
+                return true;
+            }
+            return false;
+        }
+    }
+
     // Layout management
     private LayoutManager layout; 
     
@@ -254,6 +286,7 @@ public final class VCScreen extends AdjustedScreen {
     private List<VCEntry> filteredEntries;
     
     private VCTextField searchField;
+    private ModIcon modIcon;
     private Bounds resetBounds;
 
     private final Consumer<ColorControl> colorWheelOpener = this::openColorWheel;  
@@ -311,6 +344,8 @@ public final class VCScreen extends AdjustedScreen {
         
         int resetSize = Dimensions.SEARCH_H;
         int buttonX = listStartX + layout.getEntryW() - resetSize;
+
+        modIcon = new ModIcon();
         resetBounds = new Bounds(buttonX, Dimensions.SEARCH_Y, resetSize, resetSize);
 
         var closeStr = "Close";
@@ -430,21 +465,13 @@ public final class VCScreen extends AdjustedScreen {
         int ix = hx - (headerW / 2) - (int)Math.ceil(scaledSide * 1.5);
         int iy = y - (side / 3);
 
-        VCText.drawCenteredTextWithShadow(
-            context, textRenderer, styled, hx, y, 0xFF55FFFF
-        );        
-
-        context.drawTexture(
-            RenderPipelines.GUI_TEXTURED,
-            icon, ix, iy,
-            0, 0, scaledSide, scaledSide,
-            scaledSide, scaledSide
-        );
+        VCText.drawCenteredTextWithShadow(context, textRenderer, styled, hx, y, 0xFF55FFFF);
         
         renderTabs(context, mouseX, mouseY);
         renderSearchActionButton(context, mouseX, mouseY);
         renderConfigEntries(context, mouseX, mouseY);
         renderControlOverlays(context, mouseX, mouseY);
+        modIcon.render(context, textRenderer, icon, ix, iy, scaledSide);
     }
 
     private void renderTabs(DrawContext context, int mouseX, int mouseY) {
@@ -881,6 +908,10 @@ public final class VCScreen extends AdjustedScreen {
         
         if (filtered.size() > maxVisible &&
             scroller.handleClick(mouseX, mouseY, filtered, layout)) {
+            return true;
+        }
+
+        if (modIcon.handleClick(mouseX, mouseY)) {
             return true;
         }
 

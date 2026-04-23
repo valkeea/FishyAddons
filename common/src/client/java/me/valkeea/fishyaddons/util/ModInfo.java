@@ -2,6 +2,8 @@ package me.valkeea.fishyaddons.util;
 
 import java.util.Map;
 
+import org.lwjgl.glfw.GLFW;
+
 import me.valkeea.fishyaddons.hud.elements.custom.InfoDisplay;
 import me.valkeea.fishyaddons.vconfig.api.Config;
 import me.valkeea.fishyaddons.vconfig.api.StringKey;
@@ -9,8 +11,8 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.util.InputUtil;
 
 public class ModInfo {
-    private static final int CLOSE_KEY = 88;
-    private static final int COPY_LINK_KEY = 67;
+    private static final int CLOSE_KEY = GLFW.GLFW_KEY_X;
+    private static final int COPY_LINK_KEY = GLFW.GLFW_KEY_C;
     private static final boolean FOR_NEW = false;
 
     private static String infoId = "";
@@ -19,7 +21,7 @@ public class ModInfo {
     private static boolean wasPressed = false;
     private static boolean wasClosePressed = false;
     private static long displayStartTime = 0;
-    private static final long MAX_DISPLAY_TIME = 30000;
+    private static final long MAX_DISPLAY_TIME = 60000;
 
     static {
         fetchInfo();
@@ -56,8 +58,8 @@ public class ModInfo {
 
     public static void tick() {
         if (shouldShowInfo()) {
-            var client = MinecraftClient.getInstance();
-            var window = client.getWindow();
+            var mc = MinecraftClient.getInstance();
+            var window = mc.getWindow();
 
             if (displayStartTime > 0 && System.currentTimeMillis() - displayStartTime > MAX_DISPLAY_TIME) {
                 hideInfo();
@@ -74,7 +76,7 @@ public class ModInfo {
 
             boolean copyKeyDown = InputUtil.isKeyPressed(window, COPY_LINK_KEY);
             if (wasPressed && !copyKeyDown) {
-                client.keyboard.setClipboard("https://modrinth.com/project/QOUIa2cU");
+                mc.keyboard.setClipboard("https://modrinth.com/project/QOUIa2cU");
                 FishyNotis.ccNoti();
             }
             wasPressed = copyKeyDown;
@@ -116,6 +118,8 @@ public class ModInfo {
         
         if (showInfo && displayStartTime == 0) {
             displayStartTime = System.currentTimeMillis();
+        } else {
+            infoMessage = "";
         }
     }
 

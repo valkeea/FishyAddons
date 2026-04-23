@@ -19,7 +19,7 @@
   },
   "You've caused a disturbance in the loch. Could it be... Nessie?": {
     "msg": "",
-    "onscreen": "§b§l§kA§r §{bold}§[chartreuse] 🦕 Nessie 🦕 §b§l§kA§",
+    "onscreen": "§b§l§kA§r §{bold}§[caladium] 🦕 Nessie 🦕 §b§l§kA§",
     "color": 1.5649516E7,
     "soundId": "",
     "volume": 1.0,

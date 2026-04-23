@@ -44,15 +44,16 @@ public class GradientRenderer {
         PRESETS.put("slayer", "8B0000>B22222>FF0000");
         PRESETS.put("peridot", "ADFF2F>7CFC00>00FF00");
         PRESETS.put("end", "8A2BE2>4B0082>0000FF");
-        PRESETS.put("nebula", "E926FF>9812FF>262AFF");       
+        PRESETS.put("nebula", "E926FF>9812FF>262AFF");
+        PRESETS.put("holo", "75f4ff>ffabfc>a3fffd>ffabfc>a3fffd");        
         PRESETS.put("snow", "FFFFFF>E0FFFF>AFEEEE>ADD8E6>87CEEB");        
         PRESETS.put("pastel", "FFB3BA>FFDFBA>FFFFBA>BAFFC9>BAE1FF");
         PRESETS.put("metal", "334455>7F8FE>FED3E0>C2B2F1>4A7C94");   
         PRESETS.put("gold", "A9630B>FCAF1E>B36F16>FAE079>E29311>E69B13");                
         PRESETS.put("chartreuse", "1DAF44>98FE64>EBFF6B>E0FE55>73D14B>29C347");        
-        PRESETS.put("abyss", "1D1D30>262658>22227E>000099>0000CC>0000FF");         
-        PRESETS.put("opal", "FBCBE3>C19CEF>ADD8F3>EBF5E2>FBC5DF>ADACF7>B7F1ED>F1F3E3>FCD2E6");
-        PRESETS.put("holo", "4FB2FC>6AFBE0>C3F2DA>F8C7DA>C4B6F1>51BBF8>51BBF8>C1F0D5>A1F4DA>C4D1E0>57ACFA");        
+        PRESETS.put("abyss", "1D1D30>262658>22227E>000099>0000CC>0000FF");
+        PRESETS.put("caladium", "085E14>85FFA8>15eb63>ff8591>fc002e");
+        PRESETS.put("opal", "FBCBE3>C19CEF>ADD8F3>EBF5E2>FBC5DF>ADACF7>B7F1ED>F1F3E3>FCD2E6");     
         PRESETS.put("rainbow", "FF0000>FF8000>FFFF00>80FF00>00FF00>00FF80>00FFFF>0080FF>0000FF>8000FF>FF00FF>FF0080");
         init();
     }

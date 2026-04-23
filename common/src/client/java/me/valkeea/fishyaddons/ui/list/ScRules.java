@@ -8,8 +8,9 @@ import java.util.Map;
 import org.lwjgl.glfw.GLFW;
 
 import me.valkeea.fishyaddons.feature.filter.FilterConfig;
-import me.valkeea.fishyaddons.feature.filter.RuleFactory;
 import me.valkeea.fishyaddons.feature.filter.FilterConfig.Rule;
+import me.valkeea.fishyaddons.feature.filter.RuleFactory;
+import me.valkeea.fishyaddons.feature.filter.RuleFactory.SeaCreatureData.CreatureConfig;
 import me.valkeea.fishyaddons.ui.GuiUtil;
 import me.valkeea.fishyaddons.ui.element.TextFormatMenu;
 import me.valkeea.fishyaddons.util.text.Enhancer;
@@ -468,20 +469,18 @@ public class ScRules extends Screen {
         String replacementText;
         String prefixText;
         Rule rule;
-        RuleFactory.SeaCreatureData.CreatureConfig creatureData;
+        CreatureConfig creatureData;
         boolean modified = false;
         boolean isEnabled;
         boolean isHeader;
 
         public Entry(String creatureName, String currentReplacement, 
-                    RuleFactory.SeaCreatureData.CreatureConfig creatureData,
-                    Rule existingRule, boolean isEnabled) {
+                    CreatureConfig creatureData, Rule existingRule, boolean isEnabled) {
             this(creatureName, currentReplacement, creatureData, existingRule, isEnabled, false);
         }
 
         public Entry(String creatureName, String currentReplacement, 
-                    RuleFactory.SeaCreatureData.CreatureConfig creatureData,
-                    Rule existingRule, boolean isEnabled, boolean isHeader) {
+                    CreatureConfig creatureData, Rule existingRule, boolean isEnabled, boolean isHeader) {
             final int offScreenY = -1000;
             
             this.creatureData = creatureData;
@@ -597,19 +596,22 @@ public class ScRules extends Screen {
             double mouseX = click.x();
             double mouseY = click.y();
 
+            if (!isInside(overrideField.getX(), overrideField.getY(), overrideField.getWidth(), overrideField.getHeight(), mouseX, mouseY)) {
+                overrideField.setFocused(false);
+            }
+
+            if (!isInside(prefixField.getX(), prefixField.getY(), prefixField.getWidth(), prefixField.getHeight(), mouseX, mouseY)) {
+                prefixField.setFocused(false);
+            }
+
             if (isInside(saveBtn.getX(), saveBtn.getY(), saveBtn.getWidth(), saveBtn.getHeight(), mouseX, mouseY)) {
                 saveBtn.onPress(click);
                 return true;
             }
+
             if (isInside(toggleBtn.getX(), toggleBtn.getY(), toggleBtn.getWidth(), toggleBtn.getHeight(), mouseX, mouseY)) {
                 toggleBtn.onPress(click);
                 return true;
-            }
-            if (!isInside(overrideField.getX(), overrideField.getY(), overrideField.getWidth(), overrideField.getHeight(), mouseX, mouseY)) {
-                overrideField.setFocused(false);
-            }
-            if (!isInside(prefixField.getX(), prefixField.getY(), prefixField.getWidth(), prefixField.getHeight(), mouseX, mouseY)) {
-                prefixField.setFocused(false);
             }
             return false;
         }
@@ -648,15 +650,13 @@ public class ScRules extends Screen {
         }
         
         private void updateRule(String ruleName) {
-            if (this.rule == null) { return; }
+            if (this.rule == null) return;
             
             String currentReplacementText = this.overrideField != null ? this.overrideField.getText() : this.replacementText;
             String currentPrefixText = this.prefixField != null ? this.prefixField.getText() : this.prefixText;
-            boolean isDefaultRule = FilterConfig.getDefaultRules().containsKey(ruleName) && 
-                                   !FilterConfig.getUserRules().containsKey(ruleName);
             
-            if (isDefaultRule) {
-                FilterConfig.Rule modifiedRule = new FilterConfig.Rule(
+            if (FilterConfig.getDefaultRules().containsKey(ruleName)) {
+                var modifiedRule = new Rule(
                     this.rule.getSearchText(),
                     currentReplacementText != null ? currentReplacementText : this.rule.getReplacement(),
                     currentPrefixText != null ? currentPrefixText : this.rule.getDhPrefix(),
@@ -665,14 +665,6 @@ public class ScRules extends Screen {
                     this.isEnabled
                 );
                 FilterConfig.setUserRule(ruleName, modifiedRule);
-            } else {
-                if (currentReplacementText != null) {
-                    this.rule.setReplacement(currentReplacementText);
-                }
-                if (currentPrefixText != null) {
-                    this.rule.setDhPrefix(currentPrefixText);
-                }
-                this.rule.setEnabled(this.isEnabled);
             }
         }   
     }

@@ -9,6 +9,7 @@ import me.valkeea.fishyaddons.command.CmdHelper;
 import me.valkeea.fishyaddons.command.CommandBuilderUtils;
 import me.valkeea.fishyaddons.feature.qol.NetworkMetrics;
 import me.valkeea.fishyaddons.feature.skyblock.WeatherTracker;
+import me.valkeea.fishyaddons.feature.waypoints.NpcLocation;
 import me.valkeea.fishyaddons.feature.waypoints.TempWaypoint;
 import me.valkeea.fishyaddons.tool.PlayerPosition;
 import me.valkeea.fishyaddons.tracker.SkillTracker;
@@ -48,7 +49,8 @@ public class FaRoot implements CommandHandler {
             .then(coordCommand())
             .then(dianaCommand())
             .then(skillCommand())
-            .then(slayerCommand());
+            .then(slayerCommand())
+            .then(npcCommand());
     }
 
 
@@ -363,5 +365,29 @@ public class FaRoot implements CommandHandler {
         } catch (IllegalArgumentException e) {
             return null;
         }
+    }
+
+    private static LiteralArgumentBuilder<FabricClientCommandSource> npcCommand() {
+        return ClientCommandManager.literal("npc")
+        .then(ClientCommandManager.argument("name", StringArgumentType.greedyString())
+            .executes(context -> {
+                var npcName = StringArgumentType.getString(context, "name");
+                NpcLocation.drawFor(npcName);
+                return 1;
+            }))
+        .then(ClientCommandManager.literal("all")
+            .executes(context -> {
+                NpcLocation.drawAll();
+                return 1;
+            }))
+        .then(ClientCommandManager.literal("clear")
+            .executes(context -> {
+                TempWaypoint.clearBeacons();
+                return 1;
+            }))
+        .executes(context -> {
+            FishyNotis.themed("Usage: §b/fa npc §8<§7name §8| §7all §8| §7clear§8>");
+            return 1;
+        });
     }
 }

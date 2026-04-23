@@ -629,8 +629,7 @@ public class ScData {
 
             FishyNotis.send(Text.literal("§3No catch data for " + dpName));
 
-                if (histogram == null) {
-                FishyNotis.themed("Did you mean;");
+            if (histogram == null) {
 
                 List<String> similar = new ArrayList<>();
                 Sc.getTrackedCreatures().stream()
@@ -644,6 +643,7 @@ public class ScData {
                     .styled(style -> style.withClickEvent(new net.minecraft.text.ClickEvent.RunCommand("fa sc " + key)))));
                 }
             }
+
             return;
         }
 

@@ -25,8 +25,8 @@ public class CmdManager {
     
     public static void register() {
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
-            registerFaCommand(dispatcher, "fa");
-            registerFaCommand(dispatcher, "fishyaddons");
+            registerFaCommand(dispatcher, MAIN_HANDLER.getRootNames()[0]);
+            registerFaCommand(dispatcher, MAIN_HANDLER.getRootNames()[1]);
             registerHandlerCommand(dispatcher, PROFIT_HANDLER);
             registerHandlerCommand(dispatcher, GUARD_HANDLER);
             registerHandlerCommand(dispatcher, WAYPOINT_HANDLER);

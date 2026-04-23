@@ -20,6 +20,7 @@ public enum IntKey implements ConfigKey<Integer> {
     HUD_PROFIT_LINES("profitTrackerLines", 10),
     FWP_DISTANCE("waypointChainsDistance", 3),
     RENDER_COORD_MS("renderCoordsMs", 60000),
+    NPC_MIN("npcWaypointMs", 5),
 
     NONE("NaN")
     ;

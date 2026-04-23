@@ -121,5 +121,14 @@ public class WaypointConfig {
         return items;
     }
 
+    @UISlider(
+        altKey = IntKey.NPC_MIN,
+        name = "*NPC* location waypoints",
+        description = "Change how long NPC waypoints are rendered for after being triggered.",
+        tooltip = {"§b/fa npc", "§7<name> §8| §7all §8| §7clear"},
+        min = 1, max = 10, format = "%.0f minute(s)"
+    )
+    private static int npcWaypointDuration;
+
     private WaypointConfig() {}    
 }

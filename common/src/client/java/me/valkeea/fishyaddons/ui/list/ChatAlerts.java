@@ -13,8 +13,8 @@ import me.valkeea.fishyaddons.vconfig.config.impl.AlertConfig;
 import me.valkeea.fishyaddons.vconfig.config.impl.AlertConfig.AlertData;
 import me.valkeea.fishyaddons.vconfig.ui.layout.UIScaleCalculator;
 import me.valkeea.fishyaddons.vconfig.ui.manager.ScreenManager;
-import me.valkeea.fishyaddons.vconfig.ui.render.RenderUtils;
 import me.valkeea.fishyaddons.vconfig.ui.render.VCText;
+import me.valkeea.fishyaddons.vconfig.ui.render.VCTooltip;
 import me.valkeea.fishyaddons.vconfig.ui.widget.FaButton;
 import me.valkeea.fishyaddons.vconfig.ui.widget.VCButton;
 import me.valkeea.fishyaddons.vconfig.ui.widget.VCLabelField;
@@ -58,7 +58,9 @@ public class ChatAlerts extends Screen {
     private FaButton addBtn = null;
     private DropdownMenu presetDropdown;
     private VCPopup popup = null;
-    private VCTextField presetNameField = null;  
+    private VCTextField presetNameField = null;
+    private VCTooltip downloadTooltip = null;
+    private VCTooltip uploadTooltip = null;  
 
     public ChatAlerts() {
         super(Text.literal(TITLE_TEXT));
@@ -141,6 +143,29 @@ public class ChatAlerts extends Screen {
             Text.literal("📁⤓").styled(style -> style.withBold(true).withColor(0xFFB0FFB0)),
             b -> presetPopup()
         ));
+
+        downloadTooltip = new VCTooltip(
+            Arrays.asList(
+                Text.literal("Download From File:"),
+                Text.literal("- §8Format: preset.alert.<name>.json"),
+                Text.literal("- §8All presets are stored in config/fishyaddons/preset"),
+                Text.literal("  §8and can be re-downloaded"),
+                Text.literal("  §8'example' contains the proper json structure"),
+                Text.literal("- §dTip: §7To update fishing alerts, re-download 'fishing'")
+            ),
+            VCVisuals.getThemeColor(),
+            uiScale
+        );
+
+        uploadTooltip = new VCTooltip(
+            Arrays.asList(
+                Text.literal("Save as Preset:"),
+                Text.literal("- §8Creates a working preset with all current alerts."),
+                Text.literal("- §8Can be shared with others or saved for later use")
+            ),
+            VCVisuals.getThemeColor(),
+            uiScale
+        );
     }
 
     private static void calcDimensions(float scale) {
@@ -196,20 +221,11 @@ public class ChatAlerts extends Screen {
         }
 
         if (isInside(downloadBtnX, downloadBtnY, btnW, btnH, mouseX, mouseY)) {
-            RenderUtils.preview(context, this.textRenderer, Arrays.asList(
-                Text.literal("Download From File:"),
-                Text.literal("- §8Format: preset.alert.<name>.json"),
-                Text.literal("- §8All presets are stored in config/fishyaddons/preset"),
-                Text.literal("  §8and can be re-downloaded"),
-                Text.literal("  §8'example' contains the proper json structure")
-            ), downloadBtnX - 60, downloadBtnY - 60, VCVisuals.getThemeColor(), uiScale);
+            downloadTooltip.renderAuto(context, this.textRenderer, downloadBtnX - 60, downloadBtnY - 60, this.width, this.height);
         }
+
         if (isInside(uploadBtnX, uploadBtnY, btnW, btnH, mouseX, mouseY)) {
-            RenderUtils.preview(context, this.textRenderer, Arrays.asList(
-                Text.literal("Save as Preset:"),
-                Text.literal("- §8Creates a working preset with all current alerts."),
-                Text.literal("- §8Can be shared with others or saved for later use")
-            ), uploadBtnX - 60, uploadBtnY - 60, VCVisuals.getThemeColor(), uiScale);
+            uploadTooltip.renderAuto(context, this.textRenderer, uploadBtnX - 60, uploadBtnY - 60, this.width, this.height);
         }
     }
 

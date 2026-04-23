@@ -9,33 +9,13 @@ import net.minecraft.text.Text;
 public class RenderUtils {
     private static final int TRIANGLE_OVERSAMPLE = 4;
 
-    /** Simple tooltip */
+    /** 
+     * Convenience method to create a VCTooltip and render it.
+     */
     public static void preview(DrawContext context, TextRenderer textRenderer, List<Text> lines, int x, int y, int themeColor, float uiScale) {
         if (lines == null || lines.isEmpty()) return;
-
-        int width = 0;
-        for (Text line : lines) {
-            int lineWidth = textRenderer.getWidth(line);
-            if (lineWidth > width) {
-                width = lineWidth;
-            }
-        }
-
-        var matrices = context.getMatrices();
-        matrices.pushMatrix();
-        matrices.scale(uiScale, uiScale);
-
-        int tooltipX = (int)(x / uiScale) + 8;
-        int tooltipY = (int)(y / uiScale);
-        int height = lines.size() * 10 + 5;
-
-        context.fill(tooltipX - 3, tooltipY - 3, tooltipX + width + 3, tooltipY + height + 3, 0x90000000);
-        context.fill(tooltipX - 2, tooltipY - 2, tooltipX + width + 1, tooltipY + height + 1, 0xB0000000);
-
-        for (int i = 0; i < lines.size(); i++) {
-            context.drawText(textRenderer, lines.get(i), tooltipX, tooltipY + i * 10, themeColor, false);
-        }
-        matrices.popMatrix();
+        var tt = new VCTooltip(lines, themeColor, uiScale);
+        tt.render(context, textRenderer, x, y);
     }
 
     /** Orientation-aware gradient triangle with local oversampling for smoother edges. */

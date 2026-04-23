@@ -6,6 +6,7 @@ import me.valkeea.fishyaddons.hud.core.HudElement;
 import me.valkeea.fishyaddons.hud.core.HudElementState;
 import me.valkeea.fishyaddons.util.ModInfo;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.text.Text;
 
@@ -13,6 +14,7 @@ public class InfoDisplay implements HudElement {
     private InfoDisplay() {}
     private static final boolean LINK_BTN = true;    
     private static InfoDisplay instance = null;
+
     public static InfoDisplay getInstance() {
         if (instance == null) {
             instance = new InfoDisplay();
@@ -20,13 +22,16 @@ public class InfoDisplay implements HudElement {
         return instance;
     }
 
+    public static boolean isVisible() {
+        return instance != null && instance.visible;
+    }    
+
     private boolean visible = false;
     private String message = "";
     private int hudX = 20;
     private int hudY = 40;
     private int width = 220;
     private int height = 60;
-    private int bgColor = 0xAA222222;
     private int textColor = 0xFFFFFFFF;
     private boolean outlined = false;
     private boolean bg = true; 
@@ -44,54 +49,62 @@ public class InfoDisplay implements HudElement {
         invalidateCache();
     }
 
-    public boolean isVisible() {
-        return visible;
-    }
-
     public void forceHide() {
         hide();
     }
 
+    public void externalDisplay(DrawContext context, TextRenderer tr, String msg) {
+        draw(context, tr, msg, true);
+    }
+
     @Override
-    public void render(DrawContext context, MinecraftClient mc, int mouseX, int mouseY) {
+    public void render(DrawContext ctx, MinecraftClient mc, int mouseX, int mouseY) {
         if (!visible || !ModInfo.shouldShowInfo() || message == null || message.trim().isEmpty()) {
             if (visible && !ModInfo.shouldShowInfo()) {
                 forceHide();
             }
             return;
         }
+        draw(ctx, mc.textRenderer, message, false);
+    }
 
-        if (mc == null || mc.textRenderer == null) return;
-        String[] lines = message.replace("\\n", "\n").split("\n");
+    private void draw(DrawContext ctx, TextRenderer tr, String msg, boolean external) {
+        if (tr == null) return;
+
+        String[] lines = msg.replace("\\n", "\n").split("\n");
         int maxWidth = 0;
-        int lineHeight = mc.textRenderer.fontHeight + 2;
+        int lineHeight = tr.fontHeight + 2;
         int hudHeight = 18 + (lines.length - 1) * lineHeight + 12;
 
         for (String line : lines) {
-            int lineWidth = mc.textRenderer.getWidth(line);
+            int lineWidth = tr.getWidth(line);
             if (lineWidth > maxWidth) maxWidth = lineWidth;
         }
 
-        context.fill(hudX, hudY, hudX + maxWidth + 24, hudY + hudHeight, bgColor);
+        int bgColor = external ? 0xFF111111 : 0xAA111111;
+        ctx.fill(hudX, hudY, hudX + maxWidth + 24, hudY + hudHeight, bgColor);
 
         int textX = hudX + 12;
         int textY = hudY + 12;
 
         for (int i = 0; i < lines.length; i++) {
-            context.drawText(mc.textRenderer, Text.literal(lines[i]), textX, textY + i * lineHeight, textColor, false);
+            ctx.drawText(tr, Text.literal(lines[i]), textX, textY + i * lineHeight, textColor, false);
         }
 
-        int guideW = mc.textRenderer.getWidth("Press X to close");
+        if (external) return;
+
+        int guideW = tr.getWidth("Press X to close");
         int btnY = textY + lines.length * lineHeight + 6;
-        context.fill(hudX + 6, btnY, hudX + guideW + 14, btnY + 12, 0xAA000000);
-        context.drawText(mc.textRenderer, Text.literal("Press X to close"), textX, btnY + 2, 0xFFAAAAAA, false);
+        ctx.fill(hudX + 6, btnY, hudX + guideW + 14, btnY + 12, 0xAA000000);
+        ctx.drawText(tr, Text.literal("Press X to close"), textX, btnY + 2, 0xFFAAAAAA, false);
 
         if (!LINK_BTN) return;
-        int copyW = mc.textRenderer.getWidth("C to copy link");
+        
+        int copyW = tr.getWidth("C to copy link");
         int copyX = hudX + 18 + guideW;
-        context.fill(copyX, btnY, hudX + guideW + copyW + 28, btnY + 12, 0xAA000000);
-        context.drawText(mc.textRenderer, Text.literal("C to copy link"), copyX + 7, btnY + 2, 0xFFAAAAAA, false);
-    }  
+        ctx.fill(copyX, btnY, hudX + guideW + copyW + 28, btnY + 12, 0xAA000000);
+        ctx.drawText(tr, Text.literal("C to copy link"), copyX + 7, btnY + 2, 0xFFAAAAAA, false);
+    }
 
     @Override
     public Rectangle getBounds(MinecraftClient mc) {

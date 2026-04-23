@@ -40,8 +40,8 @@ public abstract class AdjustedScreen extends Screen {
         super.init();
         
         var window = client.getWindow();
-        rawWidth = window.getWidth();
-        rawHeight = window.getHeight();
+        rawWidth = window.getFramebufferWidth();
+        rawHeight = window.getFramebufferHeight();
         
         uiScale = calculateUIScale(rawWidth, rawHeight);
         

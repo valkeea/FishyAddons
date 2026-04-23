@@ -309,6 +309,7 @@ public class CollectionDisplay extends InteractiveHudElement {
     protected void postRenderCustom(DrawContext context, MinecraftClient mc, 
                                     HudElementState state, int mouseX, int mouseY) {
 
+        var window = mc.getWindow();                                
         var screen = mc.currentScreen;
 
         if (!isEditingMode() && isInventoryOpen(mc)) {
@@ -317,13 +318,14 @@ public class CollectionDisplay extends InteractiveHudElement {
             int hudX = state.x;
             int hudY = state.y;
             int buttonWidth = (int)(45 * scale);
+            int h = window.getFramebufferHeight() / window.getScaleFactor();
             
             if (toggleMenu.isVisible() && screen != null) {
                 int buttonSpacing = (int)(2 * scale);
                 int toggleButtonX = hudX + 2 * (buttonWidth + buttonSpacing);
                 int menuX = toggleButtonX;
                 int menuY = hudY + 2;
-                toggleMenu.setPosition(menuX, menuY, screen.height);
+                toggleMenu.setPosition(menuX, menuY, h);
                 toggleMenu.render(context, screen, mouseX, mouseY, scale);
             }
             
@@ -332,7 +334,7 @@ public class CollectionDisplay extends InteractiveHudElement {
                 int goalsButtonX = hudX + 3 * (buttonWidth + buttonSpacing);
                 int menuX = goalsButtonX;
                 int menuY = hudY + 2;
-                goalToggleMenu.setPosition(menuX, menuY, screen.height);
+                goalToggleMenu.setPosition(menuX, menuY, h);
                 goalToggleMenu.render(context, screen, mouseX, mouseY, scale);
             }
 

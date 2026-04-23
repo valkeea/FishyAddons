@@ -114,7 +114,8 @@ public abstract class InteractiveHudElement extends BaseHudElement {
      * Update menu positions on cache refresh
      */
     protected void updateMenuPositions() {
-        int height = MinecraftClient.getInstance().getWindow().getScaledHeight();
+        var window = MinecraftClient.getInstance().getWindow();
+        int height = window.getFramebufferHeight() / window.getScaleFactor();
         float scale = getHudSize() / 12.0F;
         int verticalSpace = height - getHudY() - MENU_PADDING;
         
@@ -206,8 +207,8 @@ public abstract class InteractiveHudElement extends BaseHudElement {
         }
 
         var window = mc.getWindow();
-        double actualMouseX = mc.mouse.getX() * window.getScaledWidth() / window.getWidth();
-        double actualMouseY = mc.mouse.getY() * window.getScaledHeight() / window.getHeight();
+        double actualMouseX = mc.mouse.getX() * window.getFramebufferWidth() / (window.getScaleFactor() * window.getWidth());
+        double actualMouseY = mc.mouse.getY() * window.getFramebufferHeight() / (window.getScaleFactor() * window.getHeight());
         
         var drawer = new HudDrawer(mc, context, state);
         buttonManager.render(drawer, actualMouseX, actualMouseY);
@@ -262,7 +263,7 @@ public abstract class InteractiveHudElement extends BaseHudElement {
     }
     
     public boolean handleMouseClick(Click click) {
-        if (isEditingMode()) return false;
+        if (isEditingMode() || !shouldRender()) return false;
         
         var mc = MinecraftClient.getInstance();
         var state = getCachedState();
@@ -409,8 +410,8 @@ public abstract class InteractiveHudElement extends BaseHudElement {
         
         if (!isEditingMode() && isInventoryOpen(mc)) {
             var window = mc.getWindow();
-            double actualMouseX = mc.mouse.getX() * window.getScaledWidth() / window.getWidth();
-            double actualMouseY = mc.mouse.getY() * window.getScaledHeight() / window.getHeight();
+            double actualMouseX = mc.mouse.getX() * window.getFramebufferWidth() / (window.getScaleFactor() * window.getWidth());
+            double actualMouseY = mc.mouse.getY() * window.getFramebufferHeight() / (window.getScaleFactor() * window.getHeight());
             var drawer = new HudDrawer(mc, context, state);
             regionManager.renderTooltips(context, drawer, actualMouseX, actualMouseY);
         }

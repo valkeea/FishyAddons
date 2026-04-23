@@ -31,13 +31,17 @@ public class HudConfig extends BaseConfig {
     public static int getHudX(String hudKey, int defaultX) {
         Object value = INSTANCE.hud.getValues().getOrDefault(hudKey + "X", defaultX);
         int intValue = value instanceof Number n ? n.intValue() : defaultX;
-        return Math.clamp(intValue, 0, MinecraftClient.getInstance().getWindow().getScaledWidth());
+        var window = MinecraftClient.getInstance().getWindow();
+        int maxX = window.getFramebufferWidth() / window.getScaleFactor() - getHudSize(hudKey, 12);
+        return Math.clamp(intValue, 0, maxX);
     }
 
     public static int getHudY(String hudKey, int defaultY) {
         Object value = INSTANCE.hud.getValues().getOrDefault(hudKey + "Y", defaultY);
         int intValue = value instanceof Number n ? n.intValue() : defaultY;
-        return Math.clamp(intValue, 0, MinecraftClient.getInstance().getWindow().getScaledHeight());
+        var window = MinecraftClient.getInstance().getWindow();
+        int maxY = window.getFramebufferHeight() / window.getScaleFactor() - getHudSize(hudKey, 12);
+        return Math.clamp(intValue, 0, maxY);
     }
 
     public static void setHudX(String hudKey, int x) {

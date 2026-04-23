@@ -26,8 +26,9 @@ public class MixinMouse {
         double windowX = ((MouseAccessor)this).getX();
         double windowY = ((MouseAccessor)this).getY();
         
-        double scaledX = windowX * mc.getWindow().getScaledWidth() / mc.getWindow().getWidth();
-        double scaledY = windowY * mc.getWindow().getScaledHeight() / mc.getWindow().getHeight();
+        Window w = mc.getWindow();
+        double scaledX = windowX * w.getFramebufferWidth() / (w.getScaleFactor() * w.getWidth());
+        double scaledY = windowY * w.getFramebufferHeight() / (w.getScaleFactor() * w.getHeight());
         
         var event = new MouseScrollEvent(vertical, scaledX, scaledY);
         FaEvents.MOUSE_SCROLL.firePhased(event, listener -> listener.onScroll(event));
@@ -43,8 +44,8 @@ public class MixinMouse {
         Window w = mc.getWindow();
         double windowX = ((MouseAccessor)this).getX();
         double windowY = ((MouseAccessor)this).getY();
-        double scaledX = windowX * w.getScaledWidth() / w.getWidth();
-        double scaledY = windowY * w.getScaledHeight() / w.getHeight();
+        double scaledX = windowX * w.getFramebufferWidth() / (w.getScaleFactor() * w.getWidth());
+        double scaledY = windowY * w.getFramebufferHeight() / (w.getScaleFactor() * w.getHeight());
 
         var click = new Click(scaledX, scaledY, input);
         var event = new MouseClickEvent(click);

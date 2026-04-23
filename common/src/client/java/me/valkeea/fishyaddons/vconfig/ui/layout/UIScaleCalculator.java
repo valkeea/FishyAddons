@@ -42,7 +42,7 @@ public final class UIScaleCalculator {
         if (mc.getWindow() == null) {
             return (float) Math.clamp(Config.get(DoubleKey.MOD_UI_SCALE), ABSOLUTE_MIN_SCALE, ABSOLUTE_MAX_SCALE);
         }
-        int width = mc.getWindow().getWidth();
+        int width = mc.getWindow().getFramebufferWidth();
         return calculateUIScale(width);
     }
 
@@ -55,8 +55,8 @@ public final class UIScaleCalculator {
         float calculatedScale = calculateUIScale();
         float legacyMin = 0.7f;
         float legacyMax = 1.3f;
-        float legacyScale = (calculatedScale - ABSOLUTE_MIN_SCALE) / (ABSOLUTE_MAX_SCALE - ABSOLUTE_MIN_SCALE) * (legacyMax - legacyMin) + legacyMin;
-        return Math.clamp(legacyScale, legacyMin, legacyMax);
+        float mul = legacyMin / ABSOLUTE_MIN_SCALE;
+        return Math.clamp(calculatedScale * mul, legacyMin, legacyMax);
     }
 
     private UIScaleCalculator() {}

@@ -3,6 +3,7 @@ package me.valkeea.fishyaddons.hud.core;
 import java.util.List;
 
 import me.valkeea.fishyaddons.render.OutlinedText;
+import me.valkeea.fishyaddons.util.text.Color;
 import me.valkeea.fishyaddons.vconfig.api.Config;
 import me.valkeea.fishyaddons.vconfig.ui.render.RenderUtils;
 import me.valkeea.fishyaddons.vconfig.ui.widget.VCVisuals;
@@ -80,7 +81,7 @@ public class HudDrawer {
 
     /** Text button with centering and hover feedback */
     public void textButton(int x, int y, int width, int height, Text text, boolean hovered) {
-        int textColor = hovered ? VCVisuals.borderHex(true, true) : state.color;
+        int textColor = hovered ? Color.brighten(state.color, 0.5f) : state.color;
         drawText(text, x + (width - mc.textRenderer.getWidth(text)) / 2, y + (height - 9) / 2, textColor);
     }
     
@@ -91,8 +92,8 @@ public class HudDrawer {
         int w = tr.getWidth(tooltip.get(0)) + 10;
         int h = tooltip.size() * (tr.fontHeight + 2) + 4;
 
-        if (mouseX + w > screen.getScaledWidth()) mouseX = screen.getScaledWidth() - w - 5;
-        if (mouseY + h > screen.getScaledHeight()) mouseY = screen.getScaledHeight() - h - 5;
+        if (mouseX + w > screen.getFramebufferWidth() / screen.getScaleFactor()) mouseX = screen.getFramebufferWidth() / screen.getScaleFactor() - w - 5;
+        if (mouseY + h > screen.getFramebufferHeight() / screen.getScaleFactor()) mouseY = screen.getFramebufferHeight() / screen.getScaleFactor() - h - 5;
 
         RenderUtils.preview(context, mc.textRenderer, tooltip, mouseX, mouseY, themeColor, 1.0F);
     }

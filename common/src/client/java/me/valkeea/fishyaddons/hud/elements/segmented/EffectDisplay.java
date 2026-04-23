@@ -110,7 +110,10 @@ public class EffectDisplay implements HudElement {
     public void updateSpace() {
         var mc = MinecraftClient.getInstance();
         int totalH = (int)(Math.max(1, EffectTimers.getInstance().listActive().size()) * 20 * Math.max(0.5f, getHudSize() / 12.0F));
-        if (getHudY() + totalH > mc.getWindow().getScaledHeight()) {
+        var window = mc.getWindow();
+        int screenHeight = window.getFramebufferHeight() / window.getScaleFactor();
+        
+        if (getHudY() + totalH > screenHeight) {
             intersects = true;
             return;
         }

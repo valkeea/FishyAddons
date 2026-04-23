@@ -340,7 +340,8 @@ public class VCToggleMenu {
     }
 
     public void setMaxVisibleEntries(float scale, int verticalSpace) {
-        this.maxVisible = verticalSpace / (int)(baseEntryHeight * scale);
+        float s = scale > 0 ? scale : 1.0f;
+        this.maxVisible = verticalSpace / (int)(baseEntryHeight * s);
     }
 
     public boolean isMouseOver(double mouseX, double mouseY) {

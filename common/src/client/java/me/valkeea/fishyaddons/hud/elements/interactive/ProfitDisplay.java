@@ -263,6 +263,7 @@ public class ProfitDisplay extends InteractiveHudElement {
 
     @Override
     protected void postRenderCustom(DrawContext context, MinecraftClient mc, HudElementState state, int mouseX, int mouseY) {
+        var window = mc.getWindow();
         var screen = mc.currentScreen;
         if (!isEditingMode() && isInventoryOpen(mc)) {
         
@@ -276,7 +277,7 @@ public class ProfitDisplay extends InteractiveHudElement {
                 int profileButtonX = hudX + 4 * (buttonWidth + buttonSpacing);
                 int menuX = profileButtonX;
                 int menuY = hudY;
-                profileMenu.setPosition(menuX, menuY, screen.height);
+                profileMenu.setPosition(menuX, menuY, window.getFramebufferHeight() / window.getScaleFactor());
                 profileMenu.render(context, screen, mouseX, mouseY, scale);
             }
 

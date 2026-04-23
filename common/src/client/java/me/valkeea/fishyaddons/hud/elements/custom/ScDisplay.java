@@ -153,7 +153,8 @@ public class ScDisplay implements HudElement {
         List<String> creatures = getCreaturesForArea(currentArea);
         if (creatures.isEmpty()) return;
 
-        int screenWidth = mc.getWindow().getScaledWidth();
+        var window = mc.getWindow();
+        int screenWidth = window.getFramebufferWidth() / window.getScaleFactor();
         int leftThreshold = screenWidth / 3;
         int rightThreshold = (2 * screenWidth) / 3;
 
@@ -433,7 +434,8 @@ public class ScDisplay implements HudElement {
         int x = getHudX();
         int y = getHudY();
 
-        int screenW = mc.getWindow().getScaledWidth();
+        var window = mc.getWindow();
+        int screenW = window.getFramebufferWidth() / window.getScaleFactor();
         int leftThreshold = screenW / 3;
         int rightThreshold = (2 * screenW) / 3;
 

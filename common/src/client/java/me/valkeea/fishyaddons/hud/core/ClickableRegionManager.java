@@ -6,6 +6,7 @@ import java.util.function.Consumer;
 
 import me.valkeea.fishyaddons.feature.qol.CopyChat;
 import me.valkeea.fishyaddons.tool.FishyMode;
+import me.valkeea.fishyaddons.util.text.TextUtils;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.text.Text;
 
@@ -45,7 +46,7 @@ public class ClickableRegionManager {
                     return true;
             }
             if (button == 1 && region.isHovered(mouseX, mouseY) && region.getData() instanceof Text text) {
-                CopyChat.toClipboard(text.getString());
+                CopyChat.toClipboard(TextUtils.stripColor(text.getString()));
                 return true;
             }
         }

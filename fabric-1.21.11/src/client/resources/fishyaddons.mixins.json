@@ -31,6 +31,7 @@
 		"MixinInGameHudFireOverlay",
 		"MixinInGameHudSidebar",
 		"MixinInventoryScreen",
+		"MixinKeyboard",
 		"MixinLivingEntityRenderer",
 		"MixinMinecraftClientScreenChange",
 		"MixinMouse",

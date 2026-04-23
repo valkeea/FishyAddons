@@ -8,7 +8,7 @@ import me.valkeea.fishyaddons.vconfig.config.ConfigFile;
 public enum DoubleKey implements ConfigKey<Double> {
 
     DMG_SCALE("dmgScale", 0.15),
-    MOD_UI_SCALE("modUiScale", 0.8),
+    MOD_UI_SCALE("modUiScale", 1.5),
     FILTER_MIN_VALUE("minItemValue", 2.0),
     INV_SEARCH_OPACITY("searchOverlayOpacity", 0.8),
     REEL_OVERRIDE("customReel"),

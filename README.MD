@@ -1,9 +1,11 @@
 <div align="center">
-  
+
+<img alt="FA" src="https://raw.githubusercontent.com/valkeea/FishyAddons/refs/heads/main/common/src/client/resources/assets/fishyaddons/icon.png" width=100 height=100>
+
 <h1>FishyAddons for Hypixel Skyblock</h1>
 
 <a href="https://modrinth.com/project/QOUIa2cU">
-<img alt="Modrinth Version" src="https://img.shields.io/modrinth/v/QOUIa2cU?label=Modrinth&labelColor=%23363636&color=%230affeb">
+<img alt="Modrinth Version" src="https://img.shields.io/modrinth/v/QOUIa2cU?label=Modrinth&labelColor=%232a292b&color=%230affeb">
 </a>
 
  > _Use /fa or /fishyaddons to open config.  Features with commands have help message for the command root._
@@ -88,6 +90,7 @@
     <li>Phantoms on Galatea</li>
     <li>Thunder Sea creature</li>
     <li>Meow, Bark and Jerry runes</li>
+    <li>Endermen</li>
   </ul>
 </li>  
 <li> Hide and block clicks on Skyblock gui buttons</li>
@@ -96,11 +99,12 @@
 </details>
 
 <details>
-<summary><b>Waypoints</b> (3)</summary>
+<summary><b>Waypoints</b> (4)</summary>
 
 - Area-based waypoint chains _/fwp_
 - Send and render player coordinates _/fa coords <optional msg>_
 - Spider's Den relic waypoints
+- Skyblock NPC locations
 
 </details>
 

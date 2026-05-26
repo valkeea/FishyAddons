@@ -59,7 +59,8 @@ public class CollectionData {
     static final Set<String> falseMatches = Set.of(
         "jungle", "flaming", "star", "lump", "feather", "shard", "flesh", "potato",
         "mushrooms", "halfeaten", "bone", "spider egg", "nevermelt", "pixie", "spectre",
-        "guts", "burning", "distillate", "shield", "ashes", "synthetic"
+        "guts", "burning", "distillate", "shield", "ashes", "synthetic", "jewel", "zest",
+        "goblin", "juice", "salted", "cane", "beans", "cactus", "hunk", "gift", "key", "boot"
     );
 
     static final Set<String> specialCrafts = Set.of(

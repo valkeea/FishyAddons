@@ -7,7 +7,7 @@ public class SkyblockAreas {
     private SkyblockAreas() {}
 
     public enum Island {
-        CI("crimson_isle"),
+        CI("crimson_isle", false),
         HUB("hub"),
         PRIVATE("private_island"),
         DH("dungeon_hub"),
@@ -21,30 +21,42 @@ public class SkyblockAreas {
         PARK("the_park"),
         DEN("spiders_den"),
         DEF("default"),
-        GAL("galatea"),
-        BAYOU("backwater_bayou"),
-        JERRY("jerrys_workshop"),
+        GAL("galatea", false),
+        BAYOU("backwater_bayou", false),
+        JERRY("jerrys_workshop", false),
         DUNGEON("dungeon"),
         DG_HUB("dungeon_hub"),
         MINESHAFT("mineshaft"),
         PLHLEGBLAST("crimson_plhleg"),
-        CI_HOTSPOT("crimson_hotspot"),
+        CI_HOTSPOT("crimson_hotspot", false),
         RIFT("the_rift"),
+        LOTUS("lotus_atoll", false),
         NA("unknown");
 
-        private final String name;
+        private final String key;
+        private final boolean basic;
 
-        Island(String name) {
-            this.name = name;
+        Island(String key) {
+            this.key = key;
+            this.basic = true;
+        }
+
+        Island(String key, boolean basic) {
+            this.key = key;
+            this.basic = basic;
         }
 
         public String key() {
-            return name;
+            return key;
+        }
+
+        public boolean isBasic() {
+            return basic;
         }
 
         public String displayName() {
 
-            String[] words = name.split("_");
+            String[] words = key.split("_");
             StringBuilder displayName = new StringBuilder();
 
             for (String word : words) {
@@ -110,7 +122,8 @@ public class SkyblockAreas {
         return currentIsland == Island.GAL;
     }
 
-    public static boolean isDenOrPark() {
-        return Island.DEN.equals(currentIsland) || Island.PARK.equals(currentIsland);
+    public static boolean isRainArea() {
+        return currentIsland == Island.BAYOU || currentIsland == Island.PARK
+            || currentIsland == Island.LOTUS || currentIsland == Island.DEN;
     }
 }

@@ -20,7 +20,7 @@ public class WeatherTracker {
      */
     public static void onRainStateChange(boolean isRaining) {
         if (!Config.get(BooleanKey.RAIN_NOTI)) { return; }
-        if (!initialized && !ZoneUtils.checkDenOrPark()) { return; }
+        if (!initialized && !ZoneUtils.checkRainArea()) { return; }
 
         if (lastRainState && !isRaining) {
             var mc = MinecraftClient.getInstance();
@@ -72,7 +72,7 @@ public class WeatherTracker {
      * This will reinitialize the tracker
      */
     public static void shouldTrack() {
-        if (me.valkeea.fishyaddons.api.skyblock.SkyblockAreas.isDenOrPark()) {
+        if (me.valkeea.fishyaddons.api.skyblock.SkyblockAreas.isRainArea()) {
             initialized = true;
             lastRainState = isRaining();
         } else {

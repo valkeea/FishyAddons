@@ -61,7 +61,9 @@ public class SpawnData {
         // Jerry
         new SpawnZone(Island.JERRY, -6, -3, 75, 78, 99, 102),
         // Rift
-        new SpawnZone(Island.RIFT, -47, -40, 120, 125, 66, 72)
+        new SpawnZone(Island.RIFT, -47, -40, 120, 125, 66, 72),
+        // Lotus Atoll
+        new SpawnZone(Island.LOTUS, -17, -14, 70, 72, -1, 3)
     );
 
     public static void updateIsland() {

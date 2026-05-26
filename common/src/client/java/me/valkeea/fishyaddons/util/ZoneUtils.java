@@ -7,12 +7,13 @@ import me.valkeea.fishyaddons.api.skyblock.SkyblockAreas.Island;
 import me.valkeea.fishyaddons.feature.skyblock.WeatherTracker;
 import me.valkeea.fishyaddons.listener.WorldEvent;
 import me.valkeea.fishyaddons.util.text.ScoreboardUtils;
+import me.valkeea.fishyaddons.util.text.TextUtils;
 
 public class ZoneUtils {
     private ZoneUtils() {}
     private static boolean isDungeons = false;
     private static boolean isLobby = false;
-    private static boolean denOrPark = false;
+    private static boolean rainArea = false;
 
     private static final List<String> ciIndicators = List.of(
         "The Wasteland",
@@ -60,28 +61,42 @@ public class ZoneUtils {
         }
     }
 
-    public static boolean checkDenOrPark() {
-        if (denOrPark || SkyblockAreas.isDenOrPark()) {
+    public static boolean checkRainArea() {
+        if (rainArea || SkyblockAreas.isRainArea()) {
             return true;
         }
 
-        for (String line : ScoreboardUtils.getSidebarLines()) {
-            if (line != null && (line.contains("The Park") || line.contains("Birch Park"))) {
-                SkyblockAreas.setIslandFromSidebar(Island.PARK);
+        int attempts = 0;
+        for (String i : ScoreboardUtils.getSidebarLines()) {
+            attempts++;
+            if (i == null || !i.contains("⏣")) continue;
+            var l = TextUtils.stripColor(i).strip();
+            System.out.println("Sidebar line: " + l);
+            Island area = parseArea(l);
+            if (area != null) {
+                SkyblockAreas.setIslandFromSidebar(area);
                 WeatherTracker.track();
-                denOrPark = true;
+                rainArea = true;
+                System.out.println("Found rain area: " + area.name() + " after " + attempts + " attempts.");
                 return true;
-
-            } else if (line != null && line.contains("Spiders Den")) {
-                SkyblockAreas.setIslandFromSidebar(Island.DEN);
-                WeatherTracker.track();
-                denOrPark = true;
-                return true;
+            } else {
+                System.out.println("Not a rain area: " + l);
             }
         }
 
-        denOrPark = false;
+        System.out.println("No rain area found after " + attempts + " attempts.");
+        rainArea = false;
         return false;
+    }
+
+    private static Island parseArea(String line) {
+        return switch (line) {
+            case "Birch Park" -> Island.PARK;
+            case "Spiders Den" -> Island.DEN;
+            case "Lotus Atoll" -> Island.LOTUS;
+            case "Backwater Bayou" -> Island.BAYOU;
+            default -> null;
+        };
     }
 
     public static boolean isInDungeon() {
@@ -103,6 +118,6 @@ public class ZoneUtils {
     }
 
     public static void resetRain() {
-        denOrPark = false;
+        rainArea = false;
     }    
 }

@@ -39,7 +39,8 @@ public class ChatDropParser {
         CHARM("charm", false),
         NAGA("naga", false),
         SALT_YOU_CHARMED("salt you charmed", false),
-        LOOT_SHARE("loot share", false);
+        LOOT_SHARE("loot share", false),
+        TROPHY("♔ trophy", false);
         
         final String keyword;
         final boolean isDropTier;
@@ -109,12 +110,13 @@ public class ChatDropParser {
             "bramble", "grove", "thorn", "kada knight", "wither spectre", "obsidian defender",
             "bezal", "zealot", "voracious spider", "tank zombie", "lapis zombie", "barbarian duke",
             "skeletor", "burningsoul", "flare", "soul of the alpha", "power dragon", "bruiser",
-            "matcho", "sycophant", "rain slime", "golden ghoul", "zombie soldier", 
-            "flaming spider", "lava flame", "loch emperor", "magma slug", "lord jawbus",
+            "matcho", "sycophant", "rain slime", "golden ghoul", "zombie soldier", "scarf",
+            "flaming spider", "lava flame", "loch emperor", "magma slug", "lord jawbus", "nessie",
             "water hydra", "fire eel", "sea archer", "night squid", "taurus", "lapis creeper",
             "ghost", "hellwisp", "mimc", "fungloom", "stalagmight", "thyst", "star sentry",
             "drowned", "stridersurfer", "ent", "seer", "azure", "chill", "salmon", "goldfin",
             "coralot", "verdant", "cod", "cretan bull", "minotaur", "king minos", "sphinx", "yog",
+            "tewtil", "flipflopper", "lotum", "seashine",
             
             // Bugs
             "wartybug", "dragonfly", "firefly", "lunar moth", "ladybug", "cropeetle",
@@ -217,6 +219,12 @@ public class ChatDropParser {
             Pattern.compile("loot share\\s+you received an?\\s+(.+?)\\s*shard for assisting\\s+\\w+!", Pattern.CASE_INSENSITIVE),
             DropType.SHARD, -1, 1
         ));
+
+        // Pattern 10: "♔ TROPHY <FROG|FISH>! You caught a <name>!"
+        DROP_PATTERNS.add(new DropPattern(
+            Pattern.compile("♔ trophy\\s+\\w+!\\s*you caught an?\\s+(.+?)!", Pattern.CASE_INSENSITIVE),
+            DropType.ITEM, -1, 1
+        ));
     }
 
     /**
@@ -303,6 +311,7 @@ public class ChatDropParser {
             if (TRACKED_SHARDS.contains(s) && 
                 (lowerS.contains("caught") || lowerS.contains("catch"))) {
                 s = s.concat(" " + SHARD_KW);
+                System.out.println("[ChatDropParser] Normalized shard name: " + s);
             }
         }
         
@@ -334,12 +343,13 @@ public class ChatDropParser {
             }
         }
         
-        // Check for catch patterns
+        // Check for catch patterns and trophy drops
         if (lower.contains("rare catch") || 
             lower.contains("good catch") ||
             lower.contains("great catch") || 
             lower.contains("outstanding catch") ||
-            lower.contains(DropKeyword.WOW_DUG_OUT.keyword)) {
+            lower.contains(DropKeyword.WOW_DUG_OUT.keyword) ||
+            lower.contains(DropKeyword.TROPHY.keyword)) {
             return true;
         }
         
@@ -380,6 +390,7 @@ public class ChatDropParser {
         
         for (String shard : TRACKED_SHARDS) {
             if (normalized.contains(shard)) {
+                System.out.println("[ChatDropParser] Identified shard item: " + normalized);
                 return true;
             }
         }

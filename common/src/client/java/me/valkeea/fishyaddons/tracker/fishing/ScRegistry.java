@@ -124,9 +124,11 @@ public class ScRegistry {
                 } catch (Exception e) { return false; }
             });            
 
-        SpawnRequirement notGalatea = new SpawnRequirement("not_galatea", 
+        SpawnRequirement basic = new SpawnRequirement("basic_island", 
             () -> {
-                try { return !Island.GAL.equals(ScStats.getArea()); } catch (Exception e) { return true; }
+                try {
+                    return ScStats.getArea().isBasic();
+                } catch (Exception e) { return true; }
             });
             
         SpawnRequirement water = new SpawnRequirement("water", 
@@ -135,13 +137,13 @@ public class ScRegistry {
             });
 
         // Crimson Isles
-        registerCreature(Sc.THUNDER, "§dThunder", 
+        registerCreature(Sc.THUNDER, "§6Thunder", 
             Set.of(Island.CI), List.of(always), true);
             
-        registerCreature(Sc.HSPT_THUNDER, "§dThunder §8(§3Hotspot§8)", 
+        registerCreature(Sc.HSPT_THUNDER, "§6Thunder §8(§3Hotspot§8)", 
             Set.of(Island.CI_HOTSPOT), List.of(always, notPool), true);
             
-        registerCreature(Sc.POOL_THUNDER, "§dThunder §8(§3Pool§8)", 
+        registerCreature(Sc.POOL_THUNDER, "§6Thunder §8(§3Pool§8)", 
             Set.of(Island.PLHLEGBLAST), List.of(always), true);
             
         registerCreature(Sc.JAWBUS, "§cLord Jawbus", 
@@ -179,7 +181,7 @@ public class ScRegistry {
         registerCreature(Sc.NESSIE, "§dNessie", 
             Set.of(Island.GAL), List.of(always), true);            
         
-        // Bayou, Ch, Park
+        // Bayou, Ch
         registerCreature(Sc.TITANOBOA, "§dTitanoboa", 
             Set.of(Island.BAYOU), List.of(always), true);
 
@@ -188,9 +190,16 @@ public class ScRegistry {
             
         registerCreature(Sc.CH_MINER, "§6Abyssal Miner", 
             Set.of(Island.CH), List.of(always), true);
+
+        // Lotus Atoll
+        registerCreature(Sc.PRINCE, "§dFrog Prince", 
+            Set.of(Island.LOTUS), List.of(always), true);
             
-        registerCreature(Sc.NIGHT_SQUID, "§5Night Squid", 
-            Set.of(Island.PARK), List.of(always), true);
+        registerCreature(Sc.JUMPER, "§6Puddle Jumper", 
+            Set.of(Island.LOTUS), List.of(always), true);
+
+        registerCreature(Sc.CAPTAIN, "§5Drowned Captain", 
+            Set.of(Island.LOTUS), List.of(always), true);
         
         // Special conditions 
         registerCreature(Sc.TIKI, "§dWiki Tiki", 
@@ -199,14 +208,14 @@ public class ScRegistry {
         registerCreature(Sc.OCTOPUS, "§6Blue-Ringed Octopus", 
             Set.of(ANY), List.of(inHotspot, water), true); 
             
-        registerCreature(Sc.GRIM_REAPER, "§5Grim Reaper", 
+        registerCreature(Sc.GRIM_REAPER, "§dGrim Reaper", 
             Set.of(ANY), List.of(isSpooky, water), true);
 
         registerCreature(Sc.GW, "§6Great White Shark", 
             Set.of(ANY), List.of(isShark, water), true);
 
         registerCreature(Sc.WATER_HYDRA, "§5Water Hydra", 
-            Set.of(ANY), List.of(notGalatea, water), true);            
+            Set.of(ANY), List.of(basic, water), true);            
     }
 
     private void registerCreature(String id, String displayName, Set<Island> validAreas, 

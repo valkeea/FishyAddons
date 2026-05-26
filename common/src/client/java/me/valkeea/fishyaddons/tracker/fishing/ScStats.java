@@ -38,15 +38,20 @@ public class ScStats {
         Island.JERRY,
         Island.CH,
         Island.DEN,
+        Island.FI,
         Island.HUB,
-        Island.PARK
+        Island.PARK,
+        Island.LOTUS
     );
 
     private final List<Island> hotspotAreas = List.of(
         Island.CI,
         Island.BAYOU,
         Island.DEN,
-        Island.HUB
+        Island.HUB,
+        Island.JERRY,
+        Island.PARK,
+        Island.LOTUS
     );
 
     private int jawbusSinceVial = 0;
@@ -400,7 +405,7 @@ public class ScStats {
         var isCi = currentArea.key().startsWith(CRIMSON_PREFIX);
 
         if (!validAreas.contains(currentArea) && !isCi && !isHotspot) {
-            sb.append("§bN/A §c(Invalid Area)");
+            sb.append("§b" + currentArea.displayName() + "§c(Invalid Area)");
             FishyNotis.send(Text.literal(sb.toString()));
             return;
         }

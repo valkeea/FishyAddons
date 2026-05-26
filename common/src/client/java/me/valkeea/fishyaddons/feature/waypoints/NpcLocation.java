@@ -200,7 +200,7 @@ public class NpcLocation {
                 e -> true)) {
     
             var name = as.getCustomName() != null ? as.getCustomName().getString() : null;
-            if (name == null || name.isEmpty() || !name.equals(name.toUpperCase())) continue;
+            if (name == null || name.isEmpty() || name.equals(name.toUpperCase())) continue;
 
             var asPos = as.getBlockPos();
             if (p.getBlockPos().isWithinDistance(asPos, r)) {

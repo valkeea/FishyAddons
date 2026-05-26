@@ -63,7 +63,8 @@
     "Jotraeline Greatforge": {"x": -6, "y": 145, "z": -18},
     "Resident Snooty": {"x": 92, "y": 202, "z": 277},
     "No Name": {"x": 65, "y": 211, "z": 198},
-    "Scout Scardius": {"x": -16, "y": 121, "z": 232}    
+    "Scout Scardius": {"x": -16, "y": 121, "z": 232},
+    "Dirt Guy": {"x": 43, "y": 108, "z": 175}    
   },
   "crystal_hollows": {
     "Geonathan Greatforge": {"x": 530, "y": 105, "z": 556},
@@ -237,7 +238,7 @@
     "Pablo": {"x": -130, "y": 127, "z": -815},
     "Elle": {"x": -364, "y": 80, "z": -476},
     "Offea": {"x": -87, "y": 93, "z": -743},
-    "Banker": {"x": -612, "y": 100, "z": -786},
+    "Barbarian Banker": {"x": -612, "y": 100, "z": -786},
     "Ulyn": {"x": -125, "y": 99, "z": -783},
     "Vulcan": {"x": -363, "y": 115, "z": -1031},
     "Kuudra Loremaster": {"x": -106, "y": 126, "z": -817},
@@ -286,7 +287,8 @@
     "Selenar": {"x": -71, "y": 107, "z": -757},
     "Alwin": {"x": -82, "y": 92, "z": -734},
     "Leo": {"x": -143, "y": 100, "z": -828},
-    "Gnyl": {"x": -376, "y": 117, "z": -971}
+    "Gnyl": {"x": -376, "y": 117, "z": -971},
+    "Mage Banker": {"x": -83, "y": 108, "z": -775}    
   },
   "the_end": {
     "Tyzzo": {"x": -597, "y": 5, "z": -272},
@@ -406,13 +408,20 @@
     "Wizard": {"x": -5, "y": 202, "z": 65},
     "Jacob": {"x": 46, "y": 73, "z": -128},
     "Feast Chef Ted": {"x": 84, "y": 72, "z": -78},
-    "Feast Baker Scott": {"x": 77, "y": 72, "z": -83}
+    "Feast Baker Scott": {"x": 77, "y": 72, "z": -83},
+    "Lumber Jack": {"x": -123, "y": 73, "z": -29},
+    "Lumber Merchant": {"x": -125, "y": 73, "z": -42},
+    "Carpenter": {"x": -137, "y": 74, "z": -41},
+    "Apprentice": {"x": -152, "y": 63, "z": -33}  
   },
   "backwater_bayou": {
     "Junker Joel": {"x": 6, "y": 72, "z": 4},
     "Captain Baha": {"x": -22, "y": 75, "z": -8},
     "Roddy": {"x": 21, "y": 78, "z": -23},
-    "Hattie": {"x": 17, "y": 71, "z": 14}
+    "Hattie": {"x": 17, "y": 71, "z": 14},
+    "Jonesy": {"x": -9, "y": 74, "z": -10},
+    "Carly": {"x": 38, "y": 71, "z": 6},
+    "Researcher Gilbert": {"x": 27, "y": 59, "z": -26}    
   },
   "spiders_den": {
     "Haymitch": {"x": -202, "y": 83, "z": -236},
@@ -422,5 +431,34 @@
     "Spider Tamer": {"x": -298, "y": 62, "z": -194},
     "Rick": {"x": -264, "y": 71, "z": -323},
     "Archaeologist": {"x": -360, "y": 111, "z": -290}
+  },
+  "lotus_atoll": {
+    "Researcher Gilbert": {"x": -26, "y": 73, "z": 3},
+    "Captain Baha": {"x": -26, "y": 73, "z": 3},
+    "Researcher Ribery": {"x": -11, "y": 71, "z": -6},
+    "Researcher Kay": {"x": 23, "y": 83, "z": -50},
+    "Researcher Tay": {"x": 26, "y": 141, "z": -60},
+    "Researcher Betty": {"x": -13, "y": 71, "z": 3},
+    "Researcher Tina": {"x": 43, "y": 70, "z": 29},
+    "Researcher Jessica": {"x": 75, "y": 64, "z": -10},
+    "Researcher Timmy": {"x": 11, "y": 75, "z": 30},
+    "Researcher Lily": {"x": 26, "y": 66, "z": 15}  
+  },
+  "jerrys_workshop": {
+    "Gary": { "x": 53, "y": 103, "z": 56},
+    "Sherry": { "x": 6, "y": 76, "z": 95},
+    "Mees": { "x": 80, "y": 79, "z": 72},
+    "Banker Barry": { "x": 20, "y": 77, "z": 44},
+    "Einary": { "x": -16, "y": 76, "z": 63},
+    "Terry": { "x": -92, "y": 78, "z": 25},
+    "Daan": { "x": 80, "y": 78, "z": 110},
+    "Gulliver": { "x": 68, "y": 105, "z": 33},
+    "Hendrik": { "x": 16, "y": 62, "z": -30},
+    "Frosty": { "x": -1, "y": 76, "z": 92},
+    "Frozen Alex": { "x": -43, "y": 84, "z": -1},
+    "Jerry": { "x": 6, "y": 76, "z": 72},
+    "Dirk": { "x": 79, "y": 80, "z": 55},
+    "St. Jerry": { "x": -22, "y": 76, "z": 92},
+    "Maaike": { "x": 49, "y": 81, "z": 50}
   }
 }

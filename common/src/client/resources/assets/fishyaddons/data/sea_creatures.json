@@ -41,7 +41,13 @@
       "prefix": "§{pine}",
       "doubleHookPrefix": "§[peridot]DOUBLE HOOK 🎣 ",
       "enabled": true
-    },    
+    },
+    "lotus": {
+      "priority": 95,
+      "prefix": "§{lotus}",
+      "doubleHookPrefix": "§[sakura]DOUBLE HOOK 🎣 ",
+      "enabled": true
+    },
     "spooky": {
       "priority": 80,
       "prefix": "§{violet}",
@@ -103,7 +109,7 @@
       "triggerText": "You hear a massive rumble as Thunder emerges.",
       "displayName": "Thunder",
       "displayNamePlural": "two Thunders",
-      "category": "mythic",
+      "category": "legendary",
       "emoji": "🗲",
       "customMessage": "§l§b{emoji} §{bold}§[ruby]{name} §l§b{emoji}"
     },
@@ -133,7 +139,34 @@
       "category": "mythic",
       "emoji": "🦕",
       "customMessage": "§b§l§kA§r §{bold}§[caladium] {emoji} {name} {emoji} §b§l§kA§"
-    },    
+    },
+    {
+      "id": "frog_prince",
+      "triggerText": "Bow down before the Frog Prince... or pay the hefty price!",
+      "displayName": "Frog Prince",
+      "displayNamePlural": "two Frog Princes",
+      "category": "mythic",
+      "emoji": "🏵",
+      "customMessage": "§b§l§kA§r &{taffy}{emoji} §{bold}§[bright]{name} §r&{taffy}{emoji} §b§l§kA§"
+    },
+    {
+      "id": "puddle_jumper",
+      "triggerText": "A Puddle Jumper is preparing for liftoff—cast your rod into it and hold on tight!",
+      "displayName": "Puddle Jumper",
+      "displayNamePlural": "two Puddle Jumpers",
+      "category": "legendary",
+      "emoji": "🐸",
+      "customMessage": "§{seafoam}{emoji} §[sun]{name} §{seafoam}{emoji}"
+    },
+    {
+      "id": "drowned_captain",
+      "triggerText": "A Drowned Captain takes hold of your bobber!",
+      "displayName": "Drowned Captain",
+      "displayNamePlural": "two Drowned Captains",
+      "category": "epic",
+      "emoji": "⚓",
+      "customMessage": "A {name}!"
+    },
     {
       "id": "the_loch_emperor",
       "triggerText": "The Loch Emperor arises from the depths.",
@@ -141,7 +174,7 @@
       "displayNamePlural": "two Loch Emperors",
       "category": "legendary",
       "emoji": "♚",
-      "customMessage": "{emoji} {name} awakened! {emoji}"
+      "customMessage": "It's {name}! {emoji}"
     },
     {
       "id": "blue_ringed_octopus",
@@ -184,9 +217,9 @@
       "triggerText": "This can't be! The manifestation of death himself!",
       "displayName": "Grim Reaper",
       "displayNamePlural": "two Grim Reapers",
-      "category": "legendary",
-      "emoji": "💀",
-      "customMessage": "{emoji} {name} {emoji}"
+      "category": "mythic",
+      "emoji": "☠",
+      "customMessage": "§b§l§kA§r §0{emoji} §{bold}§[abyss]{name} §r§0{emoji} §b§l§kA§"
     },  
     {
       "id": "yeti",
@@ -331,7 +364,16 @@
       "category": "spooky",
       "emoji": "🛡️",
       "customMessage": "It's a {name}!"
-    },     
+    },
+    {
+      "id": "jumpin_jack",
+      "triggerText": "Watch out! It's Jumpin' Jack.",
+      "displayName": "Jumpin' Jack",
+      "displayNamePlural": "two Jumpin' Jacks",
+      "category": "spooky",
+      "emoji": "🛡️",
+      "customMessage": "A {name}!"
+    },
     {
       "id": "banshee",
       "triggerText": "The desolate wail of a Banshee breaks the silence.",
@@ -400,6 +442,24 @@
       "triggerText": "Smells of burning. Must be a Fried Chicken.",
       "displayName": "Fried Chicken",
       "displayNamePlural": "two Fried Chickens",
+      "category": "lava",
+      "emoji": "🛡️",
+      "customMessage": "A {name}!"
+    },
+    {
+      "id": "volcanic_snail",
+      "triggerText": "You feel a burning sensation as you reel in a Volcanic Snail!",
+      "displayName": "Volcanic Snail",
+      "displayNamePlural": "two Volcanic Snails",
+      "category": "lava",
+      "emoji": "🛡️",
+      "customMessage": "A {name}!"
+    },
+    {
+      "id": "magma_pillar",
+      "triggerText": "A Magma Pillar rises from the lava.",
+      "displayName": "Magma Pillar",
+      "displayNamePlural": "two Magma Pillars",
       "category": "lava",
       "emoji": "🛡️",
       "customMessage": "A {name}!"
@@ -504,22 +564,13 @@
       "customMessage": "A {name}!"
     },
     {
-      "id": "night_squid",
-      "triggerText": "Pitch darkness reveals a Night Squid.",
-      "displayName": "Night Squid",
-      "displayNamePlural": "two Night Squids",
-      "category": "water",
-      "emoji": "🌙",
-      "customMessage": "{name}! {emoji}"
-    },
-    {
       "id": "carrot_king",
       "triggerText": "Is this even a fish? It's the Carrot King!",
       "displayName": "Carrot King",
       "displayNamePlural": "two Carrot Kings",
       "category": "water",
-      "emoji": "🥕",
-      "customMessage": "{name}! {emoji}"
+      "emoji": "🐇",
+      "customMessage": "{name}! §{orange}{emoji}"
     },    
     {
       "id": "agarimoo",
@@ -672,7 +723,52 @@
       "displayNamePlural": "two Blue Sharks",
       "category": "water",
       "emoji": "𓆝",
-      "customMessage": "{emoji} {name} caught!"
-    }
+      "customMessage": "A {name}!"
+    },
+    {
+      "id": "inkling",
+      "triggerText": "You get an inkling that you've caught... an Inkling!",
+      "displayName": "Inkling",
+      "displayNamePlural": "two Inklings",
+      "category": "water",
+      "emoji": "🛡️",
+      "customMessage": "An {name}!"
+    },
+    {
+      "id": "manta_ray",
+      "triggerText": "A majestic creature rises from the water. It's a Manta Ray.",
+      "displayName": "Manta Ray",
+      "displayNamePlural": "two Manta Rays",
+      "category": "epic",
+      "emoji": "˙༄.°",
+      "customMessage": "{name} §[depths]{emoji}"
+    }, 
+    {
+      "id": "gorf",
+      "triggerText": "What even is that?! A... gorF?",
+      "displayName": "gorF",
+      "displayNamePlural": "sgorF owt",
+      "category": "lotus",
+      "emoji": "🛡️",
+      "customMessage": "A {name}?"
+    },
+    {
+      "id": "lotus_guardian",
+      "triggerText": "A Lotus Guardian emerges, ready to protect the Atoll.",
+      "displayName": "Lotus Guardian",
+      "displayNamePlural": "two Lotus Guardians",
+      "category": "lotus",
+      "emoji": "🛡️",
+      "customMessage": "A {name}!"
+    },
+    {
+      "id": "atoll_croaker",
+      "triggerText": "An inquisitive Atoll Croaker takes the bait!",
+      "displayName": "Atoll Croaker",
+      "displayNamePlural": "two Atoll Croakers",
+      "category": "lotus",
+      "emoji": "🛡️",
+      "customMessage": "An {name}!"
+    }        
   ]
 }

@@ -18,6 +18,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import me.valkeea.fishyaddons.feature.filter.FilterConfig.Rule;
+import me.valkeea.fishyaddons.tracker.fishing.Sc;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.util.Identifier;
 
@@ -141,7 +142,7 @@ public class RuleFactory {
                 return;
             }
 
-            boolean updated = mergeAssetDataIntoUserData(assetData, userData);
+            boolean updated = checkForMerges(assetData, userData);
 
             if (updated) {
                 writeUpdatedConfig(targetPath, userData);
@@ -153,12 +154,12 @@ public class RuleFactory {
         }
     }
     
-    private static boolean mergeAssetDataIntoUserData(SeaCreatureData assetData, SeaCreatureData userData) {
+    private static boolean checkForMerges(SeaCreatureData assetData, SeaCreatureData userData) {
         boolean updated = false;
         
         Map<String, SeaCreatureData.CreatureConfig> existingCreatures = new LinkedHashMap<>();
-        for (var creature : userData.creatures) {
-            existingCreatures.put(creature.id, creature);
+        for (var sc : userData.creatures) {
+            existingCreatures.put(sc.id, sc);
         }
         
         for (var assetCreature : assetData.creatures) {
@@ -181,6 +182,49 @@ public class RuleFactory {
             }
         }
         
+        return checkForUpdates(assetData, userData) || updated;
+    }
+
+    private static boolean checkForUpdates(SeaCreatureData assetData, SeaCreatureData userData) {
+        boolean updated = false;
+
+        if (userData.creatures.removeIf(c -> c.id.equals("sea_guardian") || c.id.equals("night_squid"))) {
+            updated = true;
+        }
+
+        for (int i = 0; i < userData.creatures.size(); i++) {
+            var sc = userData.creatures.get(i);
+            if (sc.id.equals(Sc.THUNDER) && !sc.category.equals("legendary")) {
+                userData.creatures.set(i, new SeaCreatureData.CreatureConfig(
+                    sc.id,
+                    sc.triggerText,
+                    sc.displayName,
+                    sc.displayNamePlural,
+                    "legendary",
+                    sc.emoji,
+                    sc.customMessage
+                ));
+                updated = true;
+
+            } else if (sc.id.equals(Sc.GRIM_REAPER) && !sc.category.equals("mythic")) {
+                var assetSc = assetData.creatures.stream()
+                    .filter(e -> e.id.equals(Sc.GRIM_REAPER))
+                    .findFirst()
+                    .orElse(null);
+
+                userData.creatures.set(i, new SeaCreatureData.CreatureConfig(
+                    sc.id,
+                    sc.triggerText,
+                    sc.displayName,
+                    sc.displayNamePlural,
+                    "mythic",
+                    sc.emoji,
+                    assetSc != null ? assetSc.customMessage : sc.customMessage
+                ));
+                updated = true;
+            }
+        }
+
         return updated;
     }
     

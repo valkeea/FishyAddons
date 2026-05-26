@@ -60,6 +60,7 @@ public class Enhancer {
         COLORS.put("magenta", 0xE11584);
         COLORS.put("fuchsia", 0xFC46AA);
         COLORS.put("blush", 0xFEC5E5);
+        COLORS.put("lotus", 0xFFA1EB);
         COLORS.put("heliotrope", 0xDF73FF);
         COLORS.put("dark_gray", 0x555555);
         COLORS.put("yes", 0xCCFFCC);

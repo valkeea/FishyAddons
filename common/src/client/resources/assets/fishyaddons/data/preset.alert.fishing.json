@@ -28,7 +28,7 @@
   },  
   "This can't be! The manifestation of death himself!": {
     "msg": "",
-    "onscreen": "§[sun]💀 Grim Reaper 💀",
+    "onscreen": "§b§l§kA§r §0☠ §{bold}§[abyss]Grim Reaper §r§0☠ §b§l§kA§",
     "color": 1.5649516E7,
     "soundId": "",
     "volume": 1.0,
@@ -46,7 +46,7 @@
   },
   "Hide no longer, a Great White Shark has tracked your scent and thirsts for your blood!": {
     "msg": "",
-    "onscreen": "§{purple}🦈 Great White Shark 🦈",
+    "onscreen": "&{periwinkle}🦈 &[sun]Great White Shark &{periwinkle}🦈",
     "color": 1.5649516E7,
     "soundId": "",
     "volume": 1.0,
@@ -145,7 +145,7 @@
   },
   "The Loch Emperor arises from the depths.": {
     "msg": "",
-    "onscreen": "§[sun]♚ The Loch Emperor awakened! ♚",
+    "onscreen": "§{leg}♚ §[sun]Loch Emperor §{leg}♚",
     "color": 1.5649516E7,
     "soundId": "",
     "volume": 1.0,
@@ -154,7 +154,7 @@
   },
   "Is this even a fish? It's the Carrot King!": {
     "msg": "",
-    "onscreen": "§[sun]Carrot King! 🥕",
+    "onscreen": "§{lapis}Carrot King §{orange}🐇",
     "color": 1.5649516E7,
     "soundId": "",
     "volume": 1.0,
@@ -205,5 +205,32 @@
     "volume": 1.0,
     "toggled": true,
     "startsWith": true
-  }  
+  },
+  "Bow down before the Frog Prince... or pay the hefty price!": {
+    "msg": "",
+    "onscreen": "§b§l§kA§r &{taffy}\u1FAB7 §{bold}§[bright]Frog Prince §r&{taffy}\u1FAB7 §b§l§kA§",
+    "color": 1.5649516E7,
+    "soundId": "",
+    "volume": 1.0,
+    "toggled": true,
+    "startsWith": true
+  },
+  "A Puddle Jumper is preparing for liftoff—cast your rod into it and hold on tight!": {
+    "msg": "",
+    "onscreen": "§{seafoam}🐸 §[sun]Puddle Jumper §{seafoam}🐸",
+    "color": 1.5649516E7,
+    "soundId": "",
+    "volume": 1.0,
+    "toggled": true,
+    "startsWith": true
+  },
+  "A Drowned Captain takes hold of your bobber!": {
+    "msg": "",
+    "onscreen": "§[purple]⚓ Drowned Captain ⚓",
+    "color": 1.5649516E7,
+    "soundId": "",
+    "volume": 1.0,
+    "toggled": true,
+    "startsWith": true
+  }
 }

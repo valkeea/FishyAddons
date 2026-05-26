@@ -9,6 +9,7 @@ import me.valkeea.fishyaddons.feature.waypoints.ChainConfig;
 import me.valkeea.fishyaddons.feature.waypoints.WaypointChains;
 import me.valkeea.fishyaddons.hud.elements.custom.InfoDisplay;
 import me.valkeea.fishyaddons.util.FishyNotis;
+import me.valkeea.fishyaddons.util.ModInfo;
 import me.valkeea.fishyaddons.vconfig.api.Config;
 import me.valkeea.fishyaddons.vconfig.config.BaseConfig;
 import net.fabricmc.fabric.api.client.networking.v1.ClientLoginConnectionEvents;
@@ -43,37 +44,45 @@ public class ClientConnected {
         int amount = registered.size();
 
         firstLoad = recreated.size() == amount;
-        anyRecreated = !recreated.isEmpty() || RuleFactory.isRecreated() || ChainConfig.isRecreated();
-        anyRestored = !restored.isEmpty() || ChainConfig.isRestored();
+
+        if (RuleFactory.isRecreated()) recreated.add("sea_creatures.json");
+        if (ChainConfig.isRecreated()) recreated.add("waypoints.json");
+        if (ChainConfig.isRestored()) restored.add("waypoints.json");
+
+        anyRecreated = !recreated.isEmpty();
+        anyRestored = !restored.isEmpty();
         rulesCorrupted = RuleFactory.isCorrupted();
-        pendingInfo = me.valkeea.fishyaddons.util.ModInfo.shouldShowInfo();
+        pendingInfo = ModInfo.shouldShowInfo();
         pendingAlert = firstLoad || anyRecreated || anyRestored || rulesCorrupted || pendingInfo;
 
         onInitialLoad();
     }
 
     public static void triggerAction() {
-        if (pendingAlert) {
-            if (pendingInfo) {
-                InfoDisplay.getInstance().show(me.valkeea.fishyaddons.util.ModInfo.getInfoMessage());
-            }            
-            if (firstLoad) {
-                FishyNotis.guideNoti();
-            } else {
-                if (migrationFailed) {
-                    migrationFailed();
-                    return;
-                }
-                if (anyRecreated) recreatedMsg();
-                if (anyRestored) restoredMsg();
-                if (rulesCorrupted) rulesCorruptedMsg();
-            }
-            resetFlags();
+        if (!pendingAlert) return;
+
+        if (pendingInfo) {
+            InfoDisplay.getInstance().show(ModInfo.getInfoMessage());
         }
+
+        if (firstLoad) {
+            FishyNotis.guideNoti();
+
+        } else {
+            if (migrationFailed) {
+                migrationFailed();
+                return;
+            }
+            if (anyRecreated) recreatedMsg();
+            if (anyRestored) restoredMsg();
+            if (rulesCorrupted) rulesCorruptedMsg();
+        }
+
+        resetFlags();
     }
 
     private static void recreatedMsg() {
-        String files = String.join(", ", recreated);
+        var files = recreated.stream().limit(5).toList();
         FishyNotis.notice("""
             The following configuration files were missing and have been replaced with defaults:
             """ + files + ". Any existing backups were corrupted or missing."
@@ -81,9 +90,10 @@ public class ClientConnected {
     }
 
     private static void restoredMsg() {
+        var files = restored.stream().limit(5).toList();
         FishyNotis.notice("""
             The following configuration files were corrupted and have been restored from backup:
-            """ + String.join(", ", restored) + "."
+            """ + files + "."
         );
     }
 

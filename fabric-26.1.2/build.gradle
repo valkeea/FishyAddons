@@ -1,0 +1,101 @@
+plugins {
+	id 'net.fabricmc.fabric-loom' version "${loom_version}"
+	id 'maven-publish'
+}
+
+
+version = project.mod_version
+group = project.maven_group
+
+base {
+	archivesName = project.archives_base_name
+}
+
+loom {
+	splitEnvironmentSourceSets()
+
+	mods {
+		"modid" {
+			sourceSet sourceSets.client
+		}
+	}
+}
+
+repositories {
+	maven { url = 'https://maven.terraformersmc.com/' }
+}
+
+dependencies {
+	minecraft "com.mojang:minecraft:${project.minecraft_version}"
+	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
+	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+	implementation "com.terraformersmc:modmenu:${project.modmenu_version}"	
+	implementation("it.unimi.dsi:fastutil:8.5.12")
+	testImplementation 'org.junit.jupiter:junit-jupiter:5.10.0'
+	testImplementation 'org.mockito:mockito-core:5.11.0'
+	testImplementation 'org.mockito:mockito-junit-jupiter:5.11.0'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+processResources {
+	inputs.property "version", project.version
+	inputs.property "loader_version", project.loader_version
+	inputs.property "fabric_version", project.fabric_version
+
+	filesMatching("fabric.mod.json") {
+		expand([
+			"version": project.version,
+			"loader_version": project.loader_version,
+			"fabric_version": project.fabric_version
+		])
+	}
+}
+
+tasks.named('processClientResources') {
+	inputs.property "version", project.version
+	inputs.property "loader_version", project.loader_version
+	inputs.property "fabric_version", project.fabric_version
+
+	filesMatching("fabric.mod.json") {
+		expand([
+			"version": project.version,
+			"loader_version": project.loader_version,
+			"fabric_version": project.fabric_version
+		])
+	}
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'		
+	it.options.release = 25
+}
+
+tasks.named('compileTestJava').configure {
+	dependsOn tasks.named('compileClientJava')
+}
+
+tasks.withType(Jar).configureEach {
+	dependsOn tasks.named('compileClientJava')
+}
+
+java {
+	withSourcesJar()
+	sourceCompatibility = JavaVersion.VERSION_25
+	targetCompatibility = JavaVersion.VERSION_25
+}
+
+test {
+	useJUnitPlatform()
+	testLogging {
+		events "passed", "skipped", "failed"
+		exceptionFormat "full"
+		showStandardStreams = true
+	}
+}
+
+jar {
+	from("../LICENSE") {
+		rename { "${it}_${archiveBaseName.get()}"}
+	}
+	archiveClassifier = 'mc26.1.2'
+}

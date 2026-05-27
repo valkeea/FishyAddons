@@ -1,0 +1,530 @@
+package me.valkeea.fishyaddons.ui.list;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import me.valkeea.fishyaddons.feature.filter.FilterConfig;
+import me.valkeea.fishyaddons.feature.filter.FilterConfig.Rule;
+import me.valkeea.fishyaddons.ui.GuiUtil;
+import me.valkeea.fishyaddons.ui.screen.FilterEditScreen;
+import me.valkeea.fishyaddons.vconfig.ui.layout.UIScaleCalculator;
+import me.valkeea.fishyaddons.vconfig.ui.manager.ScreenManager;
+import me.valkeea.fishyaddons.vconfig.ui.render.VCText;
+import me.valkeea.fishyaddons.vconfig.ui.widget.FaButton;
+import me.valkeea.fishyaddons.vconfig.ui.widget.VCButton;
+import me.valkeea.fishyaddons.vconfig.ui.widget.VCLabelField;
+import me.valkeea.fishyaddons.vconfig.ui.widget.VCPopup;
+import me.valkeea.fishyaddons.vconfig.ui.widget.VCTextField;
+import me.valkeea.fishyaddons.vconfig.ui.widget.VCVisuals;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.Style;
+
+public class FilterRules extends Screen {
+    private static final String TITLE_TEXT = "─ α Chat Filter Rules α ─";
+
+    private static float uiScale;
+    private static int entryH;
+    private static int entryW;
+    private static int btnW;
+    private static int modeBtnW;
+    private static int delBtnW;
+    private static int fieldW;
+    private static int fieldH;
+    private static int btnH;
+
+    private final List<Entry> entries = new ArrayList<>();
+
+    private boolean isDraggingScrollbar = false;
+    private boolean addMode = false;
+    private int scrollOffset = 0;
+    private int maxVisibleEntries = 0;
+    private int scrollKnobOffset = 0;
+
+    private AddEntry addEntry = null;
+    private FaButton addBtn = null;
+    private VCPopup popup = null;
+
+    public FilterRules() {
+        super(Component.literal(TITLE_TEXT));
+    }
+
+    @Override
+    protected void init() {
+        entries.clear();        
+        this.clearWidgets();
+        calcDimensions(UIScaleCalculator.calculateUIScaleLegacy());
+
+        for (Map.Entry<String, Rule> entry : FilterConfig.getUserCreatedRules().entrySet()) {
+            Entry e = new Entry(entry.getKey());
+            entries.add(e);
+            e.addToScreen();
+        }
+
+        int totalEntries = entries.size() + (addMode ? 1 : 0);
+        int listTop = 40;
+        int listBottom = this.height - 60;
+        int listHeight = listBottom - listTop;
+        maxVisibleEntries = Math.max(1, listHeight / entryH);
+        int maxScroll = Math.max(0, totalEntries - maxVisibleEntries);
+        scrollOffset = Math.clamp(scrollOffset, 0, maxScroll);
+        if (scrollOffset > maxScroll || (addMode && scrollOffset < totalEntries - maxVisibleEntries)) scrollOffset = maxScroll;
+        if (scrollOffset < 0) scrollOffset = 0;
+
+        if (!addMode) {
+            int addBtnY = this.height - 40;
+            addBtn = new FaButton(
+                this.width / 2 - entryW / 2, addBtnY, btnW, btnH,
+                Component.literal("Add").withStyle(style -> style.withColor(0xFFCCFFCC)),
+                btn -> {
+                    addMode = true;
+                    addEntry = new AddEntry();
+                    this.addRenderableWidget(addEntry.keyField);
+                    this.addRenderableWidget(addEntry.saveBtn);
+                    this.addRenderableWidget(addEntry.cancelBtn);
+                    this.removeWidget(addBtn);
+                }
+            );
+            addBtn.setUIScale(uiScale);
+            this.addRenderableWidget(addBtn);
+        }      
+
+        var backButton = new FaButton(
+            this.width / 2 - entryW / 2 + btnW, this.height - 40, btnW, btnH,
+            Component.literal("Back").withStyle(style -> style.withColor(0xFF808080)),
+            btn -> ScreenManager.openConfigScreen()
+        );
+        backButton.setUIScale(uiScale);
+        this.addRenderableWidget(backButton);
+
+        var closeButton = new FaButton(
+            this.width / 2 - entryW / 2 + btnW * 2, this.height - 40, btnW, btnH,
+            Component.literal("Close").withStyle(style -> style.withColor(0xFF808080)),
+            btn -> this.onClose()
+        );
+        closeButton.setUIScale(uiScale);
+        this.addRenderableWidget(closeButton);
+    }
+
+    private static void calcDimensions(float scale) {
+        uiScale = Math.clamp(scale, 0.7f, 1.3f);
+        entryH = (int) (28 * uiScale);
+        entryW = (int) (600 * uiScale);
+        btnW = (int) (40 * uiScale);
+        modeBtnW = (int) (60 * uiScale);
+        delBtnW = (int) (20 * uiScale);
+        fieldW = (int) (480 * uiScale);
+        fieldH = (int) (20 * uiScale);
+        btnH = (int) (20 * uiScale);
+    }
+
+    @Override
+    public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+        super.extractRenderState(context, mouseX, mouseY, delta);
+
+        var title = VCText.header(TITLE_TEXT, null);
+
+        if (entries.isEmpty()) {
+            int y = this.height / 2;
+            int x = this.width / 2;
+            int lineHeight = 15;
+            y += lineHeight * 2;
+            String[] instructions = {
+                TITLE_TEXT,
+                " -§7 Add clean strings you want to be filtered. Without editing, the message defaults to being removed.",
+                " -§7 If you instead want the message to be replaced, click 'Edit' to configure an override.",
+                "§b  • §8'Exact' will only trigger on full matches",
+                "§b  • §8'Anywhere' will match any phrase containing the input and fully replace the message.",                
+                " -§d If you wish to filter sea creature messages, please use §bCustom Sea Creature Messages §dinstead.",
+            };
+            for (String instruction : instructions) {     
+                Component text = Component.literal(instruction);
+                GuiUtil.drawScaledCenteredText(context, this.font, text.getString(),
+                    x, y, 0xFF55FFFF, uiScale - 0.1f);
+                y += lineHeight;
+            }
+        } else {
+            GuiUtil.drawScaledCenteredText(
+                context, this.font, title, this.width / 2, 15, 0xFF55FFFF, uiScale - 0.1f);
+        }
+       
+        addList(context);
+
+        if (popup != null) {          
+            popup.render(context, this.font, mouseX, mouseY, delta);
+        }
+    }
+
+    private void addList(GuiGraphicsExtractor context) {
+        int listTop = 40;
+        int listBottom = this.height - 60;
+        int listHeight = listBottom - listTop;
+        maxVisibleEntries = Math.max(1, listHeight / entryH);
+        int totalEntries = entries.size() + (addMode ? 1 : 0);
+        int y = listTop;
+        int startIdx = scrollOffset;
+        int endIdx = Math.min(startIdx + maxVisibleEntries, entries.size());
+        for (int i = 0; i < entries.size(); i++) {
+            if (i >= startIdx && i < endIdx) {
+                entries.get(i).setPosition(this.width / 2 - entryW / 2, y);
+                entries.get(i).setVisible(true);
+                y += entryH;
+            } else {
+                entries.get(i).setVisible(false);
+            }
+        }
+
+        if (totalEntries > maxVisibleEntries) {
+            renderScrollIndicator(context, this.width / 2 + entryW / 2 + 20, listTop, listHeight, totalEntries);
+        }
+
+        if (addMode && addEntry != null) {
+            addEntry.updateVisibility();
+            if (endIdx == entries.size()) {
+                addEntry.setPosition(this.width / 2 - entryW / 2, y);
+            }
+        }
+        if (addBtn != null && !addMode) {
+            int addBtnY = this.height - 40;
+            addBtn.setX(this.width / 2 - entryW / 2);
+            addBtn.setY(addBtnY);
+        }
+    }
+
+    private void renderScrollIndicator(GuiGraphicsExtractor context, int x, int y, int listHeight, int totalEntries) {
+        int scrollbarWidth = 4;
+        context.fill(x, y, x + scrollbarWidth, y + listHeight, 0x44000000);
+        if (totalEntries > maxVisibleEntries) {
+            int thumbHeight = Math.max((int)(10 * uiScale), (maxVisibleEntries * listHeight) / totalEntries);
+            int thumbY = y + (scrollOffset * (listHeight - thumbHeight)) / (totalEntries - maxVisibleEntries);
+            context.fill(x + 1, thumbY, x + scrollbarWidth - 1, thumbY + thumbHeight, VCVisuals.getThemeColor());
+            context.fill(x + 1, thumbY + thumbHeight - 1, x + scrollbarWidth - 1, thumbY + thumbHeight, 0xFF000000);
+        }
+    }
+
+    private static boolean isInside(int x, int y, int w, int h, double mouseX, double mouseY) {
+        return mouseX >= x && mouseX < x + w && mouseY >= y && mouseY < y + h;
+    }    
+
+    private class AddEntry {
+        private final VCTextField keyField;
+        private Button saveBtn;
+        private Button cancelBtn;
+
+        public AddEntry() {
+            final int offScreenY = -1000;
+            
+            this.keyField = new VCTextField(FilterRules.this.font, 0, offScreenY, fieldW, fieldH, Component.literal("Key"));
+            this.keyField.setBordered(false);
+            this.keyField.setValue("");
+            this.keyField.setEditable(true);
+            this.keyField.setMaxLength(100);
+            this.keyField.setUIScale(uiScale);
+            this.keyField.setFocused(true);
+            this.keyField.setHint(Component.literal("Filtered String...").withStyle(style -> style.withColor(0xFF808080)));
+            FilterRules.this.setFocused(this.keyField);
+
+            this.saveBtn = new FaButton(
+                0, offScreenY, delBtnW, fieldH,
+                Component.literal("✔").withStyle(s -> s.withColor(0xFFCCFFCC)),
+                btn -> {
+                    String key = this.keyField.getValue().trim();
+                    if (!checkForDupes(key)) {
+                        return;
+                    }
+                    if (!key.isEmpty()) {
+                        Rule defaultRule = new Rule();
+                        defaultRule.setSearchText(key);
+                        FilterConfig.setUserRule(key, defaultRule);
+                        abortEntry();
+                    }
+                }
+            );
+
+            this.cancelBtn = new FaButton(
+                0, offScreenY, delBtnW, fieldH,
+                Component.literal("❌").withStyle(s -> s.withColor(0xFFFF8080)),
+                btn -> abortEntry()
+            );
+        }
+
+        public void abortEntry() {
+            addMode = false;
+            FilterRules.this.removeWidget(this.keyField);
+            FilterRules.this.removeWidget(this.saveBtn);
+            FilterRules.this.removeWidget(this.cancelBtn);
+            FilterRules.this.init();
+        }
+
+        public void setPosition(int x, int y) {
+            this.keyField.setX(x);
+            this.keyField.setY(y);
+            this.saveBtn.setX(x + fieldW);
+            this.saveBtn.setY(y);
+            this.cancelBtn.setX(x + fieldW + delBtnW);
+            this.cancelBtn.setY(y);
+        }
+
+        public void updateVisibility() {
+            if (this.keyField.visible) {
+                this.keyField.setVisible(false);
+                this.saveBtn.visible = false;
+                this.cancelBtn.visible = false;
+            }
+            setVisible(true);
+        }
+
+        public void setVisible(boolean visible) {
+            this.keyField.setVisible(visible);
+            this.saveBtn.visible = visible;
+            this.cancelBtn.visible = visible;
+        }
+
+        private boolean checkForDupes(String key) {
+            for (Entry entry : entries) {
+                if (entry.keyField.getText().trim().equals(key)) {
+                    dupePopup(entry.keyField.getText().trim());
+                    return false;
+                }
+            }
+            return true;
+        }
+    }
+
+    private class Entry {
+        private final VCLabelField keyField;
+        private final Button editBtn;
+        private Button delBtn;
+        private Button toggleBtn;
+        private Button modeBtn;
+
+        public Entry(String key) {
+            final int offScreenY = -1000;
+            
+            this.keyField = new VCLabelField(FilterRules.this.font, 0, offScreenY, fieldW, fieldH, Component.literal("Key"));
+            this.keyField.setText(key);
+            this.keyField.setUIScale(uiScale);
+            this.keyField.setFocused(false);
+
+            var rule = FilterConfig.getUserCreatedRules().get(key);
+
+            this.editBtn = VCButton.createNavigationButton(
+                0, offScreenY, btnW, fieldH,
+                Component.literal("Edit").withStyle(s -> s.withColor(0xFFE2CAE9)),
+                btn -> 
+                    Minecraft.getInstance().setScreen(new FilterEditScreen(
+                        key, rule != null ? rule : new Rule(), FilterRules.this
+                    )),
+                uiScale - 0.1f
+            );
+
+            boolean mode = rule.requireFullMatch();
+            this.modeBtn = VCButton.createNavigationButton(
+                0, offScreenY, modeBtnW, fieldH,
+                mode ? Component.literal("Exact") : Component.literal("Anywhere"),
+                btn -> {
+                    Rule currentRule = FilterConfig.getUserCreatedRules().get(key);
+                    boolean currentMode = currentRule != null && currentRule.requireFullMatch();
+                    FilterConfig.setRequireFullMatch(key, !currentMode);
+                    btn.setMessage(!currentMode ? Component.literal("Exact") : Component.literal("Anywhere"));
+                },
+                uiScale - 0.1f
+            );
+
+            this.toggleBtn = VCButton.createMcToggle(
+                0, offScreenY, btnW, fieldH,
+                rule.isEnabled(),
+                btn -> {
+                    VCButton.updateButtonState(this.toggleBtn, !rule.isEnabled());                    
+                    FilterConfig.toggleUserRule(key);
+                },
+                uiScale - 0.1f
+            );            
+
+            this.delBtn = VCButton.createNavigationButton(
+                0, offScreenY, delBtnW, fieldH,
+                Component.literal("🗑").setStyle(Style.EMPTY.withColor(0xFF808080)),
+                btn -> {
+                    FilterConfig.removeUserRule(key);
+                    entries.remove(this);
+                    FilterRules.this.removeWidget(this.keyField);
+                    FilterRules.this.removeWidget(this.editBtn);
+                    FilterRules.this.removeWidget(this.modeBtn);
+                    FilterRules.this.removeWidget(this.delBtn);
+                    FilterRules.this.removeWidget(this.toggleBtn);
+                    FilterRules.this.init();
+                }, uiScale
+            );
+        }
+
+        public void setPosition(int x, int y) {
+            this.keyField.setX(x);
+            this.keyField.setY(y);
+            this.editBtn.setX(x + fieldW);
+            this.editBtn.setY(y);
+            this.modeBtn.setX(x + fieldW + btnW);
+            this.modeBtn.setY(y);
+            this.toggleBtn.setX(x + fieldW + modeBtnW + btnW);
+            this.toggleBtn.setY(y);
+            this.delBtn.setX(x + fieldW + modeBtnW + btnW * 2);
+            this.delBtn.setY(y);
+        }
+
+        public void setVisible(boolean visible) {
+            this.keyField.setVisible(visible);
+            this.editBtn.visible = visible;
+            this.modeBtn.visible = visible;
+            this.delBtn.visible = visible;
+            this.toggleBtn.visible = visible;
+        }
+
+        public void addToScreen() {
+            FilterRules.this.addRenderableWidget(this.keyField);
+            FilterRules.this.addRenderableWidget(this.editBtn);
+            FilterRules.this.addRenderableWidget(this.modeBtn);
+            FilterRules.this.addRenderableWidget(this.delBtn);
+            FilterRules.this.addRenderableWidget(this.toggleBtn);
+        }
+
+        public boolean mouseClicked(MouseButtonEvent click) {
+
+            double mouseX = click.x();
+            double mouseY = click.y();
+
+            if (isInside(keyField.getX(), keyField.getY(), keyField.getWidth(), keyField.getHeight(), mouseX, mouseY)) {
+                return true;
+            }
+            if (isInside(editBtn.getX(), editBtn.getY(), editBtn.getWidth(), editBtn.getHeight(), mouseX, mouseY)) {
+                editBtn.onPress(click);
+                return true;
+            }
+            if (isInside(modeBtn.getX(), modeBtn.getY(), modeBtn.getWidth(), modeBtn.getHeight(), mouseX, mouseY)) {
+                modeBtn.onPress(click);
+                return true;
+            }
+            if (isInside(toggleBtn.getX(), toggleBtn.getY(), toggleBtn.getWidth(), toggleBtn.getHeight(), mouseX, mouseY)) {
+                toggleBtn.onPress(click);
+                return true;
+            }            
+            if (isInside(delBtn.getX(), delBtn.getY(), delBtn.getWidth(), delBtn.getHeight(), mouseX, mouseY)) {
+                delBtn.onPress(click);
+                return true;
+            }
+            return false;
+        }
+    }
+
+    @Override
+    public boolean mouseClicked(MouseButtonEvent click, boolean doubled) {
+        if (popup != null) {
+            return popup.mouseClicked(click);
+        }
+
+        if (handleScrollbar(click.x(), click.y())) return true;
+
+        int startIdx = scrollOffset;
+        int endIdx = Math.min(startIdx + maxVisibleEntries, entries.size());
+        for (int i = startIdx; i < endIdx; i++) {
+            if (entries.get(i).mouseClicked(click)) {
+                return false;
+            }
+        }
+        return super.mouseClicked(click, doubled);
+    }
+
+    private boolean handleScrollbar(double mouseX, double mouseY) {
+        int listTop = 40;
+        int listBottom = this.height - 60;
+        int listHeight = listBottom - listTop;
+        int scrollbarX = this.width / 2 + entryW / 2 + 20;
+        int scrollbarWidth = Math.max(4, (int)(8 * uiScale));
+        int totalEntries = entries.size() + (addMode ? 1 : 0);
+
+        if (totalEntries > maxVisibleEntries
+            && mouseX >= scrollbarX && mouseX <= scrollbarX + scrollbarWidth
+            && mouseY >= listTop && mouseY <= listTop + listHeight) {
+            int thumbHeight = Math.max((int)(10 * uiScale), (maxVisibleEntries * listHeight) / totalEntries);
+            int thumbY = listTop + (scrollOffset * (listHeight - thumbHeight)) / (totalEntries - maxVisibleEntries);
+            if (mouseY >= thumbY && mouseY <= thumbY + thumbHeight) {
+                isDraggingScrollbar = true;
+                scrollKnobOffset = (int)mouseY - thumbY;
+            } else {
+                isDraggingScrollbar = true;
+                scrollKnobOffset = thumbHeight / 2;
+                double trackClickY = mouseY - listTop - scrollKnobOffset;
+                double scrollPercent = trackClickY / (listHeight - thumbHeight);
+                int newScrollOffset = (int)(scrollPercent * (totalEntries - maxVisibleEntries));
+                scrollOffset = Math.clamp(newScrollOffset, 0, totalEntries - maxVisibleEntries);
+            }
+            return true;
+        }
+        return false;
+    }        
+
+    @Override
+    public boolean mouseReleased(MouseButtonEvent click) {
+        isDraggingScrollbar = false;
+        return super.mouseReleased(click);
+    }
+
+    @Override
+    public boolean mouseDragged(MouseButtonEvent click, double offsetX, double offsetY) {
+        if (isDraggingScrollbar) {
+            int listTop = 40;
+            int listBottom = this.height - 60;
+            int listHeight = listBottom - listTop;
+            int totalEntries = entries.size() + (addMode ? 1 : 0);
+            int thumbHeight = Math.max((int)(10 * uiScale), (maxVisibleEntries * listHeight) / totalEntries);
+            int mouseThumbY = (int)click.y() - listTop - scrollKnobOffset;
+            double scrollPercent = mouseThumbY / (double)(listHeight - thumbHeight);
+            int newScrollOffset = (int)(scrollPercent * (totalEntries - maxVisibleEntries));
+            scrollOffset = Math.clamp(newScrollOffset, 0, totalEntries - maxVisibleEntries);
+            return true;
+        }
+        return super.mouseDragged(click, offsetX, offsetY);
+    }
+
+    @Override
+    public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
+        int totalEntries = entries.size() + (addMode ? 1 : 0);
+        if (totalEntries > maxVisibleEntries) {
+            scrollOffset -= (int)Math.signum(verticalAmount);
+            scrollOffset = Math.clamp(scrollOffset, 0, totalEntries - maxVisibleEntries);
+            return true;
+        }
+        return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
+    }
+
+    public void popup(Component title, String continueButtonText, Runnable onContinue, String discardButtonText, Runnable onDiscard) {
+        popup = new VCPopup(
+			title,
+			discardButtonText,
+            onDiscard::run,
+			continueButtonText,
+            onContinue::run,
+            uiScale
+        );
+        this.popup.init(this.font, this.width, this.height);
+    }
+
+    public void dupePopup(String input) {
+        String truncated = input.length() > 7 ? input.substring(0, 7) + "..." : input;        
+        this.popup = new VCPopup(
+            Component.literal("Entry with key '" + truncated + "' already exists!"),
+            "Continue Editing", () -> this.popup = null,
+            "Discard Entry", () -> {
+                if (addEntry != null) {
+                    addEntry.abortEntry();
+                }
+                this.popup = null;
+            },
+            1.0f
+        );
+        this.popup.init(this.font, this.width, this.height);
+    } 
+}

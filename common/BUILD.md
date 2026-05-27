@@ -1,6 +1,7 @@
 ## Source Management
 
 This module (common) holds all base sources, which can be modified depending on version requirements.
+26.1.2 is currently built independently.
 
 ### Build Process
 
@@ -14,13 +15,10 @@ This module (common) holds all base sources, which can be modified depending on 
    - Local sources (highest priority)
    - Filtered common sources (automatically included)
 
-_Clearing the cache is required after editing overrides_  
-
 ### Current Exclusions
 
 All modules host /mixin for clarity.
 
 #### fabric-1.21.10
-- Current reference version
-
-**Overrides are shown in build output**
+Current reference version.
+_This will be moved to 26.1.2 once Hypixel drops support for 1.21.x._

@@ -1,0 +1,170 @@
+package me.valkeea.fishyaddons.command.handler;
+
+import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+
+import me.valkeea.fishyaddons.command.CmdHelper;
+import me.valkeea.fishyaddons.feature.item.safeguard.FGUtil;
+import me.valkeea.fishyaddons.tool.ItemData;
+import me.valkeea.fishyaddons.util.FishyNotis;
+import me.valkeea.fishyaddons.vconfig.config.impl.ItemConfig;
+import me.valkeea.fishyaddons.vconfig.ui.manager.ScreenManager;
+import me.valkeea.fishyaddons.vconfig.ui.screen.VCState;
+import net.fabricmc.fabric.api.client.command.v2.ClientCommands;
+import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
+
+public class FgRoot implements CommandHandler {
+    
+    @Override
+    public String[] getRootNames() {
+        return new String[]{"guard", "fg"};
+    }
+    
+    @Override
+    public void register(LiteralArgumentBuilder<FabricClientCommandSource> builder) {
+        builder
+            .then(addCmd())
+            .then(removeCmd())
+            .then(listCmd())
+            .then(clearCmd())
+            .then(confirmClearCmd())
+            .then(cancelClearCmd())
+            .then(helpCmd())
+            .executes(context -> {
+                VCState.setSearchTo("safeguard");
+                ScreenManager.openConfigScreen();
+                return 1;
+            });
+    }
+
+    private static class CmdChat {
+        static boolean pendingClear = false;
+    }    
+    
+    private static LiteralArgumentBuilder<FabricClientCommandSource> addCmd() {
+        return ClientCommands.literal("add")
+        .executes(ctx -> {
+
+            var mc = Minecraft.getInstance();
+            if (mc.player == null || mc.level == null) return 1;
+
+            var held = mc.player.getMainHandItem();
+            if (held == null || held.isEmpty()) {
+                FishyNotis.notice("You must be holding an item to use this command.");
+                return 1;
+            }
+
+            var uuid = ItemData.extractUUID(held);
+            if (uuid.isEmpty()) {
+                FishyNotis.warn("Held item doesn't have a UUID.");
+                return 1;
+            }
+
+            var name = held.getCustomName();
+            FGUtil.addToFg(uuid, name);
+
+            FishyNotis.format(Component.literal("Your ").withStyle(ChatFormatting.GRAY)
+                .append(name)
+                .append(Component.literal(" is now protected.").withStyle(ChatFormatting.GRAY)));
+
+            return 1;
+        });
+    }
+
+    private static LiteralArgumentBuilder<FabricClientCommandSource> removeCmd() {
+        return ClientCommands.literal("remove")
+        .then(ClientCommands.argument("uuid", StringArgumentType.greedyString())
+        .executes(ctx -> {
+            String uuid = StringArgumentType.getString(ctx, "uuid");
+            if (!onRemove(uuid)) FishyNotis.notice("Provided UUID isn't protected or is invalid.");
+            return 1;
+        }))
+        .executes(ctx -> {
+
+            var mc = Minecraft.getInstance();
+            if (mc.player == null) return 1;
+
+            var held = mc.player.getMainHandItem();
+            if (held == null || held.isEmpty()) {
+                FishyNotis.notice("You must be holding an item to use this command.");
+                return 1;
+            }
+
+            var uuid = ItemData.extractUUID(held);
+            if (!(onRemove(uuid))) FishyNotis.notice("Held item isn't protected or doesn't have a UUID.");
+
+            return 1;
+        });
+    }
+
+    private static LiteralArgumentBuilder<FabricClientCommandSource> listCmd() {
+        return ClientCommands.literal("list")
+        .executes(ctx -> {
+            CmdHelper.sendSortedProtectedList();
+            return 1;
+        });
+    }
+
+
+    private static LiteralArgumentBuilder<FabricClientCommandSource> clearCmd() {
+        return ClientCommands.literal("clear")
+        .executes(context -> {
+            if (!CmdChat.pendingClear) {
+                CmdChat.pendingClear = true;
+                FishyNotis.send("Are you SURE you want to clear all protected items?");
+                CmdHelper.sendClickable("/fa guard confirmclear", "/fa guard cancelclear");
+            } else {
+                FishyNotis.warn("Please respond to the confirmation prompt for: /fa guard clear.");
+            }
+            return 1;
+        });
+    }
+
+    private static LiteralArgumentBuilder<FabricClientCommandSource> confirmClearCmd() {
+        return ClientCommands.literal("confirmclear")
+        .executes(context -> {
+            ItemConfig.clearAll();
+            FishyNotis.send("All protected items have been cleared.");
+            CmdChat.pendingClear = false;
+            return 1;
+        });
+    }
+
+    private static LiteralArgumentBuilder<FabricClientCommandSource> cancelClearCmd() {
+        return ClientCommands.literal("cancelclear")
+        .executes(context -> {
+            FishyNotis.notice("/fa guard clear was canceled.");
+            CmdChat.pendingClear = false;
+            return 1;
+        });
+    }
+
+    private static LiteralArgumentBuilder<FabricClientCommandSource> helpCmd() {
+        return ClientCommands.literal("help")
+        .executes(context -> {
+            FishyNotis.themed("Usage: §bfa/fa guard §8< §7add §8| §7remove §8| §7list §8| §7clear §8>");
+            return 1;
+        });
+    }
+
+    private static boolean onRemove(String uuid) {
+        if (uuid == null || uuid.isEmpty()) return false;
+
+        boolean isProtected = ItemConfig.isProtected(uuid);
+        if (isProtected) {
+
+            var name = ItemConfig.getDisplayName(uuid);
+            if (name != null) {
+                FishyNotis.format(Component.literal("Your ").withStyle(ChatFormatting.GRAY)
+                    .append(name)
+                    .append(Component.literal(" is no longer protected.").withStyle(ChatFormatting.GRAY)));
+            }
+            FGUtil.removeFromFg(uuid);
+        }
+        
+        return isProtected;
+    }
+}

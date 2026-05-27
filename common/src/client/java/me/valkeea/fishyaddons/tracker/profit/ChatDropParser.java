@@ -311,7 +311,6 @@ public class ChatDropParser {
             if (TRACKED_SHARDS.contains(s) && 
                 (lowerS.contains("caught") || lowerS.contains("catch"))) {
                 s = s.concat(" " + SHARD_KW);
-                System.out.println("[ChatDropParser] Normalized shard name: " + s);
             }
         }
         
@@ -389,10 +388,7 @@ public class ChatDropParser {
         }
         
         for (String shard : TRACKED_SHARDS) {
-            if (normalized.contains(shard)) {
-                System.out.println("[ChatDropParser] Identified shard item: " + normalized);
-                return true;
-            }
+            if (normalized.contains(shard)) return true;
         }
         
         return false;

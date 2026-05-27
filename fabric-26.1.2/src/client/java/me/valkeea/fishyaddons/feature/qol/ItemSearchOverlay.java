@@ -1,0 +1,311 @@
+package me.valkeea.fishyaddons.feature.qol;
+
+import java.util.HashSet;
+import java.util.Set;
+
+import me.valkeea.fishyaddons.event.EventPhase;
+import me.valkeea.fishyaddons.event.EventPriority;
+import me.valkeea.fishyaddons.event.impl.FaEvents;
+import me.valkeea.fishyaddons.hud.core.ElementRegistry;
+import me.valkeea.fishyaddons.hud.ui.SearchHudElement;
+import me.valkeea.fishyaddons.mixin.HandledScreenAccessor;
+import me.valkeea.fishyaddons.vconfig.annotation.UIContainer;
+import me.valkeea.fishyaddons.vconfig.annotation.UIHudRedirect;
+import me.valkeea.fishyaddons.vconfig.annotation.UISlider;
+import me.valkeea.fishyaddons.vconfig.annotation.UIToggle;
+import me.valkeea.fishyaddons.vconfig.annotation.VCInit;
+import me.valkeea.fishyaddons.vconfig.annotation.VCListener;
+import me.valkeea.fishyaddons.vconfig.annotation.VCModule;
+import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
+import me.valkeea.fishyaddons.vconfig.api.Config;
+import me.valkeea.fishyaddons.vconfig.api.DoubleKey;
+import me.valkeea.fishyaddons.vconfig.core.UICategory;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.input.CharacterEvent;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.world.item.ItemStack;
+
+@SuppressWarnings("squid:S6548")
+@VCModule(UICategory.QOL)
+public class ItemSearchOverlay {
+
+    private static final float DEFAULT_OVERLAY_OPACITY = 0.5f;
+
+    private static ItemSearchOverlay instance;
+    private SearchHudElement searchField;    
+    private Set<Integer> matchingSlots = new HashSet<>();
+    
+    private String lastSearchTerm = "";
+    private int lastHash = 0;
+    private boolean enabled = false;
+    private double opacity = DEFAULT_OVERLAY_OPACITY;
+    
+    private ItemSearchOverlay() {
+        for (var e : ElementRegistry.getElements()) {
+            if (e instanceof SearchHudElement hud) {
+                searchField = hud;
+                break;
+            }
+        }
+    }
+
+    @VCInit
+    public static void init() {
+        FaEvents.SCREEN_MOUSE_CLICK.register(
+            event -> getInstance().handleMouseClicked(event.click, event.doubled),
+            EventPriority.HIGH, EventPhase.PRE
+        );
+
+        FaEvents.SCREEN_CLOSE.register(event -> getInstance().onScreenClose());
+    }
+
+    private void onScreenClose() {
+        matchingSlots.clear();
+        lastSearchTerm = "";
+        lastHash = 0;
+    }
+
+    private int computeHash(Object handler) {
+        
+        try {
+            var slots = ((net.minecraft.world.inventory.AbstractContainerMenu) handler).slots;
+            int h = 1;
+            for (var slot : slots) {
+                var stack = slot.getItem();
+                if (stack != null && !stack.isEmpty()) {
+                    h = 31 * h + stack.getItem().hashCode();
+                    h = 31 * h + stack.getCount();
+                    h = 31 * h + stack.getComponents().hashCode();
+                }
+            }
+            return h;
+
+        } catch (Exception _) {
+            return 0;
+        }
+    }
+
+    public static ItemSearchOverlay getInstance() {
+        if (instance == null) {
+            instance = new ItemSearchOverlay();
+            refresh();
+        }
+        return instance;
+    }
+
+    public static void refresh() {
+        var instance = getInstance();
+        instance.enabled = Config.get(BooleanKey.INV_SEARCH);
+        instance.opacity = Config.get(DoubleKey.INV_SEARCH_OPACITY);
+    }
+
+    private boolean matchesSearch(ItemStack stack, String searchTerm) {
+        if (stack == null || stack.isEmpty()) return false;
+
+        var itemName = stack.getHoverName().getString().toLowerCase();
+        if (itemName.contains(searchTerm)) return true;
+
+        try {
+
+            var components = stack.getComponents();
+            var lore = components.get(net.minecraft.core.component.DataComponents.LORE);
+            
+            if (lore != null) {
+                for (var line : lore.lines()) {
+                    if (line.getString().toLowerCase().contains(searchTerm)) {
+                        return true;
+                    }
+                }
+            }
+        } catch (Exception _) {
+            // Ignore access error
+        }
+        
+        return false;
+    }
+
+    private void renderSegmentedOverlay(GuiGraphicsExtractor ctx, int screenWidth, int screenHeight, Set<Rectangle> excludedAreas) {
+        int alpha = (int)(opacity * 255) << 24;
+        int overlayColor = alpha;
+
+        renderHorizontalStrips(ctx, screenWidth, screenHeight, excludedAreas, overlayColor);
+    }
+    
+    private void renderHorizontalStrips(GuiGraphicsExtractor ctx, int screenWidth, int screenHeight, Set<Rectangle> excludedAreas, int overlayColor) {
+        for (int y = 0; y < screenHeight; y++) {
+            int x = 0;
+            
+            while (x < screenWidth) {
+
+                var blockingRect = findBlockingRect(x, y, excludedAreas);
+                if (blockingRect != null) {
+                    if (x < blockingRect.x) {
+                        ctx.fill(x, y, blockingRect.x, y + 1, overlayColor);
+                    }
+
+                    x = blockingRect.x + blockingRect.width;
+                } else {
+                    ctx.fill(x, y, screenWidth, y + 1, overlayColor);
+                    break;
+                }
+            }
+        }
+    }
+    
+    private Rectangle findBlockingRect(int startX, int y, Set<Rectangle> excludedAreas) {
+        Rectangle closest = null;
+        
+        for (Rectangle r : excludedAreas) {
+            if (y >= r.y && y < r.y + r.height && 
+                r.x + r.width > startX && 
+                (closest == null || r.x < closest.x)) {
+                closest = r;
+            }
+        }
+        
+        return closest;
+    }
+
+    public void renderOverlay(GuiGraphicsExtractor ctx, AbstractContainerScreen<?> screen, String searchTerm) {
+        if (searchTerm.isEmpty()) return;
+        
+        var lowerSearchTerm = searchTerm.toLowerCase();
+        var searchChanged = !lowerSearchTerm.equals(lastSearchTerm);
+        var handler = screen.getMenu();
+        if (handler == null) return;
+
+        int currentHash = computeHash(handler);
+        boolean slotsChanged = currentHash != lastHash;
+
+        if (searchChanged || slotsChanged) {
+            matchingSlots.clear();
+            lastSearchTerm = lowerSearchTerm;
+            lastHash = currentHash;
+            
+            for (var slot : handler.slots) {
+                var stack = slot.getItem();
+                if (stack != null && !stack.isEmpty() && matchesSearch(stack, lowerSearchTerm)) {
+                    matchingSlots.add(slot.index);
+                }
+            }
+        }
+        
+        if (matchingSlots.isEmpty()) {
+            return;
+        }
+        
+        var hsa = (HandledScreenAccessor) screen;
+        int guiX = hsa.getX();
+        int guiY = hsa.getY();
+
+        Set<Rectangle> excluded = new HashSet<>();
+
+        for (var slot : handler.slots) {
+            if (matchingSlots.contains(slot.index)) {
+                int slotScreenX = guiX + slot.x;
+                int slotScreenY = guiY + slot.y;
+                Rectangle slotRect = new Rectangle(slotScreenX, slotScreenY, 16, 16);
+                excluded.add(slotRect);
+            }
+        }
+
+        renderSegmentedOverlay(ctx, screen.width, screen.height, excluded);
+    }    
+    
+    private static class Rectangle {
+        int x;
+        int y;
+        int width;
+        int height;
+        
+        Rectangle(int x, int y, int width, int height) {
+            this.x = x;
+            this.y = y;
+            this.width = width;
+            this.height = height;
+        }
+    }
+    
+    public boolean handleKeyPressed(KeyEvent input) {
+        if (!isEnabled()) return false;
+        
+        if (searchField != null) {
+            return searchField.handleKeyPressed(input);
+        }
+        return false;
+    }
+    
+    public boolean handleCharTyped(CharacterEvent input) {
+        if (!isEnabled()) return false;
+        
+        if (searchField != null) {
+            return searchField.handleCharTyped(input);
+        }
+        return false;
+    }
+    
+    public boolean handleMouseClicked(MouseButtonEvent click, boolean doubled) {
+        if (!isEnabled()) return false;
+        if (searchField != null) return searchField.handleMouseClick(click, doubled);
+        return false;
+    }
+    
+    public void clearSearch() {
+        if (searchField != null) {
+            searchField.clearSearch();
+            searchField.setOverlayActive(false);
+        }
+        matchingSlots.clear();
+        lastSearchTerm = "";
+        lastHash = 0;
+    }
+    
+    public static boolean isEnabled() {
+        return getInstance().enabled;
+    }
+    
+    public void setSearchField(SearchHudElement field) {
+        this.searchField = field;
+    }
+
+    @UIContainer(
+        name = "Inventory Search",
+        order = 1,
+        description = {
+            "Scan your inventory items by name or lore.",
+            "Right-click the search field to toggle search mode."
+        }
+    )
+    private static final boolean INVSEARCH = false;
+
+    @UIToggle(
+        key = BooleanKey.INV_SEARCH,
+        name = "Main Toggle",
+        description = "Enables a HUD textfield for inventory search.",
+        parent = "Inventory Search"
+    )
+    @UIHudRedirect
+    private static boolean invSearchEnabled;
+
+    @UISlider(
+        key = DoubleKey.INV_SEARCH_OPACITY,
+        name = "Overlay Opacity",
+        description = "Adjust the darkness of the search overlay when highlighting items.",
+        min = 0.0, max = 1.0, format = "%.0f%%",
+        parent = "Inventory Search"
+    )
+    private static double invSearchOpacity;
+
+    @VCListener(BooleanKey.INV_SEARCH)
+    private void onInvSearchChanged(boolean newValue) {
+        enabled = newValue;
+        if (!newValue) clearSearch();
+    }
+
+    @VCListener(doubles = DoubleKey.INV_SEARCH_OPACITY)
+    private void onOpacityChanged(double newOpacity) {
+        opacity = newOpacity;
+    }
+}

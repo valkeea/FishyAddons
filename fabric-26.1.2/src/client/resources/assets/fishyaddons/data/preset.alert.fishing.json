@@ -1,0 +1,236 @@
+{
+  "The water bubbles and froths. A massive form emerges- you have disturbed the Wiki Tiki! You shall pay the price.": {
+    "msg": "",
+    "onscreen": "§b§l§kA§r §{bold}§[fishy] 🌊 Wiki Tiki 🌊 §b§l§kA§",
+    "color": 1.5649516E7,
+    "soundId": "",
+    "volume": 1.0,
+    "toggled": true,
+    "startsWith": true
+  },
+  "A massive Titanoboa surfaces. Its body stretches as far as the eye can see.": {
+    "msg": "",
+    "onscreen": "§b§l§kA§r §{bold}§[fishy] 🐍 Titanoboa 🐍 §b§l§kA§",
+    "color": 1.5649516E7,
+    "soundId": "",
+    "volume": 1.0,
+    "toggled": true,
+    "startsWith": true
+  },
+  "You've caused a disturbance in the loch. Could it be... Nessie?": {
+    "msg": "",
+    "onscreen": "§b§l§kA§r §{bold}§[caladium] 🦕 Nessie 🦕 §b§l§kA§",
+    "color": 1.5649516E7,
+    "soundId": "",
+    "volume": 1.0,
+    "toggled": true,
+    "startsWith": true
+  },  
+  "This can't be! The manifestation of death himself!": {
+    "msg": "",
+    "onscreen": "§b§l§kA§r §0☠ §{bold}§[abyss]Grim Reaper §r§0☠ §b§l§kA§",
+    "color": 1.5649516E7,
+    "soundId": "",
+    "volume": 1.0,
+    "toggled": true,
+    "startsWith": true
+  },
+  "What is this creature!?": {
+    "msg": "",
+    "onscreen": "§[sun]❄ Yeti ❄",
+    "color": 1.5649516E7,
+    "soundId": "",
+    "volume": 1.0,
+    "toggled": true,
+    "startsWith": true
+  },
+  "Hide no longer, a Great White Shark has tracked your scent and thirsts for your blood!": {
+    "msg": "",
+    "onscreen": "&{periwinkle}🦈 &[sun]Great White Shark &{periwinkle}🦈",
+    "color": 1.5649516E7,
+    "soundId": "",
+    "volume": 1.0,
+    "toggled": true,
+    "startsWith": true
+  },
+  "A Fiery Scuttler inconspicuously waddles up to you, friends in tow.": {
+    "msg": "",
+    "onscreen": "§[sun]Fiery Scuttler!",
+    "color": 1.5649516E7,
+    "soundId": "",
+    "volume": 1.0,
+    "toggled": true,
+    "startsWith": true
+  },
+  "The Water Hydra has come to test your strength.": {
+    "msg": "",
+    "onscreen": "§{vista_blue}🐲 §{purple}Water Hydra §{vista_blue}🐲",
+    "color": 1.5649516E7,
+    "soundId": "",
+    "volume": 1.0,
+    "toggled": true,
+    "startsWith": true
+  },
+  "You've hooked an Ent, as ancient as the forest itself.": {
+    "msg": "",
+    "onscreen": "§{seafoam}🌿 §{purple}Ent §{seafoam}🌿",
+    "color": 1.5649516E7,
+    "soundId": "",
+    "volume": 1.0,
+    "toggled": true,
+    "startsWith": true
+  },
+  "It must be a full moon, a Werewolf appears.": {
+    "msg": "",
+    "onscreen": "§{purple}A Werewolf! 🐺",
+    "color": 1.5649516E7,
+    "soundId": "",
+    "volume": 1.0,
+    "toggled": true,
+    "startsWith": true
+  },
+  "A striped beast bounds from the depths, the wild Tiger Shark!": {
+    "msg": "",
+    "onscreen": "§{purple}🦈 Tiger Shark 🦈",
+    "color": 1.5649516E7,
+    "soundId": "",
+    "volume": 1.0,
+    "toggled": true,
+    "startsWith": true
+  },
+  "A Reindrake forms from the depths.": {
+    "msg": "",
+    "onscreen": "§b§l§kA§r §{bold}§[ruby] 🎄 Reindrake 🎄 §b§l§kA§",
+    "color": 1.5649516E7,
+    "soundId": "",
+    "volume": 1.0,
+    "toggled": true,
+    "startsWith": true
+  },
+  "The sky darkens and the air thickens. The end times are upon us: Ragnarok is here.": {
+    "msg": "",
+    "onscreen": "§b§l§kA§r §{bold}§[slayer] 🔥 Ragnarok 🔥 §b§l§kA§",
+    "color": 1.5649516E7,
+    "soundId": "",
+    "volume": 1.0,
+    "toggled": true,
+    "startsWith": true
+  },
+  "You hear a massive rumble as Thunder emerges.": {
+    "msg": "",
+    "onscreen": "§l§b🗲 §{bold}§[ruby] Thunder §l§b🗲",
+    "color": 1.5649516E7,
+    "soundId": "",
+    "volume": 1.0,
+    "toggled": true,
+    "startsWith": true
+  },
+  "WOAH! A Plhlegblast appeared.": {
+    "msg": "",
+    "onscreen": "§b§l§kA§r §{bold}§[ruby] 🦑 Plhlegblast 🦑 §b§l§kA§",
+    "color": 1.5649516E7,
+    "soundId": "",
+    "volume": 1.0,
+    "toggled": true,
+    "startsWith": true
+  },
+  "You have angered a legendary creature... Lord Jawbus has arrived.": {
+    "msg": "",
+    "onscreen": "§b§l§kA§r §{bold}§[ruby] 👁 Lord Jawbus 👁 §b§l§kA§",
+    "color": 1.5649516E7,
+    "soundId": "",
+    "volume": 1.0,
+    "toggled": true,
+    "startsWith": true
+  },
+  "The Loch Emperor arises from the depths.": {
+    "msg": "",
+    "onscreen": "§{leg}♚ §[sun]Loch Emperor §{leg}♚",
+    "color": 1.5649516E7,
+    "soundId": "",
+    "volume": 1.0,
+    "toggled": true,
+    "startsWith": true
+  },
+  "Is this even a fish? It's the Carrot King!": {
+    "msg": "",
+    "onscreen": "§{lapis}Carrot King §{orange}🐇",
+    "color": 1.5649516E7,
+    "soundId": "",
+    "volume": 1.0,
+    "toggled": true,
+    "startsWith": true
+  },
+  "A garish set of tentacles arise. It's a Blue Ringed Octopus!": {
+    "msg": "",
+    "onscreen": "§[sun]🐙 Blue Ringed Octopus 🐙",
+    "color": 1.5649516E7,
+    "soundId": "",
+    "volume": 1.0,
+    "toggled": true,
+    "startsWith": true
+  },
+  "An Abyssal Miner breaks out of the water!": {
+    "msg": "",
+    "onscreen": "§[sun]⛏ Abyssal Miner ⛏",
+    "color": 1.5649516E7,
+    "soundId": "",
+    "volume": 1.0,
+    "toggled": true,
+    "startsWith": true
+  },
+  "A long snout breaks the surface of the water. It's an Alligator!": {
+    "msg": "",
+    "onscreen": "§[sun]An Alligator!",
+    "color": 1.5649516E7,
+    "soundId": "",
+    "volume": 1.0,
+    "toggled": true,
+    "startsWith": true
+  },
+  "The spirit of a long lost Phantom Fisher has come to haunt you.": {
+    "msg": "",
+    "onscreen": "§[sun]🝇 Phantom Fisher 🝇",
+    "color": 1.5649516E7,
+    "soundId": "",
+    "volume": 1.0,
+    "toggled": true,
+    "startsWith": true
+  },
+  "An Oasis Rabbit appears from the water.": {
+    "msg": "",
+    "onscreen": "§[sun]Oasis Rabbit 🐇",
+    "color": 1.5649516E7,
+    "soundId": "",
+    "volume": 1.0,
+    "toggled": true,
+    "startsWith": true
+  },
+  "Bow down before the Frog Prince... or pay the hefty price!": {
+    "msg": "",
+    "onscreen": "§b§l§kA§r &{taffy}\u1FAB7 §{bold}§[bright]Frog Prince §r&{taffy}\u1FAB7 §b§l§kA§",
+    "color": 1.5649516E7,
+    "soundId": "",
+    "volume": 1.0,
+    "toggled": true,
+    "startsWith": true
+  },
+  "A Puddle Jumper is preparing for liftoff—cast your rod into it and hold on tight!": {
+    "msg": "",
+    "onscreen": "§{seafoam}🐸 §[sun]Puddle Jumper §{seafoam}🐸",
+    "color": 1.5649516E7,
+    "soundId": "",
+    "volume": 1.0,
+    "toggled": true,
+    "startsWith": true
+  },
+  "A Drowned Captain takes hold of your bobber!": {
+    "msg": "",
+    "onscreen": "§[purple]⚓ Drowned Captain ⚓",
+    "color": 1.5649516E7,
+    "soundId": "",
+    "volume": 1.0,
+    "toggled": true,
+    "startsWith": true
+  }
+}

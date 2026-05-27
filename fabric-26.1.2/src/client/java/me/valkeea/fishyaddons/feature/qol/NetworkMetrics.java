@@ -1,0 +1,196 @@
+package me.valkeea.fishyaddons.feature.qol;
+
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
+import me.valkeea.fishyaddons.feature.skyblock.PetInfo;
+import me.valkeea.fishyaddons.vconfig.annotation.VCListener;
+import me.valkeea.fishyaddons.vconfig.annotation.VCModule;
+import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
+import me.valkeea.fishyaddons.vconfig.api.Config;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientPacketListener;
+import net.minecraft.network.protocol.ping.ClientboundPongResponsePacket;
+import net.minecraft.network.protocol.ping.ServerboundPingRequestPacket;
+import net.minecraft.util.Util;
+
+@VCModule
+public class NetworkMetrics {
+    private NetworkMetrics() {}
+    
+    // Ping
+    private static final Map<Long, Long> pendingPings = new ConcurrentHashMap<>();
+    private static volatile int lastPing = -1;
+    
+    // KeepAlive-based TPS estimation
+    private static final Deque<Long> keepAliveTimestamps = new ArrayDeque<>();
+    private static volatile double lastTps = -1;
+
+    private static final int MAX_SAMPLES = 30; // Low for real-time changes
+    private static final int START_BASELINE_MS = 570; // Added jitter buffer   
+    private static final int TRUE_BASELINE_MS = 500;
+    private static final int MIN_VALID_DELTA_MS = 100;
+    private static final int BASELINE_500MS_TICKS = 10;
+    private static final int BASELINE_1000MS_TICKS = 20;
+    private static volatile int baselineMs = START_BASELINE_MS;
+    private static volatile int baselineTicks;
+    private static volatile long lowestDetectedDelta = Long.MAX_VALUE;    
+    
+    // State for display
+    private static boolean enabled = false;
+    private static boolean tpsOn = true;
+    private static boolean fpsOn = true;
+    private static boolean pingOn = true;
+
+    static {
+        calcTicks(baselineMs);
+    }
+
+    // -- Ping ---
+    public static void send() {
+        ClientPacketListener connection = Minecraft.getInstance().getConnection();
+
+        if (connection != null) {
+            long timestamp = Util.getMillis();
+            pendingPings.put(timestamp, timestamp);
+            connection.send(new ServerboundPingRequestPacket(timestamp));
+            calcTps();
+        }
+    }
+
+    public static void onPingResponse(ClientboundPongResponsePacket packet) {
+        long sent = packet.time();
+        long now = Util.getMillis();
+        Long original = pendingPings.remove(sent);
+        if (original != null) {
+            lastPing = (int) (now - original);
+        }
+    }
+
+    // --- TPS ---
+    public static void onKaS2C() {
+        if (!PetInfo.isTablistReady()) return;
+        long now = System.currentTimeMillis();
+
+        synchronized (keepAliveTimestamps) {
+            long last = keepAliveTimestamps.peekLast() != null ? keepAliveTimestamps.peekLast() : 0;
+            long delta = now - last;
+            if (delta < MIN_VALID_DELTA_MS && !keepAliveTimestamps.isEmpty()) {
+                return;
+            }
+
+            keepAliveTimestamps.addLast(now);
+            while (keepAliveTimestamps.size() > MAX_SAMPLES) {
+                keepAliveTimestamps.removeFirst();
+            }
+
+            calcTps();
+        }
+    }
+
+    private static void calcTps() {
+        if (keepAliveTimestamps.size() < 2) {
+            lastTps = -1;
+            return;
+        }
+
+        long first = keepAliveTimestamps.peekFirst();
+        long last = keepAliveTimestamps.peekLast();
+        int intervals = keepAliveTimestamps.size() - 1;
+        long timeSpan = last - first;
+
+        if (intervals <= 0 || timeSpan <= 0) {
+            lastTps = -1;
+            return;
+        }
+
+        long avg = timeSpan / intervals;
+        double avgInterval = avg;
+        double rawTps = (baselineTicks * 1000.0) / avgInterval;
+        // Lowest detected avg delta to adjust baseline
+        updateBaseline(avg);
+        lastTps = Math.min(20.0, rawTps);
+    }
+
+    private static void updateBaseline(long newDelta) {
+        if (newDelta != baselineMs && newDelta >= TRUE_BASELINE_MS && keepAliveTimestamps.size() >= MAX_SAMPLES) {
+
+            if (newDelta <= START_BASELINE_MS && newDelta < lowestDetectedDelta) {
+                lowestDetectedDelta = newDelta;
+                baselineMs = (int)lowestDetectedDelta;
+            } else if (newDelta >= 950) { // likely limbo
+                baselineMs = 1000;
+            }
+            calcTicks(newDelta);
+        }
+    }
+
+    private static void calcTicks(long deltaMs) {
+        if (deltaMs >= 1000) {
+            baselineTicks = BASELINE_1000MS_TICKS;
+        } else if (deltaMs >= TRUE_BASELINE_MS && deltaMs <= START_BASELINE_MS) {
+            baselineTicks = (int)((20.0 * deltaMs) / 1000.0);
+        } else {
+           baselineTicks = BASELINE_500MS_TICKS;
+        }
+        
+    }    
+
+    public static void reset() {
+        synchronized (keepAliveTimestamps) {
+            keepAliveTimestamps.clear();
+        }
+        lastTps = -1;
+        baselineMs = START_BASELINE_MS;
+        calcTicks(baselineMs);
+        lowestDetectedDelta = Long.MAX_VALUE;
+    }
+
+    public static boolean isOn() {
+        return enabled;
+    }    
+
+    public static double getTps() {
+        synchronized (keepAliveTimestamps) {
+            if (keepAliveTimestamps.size() >= 5) {
+                return lastTps;
+            }
+        }
+        return -1;
+    }
+
+    public static int getPing() {
+        return lastPing;
+    }
+
+    public static String getTpsString() {
+        double tps = getTps();
+        return tps == -1 ? "?" : String.format(java.util.Locale.US, "%.2f", tps);
+    }
+
+    public static boolean shouldDisplay(BooleanKey key) {
+        switch (key) {
+            case BooleanKey.METRICS_SHOW_PING:
+                return pingOn;
+            case BooleanKey.METRICS_SHOW_TPS:
+                return tpsOn;
+            case BooleanKey.METRICS_SHOW_FPS:
+                return fpsOn;
+            default:
+                return false;
+        }
+    }    
+
+    @VCListener({
+        BooleanKey.HUD_METRICS_ENABLED, BooleanKey.METRICS_SHOW_TPS,
+        BooleanKey.METRICS_SHOW_FPS, BooleanKey.METRICS_SHOW_PING
+    })    
+    public static void refresh() {
+        enabled = Config.get(BooleanKey.HUD_METRICS_ENABLED);
+        tpsOn = Config.get(BooleanKey.METRICS_SHOW_TPS);
+        fpsOn = Config.get(BooleanKey.METRICS_SHOW_FPS);
+        pingOn = Config.get(BooleanKey.METRICS_SHOW_PING);
+    }
+}

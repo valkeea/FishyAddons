@@ -1,0 +1,393 @@
+package me.valkeea.fishyaddons.command.handler;
+
+import com.mojang.brigadier.arguments.IntegerArgumentType;
+import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+
+import me.valkeea.fishyaddons.api.skyblock.SlayerTables.SlayerType;
+import me.valkeea.fishyaddons.command.CmdHelper;
+import me.valkeea.fishyaddons.command.CommandBuilderUtils;
+import me.valkeea.fishyaddons.feature.qol.NetworkMetrics;
+import me.valkeea.fishyaddons.feature.skyblock.WeatherTracker;
+import me.valkeea.fishyaddons.feature.waypoints.NpcLocation;
+import me.valkeea.fishyaddons.feature.waypoints.TempWaypoint;
+import me.valkeea.fishyaddons.tool.PlayerPosition;
+import me.valkeea.fishyaddons.tracker.SkillTracker;
+import me.valkeea.fishyaddons.tracker.SlayerStats;
+import me.valkeea.fishyaddons.ui.list.TabbedListScreen;
+import me.valkeea.fishyaddons.util.FishyNotis;
+import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
+import me.valkeea.fishyaddons.vconfig.api.Config;
+import me.valkeea.fishyaddons.vconfig.ui.screen.HudEditScreen;
+import net.fabricmc.fabric.api.client.command.v2.ClientCommands;
+import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
+
+public class FaRoot implements CommandHandler {
+    
+    @Override
+    public String[] getRootNames() {
+        return new String[]{"fishyaddons", "fa"};
+    }
+    
+    @Override
+    public void register(LiteralArgumentBuilder<FabricClientCommandSource> builder) {
+        builder
+            .then(cmdCommand())
+            .then(cameraCommand())
+            .then(chatCommand())
+            .then(keyCommand())
+            .then(alertCommand())
+            .then(lavaCommand())
+            .then(hudCommand())
+            .then(pingCommand())
+            .then(guideCommand())
+            .then(helpCommand())
+            .then(rainCommand())
+            .then(fishCommand())
+            .then(coordCommand())
+            .then(dianaCommand())
+            .then(skillCommand())
+            .then(slayerCommand())
+            .then(npcCommand());
+    }
+
+
+    private static final String F5 = "Custom F5";
+    
+    // --- Toggle commands with gui init ---
+    
+    private static LiteralArgumentBuilder<FabricClientCommandSource> cmdCommand() {
+        return CommandBuilderUtils.toggleCommand("cmd", BooleanKey.ALIASES, "Custom commands")
+            .withGuiTab(TabbedListScreen.Tab.COMMANDS)
+            .build();
+    }
+    
+    private static LiteralArgumentBuilder<FabricClientCommandSource> chatCommand() {
+        return CommandBuilderUtils.toggleCommand("chat", BooleanKey.CHAT_REPLACEMENTS, "Chat replacements")
+            .withGuiTab(TabbedListScreen.Tab.CHAT)
+            .build();
+    }
+    
+    private static LiteralArgumentBuilder<FabricClientCommandSource> keyCommand() {
+        return CommandBuilderUtils.toggleCommand("key", BooleanKey.KEY_SHORTCUTS, "Keybinds")
+            .withGuiTab(TabbedListScreen.Tab.KEYBINDS)
+            .build();
+    }
+    
+    private static LiteralArgumentBuilder<FabricClientCommandSource> alertCommand() {
+        return CommandBuilderUtils.toggleCommand("alert", BooleanKey.CHAT_ALERTS, "Chat alerts")
+            .withGuiScreen(new me.valkeea.fishyaddons.ui.list.ChatAlerts())
+            .build();
+    }
+    
+    // --- Toggle commands ---
+    
+    private static LiteralArgumentBuilder<FabricClientCommandSource> cameraCommand() {
+        return CommandBuilderUtils.toggleCommand("camera", BooleanKey.SKIP_F5, F5)
+            .withToggle()
+            .withHelpMessage("Usage: §b/fa cam §8<§7 on §8| §7off §8| §7toggle §8>")
+            .build();
+    }
+    
+    private static LiteralArgumentBuilder<FabricClientCommandSource> lavaCommand() {
+        return CommandBuilderUtils.toggleCommand("lava", BooleanKey.FISHY_LAVA, "Clear Lava")
+            .withHelpMessage("Usage: §b/fa lava §8<§7on §8| §7off§8>")
+            .build();
+    }
+    
+    private static LiteralArgumentBuilder<FabricClientCommandSource> pingCommand() {
+        return CommandBuilderUtils.toggleCommand("ping", BooleanKey.HUD_METRICS_ENABLED, "Network Display")
+            .withDefaultAction(() -> {
+                NetworkMetrics.send();
+                var msg = Component.literal(NetworkMetrics.getPing() + " §8ms");
+                if (NetworkMetrics.shouldDisplay(BooleanKey.METRICS_SHOW_TPS)) {
+                    msg = msg.copy().append(Component.literal("§8, §7" + NetworkMetrics.getTpsString() + " §8TPS"));
+                }
+                FishyNotis.send(msg);
+                return 1;
+            })
+            .build();
+    }
+    
+    // --- Simple ---
+    
+    private static LiteralArgumentBuilder<FabricClientCommandSource> hudCommand() {
+        return CommandBuilderUtils.createGuiCommand("hud", new HudEditScreen());
+    }
+    
+    private static LiteralArgumentBuilder<FabricClientCommandSource> guideCommand() {
+        return CommandBuilderUtils.createSimpleCommand("guide", () -> {
+            if (CmdHelper.checkGUI() == 1) return 1;
+            FishyNotis.guideNoti2();
+            return 1;
+        });
+    }
+    
+    private static LiteralArgumentBuilder<FabricClientCommandSource> helpCommand() {
+        return CommandBuilderUtils.createSimpleCommand("help", () -> {
+            FishyNotis.helpNoti();
+            return 1;
+        });
+    }
+
+    // --- Complex ---
+
+    private static LiteralArgumentBuilder<FabricClientCommandSource> rainCommand() {
+        return ClientCommands.literal("rain")
+        .then(ClientCommands.literal("track")
+        .executes(context -> {
+            boolean isRaining = WeatherTracker.isRaining();
+            WeatherTracker.track();
+            String status = isRaining ? "It is currently raining. You will be notified when the rain stops." : "It is not currently raining.";
+            FishyNotis.format(Component.literal(status).withStyle(isRaining ? ChatFormatting.DARK_AQUA : ChatFormatting.RED));
+            return 1;
+        }))
+        .then(ClientCommands.literal("on")
+        .executes(context -> {
+            Config.toggle(BooleanKey.RAIN_NOTI);
+            FishyNotis.on("Rain notifications");
+            return 1;
+        }))
+        .then(ClientCommands.literal("off")
+        .executes(context -> {
+            Config.toggle(BooleanKey.RAIN_NOTI);
+            me.valkeea.fishyaddons.feature.skyblock.WeatherTracker.reset();
+            FishyNotis.off("Rain notifications");
+            return 1;
+        }))
+        .executes(context -> {
+            FishyNotis.themed("§lWeather Tracker:");
+            FishyNotis.alert(Component.literal("§3/fa rain track §8- §7Check the current rain state."));
+            FishyNotis.alert(Component.literal("§3/fa rain on | off §8- §7Enable/disable rain notifications"));
+            return 1;
+        });
+    }
+
+    private static LiteralArgumentBuilder<FabricClientCommandSource> fishCommand() {
+        return ClientCommands.literal("sc")
+        .then(ClientCommands.literal("sounds")
+        .executes(context -> {
+            FishyNotis.send("§aTo create a resource pack:");
+            FishyNotis.alert(Component.literal("§7- In any resource pack, create a folder named: §bfishyaddons"));
+            FishyNotis.alert(Component.literal("§7- Inside that folder, create another folder named: §bsounds"));
+            FishyNotis.alert(Component.literal("§7- Inside the sounds folder, create a folder named: §bcustom"));
+            FishyNotis.alert(Component.literal("§7- Place your custom .ogg files inside the custom folder"));
+            FishyNotis.alert(Component.literal("§7- Then use sound IDs: §bfishyaddons:fishyaddons_1§7, §bfishyaddons:fishyaddons_2§7, §bfishyaddons:fishyaddons_3"));
+            return 1;
+        }))
+        .then(ClientCommands.literal("since")
+        .executes(context -> {
+            me.valkeea.fishyaddons.tracker.fishing.ScStats.getInstance().sendStats();
+            return 1;
+        }))
+        .then(ClientCommands.literal("rng")
+        .executes(context -> {
+            me.valkeea.fishyaddons.tracker.fishing.ScData.getInstance().sendCatchRates();
+            return 1;
+        }))
+        .then(ClientCommands.argument("name", StringArgumentType.greedyString())
+        .executes(context -> {
+            var name = StringArgumentType.getString(context, "name");
+            me.valkeea.fishyaddons.tracker.fishing.ScData.getInstance().sendHistogramSummary(name);
+            return 1;
+        }))
+        .executes(context -> {
+            FishyNotis.themed("Usage:");
+            FishyNotis.alert(Component.literal("§3/fa fishyaddons sc sounds §8- §7Instructions for resource pack sounds"));
+            FishyNotis.alert(Component.literal("§3/fa fishyaddons sc since §8- §7Stats for 'sc since' in the current island"));          
+            FishyNotis.alert(Component.literal("§3/fa fishyaddons sc rng §8- §7Catch % for all rare scs"));
+            FishyNotis.alert(Component.literal("§3/fa fishyaddons sc <name> §8- §7Data summary for a specific sc"));
+            return 1;
+        });
+    }
+
+    private static final String TOGGLE = "toggle";
+    private static final String RESET = "reset";
+    private static final String LABEL = "label";
+
+
+    protected static LiteralArgumentBuilder<FabricClientCommandSource> coordCommand() {
+        return ClientCommands.literal("coords")
+        .then(ClientCommands.argument(LABEL, StringArgumentType.greedyString())
+        .executes(context -> {
+            String label = context.getArgument(LABEL, String.class);
+            PlayerPosition.giveAwayCoordsWithLabel(label);
+            return 1;
+        }))
+        .then(ClientCommands.literal("last")
+        .executes(context -> {
+            TempWaypoint.redrawLast();
+            return 1;
+        }))
+        .then(ClientCommands.literal("hide")
+        .then(ClientCommands.argument("x", IntegerArgumentType.integer())
+        .then(ClientCommands.argument("y", IntegerArgumentType.integer())
+        .then(ClientCommands.argument("z", IntegerArgumentType.integer())
+        .executes(context -> {
+            int x = context.getArgument("x", Integer.class);
+            int y = context.getArgument("y", Integer.class);
+            int z = context.getArgument("z", Integer.class);
+            var pos = new net.minecraft.core.BlockPos(x, y, z);
+            TempWaypoint.removeBeaconAt(pos);
+            return 1;
+        })))))
+        .then(ClientCommands.literal("redraw")
+        .then(ClientCommands.argument("x", IntegerArgumentType.integer())
+        .then(ClientCommands.argument("y", IntegerArgumentType.integer())
+        .then(ClientCommands.argument("z", IntegerArgumentType.integer())
+        .executes(context -> {
+            int x = context.getArgument("x", Integer.class);
+            int y = context.getArgument("y", Integer.class);
+            int z = context.getArgument("z", Integer.class);
+            var pos = new net.minecraft.core.BlockPos(x, y, z);
+            TempWaypoint.redraw(pos, "");
+            return 1;
+        })
+        .then(ClientCommands.argument(LABEL, StringArgumentType.greedyString())
+        .executes(context -> {
+            int x = context.getArgument("x", Integer.class);
+            int y = context.getArgument("y", Integer.class);
+            int z = context.getArgument("z", Integer.class);
+            String label = context.getArgument(LABEL, String.class);
+            var pos = new net.minecraft.core.BlockPos(x, y, z);
+            TempWaypoint.redraw(pos, label);
+            return 1;
+        }))))))
+        .executes(context -> {
+            PlayerPosition.giveAwayCoords();
+            return 1;
+        });
+    }    
+
+    private static LiteralArgumentBuilder<FabricClientCommandSource> dianaCommand() {
+        return ClientCommands.literal("diana")
+        .then(ClientCommands.literal(RESET)
+        .executes(context -> {
+            if (me.valkeea.fishyaddons.tracker.DianaStats.loaded()) {
+                me.valkeea.fishyaddons.tracker.DianaStats.getInstance().resetAll();
+                FishyNotis.send("Diana stats have been reset.");
+            } else  FishyNotis.warn("Diana stats are not loaded.");
+            return 1;
+        }))
+        .executes(context -> {
+            me.valkeea.fishyaddons.tracker.DianaStats.getInstance().sendDianaStats();
+            return 1;
+        });
+    }
+
+    private static LiteralArgumentBuilder<FabricClientCommandSource> skillCommand() {
+        return ClientCommands.literal("skill")
+        .then(ClientCommands.literal("dt")
+        .executes(context -> {
+            SkillTracker.getInstance().toggleDownTime();
+            return 1;
+        }))
+        .then(ClientCommands.literal(RESET)
+        .executes(context -> {
+            SkillTracker.getInstance().resetAll();
+            FishyNotis.notice("Skill Tracker has been reset.");
+            return 1;
+        }))
+        .then(ClientCommands.literal(TOGGLE)
+        .executes(context -> {
+            boolean current = Config.get(BooleanKey.HUD_SKILL_XP);
+            Config.toggle(BooleanKey.HUD_SKILL_XP);
+            SkillTracker.refresh();
+
+            if (!current) {
+                FishyNotis.on("Skill Tracker");
+            } else FishyNotis.off("Skill Tracker");
+
+            return 1;
+        }))
+        .executes(context -> {
+            FishyNotis.themed("Usage:");
+            FishyNotis.alert(Component.literal("§3/fa skill dt §8- §7Toggle downtime mode. Otherwise, skill XP tracking is paused after 1.5min and wiped after 15min."));
+            FishyNotis.alert(Component.literal("§3/fa skill reset §8- §7Reset all tracked XP for the session."));
+            return 1;
+        });
+    }    
+
+    private static LiteralArgumentBuilder<FabricClientCommandSource> slayerCommand() {
+        return ClientCommands.literal("slayer")
+            .then(ClientCommands.literal(RESET)
+                .then(ClientCommands.literal("all")
+                    .then(ClientCommands.literal("confirm")
+                        .executes(context -> {
+                            if (SlayerStats.loaded()) {
+                                SlayerStats.getInstance().resetAll();
+                                FishyNotis.send("All slayer stats have been reset.");
+                            } else  FishyNotis.warn("Slayer stats are not loaded.");
+                            return 1;
+                        }))
+                    .then(ClientCommands.literal("cancel")
+                        .executes(context -> {
+                            FishyNotis.notice("Slayer stats reset was canceled.");
+                            return 1;
+                        }))
+                    .executes(context -> {
+                        FishyNotis.themed("Are you SURE you want to reset ALL slayer stats?");
+                        CmdHelper.sendClickable("/fa slayer reset all confirm", "/fa slayer reset all cancel");
+                        return 1;
+                    }))
+                .then(ClientCommands.argument("type", StringArgumentType.word())
+                    .executes(context -> {
+                        var typeName = StringArgumentType.getString(context, "type");
+                        var type = parseSlayerType(typeName);
+                        if (type != null && SlayerStats.loaded()) {
+                            SlayerStats.getInstance().resetType(type);
+                            FishyNotis.send(type.getCmdName() + " slayer stats have been reset.");
+                        } else if (type == null) {
+                            FishyNotis.warn("Invalid slayer type. Use: wolf, zombie, spider, enderman, blaze, or vampire");
+                        } else FishyNotis.warn("Slayer stats are not loaded.");
+                        return 1;
+                    })))
+            .then(ClientCommands.argument("type", StringArgumentType.word())
+                .executes(context -> {
+                    var typeName = StringArgumentType.getString(context, "type");
+                    var type = parseSlayerType(typeName);
+                    if (type != null) {
+                        SlayerStats.getInstance().sendSlayerStats(type);
+                    } else FishyNotis.warn("Invalid slayer type. Use: wolf, zombie, spider, enderman, blaze, or vampire");
+                    return 1;
+                }))
+            .executes(context -> {
+                SlayerStats.getInstance().sendSlayerStats();
+                return 1;
+            });
+    }
+    
+    private static SlayerType parseSlayerType(String name) {
+        try {
+            return SlayerType.valueOf(name.toUpperCase());
+        } catch (IllegalArgumentException _) {
+            return null;
+        }
+    }
+
+    private static LiteralArgumentBuilder<FabricClientCommandSource> npcCommand() {
+        return ClientCommands.literal("npc")
+        .then(ClientCommands.argument("name", StringArgumentType.greedyString())
+            .executes(context -> {
+                var npcName = StringArgumentType.getString(context, "name");
+                NpcLocation.drawFor(npcName);
+                return 1;
+            }))
+        .then(ClientCommands.literal("all")
+            .executes(context -> {
+                NpcLocation.drawAll();
+                return 1;
+            }))
+        .then(ClientCommands.literal("clear")
+            .executes(context -> {
+                TempWaypoint.clearBeacons();
+                return 1;
+            }))          
+        .executes(context -> {
+            FishyNotis.themed("Usage: §b/fa npc §8<§7name §8| §7all §8| §7clear§8>");
+            return 1;
+        });
+    }
+}

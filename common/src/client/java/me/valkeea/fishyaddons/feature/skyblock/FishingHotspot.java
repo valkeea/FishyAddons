@@ -197,7 +197,7 @@ public class FishingHotspot {
             return true;
         }
 
-        if (labelText.contains("♔") && labelText.contains("Trophy Fish Chance")) {
+        if (labelText.contains("♔") && labelText.contains("Trophy Chance")) {
             return true;
         }        
 

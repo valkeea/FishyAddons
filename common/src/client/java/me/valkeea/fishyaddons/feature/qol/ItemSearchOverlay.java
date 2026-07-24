@@ -9,6 +9,7 @@ import me.valkeea.fishyaddons.event.impl.FaEvents;
 import me.valkeea.fishyaddons.hud.core.ElementRegistry;
 import me.valkeea.fishyaddons.hud.ui.SearchHudElement;
 import me.valkeea.fishyaddons.mixin.HandledScreenAccessor;
+import me.valkeea.fishyaddons.vconfig.annotation.UIColorPicker;
 import me.valkeea.fishyaddons.vconfig.annotation.UIContainer;
 import me.valkeea.fishyaddons.vconfig.annotation.UIHudRedirect;
 import me.valkeea.fishyaddons.vconfig.annotation.UISlider;
@@ -19,30 +20,32 @@ import me.valkeea.fishyaddons.vconfig.annotation.VCModule;
 import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
 import me.valkeea.fishyaddons.vconfig.api.Config;
 import me.valkeea.fishyaddons.vconfig.api.DoubleKey;
+import me.valkeea.fishyaddons.vconfig.api.IntKey;
 import me.valkeea.fishyaddons.vconfig.core.UICategory;
-import net.minecraft.client.gui.Click;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.ingame.HandledScreen;
-import net.minecraft.client.input.CharInput;
-import net.minecraft.client.input.KeyInput;
-import net.minecraft.item.ItemStack;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.input.CharacterEvent;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.world.item.ItemStack;
 
 @SuppressWarnings("squid:S6548")
 @VCModule(UICategory.QOL)
 public class ItemSearchOverlay {
+
     private static ItemSearchOverlay instance;
+    private SearchHudElement searchField;    
     private Set<Integer> matchingSlots = new HashSet<>();
-    private SearchHudElement searchField;
-    private static final float DEFAULT_OVERLAY_OPACITY = 0.5f;
     
     private String lastSearchTerm = "";
     private int lastHash = 0;
     private boolean enabled = false;
-    private double opacity = DEFAULT_OVERLAY_OPACITY;
+    private double opacity = DoubleKey.INV_SEARCH_OPACITY.getDefault();
+    private int color = IntKey.INV_SEARCH_COLOR.getDefault();
     
     private ItemSearchOverlay() {
-        for (var element : ElementRegistry.getElements()) {
-            if (element instanceof SearchHudElement hud) {
+        for (var e : ElementRegistry.getElements()) {
+            if (e instanceof SearchHudElement hud) {
                 searchField = hud;
                 break;
             }
@@ -68,11 +71,11 @@ public class ItemSearchOverlay {
     private int computeHash(Object handler) {
         
         try {
-            var slots = ((net.minecraft.screen.ScreenHandler) handler).slots;
+            var slots = ((net.minecraft.world.inventory.AbstractContainerMenu) handler).slots;
             int h = 1;
             for (var slot : slots) {
-                var stack = slot.getStack();
-                if (stack != null && !stack.isEmpty()) {
+                var stack = slot.getItem();
+                if (!stack.isEmpty()) {
                     h = 31 * h + stack.getItem().hashCode();
                     h = 31 * h + stack.getCount();
                     h = 31 * h + stack.getComponents().hashCode();
@@ -80,7 +83,7 @@ public class ItemSearchOverlay {
             }
             return h;
 
-        } catch (Exception e) {
+        } catch (Exception _) {
             return 0;
         }
     }
@@ -102,13 +105,13 @@ public class ItemSearchOverlay {
     private boolean matchesSearch(ItemStack stack, String searchTerm) {
         if (stack == null || stack.isEmpty()) return false;
 
-        var itemName = stack.getName().getString().toLowerCase();
+        var itemName = stack.getHoverName().getString().toLowerCase();
         if (itemName.contains(searchTerm)) return true;
 
         try {
 
             var components = stack.getComponents();
-            var lore= components.get(net.minecraft.component.DataComponentTypes.LORE);
+            var lore = components.get(net.minecraft.core.component.DataComponents.LORE);
             
             if (lore != null) {
                 for (var line : lore.lines()) {
@@ -117,22 +120,19 @@ public class ItemSearchOverlay {
                     }
                 }
             }
-        } catch (Exception e) {
+        } catch (Exception _) {
             // Ignore access error
         }
         
         return false;
     }
 
-    private void renderSegmentedOverlay(DrawContext ctx, int screenWidth, int screenHeight, Set<Rectangle> excludedAreas) {
-
-        int alpha = (int)(opacity * 255) << 24;
-        int overlayColor = alpha;
-
+    private void renderSegmentedOverlay(GuiGraphicsExtractor ctx, int screenWidth, int screenHeight, Set<Rectangle> excludedAreas) {
+        int overlayColor = (int) (opacity * 255) << 24 | (color & 0x00FFFFFF);
         renderHorizontalStrips(ctx, screenWidth, screenHeight, excludedAreas, overlayColor);
     }
     
-    private void renderHorizontalStrips(DrawContext ctx, int screenWidth, int screenHeight, Set<Rectangle> excludedAreas, int overlayColor) {
+    private void renderHorizontalStrips(GuiGraphicsExtractor ctx, int screenWidth, int screenHeight, Set<Rectangle> excludedAreas, int overlayColor) {
         for (int y = 0; y < screenHeight; y++) {
             int x = 0;
             
@@ -167,12 +167,12 @@ public class ItemSearchOverlay {
         return closest;
     }
 
-    public void renderOverlay(DrawContext ctx, HandledScreen<?> screen, String searchTerm) {
+    public void renderOverlay(GuiGraphicsExtractor ctx, AbstractContainerScreen<?> screen, String searchTerm) {
         if (searchTerm.isEmpty()) return;
         
         var lowerSearchTerm = searchTerm.toLowerCase();
         var searchChanged = !lowerSearchTerm.equals(lastSearchTerm);
-        var handler = screen.getScreenHandler();
+        var handler = screen.getMenu();
         if (handler == null) return;
 
         int currentHash = computeHash(handler);
@@ -184,9 +184,9 @@ public class ItemSearchOverlay {
             lastHash = currentHash;
             
             for (var slot : handler.slots) {
-                var stack = slot.getStack();
+                var stack = slot.getItem();
                 if (stack != null && !stack.isEmpty() && matchesSearch(stack, lowerSearchTerm)) {
-                    matchingSlots.add(slot.id);
+                    matchingSlots.add(slot.index);
                 }
             }
         }
@@ -202,7 +202,7 @@ public class ItemSearchOverlay {
         Set<Rectangle> excluded = new HashSet<>();
 
         for (var slot : handler.slots) {
-            if (matchingSlots.contains(slot.id)) {
+            if (matchingSlots.contains(slot.index)) {
                 int slotScreenX = guiX + slot.x;
                 int slotScreenY = guiY + slot.y;
                 Rectangle slotRect = new Rectangle(slotScreenX, slotScreenY, 16, 16);
@@ -227,7 +227,7 @@ public class ItemSearchOverlay {
         }
     }
     
-    public boolean handleKeyPressed(KeyInput input) {
+    public boolean handleKeyPressed(KeyEvent input) {
         if (!isEnabled()) return false;
         
         if (searchField != null) {
@@ -236,7 +236,7 @@ public class ItemSearchOverlay {
         return false;
     }
     
-    public boolean handleCharTyped(CharInput input) {
+    public boolean handleCharTyped(CharacterEvent input) {
         if (!isEnabled()) return false;
         
         if (searchField != null) {
@@ -245,7 +245,7 @@ public class ItemSearchOverlay {
         return false;
     }
     
-    public boolean handleMouseClicked(Click click, boolean doubled) {
+    public boolean handleMouseClicked(MouseButtonEvent click, boolean doubled) {
         if (!isEnabled()) return false;
         if (searchField != null) return searchField.handleMouseClick(click, doubled);
         return false;
@@ -269,8 +269,10 @@ public class ItemSearchOverlay {
         this.searchField = field;
     }
 
+    private static final String INV_SEARCH = "Inventory Search";
+
     @UIContainer(
-        name = "Inventory Search",
+        name = INV_SEARCH,
         order = 1,
         description = {
             "Scan your inventory items by name or lore.",
@@ -283,7 +285,7 @@ public class ItemSearchOverlay {
         key = BooleanKey.INV_SEARCH,
         name = "Main Toggle",
         description = "Enables a HUD textfield for inventory search.",
-        parent = "Inventory Search"
+        parent = INV_SEARCH
     )
     @UIHudRedirect
     private static boolean invSearchEnabled;
@@ -293,9 +295,17 @@ public class ItemSearchOverlay {
         name = "Overlay Opacity",
         description = "Adjust the darkness of the search overlay when highlighting items.",
         min = 0.0, max = 1.0, format = "%.0f%%",
-        parent = "Inventory Search"
+        parent = INV_SEARCH
     )
     private static double invSearchOpacity;
+
+    @UIColorPicker(
+        key = IntKey.INV_SEARCH_COLOR,
+        name = "Overlay Color",
+        description = "The color of the rendered overlay.",
+        parent = INV_SEARCH
+    )
+    private static int invSearchColor;
 
     @VCListener(BooleanKey.INV_SEARCH)
     private void onInvSearchChanged(boolean newValue) {
@@ -306,5 +316,10 @@ public class ItemSearchOverlay {
     @VCListener(doubles = DoubleKey.INV_SEARCH_OPACITY)
     private void onOpacityChanged(double newOpacity) {
         opacity = newOpacity;
+    }
+
+    @VCListener(ints = IntKey.INV_SEARCH_COLOR)
+    private void onColorChanged(int newColor) {
+        color = newColor;
     }
 }

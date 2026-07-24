@@ -3,6 +3,7 @@ package me.valkeea.fishyaddons.vconfig.api;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
+
 import me.valkeea.fishyaddons.vconfig.config.ConfigFile;
 
 public enum IntKey implements ConfigKey<Integer> {
@@ -13,13 +14,14 @@ public enum IntKey implements ConfigKey<Integer> {
     REDSTONE_COLOR_INDEX("customParticleColorIndex", 1),
     REDSTONE_COLOR("customParticleColor"),
     RENDER_COORD_COLOR("renderCoordsColor", -5653771),
+    INV_SEARCH_COLOR("searchOverlayColor", 0xFF000000),
     
     // Settings
     THEME_MODE("themeMode"),
     HUD_COLLECTION_LINES("collectionTrackerLines", 6),
     HUD_PROFIT_LINES("profitTrackerLines", 10),
     FWP_DISTANCE("waypointChainsDistance", 3),
-    RENDER_COORD_MS("renderCoordsMs", 60000),
+    RENDER_COORD_MS("renderCoordsMs", 30000),
     NPC_MIN("npcWaypointMs", 5),
 
     NONE("NaN")

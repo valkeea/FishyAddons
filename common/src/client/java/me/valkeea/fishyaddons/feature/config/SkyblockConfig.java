@@ -1,6 +1,5 @@
 package me.valkeea.fishyaddons.feature.config;
 
-import me.valkeea.fishyaddons.feature.skyblock.CocoonAlert;
 import me.valkeea.fishyaddons.feature.skyblock.EqDetector;
 import me.valkeea.fishyaddons.feature.skyblock.timer.EffectTimers;
 import me.valkeea.fishyaddons.hud.elements.interactive.ProfitDisplay;
@@ -21,8 +20,7 @@ public class SkyblockConfig {
 
     @VCInit
     public static void init() {
-        SkillTracker.init();        
-        CocoonAlert.init();        
+        SkillTracker.init();              
         EqDetector.init();
         EffectTimers.getInstance().init();
     }
@@ -241,27 +239,9 @@ public class SkyblockConfig {
 
     @UIContainer(
         name = ALARMS,
-        description = "Cocoon alert and Moonglade minigame alarm."
+        description = "Moonglade minigame alarm."
     )
     private static final boolean ALARM_SETTINGS = false;
-
-    @UIToggle(
-        key = BooleanKey.TRACK_COCOON,
-        name = "Bloodshot / The Primordial *Cocoon* Alert",
-        description = {
-            "Attempts to detect cocoons if nearby.",
-            "Default chat alert, toggleable title + audio."
-        },
-        parent = ALARMS,
-        subcategory = "cocoon alert"
-    )
-    @UIExtraToggle(key = BooleanKey.ALERT_COCOON, buttonText = "Title")
-    private static boolean cocoonAlert;
-    
-    @VCListener(BooleanKey.TRACK_COCOON)
-    private static void onCocoonAlertChange() {
-        CocoonAlert.refresh();
-    }
 
     @UIToggle(
         key = BooleanKey.BEACON_ALARM,

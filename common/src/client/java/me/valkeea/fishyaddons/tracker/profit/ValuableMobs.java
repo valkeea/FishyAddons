@@ -7,11 +7,11 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 import me.valkeea.fishyaddons.util.NearbyEntities;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.decoration.ArmorStandEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.text.Text;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.decoration.ArmorStand;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.phys.Vec3;
 
 public class ValuableMobs {
     private static boolean foundVal = false;
@@ -80,33 +80,33 @@ public class ValuableMobs {
     public static class ValuableMobInfo {
         public final int id;
         public final String mobName;
-        public final Text mobDisplayName;
+        public final Component mobDisplayName;
         public final MobHealth health;
         public final boolean isPlayerEntity;
-        public final Vec3d position;
+        public final Vec3 position;
 
-        public ValuableMobInfo(ArmorStandEntity armorStand, String mobName, String labelText, boolean isPlayerEntity) {
+        public ValuableMobInfo(ArmorStand armorStand, String mobName, String labelText, boolean isPlayerEntity) {
             this.id = armorStand.getId();
             this.mobName = mobName;
             this.health = extractHealth(labelText);
             this.isPlayerEntity = isPlayerEntity;
             this.mobDisplayName = setDisplayName(armorStand);
-            this.position = armorStand.getEntityPos();
+            this.position = armorStand.position();
         }
 
         public int getId() { return id; }
-        public Text getDisplayName() { return mobDisplayName; }
+        public Component getDisplayName() { return mobDisplayName; }
         public String getName() { return mobName; }
         public String getHealth() { return health.currentHealth; }
         public String getMaxHealth() { return health.maxHealth; }
         public int getHealthPercent() { return health.getHealthPercent(); }
-        public Vec3d getPosition() { return position; }        
+        public Vec3 getPosition() { return position; }        
 
-        private Text setDisplayName(ArmorStandEntity armorStand) {
+        private Component setDisplayName(ArmorStand armorStand) {
             var name = armorStand.getCustomName();
-            if (name == null) return Text.empty();
+            if (name == null) return Component.empty();
 
-            for (Text sibling : name.getSiblings()) {
+            for (Component sibling : name.getSiblings()) {
                 String siblingStr = sibling.getString();
                 if (siblingStr.toLowerCase().contains(mobName.toLowerCase())) return sibling;
             }
@@ -157,7 +157,7 @@ public class ValuableMobs {
                     
                     if (max <= 0) return 0;
                     return (int) ((current * 100) / max);
-                } catch (NumberFormatException e) {
+                } catch (NumberFormatException _) {
                     return 0;
                 }
             }
@@ -192,10 +192,10 @@ public class ValuableMobs {
 
     }
     
-    private record DeadMob(String name, Vec3d position, long timestamp) {}
+    private record DeadMob(String name, Vec3 position, long timestamp) {}
 
-    public static void onEntityAdded(net.minecraft.entity.Entity entity) {
-        if (entity instanceof PlayerEntity player) {
+    public static void onEntityAdded(net.minecraft.world.entity.Entity entity) {
+        if (entity instanceof Player player) {
             String displayName = NearbyEntities.extractDisplayName(player);
 
             if (isValuablePlayerEntity(displayName, player)) {
@@ -208,7 +208,7 @@ public class ValuableMobs {
     /**
      * Called from NearbyEntities tick scan after collecting all tracked or valuable entities
      */
-    public static void update(java.util.List<ArmorStandEntity> valArmorStands) {
+    public static void update(java.util.List<ArmorStand> valArmorStands) {
 
         long now = System.currentTimeMillis();
         deadMobs.entrySet().removeIf(e -> now - e.getValue().timestamp() > DEATH_CACHE_DURATION);
@@ -242,7 +242,7 @@ public class ValuableMobs {
     /**
      * Checks if an armor stand represents a valuable mob to add to the passed list
      */
-    public static boolean isValArmorstand(String name, ArmorStandEntity armorStand) {
+    public static boolean isValArmorstand(String name, ArmorStand armorStand) {
         if (name == null || name.isEmpty()) return false;
 
         return isValuableMobLabel(name, armorStand);
@@ -251,7 +251,7 @@ public class ValuableMobs {
     /**
      * Checks if a label represents a trackable mob
      */
-    public static boolean isValuableMobLabel(String labelText, ArmorStandEntity armorStand) {
+    public static boolean isValuableMobLabel(String labelText, ArmorStand armorStand) {
         if (labelText == null || labelText.isEmpty()) return false;
         
         if (isValuablePlayerEntity(labelText, armorStand)) {
@@ -281,7 +281,7 @@ public class ValuableMobs {
         return false;
     }
 
-    private static boolean checkIfTracked(String mobName, String labelText, ArmorStandEntity armorStand) {
+    private static boolean checkIfTracked(String mobName, String labelText, ArmorStand armorStand) {
         var cleanedMobName = NearbyEntities.cutObfuscation(mobName);
         var lowerCleanedName = cleanedMobName.toLowerCase();
 
@@ -314,7 +314,7 @@ public class ValuableMobs {
         return isTrackedMob || triggersInventoryTracking;
     }
 
-    private static void displayUpdate(String labelText, ArmorStandEntity armorStand, String mobName, boolean isPlayerEntity) {
+    private static void displayUpdate(String labelText, ArmorStand armorStand, String mobName, boolean isPlayerEntity) {
         
         for (ValuableMobInfo vmi : valuableMobList) {
             if (vmi.getId() == armorStand.getId()) {
@@ -326,7 +326,7 @@ public class ValuableMobs {
         valuableMobList.add(new ValuableMobInfo(armorStand, mobName, labelText, isPlayerEntity));
     }
     
-    private static void trackForDeath(String labelText, ArmorStandEntity armorStand, String mobName, boolean isPlayerEntity) {
+    private static void trackForDeath(String labelText, ArmorStand armorStand, String mobName, boolean isPlayerEntity) {
         for (ValuableMobInfo vmi : valuableMobList) {
             if (vmi.getId() == armorStand.getId()) {
                 return;
@@ -347,7 +347,7 @@ public class ValuableMobs {
             mobName = NearbyEntities.cutObfuscation(playerNameMatcher.group(1)).trim();
         }
         
-        if (isSimpleMatch && armorStand instanceof ArmorStandEntity armorStandEntity) {
+        if (isSimpleMatch && armorStand instanceof ArmorStand armorStandEntity) {
             displayUpdate(labelText, armorStandEntity, mobName, true);
         }
         return isSimpleMatch;
@@ -388,24 +388,5 @@ public class ValuableMobs {
     private static void recordDeath(ValuableMobInfo vmi, long timestamp) {
         deadMobs.put(vmi.getName() + "_" + timestamp, 
             new DeadMob(vmi.getName(), vmi.getPosition(), timestamp));
-    }
-    
-    /**
-     * Checks if a cocoon location matches a recently dead valuable mob
-     */
-    public static String checkRecentDeath(Vec3d loc) {
-
-        long now = System.currentTimeMillis();
-        
-        for (DeadMob deadMob : deadMobs.values()) {
-            if (now - deadMob.timestamp() > DEATH_CACHE_DURATION) continue;
-            
-            double distance = loc.distanceTo(deadMob.position());
-            if (distance <= DEATH_MATCH_DISTANCE) {
-                return deadMob.name();
-            }
-        }
-
-        return null;
     }
 }

@@ -3,7 +3,6 @@ plugins {
 	id 'maven-publish'
 }
 
-
 version = project.mod_version
 group = project.maven_group
 
@@ -31,10 +30,6 @@ dependencies {
 	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 	implementation "com.terraformersmc:modmenu:${project.modmenu_version}"	
 	implementation("it.unimi.dsi:fastutil:8.5.12")
-	testImplementation 'org.junit.jupiter:junit-jupiter:5.10.0'
-	testImplementation 'org.mockito:mockito-core:5.11.0'
-	testImplementation 'org.mockito:mockito-junit-jupiter:5.11.0'
-	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
 processResources {
@@ -70,32 +65,76 @@ tasks.withType(JavaCompile).configureEach {
 	it.options.release = 25
 }
 
-tasks.named('compileTestJava').configure {
-	dependsOn tasks.named('compileClientJava')
-}
-
-tasks.withType(Jar).configureEach {
-	dependsOn tasks.named('compileClientJava')
-}
-
 java {
 	withSourcesJar()
 	sourceCompatibility = JavaVersion.VERSION_25
 	targetCompatibility = JavaVersion.VERSION_25
 }
 
-test {
-	useJUnitPlatform()
-	testLogging {
-		events "passed", "skipped", "failed"
-		exceptionFormat "full"
-		showStandardStreams = true
-	}
-}
-
 jar {
 	from("../LICENSE") {
 		rename { "${it}_${archiveBaseName.get()}"}
 	}
-	archiveClassifier = 'mc26.1.2'
+	archiveClassifier = 'mc' + project.minecraft_version
+}
+
+sourceSets {
+    client {
+        java {
+            srcDirs = ['src/client/java']
+            
+            def commonSrcDir = file('../common/src/client/java')
+            def mc = project.minecraft_version.toString()
+            if (commonSrcDir.exists()) {
+
+                def filteredCommonDir = file("${buildDir}/filtered-common/java")
+                
+                copy {
+                    from commonSrcDir
+                    into filteredCommonDir
+                    exclude { details ->
+                        if (details.file.isDirectory()) {
+                            return false
+                        }
+                        def relativePath = details.path
+                        def localFile = new File(file('src/client/java'), relativePath)
+                        def shouldExclude = localFile.exists() && localFile.isFile()
+
+                        if (shouldExclude) {
+                            println "\u001B[32m[${mc}] Excluding common file: ${details.path} (local override exists)\u001B[0m"
+                        }
+                        
+                        return shouldExclude
+                    }
+                }
+                
+                srcDirs += filteredCommonDir
+            }
+        }
+        resources {
+            srcDirs = ['src/client/resources']
+            
+            def commonResDir = file('../common/src/client/resources')
+            if (commonResDir.exists()) {
+                def filteredCommonResDir = file("${buildDir}/filtered-common/resources")
+                
+                copy {
+                    from commonResDir
+                    into filteredCommonResDir
+                    exclude { details ->
+                        if (details.file.isDirectory()) {
+                            return false
+                        }
+                        def relativePath = details.path
+                        def localFile = new File(file('src/client/resources'), relativePath)
+                        def shouldExclude = localFile.exists() && localFile.isFile()
+                        
+                        return shouldExclude
+                    }
+                }
+                
+                srcDirs += filteredCommonResDir
+            }
+        }
+    }
 }

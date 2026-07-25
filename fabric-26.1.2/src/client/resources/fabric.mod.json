@@ -18,7 +18,7 @@
 	"contact": {
 		"sources": "https://github.com/valkeea/FishyAddons"
 	},
-	"license": "GLP-3.0",
+	"license": "GPL-3.0",
 	"icon": "assets/fishyaddons/icon.png",
 	"environment": "client",
 	"entrypoints": {

@@ -1,7 +1,7 @@
 package me.valkeea.fishyaddons.vconfig.ui.widget.dropdown.item;
 
-import me.valkeea.fishyaddons.vconfig.api.Config;
 import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
+import me.valkeea.fishyaddons.vconfig.api.Config;
 
 public class NetworkDisplayItem implements ToggleMenuItem {
     private final BooleanKey displayKey;

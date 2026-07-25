@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.lwjgl.glfw.GLFW;
 
+import me.valkeea.fishyaddons.compat.McApi;
 import me.valkeea.fishyaddons.feature.qol.ChatAlert;
 import me.valkeea.fishyaddons.tool.PlaySound;
 import me.valkeea.fishyaddons.ui.element.SoundSearchMenu;
@@ -21,16 +22,15 @@ import me.valkeea.fishyaddons.vconfig.ui.widget.VCPopup;
 import me.valkeea.fishyaddons.vconfig.ui.widget.VCSlider;
 import me.valkeea.fishyaddons.vconfig.ui.widget.VCTextField;
 import me.valkeea.fishyaddons.vconfig.ui.widget.VCVisuals;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.Click;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.input.KeyInput;
-import net.minecraft.registry.Registries;
-import net.minecraft.text.Style;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Identifier;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.Style;
+import net.minecraft.resources.Identifier;
 
 public class AlertEditScreen extends Screen {
     private final Screen parent;
@@ -63,15 +63,15 @@ public class AlertEditScreen extends Screen {
     }    
 
     private void storeState() {
-        stateKey = keyField.getText();
-        stateMsg = msgField.getText();
-        stateOnscreen = alertTextField.getText();
-        stateSoundId = soundIdField.getText();
+        stateKey = keyField.getValue();
+        stateMsg = msgField.getValue();
+        stateOnscreen = alertTextField.getValue();
+        stateSoundId = soundIdField.getValue();
         stateVolume = volumeSlider != null ? (float) volumeSlider.getValue() : null;
     }
 
     public AlertEditScreen(String key, AlertData data) {
-        super(Text.literal("Edit Alert"));
+        super(Component.literal("Edit Alert"));
         this.parent = ScreenManager.getConfigOrCurrent();
         this.alertKey = key;
         this.initialData = data != null ? data : new AlertData("", "", 0xFFFFFFFF, "", 1.0F, true, false);
@@ -88,53 +88,53 @@ public class AlertEditScreen extends Screen {
         int w = 300;
         int h = 20;
 
-        keyField = new VCTextField(this.textRenderer, x, y, w, h, Text.literal("Key"));
+        keyField = new VCTextField(this.font, x, y, w, h, Component.literal("Key"));
         keyField.setMaxLength(100);
-        keyField.setText(prefer(stateKey, alertKey));
-        this.addDrawableChild(keyField);
+        keyField.setValue(prefer(stateKey, alertKey));
+        this.addRenderableWidget(keyField);
 
-        addDrawableChild(new FaButton(x + w, y, 80, h, 
-            Text.literal(initialData.isStartsWith() ? "Starts With" : "Anywhere").styled(style -> 
+        addRenderableWidget(new FaButton(x + w, y, 80, h, 
+            Component.literal(initialData.isStartsWith() ? "Starts With" : "Anywhere").withStyle(style -> 
                 style.withColor(initialData.isStartsWith() ? alertColor : 0xFF808080)
             ), btn -> { 
                 boolean newMode= !initialData.isStartsWith();
-                btn.setMessage(Text.literal(newMode ? "Starts With" : "Anywhere")
-                    .styled(s -> s.withColor(newMode ? alertColor : 0xFF808080))
+                btn.setMessage(Component.literal(newMode ? "Starts With" : "Anywhere")
+                    .withStyle(s -> s.withColor(newMode ? alertColor : 0xFF808080))
                 );
                 initialData.setStartsWith(newMode);
                 alertStartsWith = newMode;
                 storeState();
-                this.client.setScreen(this);
+                McApi.setScreen(this);
             }
         ));
 
-        msgField = new VCTextField(this.textRenderer, x, y + 40, w, h, Text.literal("Chat message"));
-        msgField.setText(prefer(stateMsg, initialData.getMsg()));
+        msgField = new VCTextField(this.font, x, y + 40, w, h, Component.literal("Chat message"));
+        msgField.setValue(prefer(stateMsg, initialData.getMsg()));
         msgField.setSectionSymbol(false);
-        this.addDrawableChild(msgField);
+        this.addRenderableWidget(msgField);
 
-        alertTextField = new VCTextField(this.textRenderer, x, y + 80, w, h, Text.literal("On-screen Alert"));
-        alertTextField.setText(prefer(stateOnscreen, initialData.getOnscreen()));
-        this.addDrawableChild(alertTextField);
+        alertTextField = new VCTextField(this.font, x, y + 80, w, h, Component.literal("On-screen Alert"));
+        alertTextField.setValue(prefer(stateOnscreen, initialData.getOnscreen()));
+        this.addRenderableWidget(alertTextField);
 
-        addDrawableChild(new FaButton(x + w, centerY, 50, h, 
-            Text.literal(COLOR).styled(style -> style.withColor(alertColor)),
+        addRenderableWidget(new FaButton(x + w, centerY, 50, h, 
+            Component.literal(COLOR).withStyle(style -> style.withColor(alertColor)),
             btn -> { 
                 storeState();
-                this.client.setScreen(new ColorWheel(this, alertColor, selected -> {
+                McApi.setScreen(new ColorWheel(this, alertColor, selected -> {
                     alertColor = selected;
-                    btn.setMessage(Text.literal(COLOR).styled(s -> s.withColor(alertColor)));
-                    this.client.setScreen(this);
+                    btn.setMessage(Component.literal(COLOR).withStyle(s -> s.withColor(alertColor)));
+                    McApi.setScreen(this);
                 }));
             }
         ));
 
-        soundIdField = new VCTextField(this.textRenderer, x, y + 120, w, h, Text.literal("SoundEvent ID"));
-        soundIdField.setText(prefer(stateSoundId, initialData.getSoundId()));
-        this.addDrawableChild(soundIdField);
+        soundIdField = new VCTextField(this.font, x, y + 120, w, h, Component.literal("SoundEvent ID"));
+        soundIdField.setValue(prefer(stateSoundId, initialData.getSoundId()));
+        this.addRenderableWidget(soundIdField);
 
-        List<String> soundIds = Registries.SOUND_EVENT.stream()
-            .map(Registries.SOUND_EVENT::getId)
+        List<String> soundIds = BuiltInRegistries.SOUND_EVENT.stream()
+            .map(BuiltInRegistries.SOUND_EVENT::getKey)
             .filter(java.util.Objects::nonNull)
             .map(Identifier::toString)
             .sorted()
@@ -149,7 +149,7 @@ public class AlertEditScreen extends Screen {
             soundIds,
             sx, sy, width, entryHeight,
             soundId -> {
-                soundIdField.setText(soundId);
+                soundIdField.setValue(soundId);
                 searchMenu.setVisible(false);
             },
             soundId -> PlaySound.dynamic(soundId, volumeSlider != null ? (float) volumeSlider.getValue() : 1.0F, 1.0F, false),
@@ -157,11 +157,11 @@ public class AlertEditScreen extends Screen {
             soundIdField
         );
 
-        soundIdField.setChangedListener(
+        soundIdField.setResponder(
             query -> searchMenu.setVisible(soundIdField.isFocused() && !query.isEmpty())
         );
 
-        searchMenu.setVisible(!soundIdField.getText().isEmpty());
+        searchMenu.setVisible(!soundIdField.getValue().isEmpty());
 
         float initialVolume;
         if (stateVolume != null) {
@@ -180,24 +180,24 @@ public class AlertEditScreen extends Screen {
         );
         formatMenu.setMaxEntries((this.height - 50) / h);     
 
-        this.addDrawableChild(new FaButton(x + w / 2 + 80, soundIdField.getY() + 80, 80, 20,
-            Text.literal("HUD").styled(style -> style.withColor(0xFFE2CAE9)),
+        this.addRenderableWidget(new FaButton(x + w / 2 + 80, soundIdField.getY() + 80, 80, 20,
+            Component.literal("HUD").withStyle(style -> style.withColor(0xFFE2CAE9)),
             btn -> {
-                MinecraftClient.getInstance().setScreen(new HudEditScreen(BooleanKey.HUD_TITLE_ENABLED, this));
+                McApi.setScreen(new HudEditScreen(BooleanKey.HUD_TITLE_ENABLED, this));
                 save();
             }
         ));
 
-        this.addDrawableChild(new FaButton(x + w / 2, soundIdField.getY() + 80, 80, 20,
-            Text.literal("Save").styled(style -> style.withColor(0xFFE2CAE9)),
+        this.addRenderableWidget(new FaButton(x + w / 2, soundIdField.getY() + 80, 80, 20,
+            Component.literal("Save").withStyle(style -> style.withColor(0xFFE2CAE9)),
             btn -> {
             save();
-            close();
+            onClose();
         }));
 
-        this.addDrawableChild(new FaButton(x + w / 2 - 80, soundIdField.getY() + 80, 80, 20,
-            Text.literal("Cancel").styled(style -> style.withColor(0xFFE2CAE9)),
-            btn -> close()
+        this.addRenderableWidget(new FaButton(x + w / 2 - 80, soundIdField.getY() + 80, 80, 20,
+            Component.literal("Cancel").withStyle(style -> style.withColor(0xFFE2CAE9)),
+            btn -> onClose()
         ));
     }
 
@@ -221,27 +221,27 @@ public class AlertEditScreen extends Screen {
     }
 
     private void apply(VCTextField field, String format) {
-        String currentText = field.getText();
-        int caretPos = field.getCursor();    
+        String currentText = field.getValue();
+        int caretPos = field.getCursorPosition();    
         String newText = currentText.substring(0, caretPos) + format + currentText.substring(caretPos);
-        field.setText(newText);
-        field.setCursor(caretPos + format.length(), false);
+        field.setValue(newText);
+        field.moveCursorTo(caretPos + format.length(), false);
         field.setFocused(true);
     }    
 
     private void save() {
         float volume = volumeSlider != null ? (float) volumeSlider.getValue() : 1.0f;
-            String newKey = keyField.getText().trim();
+            String newKey = keyField.getValue().trim();
         if (newKey.isEmpty()) {
             warn();
             return;
         }
 
         var newData = new AlertData(
-            msgField.getText(),
-            alertTextField.getText(),
+            msgField.getValue(),
+            alertTextField.getValue(),
             alertColor,
-            soundIdField.getText(),
+            soundIdField.getValue(),
             volume,
             true,
             alertStartsWith
@@ -255,24 +255,23 @@ public class AlertEditScreen extends Screen {
         ChatAlert.refresh();
     }
 
-	public void warn() {
-        var client = MinecraftClient.getInstance();        
+	public void warn() {      
         var popup = new VCPopup(
-            Text.literal("Empty field detected! Would you like to restore it?"),
-            "No", this::close,
-            "Yes", () -> keyField.setText(alertKey),
+            Component.literal("Empty field detected! Would you like to restore it?"),
+            "No", this::onClose,
+            "Yes", () -> keyField.setValue(alertKey),
             1.0f
             );
-        client.setScreen(new Overlay(client.currentScreen, popup));
+        McApi.setScreen(new Overlay(McApi.screen(), popup));
 	}    
 
     @Override
-    public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        super.render(context, mouseX, mouseY, delta);
+    public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+        super.extractRenderState(context, mouseX, mouseY, delta);
         renderGuideText(context);
 
         if (searchMenu != null) {
-            searchMenu.setVisible(soundIdField.isFocused() && !soundIdField.getText().isEmpty());
+            searchMenu.setVisible(soundIdField.isFocused() && !soundIdField.getValue().isEmpty());
             if (searchMenu.isVisible()) {
                 searchMenu.render(context, this, mouseX, mouseY, delta);
             }
@@ -284,39 +283,39 @@ public class AlertEditScreen extends Screen {
         int y = centerY - 90;
         int w = 300;
 
-        context.drawText(this.textRenderer, "Detected String", x, y, 0xFF808080, false);
-        context.drawText(this.textRenderer, "Location", x + w + 10, y, 0xFF808080, false);
-        context.drawText(this.textRenderer, "Auto Chat", x, y + 40, 0xFF808080, false);
-        context.drawText(this.textRenderer, "On-screen Title", x, y + 80, 0xFF808080, false);
-        context.drawText(this.textRenderer, COLOR, x + w + 10, y + 80, 0xFF808080, false);
-        context.drawText(this.textRenderer, "SoundEvent ID", x, y + 120, 0xFF808080, false);
+        context.text(this.font, "Detected String", x, y, 0xFF808080, false);
+        context.text(this.font, "Location", x + w + 10, y, 0xFF808080, false);
+        context.text(this.font, "Auto Chat", x, y + 40, 0xFF808080, false);
+        context.text(this.font, "On-screen Title", x, y + 80, 0xFF808080, false);
+        context.text(this.font, COLOR, x + w + 10, y + 80, 0xFF808080, false);
+        context.text(this.font, "SoundEvent ID", x, y + 120, 0xFF808080, false);
         
         if (volumeSlider != null) {
             String volumeLabel = "Volume (" + volumeSlider.getPercentageLabel() + ")";
-            context.drawText(this.textRenderer, volumeLabel, x + w + 10, y + 120, 0xFF808080, false);
-            volumeSlider.render(context, this.textRenderer, mouseX, mouseY, VCVisuals.getThemeColor());
+            context.text(this.font, volumeLabel, x + w + 10, y + 120, 0xFF808080, false);
+            volumeSlider.render(context, this.font, mouseX, mouseY, VCVisuals.getThemeColor());
         }
 
         if (formatMenu != null && formatMenu.isVisible()) {
-            context.createNewRootLayer();
-            context.getMatrices().pushMatrix();
-            context.getMatrices().translate(0, 0);
+            context.nextStratum();
+            context.pose().pushMatrix();
+            context.pose().translate(0, 0);
             formatMenu.render(context, this, mouseX, mouseY);
-            context.getMatrices().popMatrix();
+            context.pose().popMatrix();
         }
 
         checkTooltip(context, mouseX, mouseY);        
     }
 
-    private void checkTooltip(DrawContext context, int mouseX, int mouseY) {
+    private void checkTooltip(GuiGraphicsExtractor context, int mouseX, int mouseY) {
         if (alertTextField != null && alertTextField.isMouseOver(mouseX, mouseY)) {
 
-            String previewText = alertTextField.getText().trim();
+            String previewText = alertTextField.getValue().trim();
             if (!previewText.isEmpty()) {
 
                 try {
-                    Text formattedPreview = Enhancer.parseFormattedText(previewText);
-                    int tooltipWidth = Math.min(400, this.textRenderer.getWidth(formattedPreview) + 20);
+                    Component formattedPreview = Enhancer.parseFormattedText(previewText);
+                    int tooltipWidth = Math.min(400, this.font.width(formattedPreview) + 20);
                     int tooltipHeight = alertTextField.getHeight();
                     int tooltipX = alertTextField.getX();
                     int tooltipY = alertTextField.getY() + tooltipHeight + 5;
@@ -328,26 +327,25 @@ public class AlertEditScreen extends Screen {
                         tooltipY = mouseY + 20;
                     }
 
-                    context.createNewRootLayer();
+                    context.nextStratum();
                     context.fill(tooltipX, tooltipY, 
                                tooltipX + tooltipWidth + 6, tooltipY + tooltipHeight + 4, 
                                0xFF171717);
                     
-                    context.drawText(this.textRenderer, formattedPreview, 
+                    context.text(this.font, formattedPreview, 
                                    tooltipX + 3, tooltipY + tooltipHeight / 3, 0xFFFFFFFF, true);
                                    
                 } catch (Exception e) {
                     System.err.println("[FishyAddons] Error rendering tooltip: " + e.getMessage());
-                    e.printStackTrace();
                     renderFallback(mouseX, mouseY, context);
                 }
             }
         }
     }
 
-    private void renderFallback(int mouseX, int mouseY, DrawContext context) {
+    private void renderFallback(int mouseX, int mouseY, GuiGraphicsExtractor context) {
         String errorText = "Error rendering preview";
-        int tooltipWidth = Math.min(400, this.textRenderer.getWidth(errorText) + 20);
+        int tooltipWidth = Math.min(400, this.font.width(errorText) + 20);
         int tooltipHeight = 20;
         int tooltipX = mouseX + 10;
         int tooltipY = mouseY - tooltipHeight - 10;
@@ -361,17 +359,17 @@ public class AlertEditScreen extends Screen {
         context.fill(tooltipX - 5, tooltipY - 5, 
                     tooltipX + tooltipWidth + 5, tooltipY + tooltipHeight + 5, 
                     0xFF171717);
-        context.drawText(this.textRenderer, Text.literal(errorText), 
+        context.text(this.font, Component.literal(errorText), 
                     tooltipX + 5, tooltipY + 10, 0xFFFF8080, true);
     }    
 
-    public void renderGuideText(DrawContext context) {       
+    public void renderGuideText(GuiGraphicsExtractor context) {       
         int x = this.width / 2 + 30;
         int y = 30;
         int lineHeight = 15;
 
-        Text title = VCText.header("FishyAddons Custom Alerts", Style.EMPTY.withBold(true));
-        context.drawTextWithShadow(this.textRenderer, title, x, y, 0xFFFFFFFF);            
+        Component title = VCText.header("FishyAddons Custom Alerts", Style.EMPTY.withBold(true));
+        context.text(this.font, title, x, y, 0xFFFFFFFF);            
 
         y += lineHeight * 2;
                 
@@ -411,17 +409,17 @@ public class AlertEditScreen extends Screen {
                 continue;
             }
 
-            var format = Formatting.GRAY;
+            var format = ChatFormatting.GRAY;
             if (instruction.startsWith(" •") || instruction.matches("\\d+\\..*")) {
-                format = Formatting.AQUA;
+                format = ChatFormatting.AQUA;
             } else if (instruction.contains("-")) {
-                format = Formatting.DARK_AQUA;
+                format = ChatFormatting.DARK_AQUA;
             } else if (instruction.startsWith(" The")) {
-                format = Formatting.DARK_GRAY;
+                format = ChatFormatting.DARK_GRAY;
             }
     
-            var text = Text.literal(instruction).formatted(format);
-            context.drawTextWithShadow(this.textRenderer, text, x, y, 0xFFFFFFFF);
+            var text = Component.literal(instruction).withStyle(format);
+            context.text(this.font, text, x, y, 0xFFFFFFFF);
             y += lineHeight;
         }              
     }
@@ -434,7 +432,7 @@ public class AlertEditScreen extends Screen {
         }
     }
     
-    private boolean handleMenu(Click click) {
+    private boolean handleMenu(MouseButtonEvent click) {
         if (formatMenu != null && formatMenu.isVisible()) {
             if (formatMenu.mouseClicked(click)) {
                 return true;
@@ -446,7 +444,7 @@ public class AlertEditScreen extends Screen {
     }    
 
     @Override
-    public boolean mouseClicked(Click click, boolean doubled) {
+    public boolean mouseClicked(MouseButtonEvent click, boolean doubled) {
 
         double mouseX = click.x();
         double mouseY = click.y();
@@ -481,7 +479,7 @@ public class AlertEditScreen extends Screen {
     }
 
     @Override
-    public boolean keyPressed(KeyInput input) {
+    public boolean keyPressed(KeyEvent input) {
         if (searchMenu != null && soundIdField.isFocused() && searchMenu.keyPressed(input)) {
             return true;
         }
@@ -506,7 +504,7 @@ public class AlertEditScreen extends Screen {
     }
 
     @Override
-    public boolean mouseDragged(Click click, double offsetX, double offsetY) {
+    public boolean mouseDragged(MouseButtonEvent click, double offsetX, double offsetY) {
         if (volumeSlider != null && volumeSlider.mouseDragged(click)) {
             return true;
         }
@@ -518,7 +516,7 @@ public class AlertEditScreen extends Screen {
     }
 
     @Override
-    public boolean mouseReleased(Click click) {
+    public boolean mouseReleased(MouseButtonEvent click) {
         if (volumeSlider != null && volumeSlider.mouseReleased(click)) {
             return true;
         }
@@ -526,12 +524,12 @@ public class AlertEditScreen extends Screen {
     }
 
     @Override
-    public boolean shouldPause() {
+    public boolean isPauseScreen() {
         return false;
     }
 
     @Override
-    public void close() {
-        this.client.setScreen(parent);
+    public void onClose() {
+        McApi.setScreen(parent);
     }
 }

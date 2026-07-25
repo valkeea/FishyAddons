@@ -1,23 +1,23 @@
 package me.valkeea.fishyaddons.util.text;
 
-import net.minecraft.text.ClickEvent.RunCommand;
-import net.minecraft.text.HoverEvent.ShowText;
-import net.minecraft.text.Style;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.ClickEvent.RunCommand;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.HoverEvent.ShowText;
+import net.minecraft.network.chat.Style;
 
 public class FromText {
 
     /**
      * Finds the first literal text component with non-empty string
      */
-    public static Text firstLiteral(Text text) {
+    public static Component firstLiteral(Component text) {
         if (!text.getString().trim().isEmpty()) {
             return text;
         }
         
-        for (Text sibling : text.getSiblings()) {
-            Text found = firstLiteral(sibling);
+        for (Component sibling : text.getSiblings()) {
+            Component found = firstLiteral(sibling);
             if (found != null) {
                 return found;
             }
@@ -28,15 +28,17 @@ public class FromText {
     /**
      * Recursively search for text with the specified color
      */
-    public static Text findNodeWithColor(Text text, Formatting targetColor) {
+    public static Component findNodeWithColor(Component text, ChatFormatting targetColor) {
         Style style = text.getStyle();
-        if (style.getColor() != null && targetColor.getColorValue() != null 
-            && style.getColor().getRgb() == targetColor.getColorValue()) {
+        var targetTextColor = targetColor.getColor();
+        var textColor = style.getColor();
+        if (textColor != null && targetTextColor != null 
+            && textColor.getValue() == targetTextColor) {
             return text;
         }
         
-        for (Text sibling : text.getSiblings()) {
-            Text found = findNodeWithColor(sibling, targetColor);
+        for (Component sibling : text.getSiblings()) {
+            Component found = findNodeWithColor(sibling, targetColor);
             if (found != null) {
                 return found;
             }
@@ -47,14 +49,14 @@ public class FromText {
     /** 
      * Returns the first ShowText hoverevent or null if none found 
      */
-    public static Text findShowText(Text text) {
+    public static Component findShowText(Component text) {
 
         if (text.getStyle().getHoverEvent() instanceof ShowText textEvent) {
             return textEvent.value();
         }
 
-        for (Text sibling : text.getSiblings()) {
-            Text found = findShowText(sibling);
+        for (Component sibling : text.getSiblings()) {
+            Component found = findShowText(sibling);
             if (found != null) {
                 return found;
             }
@@ -66,14 +68,14 @@ public class FromText {
     /** 
      * Returns the first RunCommand clickevent or null if none found
      */
-    public static String findCommand(Text text) {
+    public static String findCommand(Component text) {
 
         var event = text.getStyle().getClickEvent();
         if (event != null && event instanceof RunCommand runnable) {
             return runnable.command();
         }
 
-        for (Text sibling : text.getSiblings()) {
+        for (Component sibling : text.getSiblings()) {
             String found = findCommand(sibling);
             if (found != null) {
                 return found;

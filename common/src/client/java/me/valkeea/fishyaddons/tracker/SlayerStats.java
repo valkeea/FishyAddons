@@ -10,7 +10,7 @@ import me.valkeea.fishyaddons.tracker.monitoring.Currently;
 import me.valkeea.fishyaddons.util.FishyNotis;
 import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
 import me.valkeea.fishyaddons.vconfig.config.impl.StatConfig;
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.Component;
 
 @SuppressWarnings("squid:S6548")
 public class SlayerStats {
@@ -113,7 +113,7 @@ public class SlayerStats {
         SlayerType type;
         try {
             type = SlayerType.valueOf(savedType);
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException _) {
             LOGGER.warn("Invalid slayer type in backup: {}", savedType);
             return false;
         }
@@ -228,8 +228,11 @@ public class SlayerStats {
     public static boolean handleSlayerCompletion(String message) {
         SlayerType type = SlayerType.fromString(message);
         if (type != null && message.contains("Slayer LVL")) {
-            getInstance().setPendingType(type);
-            return true;
+            var tracker = getInstance();
+            if (tracker != null) {
+                tracker.setPendingType(type);
+                return true;
+            }
         }
         return false;
     }
@@ -297,7 +300,7 @@ public class SlayerStats {
             xpPerHour
         );
         
-        FishyNotis.alert(Text.literal(message));
+        FishyNotis.alert(Component.literal(message));
     }
 
     public void save() {
@@ -446,30 +449,30 @@ public class SlayerStats {
         int totalBosses = getTotalBosses(type);
         
         if (!hasSession && totalBosses == 0) {
-            FishyNotis.alert(Text.literal("§cNo " + type.getCmdName() + " §cslayer data available!"));
+            FishyNotis.alert(Component.literal("§cNo " + type.getCmdName() + " §cslayer data available!"));
             return;
         }
 
-        FishyNotis.themed2("α ", Text.literal(type.getCmdName() + " Slayer Stats"), " α");
+        FishyNotis.themed2("α ", Component.literal(type.getCmdName() + " Slayer Stats"), " α");
         
         if (hasSession) {
-            FishyNotis.alert(Text.literal(String.format("§7Session playtime: §3%dh %dmin", 
+            FishyNotis.alert(Component.literal(String.format("§7Session playtime: §3%dh %dmin", 
                 getSessionDurationMinutes() / 60, getSessionDurationMinutes() % 60)));
-            FishyNotis.alert(Text.literal(String.format("§7Session: §b%.1f/hr §8(§3%d §7bosses§8)", 
+            FishyNotis.alert(Component.literal(String.format("§7Session: §b%.1f/hr §8(§3%d §7bosses§8)", 
                 getSessionBossesPerHour(), sessionBosses)));
-            FishyNotis.alert(Text.literal(String.format("§7Session XP: §5%.0f/hr §8(§3%d §7total§8)", 
+            FishyNotis.alert(Component.literal(String.format("§7Session XP: §5%.0f/hr §8(§3%d §7total§8)", 
                 getSessionXpPerHour(), sessionXp)));
         }
         
         if (totalBosses > 0) {
             long totalMinutes = getTotalPlaytimeMinutes(type);
-            FishyNotis.alert(Text.literal(String.format("§7Total playtime: §3%dh %dmin", 
+            FishyNotis.alert(Component.literal(String.format("§7Total playtime: §3%dh %dmin", 
                 totalMinutes / 60, totalMinutes % 60)));
-            FishyNotis.alert(Text.literal(String.format("§7Total: §b%.1f/hr §8(§3%d §7bosses§8)", 
+            FishyNotis.alert(Component.literal(String.format("§7Total: §b%.1f/hr §8(§3%d §7bosses§8)", 
                 getTotalBossesPerHour(type), totalBosses)));
-            FishyNotis.alert(Text.literal(String.format("§7Total XP: §5%.0f/hr §8(§3%d §7total§8)", 
+            FishyNotis.alert(Component.literal(String.format("§7Total XP: §5%.0f/hr §8(§3%d §7total§8)", 
                 getTotalXpPerHour(type), getTotalXp(type))));
-            FishyNotis.alert(Text.literal(String.format("§7Average XP per boss: §d%.0f", 
+            FishyNotis.alert(Component.literal(String.format("§7Average XP per boss: §d%.0f", 
                 getAverageXpPerBoss(type))));
         }
     }
@@ -484,15 +487,15 @@ public class SlayerStats {
                 hasAnyData = true;
                 long totalMinutes = getTotalPlaytimeMinutes(type);
                 double bossesPerHour = totalMinutes > 0 ? (totalBosses / (double)totalMinutes) * 60.0 : 0;
-                FishyNotis.alert(Text.literal(String.format("§3%s§8: §b%.1f/hr §8(§3%d §7bosses, §3%d §7xp§8)",
+                FishyNotis.alert(Component.literal(String.format("§3%s§8: §b%.1f/hr §8(§3%d §7bosses, §3%d §7xp§8)",
                     type.getCmdName(), bossesPerHour, totalBosses, getTotalXp(type))));
             }
         }
         
         if (!hasAnyData) {
-            FishyNotis.alert(Text.literal("§cNo slayer data available!"));
+            FishyNotis.alert(Component.literal("§cNo slayer data available!"));
         } else if (currentType != null && sessionBosses > 0) {
-            FishyNotis.alert(Text.literal(String.format("§7Current session: §d%s §8(§3%d §7bosses§8)",
+            FishyNotis.alert(Component.literal(String.format("§7Current session: §d%s §8(§3%d §7bosses§8)",
                 currentType.getCmdName(), sessionBosses)));
         }
     }

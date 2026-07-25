@@ -10,12 +10,12 @@ import me.valkeea.fishyaddons.util.text.TextUtils;
 import me.valkeea.fishyaddons.vconfig.ui.render.VCText;
 import me.valkeea.fishyaddons.vconfig.ui.widget.VCVisuals;
 import me.valkeea.fishyaddons.vconfig.ui.widget.dropdown.item.ToggleMenuItem;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gui.Click;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.input.KeyInput;
-import net.minecraft.text.Text;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.network.chat.Component;
 
 @SuppressWarnings("squid:S107")
 public class VCToggleMenu {
@@ -57,7 +57,7 @@ public class VCToggleMenu {
         setMaxVisibleEntries(uiScale, screenHeight - y - (int)(baseEntryHeight * uiScale));
     }
 
-    public void render(DrawContext context, Screen screen, int mouseX, int mouseY, float scale) {
+    public void render(GuiGraphicsExtractor context, Screen screen, int mouseX, int mouseY, float scale) {
         if (!visible) return;
 
         uiScale = scale;
@@ -69,7 +69,7 @@ public class VCToggleMenu {
         var items = itemSupplier.get();
         if (items.isEmpty()) return;
 
-        var textRenderer = screen.getTextRenderer();
+        var textRenderer = screen.getFont();
         int totalEntries = items.size();
         int visibleEntries = Math.min(totalEntries, maxVisible);
 
@@ -87,7 +87,7 @@ public class VCToggleMenu {
         for (var item : items) {
             if (!item.useFixedWidth()) {
                 String displayName = TextUtils.stripColor(item.getDisplayName() + "[✓]");
-                scaledWidth = Math.max(scaledWidth, (int)(textRenderer.getWidth(displayName) * uiScale) + scaledPadding * 2);
+                scaledWidth = Math.max(scaledWidth, (int)(textRenderer.width(displayName) * uiScale) + scaledPadding * 2);
             }
         }
         
@@ -104,7 +104,7 @@ public class VCToggleMenu {
         }
     }
 
-    private void renderItems(DrawContext context, TextRenderer textRenderer, int mouseX, int mouseY, List<ToggleMenuItem> items, int visibleEntries) {
+    private void renderItems(GuiGraphicsExtractor context, Font textRenderer, int mouseX, int mouseY, List<ToggleMenuItem> items, int visibleEntries) {
 
         int previousHoveredIndex = hoveredIndex;
         hoveredIndex = -1;
@@ -137,17 +137,17 @@ public class VCToggleMenu {
         if (hoveredIndex == -1 && previousHoveredIndex != -1) lastHoveredIndex = -1;
     }
 
-    private void renderItem(DrawContext context, TextRenderer textRenderer, ToggleMenuItem item,
+    private void renderItem(GuiGraphicsExtractor context, Font textRenderer, ToggleMenuItem item,
         int currentY, boolean hovered, int itemIndex, long currentTime) {
        
         int themeColor = FishyMode.getThemeColor();
         int hoverColor = Color.mulRGB(themeColor, 0.3f);
         int bgColor = hovered ? hoverColor : 0xEE121212;
         int textColor = hovered ? 0xFFFFFFFF : themeColor;
-        var name = Text.literal(item.getDisplayName());
+        var name = Component.literal(item.getDisplayName());
         var displayText = name.append(item.isEnabled() ? item.getEnabledSuffix() : item.getDisabledSuffix());            
 
-        context.getMatrices().pushMatrix();
+        context.pose().pushMatrix();
         context.fill(menuX, currentY, menuX + scaledWidth, currentY + scaledEntryHeight, bgColor);
 
         if (item.useFixedWidth()) {
@@ -159,13 +159,13 @@ public class VCToggleMenu {
             );
         }
 
-        context.getMatrices().popMatrix();
+        context.pose().popMatrix();
     }
 
-    private void animateOverflow(DrawContext context, TextRenderer textRenderer, ToggleMenuItem item, Text displayText, int textColor, int currentY, boolean hovered, int itemIndex, long currentTime) {
+    private void animateOverflow(GuiGraphicsExtractor context, Font textRenderer, ToggleMenuItem item, Component displayText, int textColor, int currentY, boolean hovered, int itemIndex, long currentTime) {
         int availableWidth = scaledWidth - (scaledPadding * 2);
         String fullText = TextUtils.stripColor(item.getDisplayName() + (item.isEnabled() ? "[✓]" : "[✗]"));
-        int textWidth = (int)(textRenderer.getWidth(fullText) * uiScale);
+        int textWidth = (int)(textRenderer.width(fullText) * uiScale);
         
         int offset = 0;
         if (textWidth > availableWidth && hovered && itemIndex == lastHoveredIndex) {
@@ -193,7 +193,7 @@ public class VCToggleMenu {
         context.disableScissor();
     }
 
-    private void renderScrollable(DrawContext context, TextRenderer textRenderer, int totalEntries, int visibleEntries) {
+    private void renderScrollable(GuiGraphicsExtractor context, Font textRenderer, int totalEntries, int visibleEntries) {
 
         int textPadding = Math.max(1, (int)(2 * uiScale));        
         int menuHeight = visibleEntries * scaledEntryHeight;
@@ -202,21 +202,21 @@ public class VCToggleMenu {
         int thumbHeight = Math.max((int)(8 * uiScale), (visibleEntries * menuHeight) / totalEntries);
         int thumbY = menuY + (scrollOffset * (menuHeight - thumbHeight)) / (totalEntries - visibleEntries);
             
-        context.getMatrices().pushMatrix();
+        context.pose().pushMatrix();
         context.fill(scrollbarX, menuY, scrollbarX + scrollbarWidth, menuY + menuHeight, 0x44000000);
             
         context.fill(scrollbarX + 1, thumbY, scrollbarX + scrollbarWidth - 1, thumbY + thumbHeight, VCVisuals.getThemeColor());
             
         context.fill(menuX, menuY + menuHeight, menuX + scaledWidth, menuY + menuHeight + scaledEntryHeight, 0xEE121212);
         VCText.flatText(
-            context, textRenderer, Text.literal(". . ."), 
+            context, textRenderer, Component.literal(". . ."), 
             menuX + scaledPadding, menuY + menuHeight + textPadding, 0xFFBBAACC
         );
-        context.getMatrices().popMatrix();
+        context.pose().popMatrix();
     }
 
     @SuppressWarnings("unused:parameter")
-    public boolean mouseClicked(Click click, boolean doubled, float uiScale) {
+    public boolean mouseClicked(MouseButtonEvent click, boolean doubled, float uiScale) {
         if (!visible) return false;
 
         var items = itemSupplier.get();
@@ -267,7 +267,7 @@ public class VCToggleMenu {
         return false;
     }
 
-    public boolean keyPressed(KeyInput input) {
+    public boolean keyPressed(KeyEvent input) {
         if (!visible) return false;
 
         if (input.key() == 256) {
@@ -294,7 +294,7 @@ public class VCToggleMenu {
         return true;
     }
 
-    public boolean mouseDragged(Click click, float uiScale) {
+    public boolean mouseDragged(MouseButtonEvent click, float uiScale) {
         if (!visible || !isDraggingScrollbar) return false;
 
         var items = itemSupplier.get();

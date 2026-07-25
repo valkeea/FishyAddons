@@ -117,7 +117,7 @@ public class UIMetadata {
                 if (v instanceof ConfigKey<?> ck && !ck.getString().equals("NaN")) {
                     return ck;
                 }
-            } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+            } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException _) {
                 // Ignore and try next
             }
         }
@@ -129,7 +129,7 @@ public class UIMetadata {
             Method m = annotation.annotationType().getMethod(methodName);
             Object v = m.invoke(annotation);
             return v instanceof String[] s ? s : new String[0];
-        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException _) {
             return new String[0];
         }
     }
@@ -139,7 +139,7 @@ public class UIMetadata {
             Method m = annotation.annotationType().getMethod(methodName);
             Object v = m.invoke(annotation);
             return v instanceof int[] arr ? arr : new int[0];
-        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException _) {
             return new int[0];
         }
     } 
@@ -149,7 +149,7 @@ public class UIMetadata {
             Method m = annotation.annotationType().getMethod(methodName);
             Object v = m.invoke(annotation);
             return v instanceof String s ? s : "";
-        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException _) {
             return "";
         }
     }   
@@ -163,7 +163,7 @@ public class UIMetadata {
             if (enumClass.isInstance(v)) {
                 return enumClass.cast(v);
             }
-        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException _) {
             // Ignore and return default
         }
         // Return first enum constant as default
@@ -175,7 +175,7 @@ public class UIMetadata {
             Method m = annotation.annotationType().getMethod(methodName);
             Object v = m.invoke(annotation);
             return v instanceof Integer i ? i : defaultValue;
-        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException _) {
             return defaultValue;
         }
     }
@@ -185,7 +185,7 @@ public class UIMetadata {
             Method m = annotation.annotationType().getMethod(methodName);
             Object v = m.invoke(annotation);
             return v instanceof Boolean b ? b : defaultValue;
-        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException _) {
             return defaultValue;
         }
     }

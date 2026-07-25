@@ -5,7 +5,7 @@ import me.valkeea.fishyaddons.processor.handlers.*;
 
 @SuppressWarnings("squid:S6548")
 public class ChatHandlerRegistry {
-    private ChatHandlerRegistry() {}    
+    private ChatHandlerRegistry() {}
     private static final ChatHandlerRegistry INSTANCE = new ChatHandlerRegistry();
     public static ChatHandlerRegistry getInstance() { return INSTANCE; }
 

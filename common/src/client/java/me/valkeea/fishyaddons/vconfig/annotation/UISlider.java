@@ -5,9 +5,9 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import me.valkeea.fishyaddons.vconfig.core.UICategory;
 import me.valkeea.fishyaddons.vconfig.api.DoubleKey;
 import me.valkeea.fishyaddons.vconfig.api.IntKey;
+import me.valkeea.fishyaddons.vconfig.core.UICategory;
 
 /**
  * Configurable slider control for a single double or integer value.

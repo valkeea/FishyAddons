@@ -1,12 +1,12 @@
 package me.valkeea.fishyaddons.hud.ui;
 
+import me.valkeea.fishyaddons.compat.McApi;
 import me.valkeea.fishyaddons.hud.core.HudUtils;
 import me.valkeea.fishyaddons.mixin.HandledScreenAccessor;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.ingame.GenericContainerScreen;
-import net.minecraft.client.gui.screen.ingame.HandledScreen;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.gui.screens.inventory.ContainerScreen;
+import net.minecraft.resources.Identifier;
 
 /**
  * Button element for GenericContainerScreen, indexed to render around the container
@@ -20,14 +20,14 @@ public class IndexedButton {
     private int y;
     private int size = 16;   
 
-    public IndexedButton(HandledScreen<?> screen, short index, Runnable onClick, Identifier icon) {
+    public IndexedButton(AbstractContainerScreen<?> screen, short index, Runnable onClick, Identifier icon) {
         this(screen, index, onClick, icon, null);
     }
 
-    public IndexedButton(HandledScreen<?> screen, short index, Runnable onClick,
+    public IndexedButton(AbstractContainerScreen<?> screen, short index, Runnable onClick,
         Identifier icon, String requiredGuiName) {
         
-        if (!(screen instanceof GenericContainerScreen) || index < 1 || index > 46) {
+        if (!(screen instanceof ContainerScreen) || index < 1 || index > 46) {
             throw new IllegalArgumentException("Invalid screen or index out of bounds for IndexedButton");
         }
 
@@ -37,15 +37,15 @@ public class IndexedButton {
         this.requiredGuiName = requiredGuiName;
     }
 
-    public void render(DrawContext context, int mouseX, int mouseY) {
+    public void render(GuiGraphicsExtractor context, int mouseX, int mouseY) {
 
-        var cs = MinecraftClient.getInstance().currentScreen;
-        if (!(cs instanceof GenericContainerScreen gcs) ||
-            !isVisible(gcs.getTitle().getString())) {
+        var s = McApi.screen();
+        if (!(s instanceof ContainerScreen cs) ||
+            !isVisible(cs.getTitle().getString())) {
             return;
         }
 
-        calculatePosition(gcs);
+        calculatePosition(cs);
 
         HudUtils.iconButton(
             context, x, y, size, size, isMouseOver(mouseX, mouseY),
@@ -53,19 +53,19 @@ public class IndexedButton {
         );
     }
 
-    public void calculatePosition(GenericContainerScreen gcs) {
+    public void calculatePosition(ContainerScreen cs) {
 
-        var handler = gcs.getScreenHandler();
+        var handler = cs.getMenu();
         if (handler == null) {
             this.x = 100;
             this.y = 100;
             return;
         }
         
-        var hsa = (HandledScreenAccessor) gcs;
+        var hsa = (HandledScreenAccessor) cs;
         
         int guiLeft = hsa.getX();
-        int guiRight = hsa.getX() + hsa.getBackgroundWidth();
+        int guiRight = hsa.getX() + hsa.getImageWidth();
         int guiTop = hsa.getY();
         
         int btnIdx = index;
@@ -77,7 +77,7 @@ public class IndexedButton {
         } else if (btnIdx < 20) { // bottom, left to right
             btnIdx -= 10;
             this.x = guiLeft + btnIdx * 18;
-            this.y = guiTop + hsa.getBackgroundHeight() + 2;
+            this.y = guiTop + hsa.getImageHeight() + 2;
 
         } else if (btnIdx < 32) { // left column, top to bottom
             btnIdx -= 20;

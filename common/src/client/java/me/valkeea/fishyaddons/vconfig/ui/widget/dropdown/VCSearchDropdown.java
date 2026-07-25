@@ -6,7 +6,7 @@ import java.util.function.Supplier;
 import me.valkeea.fishyaddons.vconfig.ui.widget.VCTextField;
 import me.valkeea.fishyaddons.vconfig.ui.widget.dropdown.item.SoundSearchItem;
 import me.valkeea.fishyaddons.vconfig.ui.widget.dropdown.item.ToggleMenuItem;
-import net.minecraft.client.gui.Click;
+import net.minecraft.client.input.MouseButtonEvent;
 
 public class VCSearchDropdown extends VCToggleMenu {
     private VCTextField tf;
@@ -22,14 +22,14 @@ public class VCSearchDropdown extends VCToggleMenu {
     }
 
     @Override
-    public boolean mouseClicked(Click click, boolean doubled, float uiScale) {
+    public boolean mouseClicked(MouseButtonEvent click, boolean doubled, float uiScale) {
 
         if (tf.mouseClicked(click, doubled) && doubled) {
 
             var item = getItem(1);
             if (item instanceof SoundSearchItem ssi) {
                 String defaultValue = ssi.getDefaultValue();
-                tf.setText(defaultValue);
+                tf.setValue(defaultValue);
                 visible = false;
             }
             return true;
@@ -42,14 +42,14 @@ public class VCSearchDropdown extends VCToggleMenu {
     public void clickAction(ToggleMenuItem item, boolean rightClick) {
         if (!rightClick) {
             tf.setFocused(false);
-            tf.setText(item.getId());            
+            tf.setValue(item.getId());            
         }
         super.clickAction(item, rightClick);
     }
 
     @Override
     public String getSearchText() {
-        return tf.getText();
+        return tf.getValue();
     }
     
     public VCTextField getSearchField() {

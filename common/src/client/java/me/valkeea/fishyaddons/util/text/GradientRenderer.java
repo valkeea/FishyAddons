@@ -4,10 +4,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Style;
-import net.minecraft.text.Text;
-import net.minecraft.text.TextColor;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.Style;
+import net.minecraft.network.chat.TextColor;
 
 public class GradientRenderer {
     private GradientRenderer() {}
@@ -77,14 +77,14 @@ public class GradientRenderer {
         }
     }
     
-    public static Text renderGradientText(String text, String gradientName, Style baseStyle) {
+    public static Component renderGradientText(String text, String gradientName, Style baseStyle) {
         if (text == null || text.isEmpty()) {
-            return Text.literal("");
+            return Component.literal("");
         }
         
         if (!PRESETS.containsKey(gradientName.toLowerCase())) {
             int fallbackColor = getStartColor("meow");
-            return Text.literal(text).setStyle(baseStyle.withColor(TextColor.fromRgb(fallbackColor)));
+            return Component.literal(text).setStyle(baseStyle.withColor(TextColor.fromRgb(fallbackColor)));
         }
         
         // Use code point length for proper Unicode handling
@@ -92,7 +92,7 @@ public class GradientRenderer {
         
         if (codePointLength == 1) {
             int color = getStartColor(gradientName);
-            return Text.literal(text).setStyle(baseStyle.withColor(TextColor.fromRgb(color)));
+            return Component.literal(text).setStyle(baseStyle.withColor(TextColor.fromRgb(color)));
         }
         
         String cacheKey = gradientName.toLowerCase() + ":" + codePointLength;
@@ -134,8 +134,8 @@ public class GradientRenderer {
         return result;
     }
     
-    private static Text buildText(String text, int[] colors, Style baseStyle) {
-        MutableText result = Text.literal("");
+    private static Component buildText(String text, int[] colors, Style baseStyle) {
+        MutableComponent result = Component.literal("");
         int[] codePoints = text.codePoints().toArray();
         
         if (codePoints.length == 0) {
@@ -158,7 +158,7 @@ public class GradientRenderer {
                 currentSegment.appendCodePoint(codePoints[i]);
             } else {
                 if (!currentSegment.isEmpty()) {
-                    result.append(Text.literal(currentSegment.toString())
+                    result.append(Component.literal(currentSegment.toString())
                         .setStyle(baseStyle.withColor(TextColor.fromRgb(currentColor))));
                 }
                 
@@ -171,7 +171,7 @@ public class GradientRenderer {
         
         // Final segment
         if (!currentSegment.isEmpty()) {
-            result.append(Text.literal(currentSegment.toString())
+            result.append(Component.literal(currentSegment.toString())
                 .setStyle(baseStyle.withColor(TextColor.fromRgb(currentColor))));
         }
         return result;
@@ -180,18 +180,18 @@ public class GradientRenderer {
     /**
      * Renders a custom gradient like "FF0000>0000FF" manually
      */
-    public static Text renderCustomGradient(String text, String gradientSpec, Style baseStyle) {
+    public static Component renderCustomGradient(String text, String gradientSpec, Style baseStyle) {
         if (text == null || text.isEmpty()) {
-            return Text.literal("");
+            return Component.literal("");
         }
         
         String[] colorStrings = gradientSpec.split(">");
         if (colorStrings.length < 2) {
             try {
                 int color = Integer.parseInt(colorStrings[0], 16);
-                return Text.literal(text).setStyle(baseStyle.withColor(TextColor.fromRgb(color)));
-            } catch (NumberFormatException e) {
-                return Text.literal(text).setStyle(baseStyle);
+                return Component.literal(text).setStyle(baseStyle.withColor(TextColor.fromRgb(color)));
+            } catch (NumberFormatException _) {
+                return Component.literal(text).setStyle(baseStyle);
             }
         }
         
@@ -200,17 +200,17 @@ public class GradientRenderer {
         for (int i = 0; i < colorStrings.length; i++) {
             try {
                 colors[i] = Integer.parseInt(colorStrings[i].trim(), 16);
-            } catch (NumberFormatException e) {
+            } catch (NumberFormatException _) {
                 colors[i] = 0xFFFFFF;
             }
         }
         
         int[] codePoints = text.codePoints().toArray();
         if (codePoints.length == 1) {
-            return Text.literal(text).setStyle(baseStyle.withColor(TextColor.fromRgb(colors[0])));
+            return Component.literal(text).setStyle(baseStyle.withColor(TextColor.fromRgb(colors[0])));
         }
         
-        MutableText result = Text.literal("");
+        MutableComponent result = Component.literal("");
         int codePointLength = codePoints.length;
         
         for (int i = 0; i < codePointLength; i++) {
@@ -223,7 +223,7 @@ public class GradientRenderer {
             // Add character with interpolated color - properly handle Unicode
             String character = new String(new int[]{codePoints[i]}, 0, 1);
             Style charStyle = baseStyle.withColor(TextColor.fromRgb(interpolatedColor));
-            result.append(Text.literal(character).setStyle(charStyle));
+            result.append(Component.literal(character).setStyle(charStyle));
         }
         
         return result;
@@ -263,7 +263,7 @@ public class GradientRenderer {
         try {
             if (hex.startsWith("#")) hex = hex.substring(1);
             return Integer.parseInt(hex, 16);
-        } catch (NumberFormatException e) {
+        } catch (NumberFormatException _) {
             return 0xFFFFFF;
         }
     }

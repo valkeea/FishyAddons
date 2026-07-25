@@ -9,7 +9,7 @@ import me.valkeea.fishyaddons.util.text.ChatButton;
 import me.valkeea.fishyaddons.util.text.Enhancer;
 import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
 import me.valkeea.fishyaddons.vconfig.api.Config;
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.Component;
 
 public class ChatFormatHandler implements ChatHandler {
     
@@ -112,7 +112,7 @@ public class ChatFormatHandler implements ChatHandler {
         return lower.equals("pls") || lower.equals("please");
     }
 
-    private Text addFormatting(Text newLine, Text original, String raw) {
+    private Component addFormatting(Component newLine, Component original, String raw) {
         if (hasFormattingCodes(raw) && Config.get(BooleanKey.CHAT_FORMATTING)) {
             newLine = Enhancer.parseExistingStyle(original);
         }

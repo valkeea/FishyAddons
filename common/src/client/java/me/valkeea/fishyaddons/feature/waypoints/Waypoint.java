@@ -1,6 +1,6 @@
 package me.valkeea.fishyaddons.feature.waypoints;
 
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.core.BlockPos;
 
 public class Waypoint {
     public final BlockPos position;

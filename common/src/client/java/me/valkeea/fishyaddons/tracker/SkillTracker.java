@@ -149,7 +149,7 @@ public class SkillTracker {
                     baseline.xpAbsolute = Long.parseLong(parts[0].replace(",", ""));
                     baseline.isMaxed = true;
 
-                } catch (NumberFormatException e) {
+                } catch (NumberFormatException _) {
                     System.err.println("[FishyAddons] Error parsing baseline absolute XP: " + parts[0]);
                 }
             }
@@ -160,7 +160,7 @@ public class SkillTracker {
                 baseline.baselineLevel = level;
                 baseline.isMaxed = false;
 
-            } catch (NumberFormatException e) {
+            } catch (NumberFormatException _) {
                 System.err.println("[FishyAddons] Error parsing baseline percentage: " + progressInfo);
             }
 
@@ -176,7 +176,7 @@ public class SkillTracker {
             if (parts.length >= 1) {
                 try {
                     return Long.parseLong(parts[0].replace(",", ""));
-                } catch (NumberFormatException e) {
+                } catch (NumberFormatException _) {
                     LOGGER.warn("Error parsing current absolute XP: {}", parts[0]);
                 }
             }
@@ -186,7 +186,7 @@ public class SkillTracker {
                 double percentage = Double.parseDouble(progressInfo.replace("%", ""));
                 return SkillLevelTables.calculateCurrentXp(skillName, level, percentage);
 
-            } catch (NumberFormatException e) {
+            } catch (NumberFormatException _) {
                 LOGGER.warn("Error parsing current percentage: {}", progressInfo);
             }
 

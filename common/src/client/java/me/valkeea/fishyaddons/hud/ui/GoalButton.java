@@ -2,6 +2,7 @@ package me.valkeea.fishyaddons.hud.ui;
 
 import java.util.List;
 
+import me.valkeea.fishyaddons.compat.McApi;
 import me.valkeea.fishyaddons.event.EventPhase;
 import me.valkeea.fishyaddons.event.EventPriority;
 import me.valkeea.fishyaddons.event.impl.FaEvents;
@@ -11,39 +12,38 @@ import me.valkeea.fishyaddons.tracker.collection.CollectionTracker;
 import me.valkeea.fishyaddons.tracker.collection.RecipeScanner;
 import me.valkeea.fishyaddons.util.ContainerScanner;
 import me.valkeea.fishyaddons.vconfig.ui.render.RenderUtils;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.ingame.GenericContainerScreen;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.screens.inventory.ContainerScreen;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 
 public class GoalButton  {
     private static IndexedButton btn = null;
     private GoalButton() {}
     
     private static final String TITLE = "Recipe";
-    private static final List<Text> tooltip = List.of(
-        Text.literal("[Add as a collection goal]").styled(s -> s.withColor(FishyMode.getThemeColor())),
-        Text.literal("Please open any nested crafts").styled(s -> s.withColor(0xFFAAAAAA)),
-        Text.literal("to fully calculate the recipe!").styled(s -> s.withColor(0xFFAAAAAA))
+    private static final List<Component> tooltip = List.of(
+        Component.literal("[Add as a collection goal]").withStyle(s -> s.withColor(FishyMode.getThemeColor())),
+        Component.literal("Please open any nested crafts").withStyle(s -> s.withColor(0xFFAAAAAA)),
+        Component.literal("to fully calculate the recipe!").withStyle(s -> s.withColor(0xFFAAAAAA))
     );
 
     private static void init() {
         FaEvents.MOUSE_CLICK.register(GoalButton::setup, EventPriority.LOW, EventPhase.POST);
     }
 
-    private static void create(GenericContainerScreen gcs) {
+    private static void create(ContainerScreen gcs) {
         init();
         btn = new IndexedButton(
             gcs, (short) 35, RecipeScanner::addAsGoal,
-            Identifier.of("fishyaddons", "icon.png"), TITLE
+            Identifier.fromNamespaceAndPath("fishyaddons", "icon.png"), TITLE
         );
     }
 
     private static void setup(MouseClickEvent e) {
 
-        var s = MinecraftClient.getInstance().currentScreen;
-        if (btn != null && s instanceof GenericContainerScreen && btn.mouseClicked(e.click.x(), e.click.y())) {
+        var s = McApi.screen();
+        if (btn != null && s instanceof ContainerScreen && btn.mouseClicked(e.click.x(), e.click.y())) {
 
             e.setConsumed(true);
             
@@ -57,7 +57,7 @@ public class GoalButton  {
         }
     }
 
-    public static void render(DrawContext context, GenericContainerScreen gcs, int mouseX, int mouseY) {
+    public static void render(GuiGraphicsExtractor context, ContainerScreen gcs, int mouseX, int mouseY) {
 
         if (!ContainerScanner.current().endsWith(TITLE) ||
             !CollectionTracker.isEnabled()) {
@@ -73,7 +73,7 @@ public class GoalButton  {
         if (btn.isMouseOver(mouseX, mouseY)) {
             RenderUtils.preview(
                 context,
-                gcs.getTextRenderer(),
+                gcs.getFont(),
                 tooltip,
                 mouseX,
                 mouseY,

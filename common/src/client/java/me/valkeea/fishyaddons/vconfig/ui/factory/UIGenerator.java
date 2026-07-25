@@ -11,6 +11,7 @@ import java.util.function.Supplier;
 
 import org.slf4j.Logger;
 
+import me.valkeea.fishyaddons.compat.McApi;
 import me.valkeea.fishyaddons.vconfig.annotation.*;
 import me.valkeea.fishyaddons.vconfig.api.IntKey;
 import me.valkeea.fishyaddons.vconfig.binding.ConfigBinding;
@@ -24,7 +25,6 @@ import me.valkeea.fishyaddons.vconfig.ui.manager.ScreenManager;
 import me.valkeea.fishyaddons.vconfig.ui.screen.HudEditScreen;
 import me.valkeea.fishyaddons.vconfig.ui.widget.dropdown.item.ToggleMenuItem;
 import me.valkeea.fishyaddons.vconfig.util.ReflectionUtil;
-import net.minecraft.client.MinecraftClient;
 
 public final class UIGenerator {
     private static final Logger LOGGER = org.slf4j.LoggerFactory.getLogger(UIGenerator.class);
@@ -182,10 +182,10 @@ public final class UIGenerator {
             Method redirectMethod = moduleClass.getDeclaredMethod(redirect.method());
             redirectHandle = ReflectionUtil.tryFirst(redirectMethod);
             isStatic = java.lang.reflect.Modifier.isStatic(redirectMethod.getModifiers());
-        } catch (NoSuchMethodException e) {
+        } catch (NoSuchMethodException _) {
             LOGGER.error("Redirect method not found: {} in {}", redirect.method(), fieldInfo.getField().getDeclaringClass().getSimpleName());
             return null;
-        } catch (IllegalAccessException e) {
+        } catch (IllegalAccessException _) {
             LOGGER.error("Cannot access redirect method: {} in {}", redirect.method(), fieldInfo.getField().getDeclaringClass().getSimpleName());
             return null;
         }
@@ -213,10 +213,8 @@ public final class UIGenerator {
     }
 
     private static UIControl createHudRedirect(UIMetadata meta) {
-        var mc = MinecraftClient.getInstance();
         return new ButtonControl("HUD", () -> 
-            ScreenManager.navigateConfigScreen(new HudEditScreen(meta.booleanKey(), mc.currentScreen))
-        , new String[0]
+            ScreenManager.navigateConfigScreen(new HudEditScreen(meta.booleanKey(), McApi.screen())), new String[0]
         );
     }
     

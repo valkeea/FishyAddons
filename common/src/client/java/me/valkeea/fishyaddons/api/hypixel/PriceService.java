@@ -15,7 +15,9 @@ import java.util.concurrent.TimeUnit;
 
 import com.google.gson.Gson;
 
-import net.minecraft.text.Text;
+import me.valkeea.fishyaddons.vconfig.api.Config;
+import me.valkeea.fishyaddons.vconfig.api.StringKey;
+import net.minecraft.network.chat.Component;
 
 /**
  * Service responsible for fetching and caching item prices.
@@ -56,7 +58,6 @@ public class PriceService {
             .build();
         this.gson = new Gson();
         
-        // Init helper components & caches
         this.bazaarParser = new BzResponse(gson);
         this.auctionParser = new AhResponse(gson);
         this.apiIdCache = new ApiIdCache();
@@ -64,7 +65,6 @@ public class PriceService {
         this.bazaarCache = new ConcurrentHashMap<>();
         this.auctionCache = new ConcurrentHashMap<>();
         
-        // Schedule periodic refreshes
         this.scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
             Thread t = new Thread(r, "PriceService-Scheduler");
             t.setDaemon(true);
@@ -94,9 +94,7 @@ public class PriceService {
     // --- Configuration ---
 
     private void initPriceType() {
-        String configuredType = me.valkeea.fishyaddons.vconfig.api.Config.get(
-            me.valkeea.fishyaddons.vconfig.api.StringKey.PRICE_TYPE
-        );
+        String configuredType = Config.get(StringKey.PRICE_TYPE);
         setPriceType(configuredType);
     }
     
@@ -110,9 +108,7 @@ public class PriceService {
         }
 
         priceType = newType;
-        me.valkeea.fishyaddons.vconfig.api.Config.set(
-            me.valkeea.fishyaddons.vconfig.api.StringKey.PRICE_TYPE, newType
-        );
+        Config.set(StringKey.PRICE_TYPE, newType);
     }
 
     public static String getType() {
@@ -241,7 +237,7 @@ public class PriceService {
         if (System.currentTimeMillis() - lastBazaarUpdate < TimeUnit.MINUTES.toMillis(CD_MINUTES)) {
             long secondsLeft = TimeUnit.MINUTES.toSeconds(CD_MINUTES) - TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - lastBazaarUpdate);
             me.valkeea.fishyaddons.util.FishyNotis.alert(
-                Text.literal("§8§oBazaar cache was refreshed recently. Try again in " + secondsLeft + " second(s)."));
+                Component.literal("§8§oBazaar cache was refreshed recently. Try again in " + secondsLeft + " second(s)."));
             return;
         }
         
@@ -255,7 +251,7 @@ public class PriceService {
         if (System.currentTimeMillis() - lastAuctionUpdate < TimeUnit.MINUTES.toMillis(CD_MINUTES)) {
             long secondsLeft = TimeUnit.MINUTES.toSeconds(CD_MINUTES) - TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - lastAuctionUpdate);
             me.valkeea.fishyaddons.util.FishyNotis.alert(
-                Text.literal("§8§oAuction cache was refreshed recently. Try again in " + secondsLeft + " second(s)."));
+                Component.literal("§8§oAuction cache was refreshed recently. Try again in " + secondsLeft + " second(s)."));
             return;
         }
         
@@ -374,7 +370,7 @@ public class PriceService {
             if (!scheduler.awaitTermination(5, TimeUnit.SECONDS)) {
                 scheduler.shutdownNow();
             }
-        } catch (InterruptedException e) {
+        } catch (InterruptedException _) {
             scheduler.shutdownNow();
             Thread.currentThread().interrupt();
         }

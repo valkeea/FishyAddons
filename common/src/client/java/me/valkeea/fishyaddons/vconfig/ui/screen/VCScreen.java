@@ -40,15 +40,15 @@ import me.valkeea.fishyaddons.vconfig.ui.render.VCRenderContext;
 import me.valkeea.fishyaddons.vconfig.ui.render.VCText;
 import me.valkeea.fishyaddons.vconfig.ui.widget.VCButton;
 import me.valkeea.fishyaddons.vconfig.ui.widget.VCTextField;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gl.RenderPipelines;
-import net.minecraft.client.gui.Click;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.input.CharInput;
-import net.minecraft.client.input.KeyInput;
-import net.minecraft.text.Style;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.input.CharacterEvent;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.Style;
+import net.minecraft.resources.Identifier;
 
 public final class VCScreen extends AdjustedScreen {
     
@@ -198,7 +198,7 @@ public final class VCScreen extends AdjustedScreen {
             }
         }
         
-        boolean handleDrag(Click click, List<VCEntry> filtered, LayoutManager layout) {
+        boolean handleDrag(MouseButtonEvent click, List<VCEntry> filtered, LayoutManager layout) {
             if (!scrollState.isDragging || filtered.size() <= layout.getAllowedEntries()) {
                 return false;
             }
@@ -220,7 +220,7 @@ public final class VCScreen extends AdjustedScreen {
             return true;
         }
         
-        void render(DrawContext context, List<VCEntry> filtered, LayoutManager layout, int themeColor) {
+        void render(GuiGraphicsExtractor context, List<VCEntry> filtered, LayoutManager layout, int themeColor) {
             int maxVisible = layout.calcAllowedEntries(filtered, VCScreen.this::isSubEntry);
             int totalEntries = filtered.size();
 
@@ -243,17 +243,17 @@ public final class VCScreen extends AdjustedScreen {
         String msg = ModInfo.getInfoMessage();
         boolean show = false;
 
-        public void render(DrawContext ctx, TextRenderer tr, Identifier icon, int x, int y, int s) {
+        public void render(GuiGraphicsExtractor ctx, Font tr, Identifier icon, int x, int y, int s) {
             if (bounds == null) bounds = new Bounds(x, y, s, s);
 
-            ctx.drawTexture(
+            ctx.blit(
                 RenderPipelines.GUI_TEXTURED,
                 icon, x, y, 0, 0, s, s, s, s
             );
 
             if (!msg.isEmpty()) {
                 int dotSize = s / 4;
-                ctx.drawText(tr, "●", x + s - dotSize, y, Colors.DISABLED_RED, false);
+                ctx.text(tr, "●", x + s - dotSize, y, Colors.DISABLED_RED, false);
                 if (show) InfoDisplay.getInstance().externalDisplay(ctx, tr, msg);
             }
         }
@@ -290,12 +290,12 @@ public final class VCScreen extends AdjustedScreen {
     private Bounds resetBounds;
 
     private final Consumer<ColorControl> colorWheelOpener = this::openColorWheel;  
-    private final Identifier icon = Identifier.of("fishyaddons", "icon.png");
+    private final Identifier icon = Identifier.fromNamespaceAndPath("fishyaddons", "icon.png");
     
     private RenderManager renderer;
 
     public VCScreen() {
-        super(Text.literal("FishyAddons Configuration"));
+        super(Component.literal("FishyAddons Configuration"));
         this.configEntries = new ArrayList<>();
         this.filteredEntries = new ArrayList<>();
     }
@@ -338,9 +338,9 @@ public final class VCScreen extends AdjustedScreen {
 
         int listStartX = layout.getEntryX();
 
-        this.clearChildren();
+        this.clearWidgets();
         searchField = createSearchField(listStartX, Dimensions.SEARCH_Y, layout.getEntryW(), Dimensions.SEARCH_H);
-        addDrawableChild(searchField);
+        addRenderableWidget(searchField);
         
         int resetSize = Dimensions.SEARCH_H;
         int buttonX = listStartX + layout.getEntryW() - resetSize;
@@ -350,13 +350,13 @@ public final class VCScreen extends AdjustedScreen {
 
         var closeStr = "Close";
         int btnH = Dimensions.BUTTON_H;
-        int btnW = VCText.getWidthWithPadding(textRenderer, closeStr);
+        int btnW = VCText.getWidthWithPadding(font, closeStr);
         int btnY = height - btnH;
 
-        addDrawableChild(VCButton.vcScreenWidget(
+        addRenderableWidget(VCButton.vcScreenWidget(
             layout.getCenterX() - btnW / 2, btnY, btnW, btnH,
-            Text.literal(closeStr).setStyle(Style.EMPTY.withColor(Colors.CLOSE_BUTTON_TEXT)),
-            btn -> this.close(), uiScale
+            Component.literal(closeStr).setStyle(Style.EMPTY.withColor(Colors.CLOSE_BUTTON_TEXT)),
+            btn -> this.onClose(), uiScale
         ));
     }
 
@@ -436,19 +436,19 @@ public final class VCScreen extends AdjustedScreen {
     }
 
     private VCTextField createSearchField(int entryX, int searchY, int entryWidth, int searchH) {
-        var vctf = new VCTextField(textRenderer, entryX, searchY, entryWidth, searchH, Text.empty());
-        vctf.setText(lastSearch);
-        vctf.setChangedListener(this::onSearchChanged);
+        var vctf = new VCTextField(font, entryX, searchY, entryWidth, searchH, Component.empty());
+        vctf.setValue(lastSearch);
+        vctf.setResponder(this::onSearchChanged);
         return vctf;
     }
 
     // --- Rendering ---
     
     @Override
-    protected void renderContent(DrawContext context, int mouseX, int mouseY, float delta) {
+    protected void renderContent(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
 
         clearPerFrameCache();
-        context.applyBlur();
+        context.blurBeforeThisStratum();
         RenderUtils.gradient(context, 0, 0, width, height, Colors.BACKGROUND_GRADIENT);        
         super.renderContent(context, mouseX, mouseY, delta);
 
@@ -456,25 +456,25 @@ public final class VCScreen extends AdjustedScreen {
 
         var header = this.title.getString();
         var styled = VCText.header(header, null);
-        int headerW = textRenderer.getWidth(header);        
+        int headerW = font.width(header);        
 
-        int side = (int)Math.ceil(textRenderer.fontHeight * 1.5);
+        int side = (int)Math.ceil(font.lineHeight * 1.5);
         int scaledSide = Dimensions.getIconSize(side);
 
         var hx = layout.getCenterX() + scaledSide / 2;
         int ix = hx - (headerW / 2) - (int)Math.ceil(scaledSide * 1.5);
         int iy = y - (side / 3);
 
-        VCText.drawCenteredTextWithShadow(context, textRenderer, styled, hx, y, 0xFF55FFFF);
+        VCText.drawCenteredTextWithShadow(context, font, styled, hx, y, 0xFF55FFFF);
         
         renderTabs(context, mouseX, mouseY);
         renderSearchActionButton(context, mouseX, mouseY);
         renderConfigEntries(context, mouseX, mouseY);
         renderControlOverlays(context, mouseX, mouseY);
-        modIcon.render(context, textRenderer, icon, ix, iy, scaledSide);
+        modIcon.render(context, font, icon, ix, iy, scaledSide);
     }
 
-    private void renderTabs(DrawContext context, int mouseX, int mouseY) {
+    private void renderTabs(GuiGraphicsExtractor context, int mouseX, int mouseY) {
         if (tabManager.isEmpty()) return;
 
         int edge = layout.getEntryX() - Dimensions.TAB_W - Dimensions.TAB_ENTRY_GAP;
@@ -486,14 +486,14 @@ public final class VCScreen extends AdjustedScreen {
         tabManager.render(context, mouseX, mouseY, edge, layout.getTabAreaW());
     }
     
-    private void renderSearchActionButton(DrawContext context, int mouseX, int mouseY) {
+    private void renderSearchActionButton(GuiGraphicsExtractor context, int mouseX, int mouseY) {
         if (resetBounds == null) return;
-        boolean hasText = !searchField.getText().isEmpty();
+        boolean hasText = !searchField.getValue().isEmpty();
         boolean isHovered = resetBounds.contains(mouseX, mouseY) && hasText;
-        renderer.renderSearchReset(context, resetBounds, hasText, isHovered, textRenderer, getThemeColor());
+        renderer.renderSearchReset(context, resetBounds, hasText, isHovered, font, getThemeColor());
     }
     
-    private void renderConfigEntries(DrawContext context, int mouseX, int mouseY) {
+    private void renderConfigEntries(GuiGraphicsExtractor context, int mouseX, int mouseY) {
         var filtered = getAllFiltered();
         int maxVisible = layout.calcAllowedEntries(filtered, this::isSubEntry);
 
@@ -526,8 +526,8 @@ public final class VCScreen extends AdjustedScreen {
             
             if (promtY != 0) {
             VCText.flatText(
-                context, textRenderer,
-                Text.literal("Press ESC to clear search filters"),
+                context, font,
+                Component.literal("Press ESC to clear search filters"),
                 Dimensions.getMetadataX(layout.getEntryX(), false),
                 promtY + Dimensions.HEADER_GAP_PADDING,
                 color
@@ -535,13 +535,13 @@ public final class VCScreen extends AdjustedScreen {
         }
     }
 
-    private void renderConfigEntry(DrawContext context, VCEntry entry, int x, int y, int mouseX, int mouseY) {
+    private void renderConfigEntry(GuiGraphicsExtractor context, VCEntry entry, int x, int y, int mouseX, int mouseY) {
         boolean isSubEntry = isSubEntry(entry);
         BaseContext ctx = new BaseContext(context, mouseX, mouseY, x, layout.getEntryW());
         renderer.renderConfigEntry(ctx, entry, x, y, isSubEntry);
     }
     
-    private void renderControlOverlays(DrawContext context, int mouseX, int mouseY) {
+    private void renderControlOverlays(GuiGraphicsExtractor context, int mouseX, int mouseY) {
         // Rebuild overlay cache only when mouse moves, scroll changes, or cache is null
         boolean needsRebuild = mouseState.hasMoved(mouseX, mouseY) || 
                               mouseState.scrollChanged(scrollState.offset) || 
@@ -564,7 +564,7 @@ public final class VCScreen extends AdjustedScreen {
         renderFixedTooltip(context, mouseX, mouseY);
     }
     
-    private void renderFixedTooltip(DrawContext context, int mouseX, int mouseY) {
+    private void renderFixedTooltip(GuiGraphicsExtractor context, int mouseX, int mouseY) {
         AbstractUIControl hovered = findHoveredWithTooltip(mouseX, mouseY);
         if (hovered == null) return;
 
@@ -601,7 +601,7 @@ public final class VCScreen extends AdjustedScreen {
         return null;
     }
     
-    private void drawSubEnd(DrawContext context, int entryX, int currentY) {
+    private void drawSubEnd(GuiGraphicsExtractor context, int entryX, int currentY) {
         int lineY = currentY + Dimensions.SUB_ENTRY_VERTICAL_OFFSET;
         Bounds b = Dimensions.getSubEntryBgBounds(entryX, currentY, layout.getEntryW(), Dimensions.SUB_ENTRY_VERTICAL_OFFSET);
 
@@ -873,7 +873,7 @@ public final class VCScreen extends AdjustedScreen {
     }    
     
     @Override
-    public boolean mouseClicked(Click click, boolean doubled) {
+    public boolean mouseClicked(MouseButtonEvent click, boolean doubled) {
         var adjustedClick = adjustClick(click);
         
         if (hasAnyActiveOverlay()) {
@@ -885,8 +885,8 @@ public final class VCScreen extends AdjustedScreen {
 
         if (resetBounds != null &&
             resetBounds.contains(mouseX, mouseY) &&
-            !searchField.getText().isEmpty()) {
-            searchField.setText("");
+            !searchField.getValue().isEmpty()) {
+            searchField.setValue("");
             return true;
         }
 
@@ -918,7 +918,7 @@ public final class VCScreen extends AdjustedScreen {
         return handleEntryClicks(adjustedClick, doubled, filtered);
     }
 
-    private boolean handleOverlayClick(Click click, boolean doubled) {
+    private boolean handleOverlayClick(MouseButtonEvent click, boolean doubled) {
         var cCtx = ClickContext.fromClick(click, uiScale, doubled);
         UIControl active = getActiveOverlayControl();
         
@@ -929,7 +929,7 @@ public final class VCScreen extends AdjustedScreen {
         return false;
     }    
 
-    private boolean handleEntryClicks(Click click, boolean doubled, List<VCEntry> filtered) {
+    private boolean handleEntryClicks(MouseButtonEvent click, boolean doubled, List<VCEntry> filtered) {
         var renderCtx = new EntryRenderContext(
             layout.getEntryX(),
             layout.getListStartY(),
@@ -952,7 +952,7 @@ public final class VCScreen extends AdjustedScreen {
         return handled[0];
     }
     
-    private boolean entryClick(Click click, boolean doubled, VCEntry entry, int entryX, int currentY) {
+    private boolean entryClick(MouseButtonEvent click, boolean doubled, VCEntry entry, int entryX, int currentY) {
         if (!entry.hasControls()) return false;
         
         boolean isSubEntry = isSubEntry(entry);
@@ -982,8 +982,8 @@ public final class VCScreen extends AdjustedScreen {
     }
 
     @Override
-    public boolean mouseReleased(Click click) {
-        Click adjustedClick = adjustClick(click);
+    public boolean mouseReleased(MouseButtonEvent click) {
+        MouseButtonEvent adjustedClick = adjustClick(click);
         
         if (super.mouseReleased(click)) {
             return true;
@@ -1002,9 +1002,9 @@ public final class VCScreen extends AdjustedScreen {
     }
     
     @Override
-    public boolean mouseDragged(Click click, double offsetX, double offsetY) {
-        Click adjustedClick = adjustClick(click);
-        double guiScale = client.getWindow().getScaleFactor();
+    public boolean mouseDragged(MouseButtonEvent click, double offsetX, double offsetY) {
+        MouseButtonEvent adjustedClick = adjustClick(click);
+        double guiScale = minecraft.getWindow().getGuiScale();
         double adjustedOffsetX = offsetX * guiScale / uiScale;
         double adjustedOffsetY = offsetY * guiScale / uiScale;
         
@@ -1061,7 +1061,7 @@ public final class VCScreen extends AdjustedScreen {
     }
     
     @Override
-    public boolean keyPressed(KeyInput input) {
+    public boolean keyPressed(KeyEvent input) {
 
         if (input.key() == GLFW.GLFW_KEY_F && Keyboard.hasCtrlModifier(input)) {
             searchField.setFocused(true);
@@ -1096,7 +1096,7 @@ public final class VCScreen extends AdjustedScreen {
     }
 
     @Override
-    public boolean charTyped(CharInput input) {
+    public boolean charTyped(CharacterEvent input) {
         if (searchField.isFocused() && searchField.charTyped(input)) {
             return true;
         }
@@ -1120,7 +1120,7 @@ public final class VCScreen extends AdjustedScreen {
 
         if (expanded != null) {
             toggleExpanded(expanded);
-        } else this.close();
+        } else this.onClose();
         
         clearPerFrameCache();
         cache.overlayControls = null;
@@ -1165,7 +1165,7 @@ public final class VCScreen extends AdjustedScreen {
                 @Override
                 public void clearSearch() {
                     if (!lastSearch.isEmpty()) {
-                        searchField.setText("");
+                        searchField.setValue("");
                         lastSearch = "";
                         if (activeCategory != null) {
                             VCScreen.this.filterByCategory(activeCategory);
@@ -1206,10 +1206,10 @@ public final class VCScreen extends AdjustedScreen {
     /**
      * Create a render context for control rendering
      */
-    private VCRenderContext createRenderContext(DrawContext context, int mouseX, int mouseY) {
+    private VCRenderContext createRenderContext(GuiGraphicsExtractor context, int mouseX, int mouseY) {
         return new VCRenderContext(
             context,
-            textRenderer,
+            font,
             mouseX,
             mouseY,
             0, // delta
@@ -1333,9 +1333,9 @@ public final class VCScreen extends AdjustedScreen {
     }
 
     @Override
-    public void close() {
+    public void onClose() {
         preserveState();
         ScreenManager.invalidateCache();
-        super.close();
+        super.onClose();
     }
 }

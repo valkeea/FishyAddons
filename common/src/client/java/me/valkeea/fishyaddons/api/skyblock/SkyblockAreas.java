@@ -57,7 +57,7 @@ public class SkyblockAreas {
         public String displayName() {
 
             String[] words = key.split("_");
-            StringBuilder displayName = new StringBuilder();
+            var displayName = new StringBuilder();
 
             for (String word : words) {
                 displayName.append(Character.toUpperCase(word.charAt(0))).append(word.substring(1)).append(" ");
@@ -93,8 +93,8 @@ public class SkyblockAreas {
     }
 
     public static void setIslandByMap(String mapName) {
-        String normalized = mapName.toLowerCase().replace(" ", "_").replaceAll("[^a-z0-9_]", "");
-        for (Island island : Island.values()) {
+        var normalized = mapName.toLowerCase().replace(" ", "_").replaceAll("[^a-z0-9_]", "");
+        for (var island : Island.values()) {
             if (island.key().equals(normalized)) {
                 setIsland(island);
                 return;

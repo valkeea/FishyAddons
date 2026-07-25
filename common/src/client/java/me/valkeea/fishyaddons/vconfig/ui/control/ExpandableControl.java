@@ -46,7 +46,7 @@ public class ExpandableControl extends AbstractUIControl {
         }
         
         var text = cachedExpanded ? "Collapse" : "Expand";
-        int textWidth = ctx.textRenderer.getWidth(text);
+        int textWidth = ctx.textRenderer.width(text);
 
         if (controlWidth == 0) controlWidth = textWidth;
         

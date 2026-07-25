@@ -75,5 +75,5 @@ public class InterfaceConfig {
     private static void onFontPackChanged() {
         ScreenManager.preserveCurrentState();
         ResourceHandler.updateFontPack();
-    } 
+    }
 }

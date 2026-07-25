@@ -5,10 +5,10 @@ import java.awt.Rectangle;
 import me.valkeea.fishyaddons.hud.core.HudElement;
 import me.valkeea.fishyaddons.hud.core.HudElementState;
 import me.valkeea.fishyaddons.util.ModInfo;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.text.Text;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.network.chat.Component;
 
 public class InfoDisplay implements HudElement {
     private InfoDisplay() {}
@@ -53,31 +53,31 @@ public class InfoDisplay implements HudElement {
         hide();
     }
 
-    public void externalDisplay(DrawContext context, TextRenderer tr, String msg) {
+    public void externalDisplay(GuiGraphicsExtractor context, Font tr, String msg) {
         draw(context, tr, msg, true);
     }
 
     @Override
-    public void render(DrawContext ctx, MinecraftClient mc, int mouseX, int mouseY) {
+    public void render(GuiGraphicsExtractor ctx, Minecraft mc, int mouseX, int mouseY) {
         if (!visible || !ModInfo.shouldShowInfo() || message == null || message.trim().isEmpty()) {
             if (visible && !ModInfo.shouldShowInfo()) {
                 forceHide();
             }
             return;
         }
-        draw(ctx, mc.textRenderer, message, false);
+        draw(ctx, mc.font, message, false);
     }
 
-    private void draw(DrawContext ctx, TextRenderer tr, String msg, boolean external) {
+    private void draw(GuiGraphicsExtractor ctx, Font tr, String msg, boolean external) {
         if (tr == null) return;
 
         String[] lines = msg.replace("\\n", "\n").split("\n");
         int maxWidth = 0;
-        int lineHeight = tr.fontHeight + 2;
+        int lineHeight = tr.lineHeight + 2;
         int hudHeight = 18 + (lines.length - 1) * lineHeight + 12;
 
         for (String line : lines) {
-            int lineWidth = tr.getWidth(line);
+            int lineWidth = tr.width(line);
             if (lineWidth > maxWidth) maxWidth = lineWidth;
         }
 
@@ -88,26 +88,26 @@ public class InfoDisplay implements HudElement {
         int textY = hudY + 12;
 
         for (int i = 0; i < lines.length; i++) {
-            ctx.drawText(tr, Text.literal(lines[i]), textX, textY + i * lineHeight, textColor, false);
+            ctx.text(tr, Component.literal(lines[i]), textX, textY + i * lineHeight, textColor, false);
         }
 
         if (external) return;
 
-        int guideW = tr.getWidth("Press X to close");
+        int guideW = tr.width("Press X to close");
         int btnY = textY + lines.length * lineHeight + 6;
         ctx.fill(hudX + 6, btnY, hudX + guideW + 14, btnY + 12, 0xAA000000);
-        ctx.drawText(tr, Text.literal("Press X to close"), textX, btnY + 2, 0xFFAAAAAA, false);
+        ctx.text(tr, Component.literal("Press X to close"), textX, btnY + 2, 0xFFAAAAAA, false);
 
         if (!LINK_BTN) return;
         
-        int copyW = tr.getWidth("C to copy link");
+        int copyW = tr.width("C to copy link");
         int copyX = hudX + 18 + guideW;
         ctx.fill(copyX, btnY, hudX + guideW + copyW + 28, btnY + 12, 0xAA000000);
-        ctx.drawText(tr, Text.literal("C to copy link"), copyX + 7, btnY + 2, 0xFFAAAAAA, false);
+        ctx.text(tr, Component.literal("C to copy link"), copyX + 7, btnY + 2, 0xFFAAAAAA, false);
     }
 
     @Override
-    public Rectangle getBounds(MinecraftClient mc) {
+    public Rectangle getBounds(Minecraft mc) {
         return new Rectangle(hudX, hudY, width, height);
     }
 

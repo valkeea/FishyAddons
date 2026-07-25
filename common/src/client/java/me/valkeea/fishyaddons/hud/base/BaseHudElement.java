@@ -8,8 +8,8 @@ import me.valkeea.fishyaddons.hud.core.HudElementState;
 import me.valkeea.fishyaddons.hud.core.HudUtils;
 import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
 import me.valkeea.fishyaddons.vconfig.config.impl.HudConfig;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 
 public abstract class BaseHudElement implements HudElement {
     private final String hudKey;
@@ -39,7 +39,7 @@ public abstract class BaseHudElement implements HudElement {
     }
 
     @Override
-    public final void render(DrawContext context, MinecraftClient mc, int mouseX, int mouseY) {
+    public final void render(GuiGraphicsExtractor context, Minecraft mc, int mouseX, int mouseY) {
         if (!editingMode && !shouldRender()) return;
 
         var state = getCachedState();
@@ -47,14 +47,14 @@ public abstract class BaseHudElement implements HudElement {
 
         if (state.bg) drawBackGround(context, mc, state);
 
-        context.getMatrices().pushMatrix();
-        context.getMatrices().translate(state.x, state.y);
-        context.getMatrices().scale(scale, scale);
+        context.pose().pushMatrix();
+        context.pose().translate(state.x, state.y);
+        context.pose().scale(scale, scale);
 
         var drawer = new HudDrawer(mc, context, state);
         renderContent(drawer, mc, state);
 
-        context.getMatrices().popMatrix();
+        context.pose().popMatrix();
 
         postRender(context, mc, state, mouseX, mouseY);
         
@@ -64,21 +64,21 @@ public abstract class BaseHudElement implements HudElement {
     }
 
     protected final boolean isMouseOver(double mouseX, double mouseY) {
-        var bounds = getBounds(MinecraftClient.getInstance());
+        var bounds = getBounds(Minecraft.getInstance());
         return bounds.contains(mouseX, mouseY);
 
     }
 
     protected abstract boolean shouldRender();
-    protected abstract void renderContent(HudDrawer drawer, MinecraftClient mc, HudElementState state);
-    protected abstract int calculateContentWidth(MinecraftClient mc);
-    protected abstract int calculateContentHeight(MinecraftClient mc);
+    protected abstract void renderContent(HudDrawer drawer, Minecraft mc, HudElementState state);
+    protected abstract int calculateContentWidth(Minecraft mc);
+    protected abstract int calculateContentHeight(Minecraft mc);
 
     /**
      * Draw background based on content size.
      * Default implementation draws a simple rectangle, can be overridden for custom backgrounds.
      */
-    protected void drawBackGround(DrawContext context, MinecraftClient mc, HudElementState state) {
+    protected void drawBackGround(GuiGraphicsExtractor context, Minecraft mc, HudElementState state) {
         float scale = state.size / 12.0F;
         int bgWidth = (int)(calculateContentWidth(mc) * scale);
         int bgHeight = (int)(calculateContentHeight(mc) * scale);
@@ -88,12 +88,12 @@ public abstract class BaseHudElement implements HudElement {
     /**
      * Special rendering in editing mode
      */
-    protected void renderEditingMode(HudDrawer drawer, MinecraftClient mc, HudElementState state) {}
+    protected void renderEditingMode(HudDrawer drawer, Minecraft mc, HudElementState state) {}
 
     /**
      * Rendering after matrix pop
      */
-    protected void postRender(DrawContext context, MinecraftClient mc, HudElementState state, int mouseX, int mouseY) {}
+    protected void postRender(GuiGraphicsExtractor context, Minecraft mc, HudElementState state, int mouseX, int mouseY) {}
 
     /**
      * Perform actions after cache refresh
@@ -101,7 +101,7 @@ public abstract class BaseHudElement implements HudElement {
     protected void onCacheRefresh() {}
 
     @Override
-    public Rectangle getBounds(MinecraftClient mc) {
+    public Rectangle getBounds(Minecraft mc) {
         var state = getCachedState();
         float scale = state.size / 12.0F;
         

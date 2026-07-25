@@ -3,10 +3,10 @@ package me.valkeea.fishyaddons.processor;
 import org.jetbrains.annotations.Nullable;
 
 import me.valkeea.fishyaddons.util.text.TextUtils;
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.Component;
 
 public class ChatMessageContext {
-    private final Text originalMessage;
+    private final Component originalMessage;
     private final String rawText;
     private final String cleanText;
     private final String lowerCleanText;
@@ -17,7 +17,7 @@ public class ChatMessageContext {
     private final AnalysisCoordinator.AnalysisResult analysisResult;
     
     // Processing state
-    private Text modifiedMessage;
+    private Component modifiedMessage;
     
     // Cached message type checks
     private Boolean isSkyblockMessage;
@@ -28,7 +28,7 @@ public class ChatMessageContext {
     /**
      * Initial context for a new chat message
      */
-    public ChatMessageContext(Text originalMessage, boolean overlay) {
+    public ChatMessageContext(Component originalMessage, boolean overlay) {
         this.originalMessage = originalMessage;
         this.overlay = overlay;
         this.timestamp = System.currentTimeMillis();
@@ -43,7 +43,7 @@ public class ChatMessageContext {
     /**
      * New context for the actual rendered message
      */
-    public ChatMessageContext(Text originalMessage, Text modifiedMessage, boolean overlay) {
+    public ChatMessageContext(Component originalMessage, Component modifiedMessage, boolean overlay) {
         this.originalMessage = originalMessage;
         this.overlay = overlay;
         this.timestamp = System.currentTimeMillis();
@@ -60,7 +60,7 @@ public class ChatMessageContext {
     // --- Core Message Access ---
     
     /** Original Text object */
-    public Text getOriginalText() { return originalMessage; }
+    public Component getOriginalText() { return originalMessage; }
     
     /** Original message as String */
     public String getRawString() { return rawText; }
@@ -72,7 +72,7 @@ public class ChatMessageContext {
     public String getLowerCleanString() { return lowerCleanText; }
     
     /** Current message state (original or modified) */
-    public Text getCurrentMessage() { return modifiedMessage == null ? originalMessage : modifiedMessage; }
+    public Component getCurrentMessage() { return modifiedMessage == null ? originalMessage : modifiedMessage; }
     
     /** Check if this is an overlay message */
     public boolean isOverlay() { return overlay; }
@@ -103,7 +103,7 @@ public class ChatMessageContext {
     // --- Processing State Management ---
     
     /** Update the current message state */
-    public void setCurrentMessage(Text message) {
+    public void setCurrentMessage(Component message) {
         this.modifiedMessage = message;
     }
     

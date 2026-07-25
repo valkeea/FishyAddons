@@ -19,7 +19,7 @@ import me.valkeea.fishyaddons.vconfig.api.IntKey;
 import me.valkeea.fishyaddons.vconfig.api.StringKey;
 import me.valkeea.fishyaddons.vconfig.config.BaseConfig;
 import me.valkeea.fishyaddons.vconfig.config.ConfigSection;
-import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.Minecraft;
 
 @SuppressWarnings("squid:S6548")
 public class FishyConfig extends BaseConfig {
@@ -69,10 +69,10 @@ public class FishyConfig extends BaseConfig {
     @SuppressWarnings("unchecked")
     protected <T> ConfigSection<T> getSectionForKey(ConfigKey<T> key) {
         return switch (key) {
-            case BooleanKey bk -> (ConfigSection<T>) booleans;
-            case IntKey ik -> (ConfigSection<T>) integers;
-            case DoubleKey dk -> (ConfigSection<T>) doubles;
-            case StringKey sk -> (ConfigSection<T>) strings;
+            case BooleanKey _ -> (ConfigSection<T>) booleans;
+            case IntKey _ -> (ConfigSection<T>) integers;
+            case DoubleKey _ -> (ConfigSection<T>) doubles;
+            case StringKey _ -> (ConfigSection<T>) strings;
         };
     }
     
@@ -101,9 +101,9 @@ public class FishyConfig extends BaseConfig {
     @Override
     protected boolean tryMigrate() {
 
-        var mc = MinecraftClient.getInstance();
-        var faFile = new File(mc.runDirectory, "config/fishyaddons/fishyaddons.json");
-        var itemFile = new File(mc.runDirectory, "config/fishyaddons/fishyitems.json");
+        var mc = Minecraft.getInstance();
+        var faFile = new File(mc.gameDirectory, "config/fishyaddons/fishyaddons.json");
+        var itemFile = new File(mc.gameDirectory, "config/fishyaddons/fishyitems.json");
         
         boolean migratedSettings = false;
         boolean migratedItems = false;
@@ -278,7 +278,7 @@ public class FishyConfig extends BaseConfig {
 
     public void removeDeprecatedFiles() {
         if (!isMigrationComplete(OLD_FA_FILE)) return;
-        File faFile = new File(MinecraftClient.getInstance().runDirectory, "config/fishyaddons/fishyaddons.json");
+        File faFile = new File(Minecraft.getInstance().gameDirectory, "config/fishyaddons/fishyaddons.json");
         try {
             if (faFile.exists()) {
                 Files.delete(faFile.toPath());
@@ -296,10 +296,10 @@ public class FishyConfig extends BaseConfig {
         if (!element.isJsonPrimitive()) return null;
         
         return switch (key) {
-            case BooleanKey bk -> element.getAsBoolean();
-            case IntKey ik -> element.getAsInt();
-            case DoubleKey dk -> element.getAsDouble();
-            case StringKey sk -> element.getAsString();
+            case BooleanKey _ -> element.getAsBoolean();
+            case IntKey _ -> element.getAsInt();
+            case DoubleKey _ -> element.getAsDouble();
+            case StringKey _ -> element.getAsString();
         };
     }
     

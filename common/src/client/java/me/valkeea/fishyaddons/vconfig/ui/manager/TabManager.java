@@ -10,8 +10,8 @@ import me.valkeea.fishyaddons.vconfig.ui.model.BaseContext;
 import me.valkeea.fishyaddons.vconfig.ui.model.Tab;
 import me.valkeea.fishyaddons.vconfig.ui.model.Tab.TabItem;
 import me.valkeea.fishyaddons.vconfig.ui.model.VCEntry;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.screens.Screen;
 
 public class TabManager {
     private final List<Tab> tabs;
@@ -130,7 +130,7 @@ public class TabManager {
     // --- Rendering ---
     
     /** Render all tabs and their dropdowns */
-    public void render(DrawContext context, int mouseX, int mouseY, int startX, 
+    public void render(GuiGraphicsExtractor context, int mouseX, int mouseY, int startX, 
                       int tabAreaWidth) {
         if (tabs.isEmpty()) return;
         
@@ -274,7 +274,7 @@ public class TabManager {
                 groupedEntries = new java.util.LinkedHashMap<>();
                 
             } else if (validForExistingCategory(currentTab, currentCategory, e)) {
-                String tabItemName = extractTabItemName(e.name);
+                String tabItemName = extractTabItemName(e);
                 
                 if (tabItemName != null) {
                     groupedEntries.computeIfAbsent(tabItemName, k -> new ArrayList<>()).add(e);
@@ -303,13 +303,23 @@ public class TabManager {
      * @param entryName The entry name to parse
      * @return The extracted tab item name, or null if no markers found
      */
-    private String extractTabItemName(String entryName) {
-        if (entryName == null) return null;
-        int first = entryName.indexOf('*');
-        if (first == -1) return null;
-        int closing = entryName.indexOf('*', first + 1);
+    private String extractTabItemName(VCEntry e) {
+        var target = e.name;
+        var desc = e.description.length == 0 ? null : String.join(" ", e.description);
+
+        if (target == null && desc == null) return null;
+
+        int first = target.indexOf('*');
+        if (first == -1) {
+            first = desc.indexOf('*');
+            if (first == -1) return null;
+            target = desc;
+        }
+
+        int closing = target.indexOf('*', first + 1);
         if (closing == -1) return null;
-        return entryName.substring(first + 1, closing);
+
+        return target.substring(first + 1, closing);
     }
     
     /**

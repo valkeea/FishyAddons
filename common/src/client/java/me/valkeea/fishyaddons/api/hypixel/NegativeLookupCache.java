@@ -62,9 +62,6 @@ public class NegativeLookupCache {
         return String.format("NegativeLookupCache{size=%d, hits=%d}", size(), hits.get());
     }
     
-    /**
-     * Negative cache entry with timestamp for expiry checking.
-     */
     private record Entry(long timestamp) {
         boolean isExpired(long ttlMs) {
             return System.currentTimeMillis() - timestamp > ttlMs;

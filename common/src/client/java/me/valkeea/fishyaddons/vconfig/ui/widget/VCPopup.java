@@ -2,18 +2,18 @@ package me.valkeea.fishyaddons.vconfig.ui.widget;
 
 import me.valkeea.fishyaddons.ui.GuiUtil;
 import me.valkeea.fishyaddons.vconfig.ui.render.RenderUtils;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gui.Click;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.input.CharInput;
-import net.minecraft.client.input.KeyInput;
-import net.minecraft.text.Text;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.input.CharacterEvent;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.network.chat.Component;
 
 /**
  * Standardized popup dialog with two buttons and an optional text field.
  */
 public class VCPopup {
-	private final Text title;
+	private final Component title;
 	private final String leftButtonText;
 	private final String rightButtonText;
 	private final boolean hasTextField;
@@ -45,7 +45,7 @@ public class VCPopup {
 	/**
 	 * Text input + 2 buttons
 	 */
-	public VCPopup(Text title, Runnable onLeft, String leftButtonText, java.util.function.Consumer<String> onSave, String rightButtonText, float uiScale) {
+	public VCPopup(Component title, Runnable onLeft, String leftButtonText, java.util.function.Consumer<String> onSave, String rightButtonText, float uiScale) {
 		this.title = title;
         this.onLeft = onLeft;
 		this.leftButtonText = leftButtonText;
@@ -58,7 +58,7 @@ public class VCPopup {
 	/**
 	 * Confirm/cancel
 	 */
-	public VCPopup(Text title, String leftButtonText, Runnable onLeft, String rightButtonText, Runnable onRight, float uiScale) {
+	public VCPopup(Component title, String leftButtonText, Runnable onLeft, String rightButtonText, Runnable onRight, float uiScale) {
 		this.title = title;
 			this.leftButtonText = leftButtonText;
 			this.rightButtonText = rightButtonText;
@@ -87,7 +87,7 @@ public class VCPopup {
 	}
 
 
-	public void init(TextRenderer textRenderer, int screenWidth, int screenHeight) {
+	public void init(Font textRenderer, int screenWidth, int screenHeight) {
 		height = (int)((hasTextField ? 110 : 80) * uiScale);
 		x = screenWidth / 2;
 		y = screenHeight / 2 - height / 2;
@@ -102,13 +102,13 @@ public class VCPopup {
 			rightBtnX, buttonY, buttonW, buttonH, rightButtonText)
 			.withScale(uiScale);
 
-		textField = new VCTextField(textRenderer, tfX, tfY, tfW, tfH, Text.literal(""));
+		textField = new VCTextField(textRenderer, tfX, tfY, tfW, tfH, Component.literal(""));
 		textField.setUIScale(uiScale);
         textField.setMaxLength(10);
         textField.setFocused(true);
 	}
 
-	public void render(DrawContext context, TextRenderer textRenderer, int mouseX, int mouseY, float delta) {
+	public void render(GuiGraphicsExtractor context, Font textRenderer, int mouseX, int mouseY, float delta) {
 		
 		RenderUtils.opaqueGradient(context, x - width / 2, y, width, height, 0xFF252525);
 		RenderUtils.border(context, x - width / 2, y, width, height, 0xFF000000);
@@ -124,13 +124,13 @@ public class VCPopup {
 			VCButton.render(context, textRenderer, leftButtonConfig);
 			VCButton.render(context, textRenderer, rightButtonConfig);
 			if (hasTextField && textField != null) {
-				textField.renderWidget(context, mouseX, mouseY, delta);
+				textField.extractRenderState(context, mouseX, mouseY, delta);
 			}				
 
         }
 	}
 
-	public boolean mouseClicked(Click click) {
+	public boolean mouseClicked(MouseButtonEvent click) {
 
 		double mouseX = click.x();
 		double mouseY = click.y();
@@ -155,7 +155,7 @@ public class VCPopup {
 		if (right) {
 			if (hasTextField) {
 				if (onSave != null && textField != null) {
-					onSave.accept(textField.getText());
+					onSave.accept(textField.getValue());
 				}
 			} else {
 				if (onRight != null) onRight.run();
@@ -165,14 +165,14 @@ public class VCPopup {
 		return false;
 	}    
 
-	public boolean keyPressed(KeyInput input) {
+	public boolean keyPressed(KeyEvent input) {
 		if (hasTextField && textField != null) {
 			return textField.keyPressed(input);
 		}
 		return false;
 	}
 
-	public boolean charTyped(CharInput chr) {
+	public boolean charTyped(CharacterEvent chr) {
 		if (hasTextField && textField != null) {
 			return textField.charTyped(chr);
 		}

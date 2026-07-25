@@ -1,22 +1,22 @@
 package me.valkeea.fishyaddons.vconfig.ui.widget;
 
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gl.RenderPipelines;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.widget.ClickableWidget;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.resources.Identifier;
 
-public class VCLabelField extends ClickableWidget {
-    private static final Identifier BG_TEXTURE = Identifier.of("fishyaddons", "textures/gui/default/textbg.png");
-    private final TextRenderer textRenderer;    
+public class VCLabelField extends AbstractWidget {
+    private static final Identifier BG_TEXTURE = Identifier.fromNamespaceAndPath("fishyaddons", "textures/gui/default/textbg.png");
+    private final Font textRenderer;    
     private String text;
     private float uiScale;
     private boolean exists = true;
     private boolean drawsBg = true;
 
-    public VCLabelField(TextRenderer tr, int x, int y, int width, int height, MutableText initialText) {
+    public VCLabelField(Font tr, int x, int y, int width, int height, MutableComponent initialText) {
         super(x, y, width, height, initialText);
         this.textRenderer = tr;
         this.text = initialText.getString();
@@ -24,7 +24,7 @@ public class VCLabelField extends ClickableWidget {
 
     public void setText(String text) {
         this.text = text;
-        this.setMessage(Text.literal(text));
+        this.setMessage(Component.literal(text));
     }
 
     public String getText() {
@@ -44,11 +44,11 @@ public class VCLabelField extends ClickableWidget {
     }
 
     @Override
-    protected void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
+    protected void extractWidgetRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
         if (!exists) return;
 
         if (drawsBg) {
-            context.drawTexture(
+            context.blit(
                 RenderPipelines.GUI_TEXTURED,
                 BG_TEXTURE,
                 this.getX(), this.getY(),
@@ -58,25 +58,25 @@ public class VCLabelField extends ClickableWidget {
             );
         }
 
-        float textWidth = this.textRenderer.getWidth(text) * uiScale;
+        float textWidth = this.textRenderer.width(text) * uiScale;
         if (textWidth > this.width - 8) {
-            text = this.textRenderer.trimToWidth(text, (int) ((this.width - 8) / uiScale));
+            text = this.textRenderer.plainSubstrByWidth(text, (int) ((this.width - 8) / uiScale));
         }
         int textX = this.getX() + 4;
         int textY = this.getY() + (this.height - 8) / 2;
 
-        context.getMatrices().pushMatrix();
-        context.getMatrices().scale(uiScale, uiScale);
+        context.pose().pushMatrix();
+        context.pose().scale(uiScale, uiScale);
 
         float scaledX = textX / uiScale;
         float scaledY = textY / uiScale;
         
-        context.drawText(this.textRenderer, text, (int)scaledX, (int)scaledY, 0xFFE0E0E0, false);
-        context.getMatrices().popMatrix();
+        context.text(this.textRenderer, text, (int)scaledX, (int)scaledY, 0xFFE0E0E0, false);
+        context.pose().popMatrix();
     }
 
     @Override
-    protected void appendClickableNarrations(net.minecraft.client.gui.screen.narration.NarrationMessageBuilder builder) {
+    protected void updateWidgetNarration(net.minecraft.client.gui.narration.NarrationElementOutput builder) {
         // Access
     }
 }

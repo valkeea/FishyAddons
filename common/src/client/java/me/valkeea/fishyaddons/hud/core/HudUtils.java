@@ -2,13 +2,14 @@ package me.valkeea.fishyaddons.hud.core;
 
 import java.util.List;
 
+import me.valkeea.fishyaddons.compat.McApi;
 import me.valkeea.fishyaddons.vconfig.ui.render.RenderUtils;
 import me.valkeea.fishyaddons.vconfig.ui.widget.VCVisuals;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gl.RenderPipelines;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 
 public class HudUtils {
     private HudUtils() {}
@@ -16,10 +17,10 @@ public class HudUtils {
     /**
      * Calculate maximum width of text lines
      */
-    public static int getMaxLineWidth(MinecraftClient mc, List<Text> lines, float scale) {
+    public static int getMaxLineWidth(Minecraft mc, List<Component> lines, float scale) {
         int maxWidth = 0;
-        for (Text line : lines) {
-            int width = mc.textRenderer.getWidth(line.getString());
+        for (Component line : lines) {
+            int width = mc.font.width(line.getString());
             if (width > maxWidth) {
                 maxWidth = width;
             }
@@ -30,12 +31,11 @@ public class HudUtils {
     /**
      * Check if inventory screen is open
      */
-    public static boolean isInventoryOpen(MinecraftClient mc) {
-        if (mc.currentScreen == null) {
-            return false;
-        }
-        
-        String screenClassName = mc.currentScreen.getClass().getSimpleName();
+    public static boolean isInventoryOpen() {
+        var screen = McApi.screen();
+        if (screen == null) return false;
+
+        String screenClassName = screen.getClass().getSimpleName();
         return screenClassName.equals("class_490") ||
                screenClassName.equals("class_476") ||
                screenClassName.equals("class_475") ||
@@ -45,14 +45,14 @@ public class HudUtils {
     /**
      * Standard background
      */
-    public static void drawBackground(net.minecraft.client.gui.DrawContext context, 
+    public static void drawBackground(net.minecraft.client.gui.GuiGraphicsExtractor context, 
                                      int x, int y, int width, int height) {
         context.fill(x + 1, y + 2, x + width + 2, y + height - 1, 0x80000000);
     }
 
     @SuppressWarnings("squid:S107")
     public static void iconButton(
-        DrawContext ctx, int x, int y, int width, int height, boolean hovered, boolean enabled, Identifier icon
+        GuiGraphicsExtractor ctx, int x, int y, int width, int height, boolean hovered, boolean enabled, Identifier icon
     ) {
         int bgColor = VCVisuals.bgHex(hovered, enabled);
         int borderColor = VCVisuals.borderHex(hovered, enabled);
@@ -63,7 +63,7 @@ public class HudUtils {
         int iconX = x + (width - 16) / 2;
         int iconY = y + (height - 16) / 2;
 
-        ctx.drawTexture(
+        ctx.blit(
             RenderPipelines.GUI_TEXTURED,
             icon, iconX, iconY,
             0, 0, width, height,

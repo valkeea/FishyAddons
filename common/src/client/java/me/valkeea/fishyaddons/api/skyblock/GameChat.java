@@ -2,9 +2,6 @@ package me.valkeea.fishyaddons.api.skyblock;
 
 import me.valkeea.fishyaddons.vconfig.config.impl.StatConfig;
 
-/**
- * Tracks the current chat mode on Hypixel (all, party, guild).
- */
 public class GameChat {
     private GameChat() {}
     
@@ -68,7 +65,7 @@ public class GameChat {
             String savedMode = StatConfig.getChatMode();
             Channel mode = Channel.valueOf(savedMode);
             currentMode = mode;
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException _) {
             currentMode = Channel.ALL;
             saveChatMode();
         }
@@ -93,7 +90,7 @@ public class GameChat {
      * @param command The chat command (e.g., "all", "a", "party", "p", "guild", "g")
      */
     public static void changedChannel(String command) {
-        Channel newMode = Channel.fromCommand(command);
+        var newMode = Channel.fromCommand(command);
         if (newMode != null) {
             currentMode = newMode;
             saveChatMode();
@@ -127,12 +124,9 @@ public class GameChat {
     public static String channelPrefix() {
         Channel mode = ensureInitialized();
         switch (mode) {
-            case ALL:
-                return "/ac ";
-            case GUILD:
-                return "/gc ";
-            default:
-                return "/pc ";
+            case ALL: return "/ac ";
+            case GUILD: return "/gc ";
+            default: return "/pc ";
         }
     }
     

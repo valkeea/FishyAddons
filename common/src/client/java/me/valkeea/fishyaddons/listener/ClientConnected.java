@@ -28,7 +28,7 @@ public class ClientConnected {
     private static Set<String> recreated = new HashSet<>();
 
     public static void init() {
-        ClientLoginConnectionEvents.INIT.register((handler, client) -> onClientConnected());
+        ClientLoginConnectionEvents.INIT.register((handler, mc) -> onClientConnected());
     }
 
     private static void onClientConnected() {

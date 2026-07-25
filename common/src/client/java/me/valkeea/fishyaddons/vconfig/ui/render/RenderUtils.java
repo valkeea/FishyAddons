@@ -2,9 +2,9 @@ package me.valkeea.fishyaddons.vconfig.ui.render;
 
 import java.util.List;
 
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.text.Text;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.network.chat.Component;
 
 public class RenderUtils {
     private static final int TRIANGLE_OVERSAMPLE = 4;
@@ -12,14 +12,14 @@ public class RenderUtils {
     /** 
      * Convenience method to create a VCTooltip and render it.
      */
-    public static void preview(DrawContext context, TextRenderer textRenderer, List<Text> lines, int x, int y, int themeColor, float uiScale) {
+    public static void preview(GuiGraphicsExtractor context, Font textRenderer, List<Component> lines, int x, int y, int themeColor, float uiScale) {
         if (lines == null || lines.isEmpty()) return;
         var tt = new VCTooltip(lines, themeColor, uiScale);
         tt.render(context, textRenderer, x, y);
     }
 
     /** Orientation-aware gradient triangle with local oversampling for smoother edges. */
-    public static void gradientTriangle(DrawContext context, int x, int y, int width, int height, int color, boolean isNorth) {
+    public static void gradientTriangle(GuiGraphicsExtractor context, int x, int y, int width, int height, int color, boolean isNorth) {
         if (width <= 0 || height <= 0) return;
 
         int oversample = Math.max(1, TRIANGLE_OVERSAMPLE);
@@ -29,7 +29,7 @@ public class RenderUtils {
         int scaledHeight = height * oversample;
         int centerX = scaledX + scaledWidth / 2;
 
-        var matrices = context.getMatrices();
+        var matrices = context.pose();
         matrices.pushMatrix();
         matrices.scale(1.0f / oversample, 1.0f / oversample);
 
@@ -47,7 +47,7 @@ public class RenderUtils {
     }
 
     /** Simple border */
-    public static void border(DrawContext context, int x, int y, int width, int height, int color) {
+    public static void border(GuiGraphicsExtractor context, int x, int y, int width, int height, int color) {
         context.fill(x, y, x + width, y + 1, color);
         context.fill(x, y + height - 1, x + width, y + height, color);
         context.fill(x, y + 1, x + 1, y + height - 1, color);
@@ -55,7 +55,7 @@ public class RenderUtils {
     }
 
     /** Rectangular, vertical gradient from slight alpha to transparent */
-    public static void gradient(DrawContext context, int x, int y, int width, int height, int color) {
+    public static void gradient(GuiGraphicsExtractor context, int x, int y, int width, int height, int color) {
         int topColor = color | 0xF5000000;
         int bottomColor = color | 0x05000000;
         
@@ -63,14 +63,14 @@ public class RenderUtils {
     }
 
     /** Rectangular, vertical opaque gradient  color -> black */
-    public static void opaqueGradient(DrawContext context, int x, int y, int width, int height, int color) {
+    public static void opaqueGradient(GuiGraphicsExtractor context, int x, int y, int width, int height, int color) {
         int topColor = color | 0xFF000000;
         int bottomColor = 0xFF000000;
         
         context.fillGradient(x, y, x + width, y + height, topColor, bottomColor);
     }
     
-    public static void horizontalGradient(DrawContext context, int x, int y, int width, int height, int colorStart, int colorEnd) {
+    public static void horizontalGradient(GuiGraphicsExtractor context, int x, int y, int width, int height, int colorStart, int colorEnd) {
         if (width <= 0) return;
         
         int alphaStart = (colorStart >> 24) & 0xFF;

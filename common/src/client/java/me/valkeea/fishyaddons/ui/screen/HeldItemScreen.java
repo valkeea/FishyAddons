@@ -13,10 +13,10 @@ import me.valkeea.fishyaddons.vconfig.ui.manager.ScreenManager;
 import me.valkeea.fishyaddons.vconfig.ui.render.RenderUtils;
 import me.valkeea.fishyaddons.vconfig.ui.render.VCText;
 import me.valkeea.fishyaddons.vconfig.ui.widget.FaButton;
-import net.minecraft.client.gui.Click;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.text.Text;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.network.chat.Component;
 
 public class HeldItemScreen extends Screen {
     private final int theme;
@@ -55,7 +55,7 @@ public class HeldItemScreen extends Screen {
     }
     
     public HeldItemScreen() {
-        super(Text.literal("Held Item Animations"));
+        super(Component.literal("Held Item Animations"));
         this.theme = FishyMode.getThemeColor();
         this.scale = UIScaleCalculator.calculateUIScaleLegacy();
     }
@@ -89,20 +89,20 @@ public class HeldItemScreen extends Screen {
             button -> {
                 HeldItems.setSeparateHandSettings(!HeldItems.isSeparateHandSettings());
                 button.setMessage(GuiUtil.onOffLabel("Separate Hands", HeldItems.isSeparateHandSettings()));
-                clearAndInit();
+                rebuildWidgets();
             });
         handBtn.setUIScale(scale);
-        addDrawableChild(handBtn);
+        addRenderableWidget(handBtn);
 
         if (HeldItems.isSeparateHandSettings()) {
             var copyBtn = new FaButton(centerX - toggleW / 2, currentY + (int) (25 * scale), toggleW, btnH,
-                Text.literal("Clone Global Settings to Both Hands"), 
+                Component.literal("Clone Global Settings to Both Hands"), 
                 button -> {
                     HeldItems.cloneGlobal();
-                    clearAndInit();
+                    rebuildWidgets();
                 });
             copyBtn.setUIScale(scale);
-            addDrawableChild(copyBtn);
+            addRenderableWidget(copyBtn);
         }
 
         currentY += spacing * 3;
@@ -116,26 +116,26 @@ public class HeldItemScreen extends Screen {
         currentY += spacing;
 
         var backBtn = new FaButton(centerX - btnW - btnW / 2, currentY, btnW, btnH,
-            Text.literal("Back"), button -> 
-            close()
+            Component.literal("Back"), button -> 
+            onClose()
         );
         backBtn.setUIScale(scale);
-        addDrawableChild(backBtn);
+        addRenderableWidget(backBtn);
 
         var resetBtn = new FaButton(centerX - btnW / 2, currentY, btnW, btnH,
-            Text.literal("Reset"), button -> {
+            Component.literal("Reset"), button -> {
             HeldItems.reset();
-            clearAndInit();
+            rebuildWidgets();
         });
         resetBtn.setUIScale(scale);
-        addDrawableChild(resetBtn);
+        addRenderableWidget(resetBtn);
 
         doneBtn = new FaButton(centerX + btnW / 2, currentY, btnW, btnH,
-            Text.literal("Done"), button -> 
-            close()
+            Component.literal("Done"), button -> 
+            onClose()
         );
         doneBtn.setUIScale(scale);
-        addDrawableChild(doneBtn);
+        addRenderableWidget(doneBtn);
     }
 
     private int addCentralizedSliders(int centerX, int currentY) {
@@ -266,7 +266,7 @@ public class HeldItemScreen extends Screen {
     }
     
     @Override
-    public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+    public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
 
         int bgBottom = doneBtn.getY() + doneBtn.getHeight() + spacing;
         short bgTop = 15;
@@ -276,10 +276,10 @@ public class HeldItemScreen extends Screen {
         context.fill(bgLeft - 5, bgTop - 5, bgLeft + bgWidth + 5, bgBottom + 5, 0x80000000); 
         RenderUtils.gradient(context, bgLeft, bgTop, bgWidth, bgBottom - bgTop, 0x88000000);
 
-        super.render(context, mouseX, mouseY, delta);
+        super.extractRenderState(context, mouseX, mouseY, delta);
 
         var title = VCText.header("Held Item Animations", null);
-        GuiUtil.drawScaledCenteredText(context, this.textRenderer, title, this.width / 2, 20, 0xFFFFFFFF, scale);
+        GuiUtil.drawScaledCenteredText(context, this.font, title, this.width / 2, 20, 0xFFFFFFFF, scale);
 
 
         for (TransformSlider tfs : sliders) {
@@ -289,14 +289,14 @@ public class HeldItemScreen extends Screen {
             int w = tfs.center ? this.labelW + centerOffset + gap : this.labelW;
             int valueX = labelX + w + sliderW + gap * 2;
 
-            GuiUtil.drawScaledText(context, this.textRenderer, tfs.label, labelX, tfs.y + 2, theme, scale);
+            GuiUtil.drawScaledText(context, this.font, tfs.label, labelX, tfs.y + 2, theme, scale);
             tfs.slider.render(context, mouseX, mouseY);
-            GuiUtil.drawScaledText(context, this.textRenderer, valueText, valueX, tfs.y + 2, theme, scale);
+            GuiUtil.drawScaledText(context, this.font, valueText, valueX, tfs.y + 2, theme, scale);
         }
     }
     
     @Override
-    public boolean mouseClicked(Click click, boolean doubled) {
+    public boolean mouseClicked(MouseButtonEvent click, boolean doubled) {
         for (TransformSlider tfs : sliders) {
             if (tfs.slider.mouseClicked(click)) {
                 return true;
@@ -306,7 +306,7 @@ public class HeldItemScreen extends Screen {
     }
     
     @Override
-    public boolean mouseReleased(Click click) {
+    public boolean mouseReleased(MouseButtonEvent click) {
         for (TransformSlider tfs : sliders) {
             if (tfs.slider.mouseReleased(click)) {
                 return true;
@@ -317,7 +317,7 @@ public class HeldItemScreen extends Screen {
     }
     
     @Override
-    public boolean mouseDragged(Click click, double offsetX, double offsetY) {
+    public boolean mouseDragged(MouseButtonEvent click, double offsetX, double offsetY) {
         for (TransformSlider tfs : sliders) {
             if (tfs.slider.mouseDragged(click)) {
                 return true;
@@ -328,13 +328,13 @@ public class HeldItemScreen extends Screen {
     }
     
     @Override
-    public void close() {
+    public void onClose() {
         ScreenManager.openConfigScreen();
         HeldItems.saveChanges();
     }
 
     @Override
-    public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) {
+    public void extractBackground(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
         // no blur to make preview clearer
     }     
 }

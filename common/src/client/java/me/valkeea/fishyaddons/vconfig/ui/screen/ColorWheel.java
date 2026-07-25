@@ -2,6 +2,8 @@ package me.valkeea.fishyaddons.vconfig.ui.screen;
 
 import java.util.function.Consumer;
 
+import com.mojang.blaze3d.platform.NativeImage;
+
 import me.valkeea.fishyaddons.vconfig.api.Config;
 import me.valkeea.fishyaddons.vconfig.api.IntKey;
 import me.valkeea.fishyaddons.vconfig.ui.layout.UIScaleCalculator;
@@ -10,16 +12,15 @@ import me.valkeea.fishyaddons.vconfig.ui.render.RenderUtils;
 import me.valkeea.fishyaddons.vconfig.ui.render.VCText;
 import me.valkeea.fishyaddons.vconfig.ui.widget.FaButton;
 import me.valkeea.fishyaddons.vconfig.ui.widget.VCTextField;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gl.RenderPipelines;
-import net.minecraft.client.gui.Click;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.texture.NativeImage;
-import net.minecraft.client.texture.NativeImageBackedTexture;
-import net.minecraft.text.Style;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.texture.DynamicTexture;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.Style;
+import net.minecraft.resources.Identifier;
 
 public class ColorWheel extends Screen {
 
@@ -70,7 +71,7 @@ public class ColorWheel extends Screen {
 
     private ColorWheel(Screen parent, IntKey callbackKey, int initColor,Consumer<Integer> onColorSelected) {
 
-        super(Text.literal("Color Picker"));
+        super(Component.literal("Color Picker"));
         this.parent = parent;
         this.callbackKey = callbackKey;
         this.onColorSelected = onColorSelected;
@@ -133,14 +134,14 @@ public class ColorWheel extends Screen {
         genTexture();
         updateRgbFromHsl();
         
-        var tr = this.textRenderer;
+        var tr = this.font;
         fieldY = barY + barHeight + WIDGET_HEIGHT;
-        hexField = new VCTextField(tr, wheelCenterX - fieldWidth / 2, fieldY, fieldWidth, widgetHeight, Text.literal("Hex (e.g. #FF00FF)"));
+        hexField = new VCTextField(tr, wheelCenterX - fieldWidth / 2, fieldY, fieldWidth, widgetHeight, Component.literal("Hex (e.g. #FF00FF)"));
         hexField.setMaxLength(9);
         hexField.setUIScale(uiScale);
         hexField.setTextShadow(false);
         updateHexField();
-        this.addDrawableChild(hexField);
+        this.addRenderableWidget(hexField);
 
         btnY = fieldY + CENTER_OFFSET_Y;
         int cancelX = wheelCenterX - fieldWidth  / 2;
@@ -154,32 +155,32 @@ public class ColorWheel extends Screen {
     private void addCancelBtn(int x, int y) {
         var cancelBtn = new FaButton(
             x, y, btnWidth, widgetHeight,
-            Text.literal("Cancel").setStyle(Style.EMPTY.withColor(0xFFAAAAAA)),
+            Component.literal("Cancel").setStyle(Style.EMPTY.withColor(0xFFAAAAAA)),
             btn -> navigateBack()
         );
         cancelBtn.setUIScale(uiScale);
-        this.addDrawableChild(cancelBtn);
+        this.addRenderableWidget(cancelBtn);
     }
 
     private void addDisableBtn(int x, int y) {
         var disableBtn = new FaButton(
             x, y, btnWidth, widgetHeight,
-            Text.literal("Disable").setStyle(Style.EMPTY.withColor(0xFFFF8080)),
+            Component.literal("Disable").setStyle(Style.EMPTY.withColor(0xFFFF8080)),
             btn -> {
                 updateColor(0);
                 navigateBack();
             }
         );
         disableBtn.setUIScale(uiScale);
-        this.addDrawableChild(disableBtn);  
+        this.addRenderableWidget(disableBtn);  
     }
 
     private void addConfirmBtn(int x, int y) {
         var confirmBtn = new FaButton(
             x, y, btnWidth, widgetHeight,
-            Text.literal("Confirm").setStyle(Style.EMPTY.withColor(0xFFCCFFCC)),
+            Component.literal("Confirm").setStyle(Style.EMPTY.withColor(0xFFCCFFCC)),
             btn -> {
-                String hex = hexField.getText().trim();
+                String hex = hexField.getValue().trim();
                 float[] rgb = new float[]{red, green, blue};
                 if (hex.matches("^#?[0-9a-fA-F]{6}$")) {
                     try {
@@ -187,7 +188,7 @@ public class ColorWheel extends Screen {
                         rgb[0] = ((c >> 16) & 0xFF) / 255f;
                         rgb[1] = ((c >> 8) & 0xFF) / 255f;
                         rgb[2] = (c & 0xFF) / 255f;
-                    } catch (NumberFormatException e) {
+                    } catch (NumberFormatException _) {
                         // Current RGB if parsing fails
                     }
                 }
@@ -197,7 +198,7 @@ public class ColorWheel extends Screen {
             }
         );
         confirmBtn.setUIScale(uiScale);
-        this.addDrawableChild(confirmBtn);
+        this.addRenderableWidget(confirmBtn);
     }  
 
     // --- Color wheel texture generation ---
@@ -213,7 +214,7 @@ public class ColorWheel extends Screen {
     
     private void deletePrevious() {
         if (wheelId != null) {
-            MinecraftClient.getInstance().getTextureManager().destroyTexture(wheelId);
+            Minecraft.getInstance().getTextureManager().release(wheelId);
         }
         if (wheelImage != null) {
             wheelImage.close();
@@ -235,7 +236,7 @@ public class ColorWheel extends Screen {
                 
                 double distance = Math.sqrt((double)x * x + (double)y * y);
                 int pixelColor = calculatePixelColor(x, y, distance);
-                wheelImage.setColor(pixelX, pixelY, pixelColor);
+                wheelImage.setPixelABGR(pixelX, pixelY, pixelColor);
             }
         }
     }
@@ -280,15 +281,15 @@ public class ColorWheel extends Screen {
     
     private void register() {
         long timestamp = System.currentTimeMillis();
-        wheelId = Identifier.of("fishyaddons", "color_wheel_" + timestamp);
-        var texture = new NativeImageBackedTexture(() -> "Color Wheel", wheelImage);
-        MinecraftClient.getInstance().getTextureManager().registerTexture(wheelId, texture);
+        wheelId = Identifier.fromNamespaceAndPath("fishyaddons", "color_wheel_" + timestamp);
+        var texture = new DynamicTexture(() -> "Color Wheel", wheelImage);
+        Minecraft.getInstance().getTextureManager().register(wheelId, texture);
     }
 
     // --- Rendering ---
 
     @Override
-    public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+    public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
 
         int bgWidth = (wheelRadius + BG_PADDING_X) * 2;
         int bgLeft = wheelCenterX - wheelRadius - BG_PADDING_X;
@@ -298,23 +299,23 @@ public class ColorWheel extends Screen {
 
         context.fill(bgLeft - 2, bgTop - 2, bgLeft + bgWidth + 2, bgBottom + 2, 0x70000000); 
         RenderUtils.gradient(context, bgLeft, bgTop, bgWidth, bgBottom - bgTop, 0x30000000);          
-        super.render(context, mouseX, mouseY, delta);
+        super.extractRenderState(context, mouseX, mouseY, delta);
 
-        context.drawText(
-            this.textRenderer,
+        context.text(
+            this.font,
             VCText.header("Color Selection", null),
-            wheelCenterX - this.textRenderer.getWidth("Color Selection") / 2,
+            wheelCenterX - this.font.width("Color Selection") / 2,
             headerHeight,
             0xFFFFFFFF,
             false
         );
       
-        context.drawTexture(RenderPipelines.GUI_TEXTURED, wheelId, wheelCenterX - wheelRadius, wheelCenterY - wheelRadius, 0, 0, wheelRadius * 2, wheelRadius * 2, wheelRadius * 2, wheelRadius * 2);
+        context.blit(RenderPipelines.GUI_TEXTURED, wheelId, wheelCenterX - wheelRadius, wheelCenterY - wheelRadius, 0, 0, wheelRadius * 2, wheelRadius * 2, wheelRadius * 2, wheelRadius * 2);
         lightnessBar(context);
         selectionIndicators(context);
     }
     
-    private void lightnessBar(DrawContext context) {
+    private void lightnessBar(GuiGraphicsExtractor context) {
         for (int x = 0; x < barWidth; x++) {
             float currentLightness = x / (float) barWidth;
             float[] rgb = hslToRgb(hue * 360, saturation, currentLightness);
@@ -328,13 +329,13 @@ public class ColorWheel extends Screen {
         RenderUtils.border(context, barX, barY, barWidth, barHeight, 0x95000000);
     }
     
-    private void selectionIndicators(DrawContext context) {
+    private void selectionIndicators(GuiGraphicsExtractor context) {
         previewIndicator(context);
         lightnessIndicator(context);
         preview(context);
     }
     
-    private void previewIndicator(DrawContext context) {
+    private void previewIndicator(GuiGraphicsExtractor context) {
         float angle = hue * 2 * (float)Math.PI;
         float indicatorX = wheelCenterX + (float)(Math.cos(angle) * saturation * wheelRadius);
         float indicatorY = wheelCenterY + (float)(-Math.sin(angle) * saturation * wheelRadius);
@@ -344,7 +345,7 @@ public class ColorWheel extends Screen {
         renderCircle(context, indicatorX, indicatorY, indicatorRadius, c);
     }
     
-    private void renderCircle(DrawContext context, float centerX, float centerY, float radius, int fillColor) {
+    private void renderCircle(GuiGraphicsExtractor context, float centerX, float centerY, float radius, int fillColor) {
         int minX = (int)(centerX - radius - 3);
         int maxX = (int)(centerX + radius + 3);
         int minY = (int)(centerY - radius - 3);
@@ -400,13 +401,13 @@ public class ColorWheel extends Screen {
         return 0;
     }
     
-    private void lightnessIndicator(DrawContext context) {
+    private void lightnessIndicator(GuiGraphicsExtractor context) {
         int lightnessIndicatorX = barX + (int)(lightness * barWidth);
         context.fill(lightnessIndicatorX - 3, barY - 4, lightnessIndicatorX + 3, barY + barHeight + 4, 0x80000000);
         context.fill(lightnessIndicatorX - 1, barY - 2, lightnessIndicatorX + 1, barY + barHeight + 2, color);
     }
 
-    private void preview(DrawContext context) {
+    private void preview(GuiGraphicsExtractor context) {
         int previewX = (int)(wheelCenterX + wheelRadius * 0.2f);
         int previewY = fieldY + (int)(widgetHeight * 0.2f);
         int previewWidth = (int)(wheelRadius * 0.8f);
@@ -460,8 +461,8 @@ public class ColorWheel extends Screen {
     private void updateHexField() {
         color = rgbToInt(new float[]{red, green, blue});
         if (hexField != null) {
-            hexField.setText(String.format("#%02X%02X%02X", (int)(red * 255), (int)(green * 255), (int)(blue * 255)));
-            hexField.setEditableColor(color);
+            hexField.setValue(String.format("#%02X%02X%02X", (int)(red * 255), (int)(green * 255), (int)(blue * 255)));
+            hexField.setTextColor(color);
         }
     }
 
@@ -570,7 +571,7 @@ public class ColorWheel extends Screen {
     }
 
     @Override
-    public boolean mouseClicked(Click click, boolean doubled) {
+    public boolean mouseClicked(MouseButtonEvent click, boolean doubled) {
         double mouseX = click.x();
         double mouseY = click.y();
         int button = click.button();
@@ -597,7 +598,7 @@ public class ColorWheel extends Screen {
     }
     
     @Override
-    public boolean mouseDragged(Click click, double offsetX, double offsetY) {
+    public boolean mouseDragged(MouseButtonEvent click, double offsetX, double offsetY) {
         if (draggingWheel) {
             updateColorFromWheel(click.x(), click.y());
             return true;
@@ -612,23 +613,23 @@ public class ColorWheel extends Screen {
     }
     
     @Override
-    public boolean mouseReleased(Click click) {
+    public boolean mouseReleased(MouseButtonEvent click) {
         draggingWheel = false;
         draggingBar = false;
         return super.mouseReleased(click);
     }
     
     @Override
-    public void close() {
+    public void onClose() {
         if (wheelId != null) {
-            MinecraftClient.getInstance().getTextureManager().destroyTexture(wheelId);
+            Minecraft.getInstance().getTextureManager().release(wheelId);
             wheelId = null;
         }
         if (wheelImage != null) {
             wheelImage.close();
             wheelImage = null;
         }
-        super.close();
+        super.onClose();
     }
 
     private void navigateBack() {

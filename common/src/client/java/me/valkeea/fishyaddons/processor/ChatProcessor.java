@@ -12,7 +12,7 @@ import org.slf4j.LoggerFactory;
 import me.valkeea.fishyaddons.event.impl.GameMessageEvent;
 import me.valkeea.fishyaddons.feature.filter.ChatFilter;
 import me.valkeea.fishyaddons.feature.filter.FilterConfig.MessageContext;
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.Component;
 
 @SuppressWarnings("squid:S6548")
 public class ChatProcessor {
@@ -74,7 +74,7 @@ public class ChatProcessor {
         }
     }
 
-    public Text applyDisplayFilters(Text message) {
+    public Component applyDisplayFilters(Component message) {
         if (message == null) return message;
 
         var context = pendingDisplayContext.get();
@@ -87,7 +87,7 @@ public class ChatProcessor {
         }
 
         try {
-            Text filteredMessage = ChatFilter.applyFilters(context);
+            var filteredMessage = ChatFilter.applyFilters(context);
             context.setCurrentMessage(filteredMessage);
 
             processDisplayHandlers(context);
@@ -132,10 +132,10 @@ public class ChatProcessor {
 
         try {
             if (handler.shouldHandle(context)) {
-                ChatHandlerResult result = handler.handle(context);
+                ChatHandlerResult r = handler.handle(context);
 
                 if (debugMode && processedBy != null) {
-                    processedBy.add(handler.getHandlerName() + ":" + result.getAction());
+                    processedBy.add(handler.getHandlerName() + ":" + r.getAction());
                 }
             }
 
@@ -149,7 +149,7 @@ public class ChatProcessor {
     }
     
     private ProcessingResult processSingleHandler(ChatHandler handler, ChatMessageContext context, List<String> processedBy) {
-        ProcessingResult result = processHandler(handler, context);
+        var result = processHandler(handler, context);
         if (!result.wasSkipped() && debugMode && processedBy != null) {
             processedBy.add(handler.getHandlerName() + ":" + result.getAction());
         }
@@ -173,8 +173,8 @@ public class ChatProcessor {
                 return ProcessingResult.skipped();
             }
 
-            ChatHandlerResult result = handler.handle(context);
-            return new ProcessingResult(result.getAction());
+            ChatHandlerResult r = handler.handle(context);
+            return new ProcessingResult(r.getAction());
 
         } catch (Exception e) {
             LOGGER.error("Error in chat handler '{}': {}", handler.getHandlerName(), e.getMessage());
@@ -185,7 +185,7 @@ public class ChatProcessor {
         }
     }
 
-    private void recordProcessingTime(long startTime, Text message) {
+    private void recordProcessingTime(long startTime, Component message) {
         long endTime = System.nanoTime();
         long totalTime = endTime - startTime;
         totalProcessingTimeNs.addAndGet(totalTime);

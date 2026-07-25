@@ -15,9 +15,9 @@ import me.valkeea.fishyaddons.vconfig.annotation.VCModule;
 import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
 import me.valkeea.fishyaddons.vconfig.api.Config;
 import me.valkeea.fishyaddons.vconfig.api.IntKey;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Style;
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.Style;
 
 @VCModule
 public class PetInfo {
@@ -27,8 +27,8 @@ public class PetInfo {
     private static boolean tablistReady = false;
     private static int color = 0;
 
-    private static Text l1Scanned = null;
-    private static Text directOverride = null;
+    private static Component l1Scanned = null;
+    private static Component directOverride = null;
 
     private static final Pattern AUTOPET_PATTERN = Pattern.compile(
         "§cAutopet §eequipped your (§.\\[Lvl \\d+\\] (?:§.\\[§.\\d+§.⚔§.\\] )?(?:§.)+.+?)§e! §a§lVIEW RULE");    
@@ -40,7 +40,7 @@ public class PetInfo {
         var directMatcher = AUTOPET_PATTERN.matcher(s);
         if (directMatcher.find()) {
             String petInfoPart = directMatcher.group(1);
-            Text petInfo = Enhancer.parseFormattedTextSimple(petInfoPart);
+            Component petInfo = Enhancer.parseFormattedTextSimple(petInfoPart);
             setOverride(petInfo);
             return true;
         }
@@ -53,7 +53,7 @@ public class PetInfo {
         }
 
         if (s.contains("You despawned your")) {
-            Text msg = Text.literal("Despawned").setStyle(Style.EMPTY.withColor(0xFF808080));
+            Component msg = Component.literal("Despawned").setStyle(Style.EMPTY.withColor(0xFF808080));
             setOverride(msg);
             clearInfo();
             return true;
@@ -71,7 +71,7 @@ public class PetInfo {
         ActivePet.forceUpdate();
     }    
 
-    public static void setOverride(Text petInfo) { 
+    public static void setOverride(Component petInfo) { 
         directOverride = petInfo; 
     }
     
@@ -79,12 +79,12 @@ public class PetInfo {
         directOverride = null; 
     }
 
-    public static Text getPet() {
+    public static Component getPet() {
         if (directOverride != null) return directOverride;
-        return l1Scanned != null ? l1Scanned : Text.literal("");
+        return l1Scanned != null ? l1Scanned : Component.literal("");
     }
 
-    public static void setNewPet(Text flattened) {
+    public static void setNewPet(Component flattened) {
         l1Scanned = flattened;
     }
 
@@ -107,20 +107,20 @@ public class PetInfo {
     public static boolean shouldIncludeXp() { return Config.get(BooleanKey.PET_INCLUDEXP); }
 
     public static class ActivePet {
-        private static Text l1;
-        private static Text l2;
+        private static Component l1;
+        private static Component l2;
         private static final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
         private static ScheduledFuture<?> pendingCombine = null;
         private static final long DEBOUNCE_MS = 50;
 
         private ActivePet() {}
 
-        public static synchronized void setl1(Text pet) {
+        public static synchronized void setl1(Component pet) {
             ActivePet.l1 = pet;
             scheduleCombine();
         }        
 
-        public static synchronized void setl2(Text xp) {
+        public static synchronized void setl2(Component xp) {
             ActivePet.l2 = xp;
             scheduleCombine();
         }
@@ -144,11 +144,11 @@ public class PetInfo {
 
         private static synchronized void combine() {
 
-            var merged = Text.empty();
+            var merged = Component.empty();
             merged.append(l1);
 
             if (PetInfo.shouldIncludeXp()) {
-                merged.append(Text.literal(" "));
+                merged.append(Component.literal(" "));
 
                 if (color != 0) merged.append(formatl2(l2, color));
                 else merged.append(l2);
@@ -158,17 +158,17 @@ public class PetInfo {
             setNewPet(merged);
         }
 
-        private static Text formatl2(Text line, int color) {
+        private static Component formatl2(Component line, int color) {
 
             var raw = line.getString().trim();
             if (raw.equalsIgnoreCase("max level")) {
-                return Text.empty().append(Text.literal("MAX").setStyle(Style.EMPTY
+                return Component.empty().append(Component.literal("MAX").setStyle(Style.EMPTY
                     .withBold(true))
                     .withColor(color));
             }
 
             var tail = false;
-            var result = Text.empty();
+            var result = Component.empty();
 
             for (int i = 0; i < raw.length(); i++) {
                 char c = raw.charAt(i);
@@ -184,8 +184,8 @@ public class PetInfo {
             return result;
         }
 
-        private static MutableText paintChar(char c, int color) {
-            return Text.literal(String.valueOf(c)).setStyle(Style.EMPTY.withColor(color));
+        private static MutableComponent paintChar(char c, int color) {
+            return Component.literal(String.valueOf(c)).setStyle(Style.EMPTY.withColor(color));
         }        
     }  
 }

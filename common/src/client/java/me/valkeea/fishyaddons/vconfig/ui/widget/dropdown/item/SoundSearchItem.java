@@ -5,7 +5,7 @@ import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
 import me.valkeea.fishyaddons.vconfig.api.Config;
 import me.valkeea.fishyaddons.vconfig.api.DoubleKey;
 import me.valkeea.fishyaddons.vconfig.api.StringKey;
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.Component;
 
 public class SoundSearchItem implements ToggleMenuItem {
     private final StringKey key;
@@ -84,12 +84,12 @@ public class SoundSearchItem implements ToggleMenuItem {
     }
 
     @Override
-    public Text getEnabledSuffix() {
-        return Text.of("");
+    public Component getEnabledSuffix() {
+        return Component.nullToEmpty("");
     }
 
     @Override
-    public Text getDisabledSuffix() {
-        return Text.of("");
+    public Component getDisabledSuffix() {
+        return Component.nullToEmpty("");
     }
 }

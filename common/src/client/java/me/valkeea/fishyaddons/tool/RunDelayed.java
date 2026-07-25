@@ -27,7 +27,7 @@ public class RunDelayed {
 			try {
 				Thread.sleep(delayMillis);
 				action.run();
-			} catch (InterruptedException e) {
+			} catch (InterruptedException _) {
 				Thread.currentThread().interrupt();
 			}
 		});

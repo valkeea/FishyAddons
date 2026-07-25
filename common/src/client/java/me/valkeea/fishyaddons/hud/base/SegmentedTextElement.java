@@ -3,8 +3,7 @@ package me.valkeea.fishyaddons.hud.base;
 import me.valkeea.fishyaddons.hud.core.HudDrawer;
 import me.valkeea.fishyaddons.hud.core.HudElementState;
 import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.text.Text;
+import net.minecraft.client.Minecraft;
 
 /**
  * Elements with multi-component text display (label + value pairs)
@@ -19,7 +18,7 @@ public abstract class SegmentedTextElement extends BaseHudElement {
     }
 
     @Override
-    protected final void renderContent(HudDrawer drawer, MinecraftClient mc, HudElementState state) {
+    protected final void renderContent(HudDrawer drawer, Minecraft mc, HudElementState state) {
         Component[] components = getComponents();
         if (components == null || components.length == 0) return;
 
@@ -30,12 +29,12 @@ public abstract class SegmentedTextElement extends BaseHudElement {
             
             if (comp.label != null) {
                 drawer.drawText(comp.label, xOffset, 0, comp.labelColor);
-                xOffset += mc.textRenderer.getWidth(comp.label);
+                xOffset += mc.font.width(comp.label);
             }
             
             if (comp.value != null) {
                 drawer.drawText(comp.value, xOffset, 0, comp.valueColor);
-                xOffset += mc.textRenderer.getWidth(comp.value);
+                xOffset += mc.font.width(comp.value);
             }
             
             if (i < components.length - 1) {
@@ -45,7 +44,7 @@ public abstract class SegmentedTextElement extends BaseHudElement {
     }
 
     @Override
-    protected final int calculateContentWidth(MinecraftClient mc) {
+    protected final int calculateContentWidth(Minecraft mc) {
         Component[] components = getComponents();
         if (components == null || components.length == 0) return 100;
 
@@ -55,10 +54,10 @@ public abstract class SegmentedTextElement extends BaseHudElement {
             if (comp == null) continue;
             
             if (comp.label != null) {
-                totalWidth += mc.textRenderer.getWidth(comp.label);
+                totalWidth += mc.font.width(comp.label);
             }
             if (comp.value != null) {
-                totalWidth += mc.textRenderer.getWidth(comp.value);
+                totalWidth += mc.font.width(comp.value);
             }
             
             if (i < components.length - 1) {
@@ -69,8 +68,8 @@ public abstract class SegmentedTextElement extends BaseHudElement {
     }
 
     @Override
-    protected final int calculateContentHeight(MinecraftClient mc) {
-        return mc.textRenderer.fontHeight;
+    protected final int calculateContentHeight(Minecraft mc) {
+        return mc.font.lineHeight;
     }
 
     /**
@@ -82,13 +81,13 @@ public abstract class SegmentedTextElement extends BaseHudElement {
      * Represents a label-value pair component
      */
     protected static class Component {
-        public final Text label;
-        public final Text value;
+        public final net.minecraft.network.chat.Component label;
+        public final net.minecraft.network.chat.Component value;
         public final int labelColor;
         public final int valueColor;
         public final int spacing;
 
-        public Component(Text label, Text value, int labelColor, int valueColor, int spacing) {
+        public Component(net.minecraft.network.chat.Component label, net.minecraft.network.chat.Component value, int labelColor, int valueColor, int spacing) {
             this.label = label;
             this.value = value;
             this.labelColor = labelColor;
@@ -96,7 +95,7 @@ public abstract class SegmentedTextElement extends BaseHudElement {
             this.spacing = spacing;
         }
         
-        public Component(Text label, Text value, int labelColor, int valueColor) {
+        public Component(net.minecraft.network.chat.Component label, net.minecraft.network.chat.Component value, int labelColor, int valueColor) {
             this(label, value, labelColor, valueColor, 10);
         }
     }

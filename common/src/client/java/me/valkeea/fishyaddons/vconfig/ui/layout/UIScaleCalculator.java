@@ -2,7 +2,7 @@ package me.valkeea.fishyaddons.vconfig.ui.layout;
 
 import me.valkeea.fishyaddons.vconfig.api.Config;
 import me.valkeea.fishyaddons.vconfig.api.DoubleKey;
-import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.Minecraft;
 
 public final class UIScaleCalculator {
     
@@ -38,11 +38,11 @@ public final class UIScaleCalculator {
      * @return The calculated UI scale
      */
     public static float calculateUIScale() {
-        var mc = MinecraftClient.getInstance();
+        var mc = Minecraft.getInstance();
         if (mc.getWindow() == null) {
             return (float) Math.clamp(Config.get(DoubleKey.MOD_UI_SCALE), ABSOLUTE_MIN_SCALE, ABSOLUTE_MAX_SCALE);
         }
-        int width = mc.getWindow().getFramebufferWidth();
+        int width = mc.getWindow().getWidth();
         return calculateUIScale(width);
     }
 

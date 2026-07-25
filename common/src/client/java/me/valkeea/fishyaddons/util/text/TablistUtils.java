@@ -3,26 +3,25 @@ package me.valkeea.fishyaddons.util.text;
 import java.util.Collection;
 import java.util.List;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.PlayerListEntry;
-import net.minecraft.text.Text;
-
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.PlayerInfo;
+import net.minecraft.network.chat.Component;
 
 public class TablistUtils {
     private TablistUtils() {}
 
-    public static List<Text> getLines() {
+    public static List<Component> getLines() {
 
-        var mc = MinecraftClient.getInstance();
+        var mc = Minecraft.getInstance();
         if (mc.player == null) return java.util.Collections.emptyList();
 
-        List<Text> lines = new java.util.ArrayList<>();
+        List<Component> lines = new java.util.ArrayList<>();
 
-        if (mc.player != null && mc.player.networkHandler != null) {
-            Collection<PlayerListEntry> entries = mc.player.networkHandler.getListedPlayerListEntries();
+        if (mc.player != null && mc.player.connection != null) {
+            Collection<PlayerInfo> entries = mc.player.connection.getListedOnlinePlayers();
 
-            for (PlayerListEntry entry : entries) {
-                Text displayName = entry.getDisplayName();
+            for (PlayerInfo e : entries) {
+                var displayName = e.getTabListDisplayName();
 
                 if (displayName != null) {
                     lines.add(displayName);

@@ -1,5 +1,7 @@
 package me.valkeea.fishyaddons;
 
+import com.mojang.blaze3d.platform.InputConstants;
+
 import me.valkeea.fishyaddons.api.skyblock.GameChat;
 import me.valkeea.fishyaddons.command.CmdManager;
 import me.valkeea.fishyaddons.feature.filter.FilterConfig;
@@ -9,12 +11,7 @@ import me.valkeea.fishyaddons.feature.qol.FishyPresets;
 import me.valkeea.fishyaddons.feature.waypoints.WaypointChains;
 import me.valkeea.fishyaddons.hud.core.ElementRegistry;
 import me.valkeea.fishyaddons.hud.ui.FishyToast;
-import me.valkeea.fishyaddons.listener.ClientConnected;
-import me.valkeea.fishyaddons.listener.ClientDisconnected;
-import me.valkeea.fishyaddons.listener.ClientStop;
-import me.valkeea.fishyaddons.listener.ClientTick;
-import me.valkeea.fishyaddons.listener.ModifyChat;
-import me.valkeea.fishyaddons.listener.WorldEvent;
+import me.valkeea.fishyaddons.listener.*;
 import me.valkeea.fishyaddons.processor.ChatHandlerRegistry;
 import me.valkeea.fishyaddons.tool.GuiScheduler;
 import me.valkeea.fishyaddons.tool.ModCheck;
@@ -30,12 +27,11 @@ import me.valkeea.fishyaddons.vconfig.core.ConfigScanner;
 import me.valkeea.fishyaddons.vconfig.ui.manager.ScreenManager;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
-import net.minecraft.client.option.KeyBinding;
-import net.minecraft.client.util.InputUtil;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.Registry;
-import net.minecraft.util.Identifier;
+import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
+import net.minecraft.client.KeyMapping;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.Identifier;
 
 public class FishyAddons implements ClientModInitializer {
 
@@ -73,17 +69,17 @@ public class FishyAddons implements ClientModInitializer {
         CmdManager.register();
         BlacklistManager.init(); 
         
-        Registry.register(Registries.SOUND_EVENT,
+        Registry.register(BuiltInRegistries.SOUND_EVENT,
             PlaySound.PROTECT_TRIGGER_ID,
             PlaySound.PROTECT_TRIGGER_EVENT
         );
 
-        var mainKey = KeyBindingHelper.registerKeyBinding(
-            new KeyBinding("Open Config", InputUtil.Type.KEYSYM, 240, KeyBinding.Category.create(Identifier.of("fishyaddons", "mod_keybinds")))
+        var mainKey = KeyMappingHelper.registerKeyMapping(
+            new KeyMapping("Open Config", InputConstants.Type.KEYSYM, 240, KeyMapping.Category.register(Identifier.fromNamespaceAndPath("fishyaddons", "mod_keybinds")))
         );
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            while (mainKey.wasPressed()) {
+            while (mainKey.consumeClick()) {
                 ScreenManager.openConfigScreen();
             }
         });

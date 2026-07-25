@@ -9,17 +9,17 @@ import org.slf4j.LoggerFactory;
 import me.valkeea.fishyaddons.feature.skyblock.EqTextures;
 import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
 import me.valkeea.fishyaddons.vconfig.api.Config;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gl.RenderPipelines;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.ingame.InventoryScreen;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.screens.inventory.InventoryScreen;
+import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.item.ItemStack;
 
 public class EqDisplay {
     private static EqDisplay instance = null;    
     private static final Logger LOGGER = LoggerFactory.getLogger("FishyAddons/EqDisplay");
-    private static final Identifier SLOT_TEXTURE = Identifier.of("minecraft", "textures/gui/container/inventory.png");
+    private static final Identifier SLOT_TEXTURE = Identifier.fromNamespaceAndPath("minecraft", "textures/gui/container/inventory.png");
 
     private static final Map<Integer, ItemStack> cachedSkullItems = new HashMap<>();
     private static final Map<Integer, Integer[]> cachedArmorPositions = new HashMap<>();
@@ -121,12 +121,12 @@ public class EqDisplay {
     /**
      * Render a secondary armor display on the inventory screen
      */
-    public static void render(DrawContext context, InventoryScreen screen) {
+    public static void render(GuiGraphicsExtractor context, InventoryScreen screen) {
         if (!Config.get(BooleanKey.EQ_DISPLAY) || !shouldRender()) {
             return;
         }
         
-        var client = MinecraftClient.getInstance();
+        var client = Minecraft.getInstance();
         if (client.player == null) return;
         
         computePos(screen);
@@ -155,7 +155,7 @@ public class EqDisplay {
 
     private static int[][] findVanillaPos(InventoryScreen screen) {
         try {
-            var handler = screen.getScreenHandler();
+            var handler = screen.getMenu();
             if (handler == null) {
                 return new int[0][0];
             } else {
@@ -189,21 +189,21 @@ public class EqDisplay {
         return shouldRender;
     }
     
-    private static void renderSlotBg(DrawContext context, int x, int y) {
-        context.drawTexture(RenderPipelines.GUI_TEXTURED,
+    private static void renderSlotBg(GuiGraphicsExtractor context, int x, int y) {
+        context.blit(RenderPipelines.GUI_TEXTURED,
                            SLOT_TEXTURE, x, y, 7, 83, SLOT_SIZE, SLOT_SIZE, 256, 256);
     }
     
-    private static void renderSkull(DrawContext context, int x, int y, int slotIndex) {
+    private static void renderSkull(GuiGraphicsExtractor context, int x, int y, int slotIndex) {
         try {
             var skullStack = EqTextures.getSlotItemStack(slotIndex);
             if (skullStack != null && !skullStack.isEmpty()) {
-                context.drawItem(skullStack, x, y);
+                context.item(skullStack, x, y);
             } else {
                 context.fill(x, y, x + 16, y + 16, 0xFF404040);
             }
             
-        } catch (Exception e) {
+        } catch (Exception _) {
             context.fill(x, y, x + 16, y + 16, 0xFF8B4513);
         }
     }
@@ -230,9 +230,9 @@ public class EqDisplay {
         }
 
         if (button == 0) {
-            var client = MinecraftClient.getInstance();
+            var client = Minecraft.getInstance();
             if (client.player != null) {
-                client.player.networkHandler.sendChatMessage("/equipment");
+                client.player.connection.sendChat("/equipment");
                 return true;
             }
         }

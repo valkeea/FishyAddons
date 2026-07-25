@@ -4,11 +4,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 import me.valkeea.fishyaddons.event.impl.FaEvents;
-import me.valkeea.fishyaddons.vconfig.api.Config;
 import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
-import net.minecraft.client.gui.screen.ingame.GenericContainerScreen;
-import net.minecraft.item.ItemStack;
-import net.minecraft.screen.slot.Slot;
+import me.valkeea.fishyaddons.vconfig.api.Config;
+import net.minecraft.client.gui.screens.inventory.ContainerScreen;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
 
 /**
  * Detects init (changes) in equipment screen and updates EqTextures accordingly
@@ -16,7 +16,7 @@ import net.minecraft.screen.slot.Slot;
 public class EqDetector {
     
     private static boolean isEqScreen = false;
-    private static GenericContainerScreen currentEqScreen = null;
+    private static ContainerScreen currentEqScreen = null;
     private static final int[] EQUIPMENT_SLOTS = {10, 19, 28, 37};
     private static final Map<Integer, ItemStack> lastSeenStacks = new HashMap<>();
 
@@ -27,7 +27,7 @@ public class EqDetector {
         FaEvents.SCREEN_CLOSE.register(event -> onScreenClosed(event.titleString));
     }
 
-    public static void onScreen(GenericContainerScreen screen, String title) {
+    public static void onScreen(ContainerScreen screen, String title) {
         if (!Config.get(BooleanKey.EQ_DISPLAY) || !isEqScreen(title)) return;
         
         isEqScreen = true;
@@ -59,10 +59,10 @@ public class EqDetector {
         }
     }
     
-    private static void scanEquipmentSlots(GenericContainerScreen screen, boolean forceUpdate) {
+    private static void scanEquipmentSlots(ContainerScreen screen, boolean forceUpdate) {
         if (!Config.get(BooleanKey.EQ_DISPLAY)) return;
 
-        var handler = screen.getScreenHandler();
+        var handler = screen.getMenu();
         if (handler == null) return;
         
         for (int i = 0; i < EQUIPMENT_SLOTS.length; i++) {
@@ -70,11 +70,11 @@ public class EqDetector {
 
             if (slotIndex >= 0 && slotIndex < handler.slots.size()) {
                 Slot slot = handler.slots.get(slotIndex);
-                var currentStack = slot.getStack();
+                var currentStack = slot.getItem();
                 var lastStack = lastSeenStacks.get(i);
                 
     
-                if (forceUpdate || !ItemStack.areEqual(currentStack, lastStack)) {
+                if (forceUpdate || !ItemStack.matches(currentStack, lastStack)) {
                     update(currentStack, i);
                 }
             }

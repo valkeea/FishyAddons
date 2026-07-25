@@ -9,8 +9,8 @@ import me.valkeea.fishyaddons.api.skyblock.GameMode;
 import me.valkeea.fishyaddons.feature.skyblock.PetInfo;
 import me.valkeea.fishyaddons.util.text.FromText;
 import me.valkeea.fishyaddons.util.text.TablistUtils;
-import net.minecraft.network.packet.s2c.play.PlayerListS2CPacket;
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.game.ClientboundPlayerInfoUpdatePacket;
 
 public class TabScanner {
     private TabScanner() {}
@@ -30,11 +30,11 @@ public class TabScanner {
     /**
      * Handles tab update packet to scan for pet and XP lines.
      */
-    public static void onUpdate(PlayerListS2CPacket packet) {
-        if (PetInfo.isOn() && GameMode.skyblock() && !packet.getEntries().isEmpty() &&
-            packet.getActions().contains(PlayerListS2CPacket.Action.UPDATE_DISPLAY_NAME)) {
+    public static void onUpdate(ClientboundPlayerInfoUpdatePacket packet) {
+        if (PetInfo.isOn() && GameMode.skyblock() && !packet.entries().isEmpty() &&
+            packet.actions().contains(ClientboundPlayerInfoUpdatePacket.Action.UPDATE_DISPLAY_NAME)) {
 
-            var displayName = packet.getEntries().get(0).displayName();
+            var displayName = packet.entries().get(0).displayName();
             synchronized (lock) {
                 if (displayName != null) {
 
@@ -63,7 +63,7 @@ public class TabScanner {
             try {
                 Thread.sleep(5000);
                 scanPet();
-            } catch (InterruptedException e) {
+            } catch (InterruptedException _) {
                 Thread.currentThread().interrupt();
             }
         });
@@ -80,7 +80,7 @@ public class TabScanner {
             }
         }
 
-        List<Text> lines = TablistUtils.getLines();
+        List<Component> lines = TablistUtils.getLines();
 
         if (lines.isEmpty()) {
             delayedScan();
@@ -103,9 +103,9 @@ public class TabScanner {
         }
     }    
 
-    private static Text findl1(List<Text> lines) {
+    private static Component findl1(List<Component> lines) {
         for (int i = 0; i < lines.size(); i++) {
-            Text line = lines.get(i);
+            Component line = lines.get(i);
             if (isPetLine(line.getString())) {
                 return line;
             }
@@ -118,9 +118,9 @@ public class TabScanner {
         return PET_PATTERN.matcher(line.trim()).matches();
     }
 
-    private static Text findl2(List<Text> lines) {
+    private static Component findl2(List<Component> lines) {
         for (int i = 0; i < lines.size(); i++) {
-            Text line = lines.get(i);
+            Component line = lines.get(i);
             if (isXpLine(line)) {
                 return line;
             }
@@ -128,7 +128,7 @@ public class TabScanner {
         return null;
     }
 
-    private static boolean isXpLine(Text line) {
+    private static boolean isXpLine(Component line) {
         if (line.getSiblings().isEmpty()) {
             return false;
         }
@@ -151,11 +151,11 @@ public class TabScanner {
      * Scans tab entries for skill level lines and updates SkillTracker.
      */
     public static boolean scanForSkills() {
-        List<Text> lines = TablistUtils.getLines();
+        List<Component> lines = TablistUtils.getLines();
         if (lines.isEmpty()) return false;
         
         Map<String, Integer> extractedSkills = new HashMap<>();
-        for (Text line : lines) {
+        for (Component line : lines) {
             extractedSkills.putAll(extractSkillLevels(line));
         }
 
@@ -181,7 +181,7 @@ public class TabScanner {
         return false;
     }
 
-    public static Map<String, Integer> extractSkillLevels(Text line) {
+    public static Map<String, Integer> extractSkillLevels(Component line) {
         Map<String, Integer> skillLevels = new HashMap<>();
         String lineStr = line.getString();
 
@@ -200,7 +200,7 @@ public class TabScanner {
                 try {
                     int level = Integer.parseInt(levelStr);
                     skillLevels.put(skillName, level);
-                } catch (NumberFormatException e) {
+                } catch (NumberFormatException _) {
                     // Ignore invalid number formats
                 }
             }

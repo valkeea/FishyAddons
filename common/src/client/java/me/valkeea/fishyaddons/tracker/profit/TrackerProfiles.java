@@ -14,7 +14,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import me.valkeea.fishyaddons.util.FishyNotis;
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.Component;
 
 public class TrackerProfiles {  
     private static final String TRACKER_BASE_PATH = "config/fishyaddons/tracker/";
@@ -153,7 +153,7 @@ public class TrackerProfiles {
 
         boolean wasActiveProfile = profile.equals(currentProfile);
         if (wasActiveProfile) {
-            FishyNotis.alert(Text.literal("§8§oSwitched profile to default."));
+            FishyNotis.alert(Component.literal("§8§oSwitched profile to default."));
             setCurrentProfile(DEFAULT_PROFILE);
         }
         
@@ -179,8 +179,6 @@ public class TrackerProfiles {
             data.sessionStartTime = TrackedItemData.getSessionStartTime();
             data.lastActivityTime = TrackedItemData.getLastActivityTime();
             data.totalPausedTime = TrackedItemData.getTotalPausedTime();
-            data.savedAt = System.currentTimeMillis();
-            data.profileName = currentProfile;
 
             Gson gson = new GsonBuilder().setPrettyPrinting().create();
             String json = gson.toJson(data);
@@ -225,10 +223,10 @@ public class TrackerProfiles {
             TrackedItemData.clearAll();
             setCurrentProfile(newName);
 
-            FishyNotis.send(Text.literal("§aCreated new tracker profile: " + newName));
+            FishyNotis.send(Component.literal("§aCreated new tracker profile: " + newName));
 
             if (!isUserInput) {
-                FishyNotis.alert(Text.literal("§7Use /fp profile rename " + newName + " <new_name> to rename it."));
+                FishyNotis.alert(Component.literal("§7Use /fp profile rename " + newName + " <new_name> to rename it."));
             }
         } catch (Exception e) {
             System.err.println("Error creating new tracker data file: " + e.getMessage());
@@ -240,7 +238,7 @@ public class TrackerProfiles {
 
     public static boolean renameProfile(String oldName, String newName) {
         if (oldName == null || newName == null || oldName.trim().isEmpty() || newName.trim().isEmpty()) {
-            FishyNotis.alert(Text.literal("§cInvalid profile name(s)"));
+            FishyNotis.alert(Component.literal("§cInvalid profile name(s)"));
             return false;
         }
 
@@ -326,8 +324,6 @@ public class TrackerProfiles {
         long sessionStartTime;
         long lastActivityTime;
         long totalPausedTime;
-        long savedAt;
-        String profileName;
     }
 
     private TrackerProfiles() {

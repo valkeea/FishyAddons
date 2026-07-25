@@ -15,15 +15,15 @@ import me.valkeea.fishyaddons.vconfig.ui.manager.ScreenManager;
 import me.valkeea.fishyaddons.vconfig.ui.render.VCText;
 import me.valkeea.fishyaddons.vconfig.ui.widget.FaButton;
 import me.valkeea.fishyaddons.vconfig.ui.widget.FaTextField;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.Click;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.client.input.CharInput;
-import net.minecraft.client.input.KeyInput;
-import net.minecraft.text.Text;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.CharacterEvent;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.network.chat.Component;
 
 public class TabbedListScreen extends Screen {
     public enum Tab { COMMANDS, KEYBINDS, CHAT }
@@ -37,10 +37,10 @@ public class TabbedListScreen extends Screen {
     protected FishyPopup fishyPopup = null;
     private DropdownMenu presetDropdown;
 
-    private TextFieldWidget presetNameField;
+    private EditBox presetNameField;
 
     public TabbedListScreen(Tab tab) {
-        super(Text.literal(HEADER));
+        super(Component.literal(HEADER));
         this.currentTab = tab;
     }
 
@@ -57,27 +57,27 @@ public class TabbedListScreen extends Screen {
         // Tab buttons
         int tx = width / 2 - w - w / 2 - h;
 
-        addDrawableChild(new FaButton(tx, tabBtnY, w, h,
-            Text.literal("Commands"),
+        addRenderableWidget(new FaButton(tx, tabBtnY, w, h,
+            Component.literal("Commands"),
             btn -> switchTab(Tab.COMMANDS))
         );
         tx += w + h;
 
-        addDrawableChild(new FaButton(tx, tabBtnY, w, h,
-            Text.literal("Keybinds"),
+        addRenderableWidget(new FaButton(tx, tabBtnY, w, h,
+            Component.literal("Keybinds"),
             btn -> switchTab(Tab.KEYBINDS))
         );
         tx += w + h;
 
-        addDrawableChild(new FaButton(tx, tabBtnY, w, h,
-            Text.literal("Chat"),
+        addRenderableWidget(new FaButton(tx, tabBtnY, w, h,
+            Component.literal("Chat"),
             btn -> switchTab(Tab.CHAT))
         );
 
         // Lists
-        commandEntryList = new AliasEntryList(MinecraftClient.getInstance(), listWidth, listHeight, listY, 24, this);
-        keybindEntryList = new KeybindEntryList(MinecraftClient.getInstance(), listWidth, listHeight, listY, 24, this);
-        chatEntryList = new ChatEntryList(MinecraftClient.getInstance(), listWidth, listHeight, listY, 24, this);
+        commandEntryList = new AliasEntryList(Minecraft.getInstance(), listWidth, listHeight, listY, 24, this);
+        keybindEntryList = new KeybindEntryList(Minecraft.getInstance(), listWidth, listHeight, listY, 24, this);
+        chatEntryList = new ChatEntryList(Minecraft.getInstance(), listWidth, listHeight, listY, 24, this);
 
         commandEntryList.setPosition((width - listWidth) / 2, listY);
         keybindEntryList.setPosition((width - listWidth) / 2, listY);        
@@ -87,39 +87,39 @@ public class TabbedListScreen extends Screen {
         keybindEntryList.refreshWithAdd();
         chatEntryList.refreshWithAdd();
             
-        addDrawableChild(commandEntryList);
-        addDrawableChild(keybindEntryList);
-        addDrawableChild(chatEntryList);
+        addRenderableWidget(commandEntryList);
+        addRenderableWidget(keybindEntryList);
+        addRenderableWidget(chatEntryList);
         
         updateTabVisibility();
 
         int x = width / 2 - w;
         int y = height - 30;
         
-        addDrawableChild(new FaButton(x, y, w, h,
-            Text.literal("Back").styled(style -> style.withColor(0xFFB0B0B0)),
+        addRenderableWidget(new FaButton(x, y, w, h,
+            Component.literal("Back").withStyle(style -> style.withColor(0xFFB0B0B0)),
             b -> ScreenManager.openConfigScreen()
         ));
         x += w;
 
-        addDrawableChild(new FaButton(x, y, w, h,
-            Text.literal("Close").styled(style -> style.withColor(0xFFB0B0B0)),
-            b -> this.close()
+        addRenderableWidget(new FaButton(x, y, w, h,
+            Component.literal("Close").withStyle(style -> style.withColor(0xFFB0B0B0)),
+            b -> this.onClose()
         ));
         x += w;
 
-        addDrawableChild(new FaButton(x, y, w, h,
-            Text.literal("Load Preset").styled(style -> style.withColor(0xFFE2CAE9)),
+        addRenderableWidget(new FaButton(x, y, w, h,
+            Component.literal("Load Preset").withStyle(style -> style.withColor(0xFFE2CAE9)),
             b -> showPresetDropdown()
         ));
         x += w;
 
-        addDrawableChild(new FaButton(x, y, w, h,
-            Text.literal("Save Preset").styled(style -> style.withColor(0xFFB0FFB0)),
+        addRenderableWidget(new FaButton(x, y, w, h,
+            Component.literal("Save Preset").withStyle(style -> style.withColor(0xFFB0FFB0)),
             b -> showSavePresetPopup()
         ));
 
-        this.client.execute(this::refreshEntryList);
+        this.minecraft.execute(this::refreshEntryList);
     }
 
     private void switchTab(Tab tab) {
@@ -128,7 +128,7 @@ public class TabbedListScreen extends Screen {
             fishyPopup = null;
         }
         updateTabVisibility();
-        this.client.execute(this::refreshEntryList);
+        this.minecraft.execute(this::refreshEntryList);
         this.setFocused(null);
     }
 
@@ -147,11 +147,11 @@ public class TabbedListScreen extends Screen {
     }
 
     @Override
-    public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        super.render(context, mouseX, mouseY, delta);
+    public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+        super.extractRenderState(context, mouseX, mouseY, delta);
 
         var title = VCText.header(HEADER, null);
-        GuiUtil.drawScaledCenteredText(context, textRenderer, title, width / 2, 20, 0xFFFFFFFF, 1.0f);
+        GuiUtil.drawScaledCenteredText(context, font, title, width / 2, 20, 0xFFFFFFFF, 1.0f);
 
         if (presetDropdown != null && presetDropdown.isVisible()) {
             presetDropdown.render(context, this, mouseX, mouseY);
@@ -160,28 +160,28 @@ public class TabbedListScreen extends Screen {
         if (fishyPopup == null) {
             findAndDrawTooltip(context);
         } else {
-            fishyPopup.render(context, this.textRenderer, mouseX, mouseY, delta);
+            fishyPopup.render(context, this.font, mouseX, mouseY, delta);
             if (presetNameField != null) {
                 presetNameField.setX(fishyPopup.getX() + (fishyPopup.getWidth() - presetNameField.getWidth()) / 2);
                 presetNameField.setY(fishyPopup.getY() + 35);
-                presetNameField.render(context, mouseX, mouseY, delta);
+                presetNameField.extractRenderState(context, mouseX, mouseY, delta);
             }            
         }
     }
 
-    private void findAndDrawTooltip(DrawContext context) {
+    private void findAndDrawTooltip(GuiGraphicsExtractor context) {
         var activeList = getActiveList();
-        activeList.getGuideText(context, this.textRenderer, width - 710, 85);
+        activeList.getGuideText(context, this.font, width - 710, 85);
         for (var entry : activeList.children()) {
             if (entry instanceof GenericEntryList.GenericEntry ge && ge.pendingTooltip != null) {
-                GuiUtil.fishyTooltip(context, this.textRenderer, ge.tooltipLines != null ? ge.tooltipLines : List.of(Text.literal(ge.pendingTooltip)), ge.tooltipX, ge.tooltipY);
+                GuiUtil.fishyTooltip(context, this.font, ge.tooltipLines != null ? ge.tooltipLines : List.of(Component.literal(ge.pendingTooltip)), ge.tooltipX, ge.tooltipY);
                 break;
             }
         }
     }
 
     @Override
-    public boolean mouseClicked(Click click, boolean doubled) {
+    public boolean mouseClicked(MouseButtonEvent click, boolean doubled) {
         if (fishyPopup != null && presetNameField != null && presetNameField.mouseClicked(click, doubled)) {
             presetNameField.setFocused(true);
             this.setFocused(presetNameField);
@@ -207,7 +207,7 @@ public class TabbedListScreen extends Screen {
         return super.mouseClicked(click, doubled);
     }
 
-    private boolean handlePresetClicks(Click click) {
+    private boolean handlePresetClicks(MouseButtonEvent click) {
         if (presetDropdown.mouseClicked(click)) return true;
         
         int x = presetDropdown.getX(); 
@@ -223,35 +223,35 @@ public class TabbedListScreen extends Screen {
     }
 
     @Override
-    public boolean keyPressed(KeyInput input) {
+    public boolean keyPressed(KeyEvent input) {
         if (fishyPopup != null && presetNameField != null) {
             return presetNameField.keyPressed(input);
         }
         var entry = getActiveList().getFocused();
         if (entry != null) {
             if (entry.outputField.isFocused() && entry.outputField.keyPressed(input)) return true;
-            if (entry.inputWidget instanceof TextFieldWidget field && field.isFocused() && field.keyPressed(input)) return true;
-            if (entry.inputWidget instanceof ButtonWidget btn && btn.isFocused() && btn.keyPressed(input)) return true;
+            if (entry.inputWidget instanceof EditBox field && field.isFocused() && field.keyPressed(input)) return true;
+            if (entry.inputWidget instanceof Button btn && btn.isFocused() && btn.keyPressed(input)) return true;
             if (entry.keyPressed(input)) return true;
         }
         return super.keyPressed(input);
     }
 
     @Override
-    public boolean charTyped(CharInput chr) {
+    public boolean charTyped(CharacterEvent chr) {
         if (fishyPopup != null && presetNameField != null) {
             return presetNameField.charTyped(chr);
         }
         var entry = getActiveList().getFocused();
         if (entry != null) {
             if (entry.outputField.isFocused() && entry.outputField.charTyped(chr)) return true;
-            if (entry.inputWidget instanceof TextFieldWidget field && field.isFocused() && field.charTyped(chr)) return true;
-            if (entry.inputWidget instanceof ButtonWidget btn && btn.isFocused() && btn.charTyped(chr)) return true;
+            if (entry.inputWidget instanceof EditBox field && field.isFocused() && field.charTyped(chr)) return true;
+            if (entry.inputWidget instanceof Button btn && btn.isFocused() && btn.charTyped(chr)) return true;
         }
         return super.charTyped(chr);
     }
 
-    public void showFishyPopup(Text title, Text continueButtonText, Runnable onContinue, Text discardButtonText, Runnable onDiscard) {
+    public void showFishyPopup(Component title, Component continueButtonText, Runnable onContinue, Component discardButtonText, Runnable onDiscard) {
         this.fishyPopup = new FishyPopup(title, continueButtonText, onContinue, discardButtonText, onDiscard);
         this.fishyPopup.init(this.width, this.height);
     }
@@ -266,7 +266,7 @@ public class TabbedListScreen extends Screen {
         List<String> suffixes = FishyPresets.listPresetSuffixes(type);
 
         if (suffixes.isEmpty()) {
-            showFishyPopup(Text.literal("No presets found for this tab."), Text.literal("OK"), () -> fishyPopup = null, Text.literal(""), () -> {});
+            showFishyPopup(Component.literal("No presets found for this tab."), Component.literal("OK"), () -> fishyPopup = null, Component.literal(""), () -> {});
             return;
         }
 
@@ -327,28 +327,28 @@ public class TabbedListScreen extends Screen {
     }
 
     private void showSavePresetPopup() {
-        presetNameField = new FaTextField(this.textRenderer, this.width / 2 - 60,
-        this.height / 2, 120, 20, Text.literal("Preset Name"));
+        presetNameField = new FaTextField(this.font, this.width / 2 - 60,
+        this.height / 2, 120, 20, Component.literal("Preset Name"));
         presetNameField.setMaxLength(32);
-        presetNameField.setText("");
+        presetNameField.setValue("");
         this.setFocused(presetNameField);
 
         showFishyPopup(
-            Text.literal("Enter preset name:"),
-            Text.literal("Save"),
+            Component.literal("Enter preset name:"),
+            Component.literal("Save"),
             () -> {
-                String suffix = presetNameField.getText().trim();
+                String suffix = presetNameField.getValue().trim();
                 if (!suffix.isEmpty()) {
                     saveCurrentTabAsPreset(suffix);
                 }
                 fishyPopup = null;
-                this.remove(presetNameField);
+                this.removeWidget(presetNameField);
                 presetNameField = null;
             },
-            Text.literal("Cancel"),
+            Component.literal("Cancel"),
             () -> {
                 fishyPopup = null;
-                this.remove(presetNameField);
+                this.removeWidget(presetNameField);
                 presetNameField = null;
             }
         );

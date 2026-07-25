@@ -28,8 +28,8 @@ import me.valkeea.fishyaddons.hud.core.ElementRegistry;
 import me.valkeea.fishyaddons.hud.elements.segmented.EffectDisplay;
 import me.valkeea.fishyaddons.tool.RunDelayed;
 import me.valkeea.fishyaddons.util.FishyNotis;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.Minecraft;
+import net.minecraft.resources.Identifier;
 
 @SuppressWarnings("squid:S6548")
 public class EffectTimers {
@@ -38,7 +38,7 @@ public class EffectTimers {
     public static EffectTimers getInstance() { return INSTANCE; }
     private EffectTimers() {}
 
-    private static final File CONFIG = new File(MinecraftClient.getInstance().runDirectory, "config/fishyaddons/display.json");
+    private static final File CONFIG = new File(Minecraft.getInstance().gameDirectory, "config/fishyaddons/display.json");
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final String EFFECTS_KEY = "effects";
     private static final long WARN_EARLY = (5 * 60 * 1000);
@@ -312,8 +312,8 @@ public class EffectTimers {
         scheduledCheck = true;
 
         scheduler.scheduleAtFixedRate(() -> {
-            var mc = MinecraftClient.getInstance();
-            if (mc.player == null || mc.world == null) return;
+            var mc = Minecraft.getInstance();
+            if (mc.player == null || mc.level == null) return;
 
             checkExpiring();
         }, 1, 1, TimeUnit.MINUTES);

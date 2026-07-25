@@ -7,17 +7,17 @@ import me.valkeea.fishyaddons.tool.FishyMode;
 import me.valkeea.fishyaddons.util.text.Color;
 import me.valkeea.fishyaddons.vconfig.ui.render.RenderUtils;
 import me.valkeea.fishyaddons.vconfig.ui.widget.VCTextField;
-import net.minecraft.client.gui.Click;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.client.input.KeyInput;
-import net.minecraft.text.Style;
-import net.minecraft.text.Text;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.Style;
 
 public class SearchMenu {
     private static final int MAX_VISIBLE_ENTRIES = 8;
-    private final TextFieldWidget searchField;
+    private final EditBox searchField;
     private final boolean usesExternalField;
     private final int x;
     private final int y;
@@ -50,9 +50,9 @@ public class SearchMenu {
             this.searchField = externalField;
             this.usesExternalField = true;
         } else {
-            this.searchField = new VCTextField(screen.getTextRenderer(), x, y, width, 15, Text.literal("Search..."));
-            this.searchField.setEditableColor(0xFF808080);
-            this.searchField.setChangedListener(this::updateFilter);
+            this.searchField = new VCTextField(screen.getFont(), x, y, width, 15, Component.literal("Search..."));
+            this.searchField.setTextColor(0xFF808080);
+            this.searchField.setResponder(this::updateFilter);
             this.usesExternalField = false;
         }
     }
@@ -65,11 +65,11 @@ public class SearchMenu {
     }
 
     private void updateSearchFieldPlaceholder() {
-        if (!searchField.isFocused() && searchField.getText().isEmpty()) {
-            searchField.setText(Text.literal("search...")
+        if (!searchField.isFocused() && searchField.getValue().isEmpty()) {
+            searchField.setValue(Component.literal("search...")
             .setStyle(Style.EMPTY.withItalic(true).withColor(0xFF808080)).getString());
-        } else if (searchField.isFocused() && searchField.getText().equals("search...")) {
-            searchField.setText("");
+        } else if (searchField.isFocused() && searchField.getValue().equals("search...")) {
+            searchField.setValue("");
         }
     }
 
@@ -86,7 +86,7 @@ public class SearchMenu {
         return entryHeights;
     }
 
-    private void renderEntry(DrawContext context, net.minecraft.client.font.TextRenderer textRenderer, 
+    private void renderEntry(GuiGraphicsExtractor context, net.minecraft.client.gui.Font textRenderer, 
             SearchEntry entry, int entryHeight, int currentY, boolean hovered) {
         int themeColor = FishyMode.getThemeColor();
         int hoverColor = Color.brighten(themeColor, 0.3f);
@@ -94,42 +94,42 @@ public class SearchMenu {
         int textColor = hovered ? 0xFFFFFFFF : themeColor;
         String text = entry.displayName != null ? entry.displayName : entry.name;
         
-        context.getMatrices().pushMatrix();
+        context.pose().pushMatrix();
         RenderUtils.opaqueGradient(context, x, currentY, width, entryHeight, bgColor);
-        context.drawText(textRenderer, text, x + 6, currentY + 2, textColor, false);
-        context.getMatrices().popMatrix();
+        context.text(textRenderer, text, x + 6, currentY + 2, textColor, false);
+        context.pose().popMatrix();
 
         if (entry.description != null && !entry.description.isEmpty()) {
             String[] lines = entry.description.split("\n");
             int descColor = hovered ? 0xFFEEEEEE : 0xFFCCCCCC;
             for (int l = 0; l < lines.length; l++) {
-                context.drawText(textRenderer, lines[l], x + 8, currentY + 16 + l * 12, descColor, false);
+                context.text(textRenderer, lines[l], x + 8, currentY + 16 + l * 12, descColor, false);
             }
         }
     }
 
-    private void renderScrollIndicator(DrawContext context, net.minecraft.client.font.TextRenderer textRenderer, int currentY, int totalEntries) {
+    private void renderScrollIndicator(GuiGraphicsExtractor context, net.minecraft.client.gui.Font textRenderer, int currentY, int totalEntries) {
         if (totalEntries > MAX_VISIBLE_ENTRIES) {
             context.fill(x, currentY, x + width, currentY + 18, 0xCC222222);
-            context.drawText(textRenderer, ". . .", x + 10, currentY + 4, 0xFFBBAACC, false);
+            context.text(textRenderer, ". . .", x + 10, currentY + 4, 0xFFBBAACC, false);
         }
     }
 
-    public void render(DrawContext context, Screen screen, int mouseX, int mouseY, float delta) {
+    public void render(GuiGraphicsExtractor context, Screen screen, int mouseX, int mouseY, float delta) {
         if (!visible) return;
 
         updateSearchFieldPlaceholder();
 
         if (!usesExternalField) {
-            searchField.render(context, mouseX, mouseY, delta); 
+            searchField.extractRenderState(context, mouseX, mouseY, delta); 
         } 
         if (usesExternalField) {
-            updateFilter(searchField.getText());
+            updateFilter(searchField.getValue());
         }
 
         if (!searchField.isFocused() && !usesExternalField) return;
 
-        var textRenderer = screen.getTextRenderer();
+        var textRenderer = screen.getFont();
 
         int totalEntries = filteredEntries.size();
         int visibleEntries = Math.min(totalEntries, MAX_VISIBLE_ENTRIES);
@@ -158,7 +158,7 @@ public class SearchMenu {
         renderScrollIndicator(context, textRenderer, currentY, totalEntries);
     }
 
-    public boolean keyPressed(KeyInput input) {
+    public boolean keyPressed(KeyEvent input) {
         if (input.key() == 256) {
             if (searchField.isFocused()) {
                 searchField.setFocused(false);
@@ -186,7 +186,7 @@ public class SearchMenu {
         return searchField.keyPressed(input);
     }
 
-    public boolean mouseClicked(Click click) {
+    public boolean mouseClicked(MouseButtonEvent click) {
         if (!visible) return false;
 
         int totalEntries = filteredEntries.size();
@@ -237,7 +237,7 @@ public class SearchMenu {
         return false;
     }
 
-    public TextFieldWidget getSearchField() { return searchField; }
+    public EditBox getSearchField() { return searchField; }
     public void setVisible(boolean visible) { this.visible = visible; }
     public boolean isVisible() { return visible; }
     public List<SearchEntry> getFilteredEntries() { return filteredEntries; }

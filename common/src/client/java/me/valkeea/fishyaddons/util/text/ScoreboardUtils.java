@@ -4,10 +4,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.scoreboard.ScoreboardDisplaySlot;
-import net.minecraft.scoreboard.ScoreboardEntry;
-import net.minecraft.text.Text;
+import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.scores.DisplaySlot;
+import net.minecraft.world.scores.PlayerScoreEntry;
 
 public class ScoreboardUtils {
     private static String gameMode = null;
@@ -15,25 +15,25 @@ public class ScoreboardUtils {
     private ScoreboardUtils() {}
 
     public static List<String> getSidebarLines() {
-        var mc = MinecraftClient.getInstance();
-        if (mc.world == null) return Collections.emptyList();
+        var mc = Minecraft.getInstance();
+        if (mc.level == null) return Collections.emptyList();
 
-        var scoreboard = mc.world.getScoreboard();
-        var objective = scoreboard.getObjectiveForSlot(ScoreboardDisplaySlot.SIDEBAR);
+        var scoreboard = mc.level.getScoreboard();
+        var objective = scoreboard.getDisplayObjective(DisplaySlot.SIDEBAR);
         if (objective == null) return Collections.emptyList();
 
-        List<ScoreboardEntry> entries = new ArrayList<>(scoreboard.getScoreboardEntries(objective));
+        List<PlayerScoreEntry> entries = new ArrayList<>(scoreboard.listPlayerScores(objective));
         entries.sort((a, b) -> Integer.compare(b.value(), a.value()));
 
         List<String> lines = new ArrayList<>();
 
-        for (ScoreboardEntry entry : entries) {
+        for (PlayerScoreEntry entry : entries) {
             var owner = entry.owner();
-            var team = scoreboard.getScoreHolderTeam(owner);
+            var team = scoreboard.getPlayersTeam(owner);
 
             String line;
             if (team != null) {
-                line = team.getPrefix().getString() + team.getSuffix().getString();
+                line = team.getPlayerPrefix().getString() + team.getPlayerSuffix().getString();
             } else line = owner;
 
             lines.add(line);
@@ -56,12 +56,12 @@ public class ScoreboardUtils {
     }
 
     public static String getSidebarObjectiveName() {
-        var mc = MinecraftClient.getInstance();
-        if (mc.world == null) return null;
+        var mc = Minecraft.getInstance();
+        if (mc.level == null) return null;
         
-        var scoreboard = mc.world.getScoreboard();
-        var objective = scoreboard.getObjectiveForSlot(ScoreboardDisplaySlot.SIDEBAR);
-        Text titleText = objective != null ? objective.getDisplayName() : Text.empty();
+        var scoreboard = mc.level.getScoreboard();
+        var objective = scoreboard.getDisplayObjective(DisplaySlot.SIDEBAR);
+        Component titleText = objective != null ? objective.getDisplayName() : Component.empty();
         String title = titleText.getString();
 
         return title.isEmpty() ? null : title;

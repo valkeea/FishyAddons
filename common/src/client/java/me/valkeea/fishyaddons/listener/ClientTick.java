@@ -17,10 +17,10 @@ public class ClientTick {
 
     public static void init() {
         
-        ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            if (client.player == null || client.world == null) return;
+        ClientTickEvents.END_CLIENT_TICK.register(mc -> {
+            if (mc.player == null || mc.level == null) return;
 
-            var time = client.world.getTime();
+            var time = mc.level.getGameTime();
             
             ServerCommand.tick();
             ActivityMonitor.getInstance().tick();

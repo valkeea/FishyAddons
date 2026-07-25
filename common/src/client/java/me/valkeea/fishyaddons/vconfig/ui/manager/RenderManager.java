@@ -17,9 +17,9 @@ import me.valkeea.fishyaddons.vconfig.ui.render.RenderUtils;
 import me.valkeea.fishyaddons.vconfig.ui.render.VCRenderContext;
 import me.valkeea.fishyaddons.vconfig.ui.render.VCText;
 import me.valkeea.fishyaddons.vconfig.ui.screen.VCScreen;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.text.Text;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.Component;
 
 public class RenderManager {
     private final VCScreen screen;
@@ -73,7 +73,7 @@ public class RenderManager {
     private void renderEntryMetadata(BaseContext renderCtx, VCEntry e, int contentX, int contentY, boolean sub) {
 
         int nameColor = sub ? Color.mulRGB(themeColorSupplier.get(), 0.8f) : themeColorSupplier.get();
-        VCText.flatText(renderCtx.context, screen.getTextRenderer(), e.cleanName, contentX, contentY, nameColor);
+        VCText.flatText(renderCtx.context, screen.getFont(), e.cleanName, contentX, contentY, nameColor);
     
         if (e.description != null) {
             int descOffset = Dimensions.getDescriptionOffset();
@@ -81,12 +81,12 @@ public class RenderManager {
             
             if (sub) {
                 if (e.description.length > 0) {
-                    VCText.flatText(renderCtx.context, screen.getTextRenderer(), e.description[0], contentX, descStartY, Colors.SUB_DESCRIPTION_TEXT);
+                    VCText.flatText(renderCtx.context, screen.getFont(), e.description[0], contentX, descStartY, Colors.SUB_DESCRIPTION_TEXT);
                 }
             } else {
                 int lineSpacing = Dimensions.DESC_LINE_SPACING;
                 for (int i = 0; i < Math.min(e.description.length, 2); i++) {
-                    VCText.flatText(renderCtx.context, screen.getTextRenderer(), e.description[i], contentX, descStartY + i * lineSpacing, Colors.DESCRIPTION_TEXT);
+                    VCText.flatText(renderCtx.context, screen.getFont(), e.description[i], contentX, descStartY + i * lineSpacing, Colors.DESCRIPTION_TEXT);
                 }
             }
         }
@@ -100,7 +100,7 @@ public class RenderManager {
         
         var rCtx = new VCRenderContext(
             vcContext.context,
-            screen.getTextRenderer(),
+            screen.getFont(),
             vcContext.mouseX,
             vcContext.mouseY,
             1.0f,
@@ -133,27 +133,27 @@ public class RenderManager {
         }
     }
     
-    public void renderHeaderEntry(DrawContext context, VCEntry e, int x, int y, int entryWidth, int headerHeight, boolean sub) {
+    public void renderHeaderEntry(GuiGraphicsExtractor context, VCEntry e, int x, int y, int entryWidth, int headerHeight, boolean sub) {
         
         if (sub) {
             int textX = x + Dimensions.SUB_HEADER_HORIZONTAL_OFFSET;
             int textY = y + Dimensions.SUB_ENTRY_VERTICAL_OFFSET;
-            VCText.flatText(context, screen.getTextRenderer(), e.name, textX, textY, 0xFF888888);
+            VCText.flatText(context, screen.getFont(), e.name, textX, textY, 0xFF888888);
             Bounds b = Dimensions.getSubEntryBgBounds(x, y, entryWidth, headerHeight);
             context.fill(b.x, b.y, b.x + b.width, b.y + b.height, 0x30000000);
             return;
         }
         
-        Text title = VCText.header(e.name, null); 
-        var tr = screen.getTextRenderer();      
-        int textW = tr.getWidth(e.name);
+        Component title = VCText.header(e.name, null); 
+        var tr = screen.getFont();      
+        int textW = tr.width(e.name);
         
         int textCenterX = layout.getCenterX();
         int textX = textCenterX - textW / 2;
         int textY = y + Dimensions.getHeaderTextY(sub);
 
         int lineHeight = Dimensions.getTallSeparatorH();
-        int lineY = textY + tr.fontHeight / 2 - lineHeight / 2;
+        int lineY = textY + tr.lineHeight / 2 - lineHeight / 2;
         
         int gapPadding = Dimensions.HEADER_GAP_PADDING;
         
@@ -172,7 +172,7 @@ public class RenderManager {
             RenderUtils.horizontalGradient(context, gapEnd, lineY, x + entryWidth - gapEnd, lineHeight, g2, g3);
         }
         
-        VCText.flatText(context, screen.getTextRenderer(), title, textX, textY, Colors.AQUA);
+        VCText.flatText(context, screen.getFont(), title, textX, textY, Colors.AQUA);
     }
     
     public void renderTabsWithCoordinates(BaseContext renderCtx, Screen screen, List<Tab> tabs, int activeTabIndex, Integer theme) {
@@ -222,9 +222,9 @@ public class RenderManager {
         }
 
         int textX = Dimensions.getTabTextX(x);
-        int textY = y + (height - screen.getTextRenderer().fontHeight) / 2;
+        int textY = y + (height - screen.getFont().lineHeight) / 2;
         
-        VCText.flatText(renderCtx.context, screen.getTextRenderer(), tab.displayName, textX, textY, textColor);
+        VCText.flatText(renderCtx.context, screen.getFont(), tab.displayName, textX, textY, textColor);
         
         int arrowX = Dimensions.getTabIndicatorX(x, width);
         int arrowY = y + height / 2;
@@ -260,13 +260,13 @@ public class RenderManager {
                                      listY + itemHeight, 0x30FFFFFF);
             }
             
-            VCText.flatText(renderCtx.context, screen.getTextRenderer(), "• " + item.displayName(), 
+            VCText.flatText(renderCtx.context, screen.getFont(), "• " + item.displayName(), 
                                  Dimensions.getTabTextX(x), listY + Dimensions.TAB_BORDER_OFFSET, textColor);
             listY += itemHeight;
         }
     }
     
-    private void renderDropdownArrow(DrawContext context, int x, int y, int size, int color, boolean up) {
+    private void renderDropdownArrow(GuiGraphicsExtractor context, int x, int y, int size, int color, boolean up) {
         if (up) {
             for (int i = 0; i < size; i++) {
                 context.fill(x - i, y - i, x + i + 1, y - i + 1, color);
@@ -280,24 +280,24 @@ public class RenderManager {
 
     public void formatAndRenderTooltip(VCRenderContext ctx, String[] tooltipLines, int x, int y, int width, int maxWidth) {
         
-        List<Text> lines = new ArrayList<>();
+        List<Component> lines = new ArrayList<>();
         for (int i = 0; i < tooltipLines.length; i++) {
             String part = tooltipLines[i].trim();
             if (i > 0 && part.charAt(0) != '§') part = "§7• " + part;
             if (part.contains("\n")) {
                 String[] split = part.split("\n");
                 for (String s : split) {
-                    lines.add(Text.literal(s.trim()));
+                    lines.add(Component.literal(s.trim()));
                 }
             } else {
-                lines.add(Text.literal(part));
+                lines.add(Component.literal(part));
             }
         }
 
         entryInfo(ctx, lines, x, y, width, maxWidth);
     }
 
-    private void entryInfo(VCRenderContext ctx, List<Text> lines, int x, int y, int width, int maxHeight) {
+    private void entryInfo(VCRenderContext ctx, List<Component> lines, int x, int y, int width, int maxHeight) {
         if (lines == null || lines.isEmpty()) return;
 
         var context = ctx.context;
@@ -306,7 +306,7 @@ public class RenderManager {
         int scaledWidth = width;
         int scaledMaxHeight = maxHeight;
         
-        int lineHeight = (int)Math.ceil(ctx.textRenderer.fontHeight + 2 / textScale);
+        int lineHeight = (int)Math.ceil(ctx.textRenderer.lineHeight + 2 / textScale);
         int padding = 4;
         int tooltipHeight = Math.min(lines.size() * lineHeight + padding * 2, scaledMaxHeight);
         int displayLines = Math.min(lines.size(), (scaledMaxHeight - padding * 2) / lineHeight);
@@ -314,7 +314,7 @@ public class RenderManager {
         context.fill(x, y, x + scaledWidth, y + tooltipHeight, 0xE0000000);
         RenderUtils.border(context, x, y, scaledWidth, tooltipHeight, ctx.themeColor & 0x60FFFFFF);
 
-        var matrices = context.getMatrices();
+        var matrices = context.pose();
         
         matrices.pushMatrix();
         matrices.scale(textScale, textScale);
@@ -323,20 +323,20 @@ public class RenderManager {
         y = (int)(y / textScale);
 
         for (int i = 0; i < displayLines; i++) {
-            context.drawText(ctx.textRenderer, lines.get(i), 
+            context.text(ctx.textRenderer, lines.get(i), 
                            x + padding, y + padding + i * lineHeight, 
                            ctx.themeColor, false);               
         }
         
         if (displayLines < lines.size()) {
-            context.drawText(ctx.textRenderer, Text.literal("..."), 
+            context.text(ctx.textRenderer, Component.literal("..."), 
                            x + padding, y + tooltipHeight - lineHeight - padding / 2, 
                            0xFF888888, false);
         }
         matrices.popMatrix();
     }
     
-    public void renderSearchReset(DrawContext context, Bounds bounds, boolean showClear, boolean isHovered, net.minecraft.client.font.TextRenderer textRenderer, int themeColor) {
+    public void renderSearchReset(GuiGraphicsExtractor context, Bounds bounds, boolean showClear, boolean isHovered, net.minecraft.client.gui.Font textRenderer, int themeColor) {
         int x = bounds.x;
         int y = bounds.y;
         int w = bounds.width;
@@ -348,10 +348,10 @@ public class RenderManager {
         String icon = showClear ? "❌" : "⌕";
         int textColor = isHovered ? themeColor : 0xFFAAAAAA;
         
-        int textW = textRenderer.getWidth(icon);
+        int textW = textRenderer.width(icon);
         int textX = x + (w - textW) / 2;
-        int textY = y + (h - textRenderer.fontHeight) / 2;
+        int textY = y + (h - textRenderer.lineHeight) / 2;
         
-        context.drawText(textRenderer, Text.literal(icon), textX, textY, textColor, false);
+        context.text(textRenderer, Component.literal(icon), textX, textY, textColor, false);
     }
 }

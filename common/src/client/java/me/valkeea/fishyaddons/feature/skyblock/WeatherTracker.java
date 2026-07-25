@@ -3,46 +3,35 @@ package me.valkeea.fishyaddons.feature.skyblock;
 import me.valkeea.fishyaddons.tool.PlaySound;
 import me.valkeea.fishyaddons.util.FishyNotis;
 import me.valkeea.fishyaddons.util.ZoneUtils;
-import me.valkeea.fishyaddons.vconfig.api.Config;
 import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
+import me.valkeea.fishyaddons.vconfig.api.Config;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
 
 public class WeatherTracker {
-    private WeatherTracker() {}
+    private static final int CAVE_Y_LEVEL = 69;
+    
     private static boolean lastRainState = false;
     private static boolean initialized = false;
     
-    /**
-     * Mixin hooks into the rain state change event
-     * --> passed as !raining.
-     */
-    public static void onRainStateChange(boolean isRaining) {
-        if (!Config.get(BooleanKey.RAIN_NOTI)) { return; }
-        if (!initialized && !ZoneUtils.checkRainArea()) { return; }
+    public static void onRainLevelChange(boolean isRaining) {
+        if (!Config.get(BooleanKey.RAIN_NOTI) || (!initialized && !ZoneUtils.checkRainArea())) return;
 
         if (lastRainState && !isRaining) {
-            var mc = MinecraftClient.getInstance();
-            if (mc.player != null && mc.player.getY() == 69) {
-                Text message = Text.literal("Warning: rain tracking is disabled in water with no sky access.")
-                    .formatted(Formatting.DARK_GRAY, Formatting.ITALIC);
-                FishyNotis.send(message);
-            } else {
-                stopped();
-            }
+            var mc = Minecraft.getInstance();
+            if (mc.player != null && mc.player.getY() == CAVE_Y_LEVEL) warnNoSky();
+            else rainStopped();
 
-        } else if (!lastRainState && isRaining) {
-            started();
-        }
+        } else if (!lastRainState && isRaining) rainStarted();
 
         lastRainState = isRaining;
     }
 
     public static boolean isRaining() {
-        var client = MinecraftClient.getInstance();
-        if (client.world != null) {
-            return client.world.isRaining();
+        var mc = Minecraft.getInstance();
+        if (mc.level != null) {
+            return mc.level.isRaining();
         }
         return false;
     }
@@ -51,7 +40,7 @@ public class WeatherTracker {
      * Force check the current rain state and enable tracking
      */
     public static void track() {
-        onRainStateChange(isRaining());
+        onRainLevelChange(isRaining());
         if (!initialized) {
             lastRainState = isRaining();
             initialized = true;
@@ -81,22 +70,22 @@ public class WeatherTracker {
         }
     }
     
-    private static void stopped() {
-        if (!Config.get(BooleanKey.RAIN_NOTI)) {
-            return;
-        }
-        
+    private static void rainStopped() {
         FishyNotis.warn2("Rain has stopped!");
         PlaySound.rainAlarm();
     }
     
-    private static void started() {
-        if (!Config.get(BooleanKey.RAIN_NOTI)) {
-            return;
-        }
-        
-        Text message = Text.literal("Rain has started!")
-            .formatted(Formatting.GRAY, Formatting.ITALIC);
+    private static void rainStarted() {
+        var message = Component.literal("Rain has started!")
+            .withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC);
         FishyNotis.alert(message);
     }
+
+    private static void warnNoSky() {
+        var message = Component.literal("Warning: rain tracking is disabled in water with no sky access.")
+            .withStyle(ChatFormatting.DARK_GRAY, ChatFormatting.ITALIC);
+        FishyNotis.send(message);
+    }
+
+    private WeatherTracker() {}    
 }

@@ -3,8 +3,8 @@ package me.valkeea.fishyaddons.processor.handlers;
 import me.valkeea.fishyaddons.processor.ChatHandler;
 import me.valkeea.fishyaddons.processor.ChatHandlerResult;
 import me.valkeea.fishyaddons.processor.ChatMessageContext;
-import me.valkeea.fishyaddons.tracker.profit.SackDropParser;
 import me.valkeea.fishyaddons.tracker.profit.ProfitTracker;
+import me.valkeea.fishyaddons.tracker.profit.SackDropParser;
 
 public class HoverEventHandler implements ChatHandler {
     

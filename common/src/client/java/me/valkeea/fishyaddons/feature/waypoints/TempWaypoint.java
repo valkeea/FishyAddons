@@ -12,11 +12,11 @@ import me.valkeea.fishyaddons.vconfig.annotation.VCModule;
 import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
 import me.valkeea.fishyaddons.vconfig.api.Config;
 import me.valkeea.fishyaddons.vconfig.api.IntKey;
-import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderContext;
-import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
+import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderContext;
+import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
+import net.minecraft.client.Minecraft;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.phys.Vec3;
 
 @VCModule
 public class TempWaypoint {
@@ -27,7 +27,7 @@ public class TempWaypoint {
 
     private static BeaconData lastBeacon = null;
     private static boolean hideNear = false;
-    private static long duration = 60000;
+    private static long duration = IntKey.RENDER_COORD_MS.getDefault();
 
     @VCListener(value = BooleanKey.RENDER_COORD_HIDE_CLOSE, ints = IntKey.RENDER_COORD_MS)
     public static void refresh() {
@@ -38,7 +38,7 @@ public class TempWaypoint {
     @VCInit
     public static void init() {
         refresh();
-        WorldRenderEvents.END_MAIN.register(context -> {
+        LevelRenderEvents.COLLECT_SUBMITS.register(context -> {
             if (beacons.isEmpty()) return;
 
             long now = System.currentTimeMillis();
@@ -52,15 +52,15 @@ public class TempWaypoint {
         });
     }
     
-    private static void renderFar(WorldRenderContext context) {
-        var client = MinecraftClient.getInstance();
+    private static void renderFar(LevelRenderContext context) {
+        var client = Minecraft.getInstance();
         if (client.player == null) return;
 
-        Vec3d playerPos = client.player.getEntityPos();
+        Vec3 playerPos = client.player.position();
         long now = System.currentTimeMillis();
         
         beacons.removeIf(beacon -> {
-            Vec3d beaconCenter = new Vec3d(
+            Vec3 beaconCenter = new Vec3(
                 beacon.getPos().getX() + 0.5, 
                 beacon.getPos().getY() + 0.5, 
                 beacon.getPos().getZ() + 0.5
@@ -85,7 +85,7 @@ public class TempWaypoint {
         });
     }
     
-    private static void renderAll(WorldRenderContext context) {
+    private static void renderAll(LevelRenderContext context) {
         for (BeaconData beacon : beacons) {
             Beacon.renderBeacon(context, beacon);
         }
@@ -102,12 +102,12 @@ public class TempWaypoint {
      * The position is converted to a centered BlockPos and empty titles are handled at render.
      */
     public static void setBeacon(BlockPos pos, int colorARGB, String displayLabel) {
-        beacons.add(new BeaconData(getActualPos(new Vec3d(pos)), colorARGB, displayLabel));
+        beacons.add(new BeaconData(getActualPos(new Vec3(pos)), colorARGB, displayLabel));
         lastBeacon = beacons.get(beacons.size() - 1);
     }
     
     public static void setBeacon(BlockPos pos, int colorARGB, String displayLabel, long customDuration) {
-        var beacon = new BeaconData(getActualPos(new Vec3d(pos)), colorARGB, displayLabel);
+        var beacon = new BeaconData(getActualPos(new Vec3(pos)), colorARGB, displayLabel);
         beacon.setDuration(customDuration);
         beacons.add(beacon);
         lastBeacon = beacons.get(beacons.size() - 1);
@@ -116,7 +116,7 @@ public class TempWaypoint {
     /**
      * Convert Vec3d to centered BlockPos with proper flooring for negative coordinates.
      */
-    public static BlockPos getActualPos(Vec3d pos) {
+    public static BlockPos getActualPos(Vec3 pos) {
         return new BlockPos(
             (int) (pos.x < 0 ? Math.floor(pos.x) - 1 : Math.floor(pos.x)),
             (int) (Math.floor(pos.y) - 1),
@@ -132,7 +132,7 @@ public class TempWaypoint {
     }
 
     public static void redraw(BlockPos pos, String title) {
-        var actualPos = getActualPos(new Vec3d(pos));
+        var actualPos = getActualPos(new Vec3(pos));
         
         beacons.removeIf(beacon -> beacon.getPos().equals(actualPos));
         
@@ -142,7 +142,7 @@ public class TempWaypoint {
     }
 
     public static void removeBeaconAt(BlockPos pos) {
-        beacons.removeIf(beacon -> beacon.getPos().equals(getActualPos(new Vec3d(pos))));
+        beacons.removeIf(beacon -> beacon.getPos().equals(getActualPos(new Vec3(pos))));
     }
 
     public static class BeaconData implements me.valkeea.fishyaddons.render.IBeaconData {
@@ -175,14 +175,13 @@ public class TempWaypoint {
 
         private String formatLabel(String label) {
             
-            var mc = MinecraftClient.getInstance();
-            if (mc == null || mc.player == null) return label != null ? label : "";
+            var mc = Minecraft.getInstance();
+            if (mc.player == null) return label != null ? label : "";
 
-            var playerPos = mc.player != null ? mc.player.getEntityPos() : Vec3d.ZERO;
-            var distance = playerPos.distanceTo(new Vec3d(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5));
+            var distance = mc.player.position().distanceTo(new Vec3(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5));
             var distanceStr = String.format("%.1f", distance);
 
-            return label != null && !label.isEmpty() ? label + " (" + distanceStr + "m)" : distanceStr + "m";
+            return label != null && !label.isEmpty() ? label + " §8(§7" + distanceStr + "m§8)" : distanceStr + "m";
         }
     }
 }

@@ -6,14 +6,15 @@ import java.util.Set;
 
 import org.lwjgl.glfw.GLFW;
 
+import com.mojang.blaze3d.platform.InputConstants;
+
 import me.valkeea.fishyaddons.util.ServerCommand;
 import me.valkeea.fishyaddons.vconfig.annotation.VCListener;
 import me.valkeea.fishyaddons.vconfig.annotation.VCModule;
 import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
 import me.valkeea.fishyaddons.vconfig.api.Config;
 import me.valkeea.fishyaddons.vconfig.config.impl.ShortcutsConfig;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.util.InputUtil;
+import net.minecraft.client.Minecraft;
 
 @VCModule
 public class KeyShortcut {
@@ -44,22 +45,22 @@ public class KeyShortcut {
         if (currentTime - lastChatClose < GRACE_PERIOD_MS) return;
         
         Map<String, String> keybinds = cachedKeybinds;
-        for (Map.Entry<String, String> entry : keybinds.entrySet()) {
-            String key = entry.getKey();
-            String command = entry.getValue();
+        for (var e : keybinds.entrySet()) {
+            String key = e.getKey();
+            String command = e.getValue();
             
             if (!ShortcutsConfig.isKeybindToggled(key)) continue;
             
             boolean isPressed = false;
             if (key.startsWith("MOUSE")) {
                 int mouseButton = parseMouseButton(key);
-                boolean pressed = GLFW.glfwGetMouseButton(MinecraftClient.getInstance().getWindow().getHandle(), mouseButton) == GLFW.GLFW_PRESS;
+                boolean pressed = GLFW.glfwGetMouseButton(Minecraft.getInstance().getWindow().handle(), mouseButton) == GLFW.GLFW_PRESS;
                 isPressed = pressed;
                 
             } else {
                 int keyCode = parseKeyCode(key);
                 if (keyCode != -1) {
-                    isPressed = InputUtil.isKeyPressed(MinecraftClient.getInstance().getWindow(), keyCode);
+                    isPressed = InputConstants.isKeyDown(Minecraft.getInstance().getWindow(), keyCode);
                 }
             }
 
@@ -69,18 +70,22 @@ public class KeyShortcut {
 
     private static int parseKeyCode(String key) {
         try {
+            
             if (key.startsWith("GLFW_KEY_")) {
-                java.lang.reflect.Field field = org.lwjgl.glfw.GLFW.class.getField(key);
+                var field = org.lwjgl.glfw.GLFW.class.getField(key);
                 return field.getInt(null);
+
+            } else if (key.length() == 1) {
+                return InputConstants.getKey("key.keyboard." + key.toLowerCase()).getValue();
+
+            } else if (key.startsWith("KEY_")) {
+                return InputConstants.getKey("key.keyboard." + key.substring(4).toLowerCase()).getValue();
+
+            } else {
+                return InputConstants.getKey(key).getValue();
             }
-            if (key.length() == 1) {
-                return InputUtil.fromTranslationKey("key.keyboard." + key.toLowerCase()).getCode();
-            }
-            if (key.startsWith("KEY_")) {
-                return InputUtil.fromTranslationKey("key.keyboard." + key.substring(4).toLowerCase()).getCode();
-            }
-            return InputUtil.fromTranslationKey(key).getCode();
-        } catch (Exception e) {
+
+        } catch (Exception _) {
             return -1;
         }
     }
@@ -88,7 +93,7 @@ public class KeyShortcut {
     private static int parseMouseButton(String key) {
         try {
             return Integer.parseInt(key.replace("MOUSE", "").trim());
-        } catch (NumberFormatException e) {
+        } catch (NumberFormatException _) {
             return -1;
         }
     }

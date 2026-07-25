@@ -1,16 +1,16 @@
 package me.valkeea.fishyaddons.vconfig.ui.model;
 
-import net.minecraft.client.gui.Click;
+import net.minecraft.client.input.MouseButtonEvent;
 
 public class ClickContext {
-    public final Click click;
+    public final MouseButtonEvent click;
     public final int mouseX;
     public final int mouseY;
     public final int button;
     public final float uiScale;
     public final boolean doubled;
     
-    public ClickContext(Click click, int mouseX, int mouseY, int button, float uiScale, boolean doubled) {
+    public ClickContext(MouseButtonEvent click, int mouseX, int mouseY, int button, float uiScale, boolean doubled) {
         this.click = click;
         this.mouseX = mouseX;
         this.mouseY = mouseY;
@@ -19,7 +19,7 @@ public class ClickContext {
         this.doubled = doubled;
     }
     
-    public static ClickContext fromClick(Click click, float uiScale, boolean doubled) {
+    public static ClickContext fromClick(MouseButtonEvent click, float uiScale, boolean doubled) {
         return new ClickContext(
             click,
             (int) click.x(),

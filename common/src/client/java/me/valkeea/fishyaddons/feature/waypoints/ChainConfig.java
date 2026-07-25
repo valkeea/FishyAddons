@@ -21,17 +21,17 @@ import com.google.gson.JsonIOException;
 import com.google.gson.JsonSyntaxException;
 
 import me.valkeea.fishyaddons.tool.FishyMode;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.client.Minecraft;
+import net.minecraft.core.BlockPos;
+import net.minecraft.resources.Identifier;
 
 @SuppressWarnings("squid:S1104")
 public class ChainConfig {
     private ChainConfig() {}
     
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-    private static final File WAYPOINTS_FILE = new File(MinecraftClient.getInstance().runDirectory, "config/fishyaddons/waypoints.json");
-    private static final File BACKUP_DIR = new File(MinecraftClient.getInstance().runDirectory, "config/fishyaddons/backup");
+    private static final File WAYPOINTS_FILE = new File(Minecraft.getInstance().gameDirectory, "config/fishyaddons/waypoints.json");
+    private static final File BACKUP_DIR = new File(Minecraft.getInstance().gameDirectory, "config/fishyaddons/backup");
     private static final File BACKUP_FILE = new File(BACKUP_DIR, "waypoints.json");
     // Keyed by preset name
     private static final Map<String, WaypointChain> PRESET_CHAINS = new HashMap<>();
@@ -341,70 +341,81 @@ public class ChainConfig {
 
     private static void loadAllPresetLocations() {
         try {
-            var client = MinecraftClient.getInstance();
-            if (client == null || client.getResourceManager() == null) {
+            var mc = Minecraft.getInstance();
+            var manager = mc.getResourceManager();
+            if (manager == null) {
+                System.err.println("[ChainConfig] Resource manager is null. Cannot load presets.");
                 return;
             }
-            
-            InputStream stream = client.getResourceManager()
-                .getResource(Identifier.of("fishyaddons", "data/preset_locations.json"))
-                .orElseThrow(() -> new RuntimeException("preset_locations.json not found"))
-                .getInputStream();
-            
-            InputStreamReader reader = new InputStreamReader(stream);
-            PresetDataRoot rootData;
 
-            try (java.util.Scanner scanner = new java.util.Scanner(reader)) {
-                scanner.useDelimiter("\\Z");
-                String jsonContent = scanner.next();
-                rootData = GSON.fromJson(jsonContent, PresetDataRoot.class);
+            var resource = manager
+                .getResource(Identifier.fromNamespaceAndPath("fishyaddons", "data/preset_locations.json"))
+                .orElseThrow(() -> new RuntimeException("preset_locations.json not found"));
+
+            PresetDataRoot rootData;
+            
+            try (
+                InputStream is = resource.open();
+                var reader = new InputStreamReader(is, java.nio.charset.StandardCharsets.UTF_8)
+            ) {
+                rootData = GSON.fromJson(reader, PresetDataRoot.class);
             }
 
-            reader.close();
-            
             if (rootData != null && rootData.presets != null) {
-                for (Map.Entry<String, AreaPresets> entry : rootData.presets.entrySet()) {
-                    String area = entry.getKey();
-                    AreaPresets areaPresets = entry.getValue();
-                    
-                    if (areaPresets != null && areaPresets.chains != null) {
-                        for (Map.Entry<String, PresetChainData> chainEntry : areaPresets.chains.entrySet()) {
-                            String chainName = chainEntry.getKey();
-                            PresetChainData chainData = chainEntry.getValue();
-                            
-                            if (chainData != null && chainData.locations != null) {
-                                List<Waypoint> waypoints = new ArrayList<>();
-                                for (int i = 0; i < chainData.locations.size(); i++) {
-                                    PresetLocation loc = chainData.locations.get(i);
-                                    String label = chainData.labelTemplate != null ? 
-                                        chainData.labelTemplate.replace("{index}", String.valueOf(i + 1)) :
-                                        chainName + " " + (i + 1);
-                                    
-                                    waypoints.add(new Waypoint(
-                                        new BlockPos(loc.x, loc.y, loc.z),
-                                        label,
-                                        false
-                                    ));
-                                }
-                                
-                                String presetKey = chainData.key != null ? chainData.key : ("preset_" + area + "_" + chainName);
-                                String displayName = chainData.displayName != null ? chainData.displayName : chainName;
-                                
-                                PRESET_CHAINS.put(presetKey, new WaypointChain(
-                                    area,
-                                    displayName,
-                                    waypoints,
-                                    ChainType.MOD_PRESET
-                                ));
-                            }
-                        }
-                    }
+                for (var e : rootData.presets.entrySet()) {
+                    loadPresetArea(e.getKey(), e.getValue());
                 }
             }
             
         } catch (IOException | JsonSyntaxException e) {
             System.err.println("[ChainConfig] Failed to load preset locations: " + e.getMessage());
         }
+    }
+
+    private static void loadPresetArea(String area, AreaPresets areaPresets) {
+        if (areaPresets == null || areaPresets.chains == null) {
+            return;
+        }
+        
+        for (var chainEntry : areaPresets.chains.entrySet()) {
+            loadPresetChain(area, chainEntry.getKey(), chainEntry.getValue());
+        }
+    }
+
+    private static void loadPresetChain(String area, String chainName, PresetChainData chainData) {
+        if (chainData == null || chainData.locations == null) {
+            return;
+        }
+        
+        List<Waypoint> waypoints = createWaypoints(chainName, chainData);
+        String presetKey = chainData.key != null ? chainData.key : ("preset_" + area + "_" + chainName);
+        String displayName = chainData.displayName != null ? chainData.displayName : chainName;
+        
+        PRESET_CHAINS.put(presetKey, new WaypointChain(
+            area,
+            displayName,
+            waypoints,
+            ChainType.MOD_PRESET
+        ));
+    }
+
+    private static List<Waypoint> createWaypoints(String chainName, PresetChainData chainData) {
+        List<Waypoint> waypoints = new ArrayList<>();
+        
+        for (int i = 0; i < chainData.locations.size(); i++) {
+            PresetLocation loc = chainData.locations.get(i);
+            String label = chainData.labelTemplate != null ? 
+                chainData.labelTemplate.replace("{index}", String.valueOf(i + 1)) :
+                chainName + " " + (i + 1);
+            
+            waypoints.add(new Waypoint(
+                new BlockPos(loc.x, loc.y, loc.z),
+                label,
+                false
+            ));
+        }
+        
+        return waypoints;
     }
 
     private static class PresetDataRoot {

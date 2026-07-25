@@ -5,7 +5,7 @@ import java.util.Locale;
 import java.util.Map;
 
 import me.valkeea.fishyaddons.util.SpriteUtil;
-import net.minecraft.util.Identifier;
+import net.minecraft.resources.Identifier;
 
 public class EffectRegistry {
     private static final Map<String, EffectConfig> CONFIGS = new HashMap<>();

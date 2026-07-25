@@ -19,10 +19,10 @@ import me.valkeea.fishyaddons.util.FishyNotis;
 import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
 import me.valkeea.fishyaddons.vconfig.api.Config;
 import me.valkeea.fishyaddons.vconfig.ui.screen.HudEditScreen;
-import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
+import net.fabricmc.fabric.api.client.command.v2.ClientCommands;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
 
 public class FaRoot implements CommandHandler {
     
@@ -101,9 +101,9 @@ public class FaRoot implements CommandHandler {
         return CommandBuilderUtils.toggleCommand("ping", BooleanKey.HUD_METRICS_ENABLED, "Network Display")
             .withDefaultAction(() -> {
                 NetworkMetrics.send();
-                var msg = Text.literal(NetworkMetrics.getPing() + " §8ms");
+                var msg = Component.literal(NetworkMetrics.getPing() + " §8ms");
                 if (NetworkMetrics.shouldDisplay(BooleanKey.METRICS_SHOW_TPS)) {
-                    msg = msg.copy().append(Text.literal("§8, §7" + NetworkMetrics.getTpsString() + " §8TPS"));
+                    msg = msg.copy().append(Component.literal("§8, §7" + NetworkMetrics.getTpsString() + " §8TPS"));
                 }
                 FishyNotis.send(msg);
                 return 1;
@@ -135,70 +135,70 @@ public class FaRoot implements CommandHandler {
     // --- Complex ---
 
     private static LiteralArgumentBuilder<FabricClientCommandSource> rainCommand() {
-        return ClientCommandManager.literal("rain")
-        .then(ClientCommandManager.literal("track")
-        .executes(context -> {
+        return ClientCommands.literal("rain")
+        .then(ClientCommands.literal("track")
+        .executes(ctx -> {
             boolean isRaining = WeatherTracker.isRaining();
             WeatherTracker.track();
             String status = isRaining ? "It is currently raining. You will be notified when the rain stops." : "It is not currently raining.";
-            FishyNotis.format(Text.literal(status).formatted(isRaining ? Formatting.DARK_AQUA : Formatting.RED));
+            FishyNotis.format(Component.literal(status).withStyle(isRaining ? ChatFormatting.DARK_AQUA : ChatFormatting.RED));
             return 1;
         }))
-        .then(ClientCommandManager.literal("on")
-        .executes(context -> {
+        .then(ClientCommands.literal("on")
+        .executes(ctx -> {
             Config.toggle(BooleanKey.RAIN_NOTI);
             FishyNotis.on("Rain notifications");
             return 1;
         }))
-        .then(ClientCommandManager.literal("off")
-        .executes(context -> {
+        .then(ClientCommands.literal("off")
+        .executes(ctx -> {
             Config.toggle(BooleanKey.RAIN_NOTI);
             me.valkeea.fishyaddons.feature.skyblock.WeatherTracker.reset();
             FishyNotis.off("Rain notifications");
             return 1;
         }))
-        .executes(context -> {
+        .executes(ctx -> {
             FishyNotis.themed("§lWeather Tracker:");
-            FishyNotis.alert(Text.literal("§3/fa rain track §8- §7Check the current rain state."));
-            FishyNotis.alert(Text.literal("§3/fa rain on | off §8- §7Enable/disable rain notifications"));
+            FishyNotis.alert(Component.literal("§3/fa rain track §8- §7Check the current rain state."));
+            FishyNotis.alert(Component.literal("§3/fa rain on | off §8- §7Enable/disable rain notifications"));
             return 1;
         });
     }
 
     private static LiteralArgumentBuilder<FabricClientCommandSource> fishCommand() {
-        return ClientCommandManager.literal("sc")
-        .then(ClientCommandManager.literal("sounds")
-        .executes(context -> {
+        return ClientCommands.literal("sc")
+        .then(ClientCommands.literal("sounds")
+        .executes(ctx -> {
             FishyNotis.send("§aTo create a resource pack:");
-            FishyNotis.alert(Text.literal("§7- In any resource pack, create a folder named: §bfishyaddons"));
-            FishyNotis.alert(Text.literal("§7- Inside that folder, create another folder named: §bsounds"));
-            FishyNotis.alert(Text.literal("§7- Inside the sounds folder, create a folder named: §bcustom"));
-            FishyNotis.alert(Text.literal("§7- Place your custom .ogg files inside the custom folder"));
-            FishyNotis.alert(Text.literal("§7- Then use sound IDs: §bfishyaddons:fishyaddons_1§7, §bfishyaddons:fishyaddons_2§7, §bfishyaddons:fishyaddons_3"));
+            FishyNotis.alert(Component.literal("§7- In any resource pack, create a folder named: §bfishyaddons"));
+            FishyNotis.alert(Component.literal("§7- Inside that folder, create another folder named: §bsounds"));
+            FishyNotis.alert(Component.literal("§7- Inside the sounds folder, create a folder named: §bcustom"));
+            FishyNotis.alert(Component.literal("§7- Place your custom .ogg files inside the custom folder"));
+            FishyNotis.alert(Component.literal("§7- Then use sound IDs: §bfishyaddons:fishyaddons_1§7, §bfishyaddons:fishyaddons_2§7, §bfishyaddons:fishyaddons_3"));
             return 1;
         }))
-        .then(ClientCommandManager.literal("since")
-        .executes(context -> {
+        .then(ClientCommands.literal("since")
+        .executes(ctx -> {
             me.valkeea.fishyaddons.tracker.fishing.ScStats.getInstance().sendStats();
             return 1;
         }))
-        .then(ClientCommandManager.literal("rng")
-        .executes(context -> {
+        .then(ClientCommands.literal("rng")
+        .executes(ctx -> {
             me.valkeea.fishyaddons.tracker.fishing.ScData.getInstance().sendCatchRates();
             return 1;
         }))
-        .then(ClientCommandManager.argument("name", StringArgumentType.greedyString())
-        .executes(context -> {
-            var name = StringArgumentType.getString(context, "name");
+        .then(ClientCommands.argument("name", StringArgumentType.greedyString())
+        .executes(ctx -> {
+            var name = StringArgumentType.getString(ctx, "name");
             me.valkeea.fishyaddons.tracker.fishing.ScData.getInstance().sendHistogramSummary(name);
             return 1;
         }))
-        .executes(context -> {
+        .executes(ctx -> {
             FishyNotis.themed("Usage:");
-            FishyNotis.alert(Text.literal("§3/fa fishyaddons sc sounds §8- §7Instructions for resource pack sounds"));
-            FishyNotis.alert(Text.literal("§3/fa fishyaddons sc since §8- §7Stats for 'sc since' in the current island"));          
-            FishyNotis.alert(Text.literal("§3/fa fishyaddons sc rng §8- §7Catch % for all rare scs"));
-            FishyNotis.alert(Text.literal("§3/fa fishyaddons sc <name> §8- §7Data summary for a specific sc"));
+            FishyNotis.alert(Component.literal("§3/fa fishyaddons sc sounds §8- §7Instructions for resource pack sounds"));
+            FishyNotis.alert(Component.literal("§3/fa fishyaddons sc since §8- §7Stats for 'sc since' in the current island"));          
+            FishyNotis.alert(Component.literal("§3/fa fishyaddons sc rng §8- §7Catch % for all rare scs"));
+            FishyNotis.alert(Component.literal("§3/fa fishyaddons sc <name> §8- §7Data summary for a specific sc"));
             return 1;
         });
     }
@@ -209,89 +209,89 @@ public class FaRoot implements CommandHandler {
 
 
     protected static LiteralArgumentBuilder<FabricClientCommandSource> coordCommand() {
-        return ClientCommandManager.literal("coords")
-        .then(ClientCommandManager.argument(LABEL, StringArgumentType.greedyString())
-        .executes(context -> {
-            String label = context.getArgument(LABEL, String.class);
+        return ClientCommands.literal("coords")
+        .then(ClientCommands.argument(LABEL, StringArgumentType.greedyString())
+        .executes(ctx -> {
+            String label = ctx.getArgument(LABEL, String.class);
             PlayerPosition.giveAwayCoordsWithLabel(label);
             return 1;
         }))
-        .then(ClientCommandManager.literal("last")
-        .executes(context -> {
+        .then(ClientCommands.literal("last")
+        .executes(ctx -> {
             TempWaypoint.redrawLast();
             return 1;
         }))
-        .then(ClientCommandManager.literal("hide")
-        .then(ClientCommandManager.argument("x", IntegerArgumentType.integer())
-        .then(ClientCommandManager.argument("y", IntegerArgumentType.integer())
-        .then(ClientCommandManager.argument("z", IntegerArgumentType.integer())
-        .executes(context -> {
-            int x = context.getArgument("x", Integer.class);
-            int y = context.getArgument("y", Integer.class);
-            int z = context.getArgument("z", Integer.class);
-            var pos = new net.minecraft.util.math.BlockPos(x, y, z);
+        .then(ClientCommands.literal("hide")
+        .then(ClientCommands.argument("x", IntegerArgumentType.integer())
+        .then(ClientCommands.argument("y", IntegerArgumentType.integer())
+        .then(ClientCommands.argument("z", IntegerArgumentType.integer())
+        .executes(ctx -> {
+            int x = ctx.getArgument("x", Integer.class);
+            int y = ctx.getArgument("y", Integer.class);
+            int z = ctx.getArgument("z", Integer.class);
+            var pos = new net.minecraft.core.BlockPos(x, y, z);
             TempWaypoint.removeBeaconAt(pos);
             return 1;
         })))))
-        .then(ClientCommandManager.literal("redraw")
-        .then(ClientCommandManager.argument("x", IntegerArgumentType.integer())
-        .then(ClientCommandManager.argument("y", IntegerArgumentType.integer())
-        .then(ClientCommandManager.argument("z", IntegerArgumentType.integer())
-        .executes(context -> {
-            int x = context.getArgument("x", Integer.class);
-            int y = context.getArgument("y", Integer.class);
-            int z = context.getArgument("z", Integer.class);
-            var pos = new net.minecraft.util.math.BlockPos(x, y, z);
+        .then(ClientCommands.literal("redraw")
+        .then(ClientCommands.argument("x", IntegerArgumentType.integer())
+        .then(ClientCommands.argument("y", IntegerArgumentType.integer())
+        .then(ClientCommands.argument("z", IntegerArgumentType.integer())
+        .executes(ctx -> {
+            int x = ctx.getArgument("x", Integer.class);
+            int y = ctx.getArgument("y", Integer.class);
+            int z = ctx.getArgument("z", Integer.class);
+            var pos = new net.minecraft.core.BlockPos(x, y, z);
             TempWaypoint.redraw(pos, "");
             return 1;
         })
-        .then(ClientCommandManager.argument(LABEL, StringArgumentType.greedyString())
-        .executes(context -> {
-            int x = context.getArgument("x", Integer.class);
-            int y = context.getArgument("y", Integer.class);
-            int z = context.getArgument("z", Integer.class);
-            String label = context.getArgument(LABEL, String.class);
-            var pos = new net.minecraft.util.math.BlockPos(x, y, z);
+        .then(ClientCommands.argument(LABEL, StringArgumentType.greedyString())
+        .executes(ctx -> {
+            int x = ctx.getArgument("x", Integer.class);
+            int y = ctx.getArgument("y", Integer.class);
+            int z = ctx.getArgument("z", Integer.class);
+            String label = ctx.getArgument(LABEL, String.class);
+            var pos = new net.minecraft.core.BlockPos(x, y, z);
             TempWaypoint.redraw(pos, label);
             return 1;
         }))))))
-        .executes(context -> {
+        .executes(ctx -> {
             PlayerPosition.giveAwayCoords();
             return 1;
         });
     }    
 
     private static LiteralArgumentBuilder<FabricClientCommandSource> dianaCommand() {
-        return ClientCommandManager.literal("diana")
-        .then(ClientCommandManager.literal(RESET)
-        .executes(context -> {
+        return ClientCommands.literal("diana")
+        .then(ClientCommands.literal(RESET)
+        .executes(ctx -> {
             if (me.valkeea.fishyaddons.tracker.DianaStats.loaded()) {
                 me.valkeea.fishyaddons.tracker.DianaStats.getInstance().resetAll();
                 FishyNotis.send("Diana stats have been reset.");
             } else  FishyNotis.warn("Diana stats are not loaded.");
             return 1;
         }))
-        .executes(context -> {
+        .executes(ctx -> {
             me.valkeea.fishyaddons.tracker.DianaStats.getInstance().sendDianaStats();
             return 1;
         });
     }
 
     private static LiteralArgumentBuilder<FabricClientCommandSource> skillCommand() {
-        return ClientCommandManager.literal("skill")
-        .then(ClientCommandManager.literal("dt")
-        .executes(context -> {
+        return ClientCommands.literal("skill")
+        .then(ClientCommands.literal("dt")
+        .executes(ctx -> {
             SkillTracker.getInstance().toggleDownTime();
             return 1;
         }))
-        .then(ClientCommandManager.literal(RESET)
-        .executes(context -> {
+        .then(ClientCommands.literal(RESET)
+        .executes(ctx -> {
             SkillTracker.getInstance().resetAll();
             FishyNotis.notice("Skill Tracker has been reset.");
             return 1;
         }))
-        .then(ClientCommandManager.literal(TOGGLE)
-        .executes(context -> {
+        .then(ClientCommands.literal(TOGGLE)
+        .executes(ctx -> {
             boolean current = Config.get(BooleanKey.HUD_SKILL_XP);
             Config.toggle(BooleanKey.HUD_SKILL_XP);
             SkillTracker.refresh();
@@ -302,39 +302,39 @@ public class FaRoot implements CommandHandler {
 
             return 1;
         }))
-        .executes(context -> {
+        .executes(ctx -> {
             FishyNotis.themed("Usage:");
-            FishyNotis.alert(Text.literal("§3/fa skill dt §8- §7Toggle downtime mode. Otherwise, skill XP tracking is paused after 1.5min and wiped after 15min."));
-            FishyNotis.alert(Text.literal("§3/fa skill reset §8- §7Reset all tracked XP for the session."));
+            FishyNotis.alert(Component.literal("§3/fa skill dt §8- §7Toggle downtime mode. Otherwise, skill XP tracking is paused after 1.5min and wiped after 15min."));
+            FishyNotis.alert(Component.literal("§3/fa skill reset §8- §7Reset all tracked XP for the session."));
             return 1;
         });
     }    
 
     private static LiteralArgumentBuilder<FabricClientCommandSource> slayerCommand() {
-        return ClientCommandManager.literal("slayer")
-            .then(ClientCommandManager.literal(RESET)
-                .then(ClientCommandManager.literal("all")
-                    .then(ClientCommandManager.literal("confirm")
-                        .executes(context -> {
+        return ClientCommands.literal("slayer")
+            .then(ClientCommands.literal(RESET)
+                .then(ClientCommands.literal("all")
+                    .then(ClientCommands.literal("confirm")
+                        .executes(ctx -> {
                             if (SlayerStats.loaded()) {
                                 SlayerStats.getInstance().resetAll();
                                 FishyNotis.send("All slayer stats have been reset.");
                             } else  FishyNotis.warn("Slayer stats are not loaded.");
                             return 1;
                         }))
-                    .then(ClientCommandManager.literal("cancel")
-                        .executes(context -> {
+                    .then(ClientCommands.literal("cancel")
+                        .executes(ctx -> {
                             FishyNotis.notice("Slayer stats reset was canceled.");
                             return 1;
                         }))
-                    .executes(context -> {
+                    .executes(ctx -> {
                         FishyNotis.themed("Are you SURE you want to reset ALL slayer stats?");
                         CmdHelper.sendClickable("/fa slayer reset all confirm", "/fa slayer reset all cancel");
                         return 1;
                     }))
-                .then(ClientCommandManager.argument("type", StringArgumentType.word())
-                    .executes(context -> {
-                        var typeName = StringArgumentType.getString(context, "type");
+                .then(ClientCommands.argument("type", StringArgumentType.word())
+                    .executes(ctx -> {
+                        var typeName = StringArgumentType.getString(ctx, "type");
                         var type = parseSlayerType(typeName);
                         if (type != null && SlayerStats.loaded()) {
                             SlayerStats.getInstance().resetType(type);
@@ -344,16 +344,16 @@ public class FaRoot implements CommandHandler {
                         } else FishyNotis.warn("Slayer stats are not loaded.");
                         return 1;
                     })))
-            .then(ClientCommandManager.argument("type", StringArgumentType.word())
-                .executes(context -> {
-                    var typeName = StringArgumentType.getString(context, "type");
+            .then(ClientCommands.argument("type", StringArgumentType.word())
+                .executes(ctx -> {
+                    var typeName = StringArgumentType.getString(ctx, "type");
                     var type = parseSlayerType(typeName);
                     if (type != null) {
                         SlayerStats.getInstance().sendSlayerStats(type);
                     } else FishyNotis.warn("Invalid slayer type. Use: wolf, zombie, spider, enderman, blaze, or vampire");
                     return 1;
                 }))
-            .executes(context -> {
+            .executes(ctx -> {
                 SlayerStats.getInstance().sendSlayerStats();
                 return 1;
             });
@@ -362,30 +362,30 @@ public class FaRoot implements CommandHandler {
     private static SlayerType parseSlayerType(String name) {
         try {
             return SlayerType.valueOf(name.toUpperCase());
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException _) {
             return null;
         }
     }
 
     private static LiteralArgumentBuilder<FabricClientCommandSource> npcCommand() {
-        return ClientCommandManager.literal("npc")
-        .then(ClientCommandManager.argument("name", StringArgumentType.greedyString())
-            .executes(context -> {
-                var npcName = StringArgumentType.getString(context, "name");
+        return ClientCommands.literal("npc")
+        .then(ClientCommands.argument("name", StringArgumentType.greedyString())
+            .executes(ctx -> {
+                var npcName = StringArgumentType.getString(ctx, "name");
                 NpcLocation.drawFor(npcName);
                 return 1;
             }))
-        .then(ClientCommandManager.literal("all")
-            .executes(context -> {
+        .then(ClientCommands.literal("all")
+            .executes(ctx -> {
                 NpcLocation.drawAll();
                 return 1;
             }))
-        .then(ClientCommandManager.literal("clear")
-            .executes(context -> {
+        .then(ClientCommands.literal("clear")
+            .executes(ctx -> {
                 TempWaypoint.clearBeacons();
                 return 1;
-            }))
-        .executes(context -> {
+            }))           
+        .executes(ctx -> {
             FishyNotis.themed("Usage: §b/fa npc §8<§7name §8| §7all §8| §7clear§8>");
             return 1;
         });

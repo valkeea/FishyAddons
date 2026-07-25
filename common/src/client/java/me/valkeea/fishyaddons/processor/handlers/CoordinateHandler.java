@@ -11,8 +11,8 @@ import me.valkeea.fishyaddons.util.text.TextUtils;
 import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
 import me.valkeea.fishyaddons.vconfig.api.Config;
 import me.valkeea.fishyaddons.vconfig.api.IntKey;
-import net.minecraft.text.Text;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 
 public class CoordinateHandler implements ChatHandler {
     
@@ -42,13 +42,13 @@ public class CoordinateHandler implements ChatHandler {
 
         try {
             String rawMessage = context.getRawString();
-            Text originalMessage = context.getOriginalText();
+            Component originalMessage = context.getOriginalText();
 
             if (Config.get(BooleanKey.RENDER_COORDS)) {
                 initBeaconFor(rawMessage);
 
                 if (Config.get(BooleanKey.CHAT_FILTER_COORDS_ENABLED)) {
-                    Text enhanced = addButtons(originalMessage);
+                    Component enhanced = addButtons(originalMessage);
                     
                     if (!enhanced.equals(originalMessage)) {
                         context.setCurrentMessage(enhanced);
@@ -99,7 +99,7 @@ public class CoordinateHandler implements ChatHandler {
                 Config.get(IntKey.RENDER_COORD_COLOR), 
                 label
             );
-        } catch (NumberFormatException e) {
+        } catch (NumberFormatException _) {
             // Invalid number format, ignore
         }
     }
@@ -132,7 +132,7 @@ public class CoordinateHandler implements ChatHandler {
         return "";
     }
 
-    private Text addButtons(Text originalMessage) {
+    private Component addButtons(Component originalMessage) {
         String messageText = originalMessage.getString();
         String coords = extractCoordinates(messageText).isEmpty() ? "" : extractCoordinates(messageText);
 

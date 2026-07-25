@@ -12,7 +12,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 
 import me.valkeea.fishyaddons.util.JsonUtil;
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.item.ItemStack;
 
 /**
  * Handles crafting recipe conversions and goal tracking.

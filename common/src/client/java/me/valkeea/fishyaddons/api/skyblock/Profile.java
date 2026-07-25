@@ -1,14 +1,13 @@
 package me.valkeea.fishyaddons.api.skyblock;
 
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 
 /**
  * Stores information about the player's SkyBlock profile, such as profile name, selected profile, and other relevant data.
  */
 public class Profile {
-    private Profile() {}
     private static String userName = "";
 
     /** Return the current username or empty if not initialized */
@@ -24,10 +23,12 @@ public class Profile {
     public static void initUsername(ItemStack s) {
         if (s == null || s.isEmpty() || !s.getItem().equals(Items.PLAYER_HEAD)) return;
 
-        var profile = s.getOrDefault(DataComponentTypes.PROFILE, null);
+        var profile = s.get(DataComponents.PROFILE);
         if (profile == null) return;
 
-        var username = profile.getName().orElse("");
+        var username = profile.name().orElse("");
         if (!username.isEmpty()) setUserName(username);       
-    }    
+    }
+
+    private Profile() {}    
 }

@@ -10,10 +10,10 @@ import me.valkeea.fishyaddons.vconfig.annotation.VCListener;
 import me.valkeea.fishyaddons.vconfig.annotation.VCModule;
 import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
 import me.valkeea.fishyaddons.vconfig.api.Config;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientPlayNetworkHandler;
-import net.minecraft.network.packet.c2s.query.QueryPingC2SPacket;
-import net.minecraft.network.packet.s2c.query.PingResultS2CPacket;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientPacketListener;
+import net.minecraft.network.protocol.ping.ClientboundPongResponsePacket;
+import net.minecraft.network.protocol.ping.ServerboundPingRequestPacket;
 import net.minecraft.util.Util;
 
 @VCModule
@@ -50,20 +50,19 @@ public class NetworkMetrics {
 
     // -- Ping ---
     public static void send() {
+        ClientPacketListener connection = Minecraft.getInstance().getConnection();
 
-        ClientPlayNetworkHandler handler = MinecraftClient.getInstance().getNetworkHandler();
-
-        if (handler != null) {
-            long timestamp = Util.getMeasuringTimeMs();
+        if (connection != null) {
+            long timestamp = Util.getMillis();
             pendingPings.put(timestamp, timestamp);
-            handler.sendPacket(new QueryPingC2SPacket(timestamp));
+            connection.send(new ServerboundPingRequestPacket(timestamp));
             calcTps();
         }
     }
 
-    public static void onPingResponse(PingResultS2CPacket packet) {
-        long sent = packet.startTime();
-        long now = Util.getMeasuringTimeMs();
+    public static void onPingResponse(ClientboundPongResponsePacket packet) {
+        long sent = packet.time();
+        long now = Util.getMillis();
         Long original = pendingPings.remove(sent);
         if (original != null) {
             lastPing = (int) (now - original);
@@ -110,7 +109,7 @@ public class NetworkMetrics {
         long avg = timeSpan / intervals;
         double avgInterval = avg;
         double rawTps = (baselineTicks * 1000.0) / avgInterval;
-        // Use lowest detected avg delta to adjust baseline
+        // Lowest detected avg delta to adjust baseline
         updateBaseline(avg);
         lastTps = Math.min(20.0, rawTps);
     }
@@ -180,7 +179,7 @@ public class NetworkMetrics {
             case BooleanKey.METRICS_SHOW_FPS:
                 return fpsOn;
             default:
-                return true;
+                return false;
         }
     }    
 

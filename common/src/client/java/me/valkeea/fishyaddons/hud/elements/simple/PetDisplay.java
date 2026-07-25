@@ -3,7 +3,7 @@ package me.valkeea.fishyaddons.hud.elements.simple;
 import me.valkeea.fishyaddons.feature.skyblock.PetInfo;
 import me.valkeea.fishyaddons.hud.base.SimpleHudElement;
 import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.Component;
 
 public class PetDisplay extends SimpleHudElement {
     
@@ -25,7 +25,7 @@ public class PetDisplay extends SimpleHudElement {
     }
 
     @Override
-    protected Text getText() {
+    protected Component getText() {
         return PetInfo.getPet();
     }
 }

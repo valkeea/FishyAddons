@@ -224,7 +224,7 @@ public class ChatDropParser {
         DROP_PATTERNS.add(new DropPattern(
             Pattern.compile("♔ trophy\\s+\\w+!\\s*you caught an?\\s+(.+?)!", Pattern.CASE_INSENSITIVE),
             DropType.ITEM, -1, 1
-        ));
+        ));        
     }
 
     /**
@@ -272,7 +272,7 @@ public class ChatDropParser {
 
             return null;
 
-        } catch (Exception e) {
+        } catch (Exception _) {
             return null; // Parsing failed for this pattern
         }
     }
@@ -388,7 +388,9 @@ public class ChatDropParser {
         }
         
         for (String shard : TRACKED_SHARDS) {
-            if (normalized.contains(shard)) return true;
+            if (normalized.contains(shard)) {
+                return true;
+            }
         }
         
         return false;

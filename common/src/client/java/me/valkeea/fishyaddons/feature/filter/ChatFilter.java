@@ -3,22 +3,22 @@ package me.valkeea.fishyaddons.feature.filter;
 import me.valkeea.fishyaddons.processor.ChatMessageContext;
 import me.valkeea.fishyaddons.processor.MessageAnalysis.FilterMatch;
 import me.valkeea.fishyaddons.util.text.Enhancer;
-import me.valkeea.fishyaddons.vconfig.api.Config;
 import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
-import net.minecraft.text.Text;
+import me.valkeea.fishyaddons.vconfig.api.Config;
+import net.minecraft.network.chat.Component;
 
 public class ChatFilter {
     private ChatFilter() {}
     
-    public static Text applyFilters(ChatMessageContext context) {
+    public static Component applyFilters(ChatMessageContext context) {
 
-        Text currentMsg = context.getCurrentMessage();
-        String replacement = findContextualReplacement(context);
+        var currentMsg = context.getCurrentMessage();
+        var replacement = findContextualReplacement(context);
 
         if (replacement != null && !replacement.equals(currentMsg.getString())) {
 
             if (replacement.isEmpty()) {
-                return Text.literal("");
+                return Component.literal("");
             }
 
             return Enhancer.parseFormattedText(replacement);

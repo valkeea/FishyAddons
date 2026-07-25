@@ -3,7 +3,6 @@ package me.valkeea.fishyaddons.hud.elements.segmented;
 import me.valkeea.fishyaddons.feature.skyblock.timer.ChatTimers;
 import me.valkeea.fishyaddons.hud.base.SegmentedTextElement;
 import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
-import net.minecraft.text.Text;
 
 public class TimerDisplay extends SegmentedTextElement {
     
@@ -30,8 +29,8 @@ public class TimerDisplay extends SegmentedTextElement {
         long secondsLeft = ChatTimers.getInstance().getBeaconTimer();
         if (secondsLeft < 0) return new Component[0];
         
-        Text label = Text.literal("Moonglade:");
-        Text value = Text.literal(" " + formatTime(secondsLeft));
+        net.minecraft.network.chat.Component label = net.minecraft.network.chat.Component.literal("Moonglade:");
+        net.minecraft.network.chat.Component value = net.minecraft.network.chat.Component.literal(" " + formatTime(secondsLeft));
         int labelColor = getCachedState().color;
         int valueColor = 0xFFFFFF;
         

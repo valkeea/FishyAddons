@@ -66,7 +66,7 @@ public class XpHandler implements ChatHandler {
                 FaEvents.XP_GAIN.firePhased(event, listener -> listener.onXpGain(event));
                 return true;
 
-            } catch (NumberFormatException e) {
+            } catch (NumberFormatException _) {
                 System.err.println("[FishyAddons] Error parsing XP amount: " + amountStr);
             }
         }

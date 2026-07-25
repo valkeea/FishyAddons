@@ -4,12 +4,12 @@ import me.valkeea.fishyaddons.ui.GuiUtil;
 import me.valkeea.fishyaddons.vconfig.ui.layout.Colors;
 import me.valkeea.fishyaddons.vconfig.ui.render.RenderUtils;
 import me.valkeea.fishyaddons.vconfig.ui.render.VCText;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Text;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 
 public class VCButton {
     private VCButton() {
@@ -56,7 +56,7 @@ public class VCButton {
     /**
      * Unified button rendering method using ButtonConfig
      */
-    public static void render(DrawContext context, TextRenderer textRenderer, ButtonConfig config) {
+    public static void render(GuiGraphicsExtractor context, Font textRenderer, ButtonConfig config) {
         switch (config.type) {
             case TOGGLE -> renderToggle(context, textRenderer, config);
             case NAVIGATION -> renderNavigation(context, textRenderer, config);
@@ -69,45 +69,45 @@ public class VCButton {
     /**
      * Functional ButtonWidget with the standardized styling
      */
-    public static ButtonWidget createNavigationButton(int x, int y, int width, int height, MutableText message, 
-                                                     ButtonWidget.PressAction onPress, float uiScale) {
-        return new ButtonWidget(x, y, width, height, message, onPress, button -> message) {
+    public static Button createNavigationButton(int x, int y, int width, int height, MutableComponent message, 
+                                                     Button.OnPress onPress, float uiScale) {
+        return new Button(x, y, width, height, message, onPress, button -> message) {
             @Override
-            protected void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
+            protected void extractContents(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
                 var config = new ButtonConfig(this.getX(), this.getY(), this.width, this.height, this.getMessage().getString())
                     .withScale(uiScale)
                     .withEnabled(this.active)
                     .withHovered(this.isHovered())
                     .withType(ButtonType.NAVIGATION);
                 
-                VCButton.render(context, MinecraftClient.getInstance().textRenderer, config);
+                VCButton.render(context, Minecraft.getInstance().font, config);
             }
         };
     }
 
-    public static ButtonWidget vcScreenWidget(int x, int y, int width, int height, MutableText message, 
-                                                     ButtonWidget.PressAction onPress, float uiScale) {
-        return new ButtonWidget(x, y, width, height, message, onPress, button -> message) {
+    public static Button vcScreenWidget(int x, int y, int width, int height, MutableComponent message, 
+                                                     Button.OnPress onPress, float uiScale) {
+        return new Button(x, y, width, height, message, onPress, button -> message) {
             @Override
-            protected void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
+            protected void extractContents(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
                 var config = new ButtonConfig(this.getX(), this.getY(), this.width, this.height, this.getMessage().getString())
                     .withScale(uiScale)
                     .withEnabled(this.active)
                     .withHovered(this.isHovered())
                     .withType(ButtonType.STANDARD);
                 
-                VCButton.render(context, MinecraftClient.getInstance().textRenderer, config);
+                VCButton.render(context, Minecraft.getInstance().font, config);
             }
         };
     }    
 
-    public static ButtonWidget createMcToggle(int x, int y, int width, int height, boolean enabled,
-                                                  ButtonWidget.PressAction onPress, float uiScale) {
+    public static Button createMcToggle(int x, int y, int width, int height, boolean enabled,
+                                                  Button.OnPress onPress, float uiScale) {
 
-        MutableText message = enabled ? Text.literal("ON") : Text.literal("OFF");
-        return new ButtonWidget(x, y, width, height, message, onPress, button -> message) {
+        MutableComponent message = enabled ? Component.literal("ON") : Component.literal("OFF");
+        return new Button(x, y, width, height, message, onPress, button -> message) {
             @Override
-            protected void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
+            protected void extractContents(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
                 
                 boolean currentEnabled = this.getMessage().getString().equals("ON");
                 var config = new ButtonConfig(this.getX(), this.getY(), this.width, this.height, this.getMessage().getString())
@@ -116,13 +116,13 @@ public class VCButton {
                     .withHovered(this.isHovered())
                     .withType(ButtonType.MCTOGGLE);
 
-                VCButton.render(context, MinecraftClient.getInstance().textRenderer, config);
+                VCButton.render(context, Minecraft.getInstance().font, config);
             }
         };
     }
 
     // -- Internal rendering methods --
-    private static void renderNavigation(DrawContext context, TextRenderer textRenderer, ButtonConfig config) {
+    private static void renderNavigation(GuiGraphicsExtractor context, Font textRenderer, ButtonConfig config) {
 
         int bgColor = config.enabled ? VCVisuals.bgHex2(config.hovered) : 0x80404040;
         int borderColor = config.enabled ? VCVisuals.borderHex2(config.hovered) : 0x80404040;
@@ -137,7 +137,7 @@ public class VCButton {
         );
     }
 
-    private static void renderVCWidget(DrawContext context, TextRenderer textRenderer, ButtonConfig config) {
+    private static void renderVCWidget(GuiGraphicsExtractor context, Font textRenderer, ButtonConfig config) {
 
         int bgColor = config.enabled ? VCVisuals.bgHex2(config.hovered) : 0x80404040;
         int borderColor = config.enabled ? VCVisuals.borderHex2(config.hovered) : 0x80404040;
@@ -152,7 +152,7 @@ public class VCButton {
         );
     }    
 
-    private static void renderMcToggle(DrawContext context, TextRenderer textRenderer, ButtonConfig config) {
+    private static void renderMcToggle(GuiGraphicsExtractor context, Font textRenderer, ButtonConfig config) {
         int textColor = config.enabled ? Colors.ENABLED_GREEN : Colors.TRANSPARENT_GREY;
         int bgColor = VCVisuals.bgHex2(config.hovered);
         int borderColor = VCVisuals.borderHex2(config.hovered);
@@ -165,7 +165,7 @@ public class VCButton {
         );
     }
 
-    private static void renderStandard(DrawContext context, TextRenderer textRenderer, ButtonConfig config) {
+    private static void renderStandard(GuiGraphicsExtractor context, Font textRenderer, ButtonConfig config) {
 
         int bgColor = VCVisuals.bgHex(config.hovered, config.enabled);
         RenderUtils.gradient(context, config.x, config.y, config.width, config.height, bgColor);
@@ -187,7 +187,7 @@ public class VCButton {
         );
     }
 
-    private static void renderToggle(DrawContext context, TextRenderer textRenderer, ButtonConfig config) {
+    private static void renderToggle(GuiGraphicsExtractor context, Font textRenderer, ButtonConfig config) {
         int textColor = config.enabled ? Colors.ENABLED_GREEN : Colors.TRANSPARENT_GREY;
 
         int bgColor = VCVisuals.bgHex(config.hovered, config.enabled);
@@ -231,9 +231,9 @@ public class VCButton {
                mouseY >= buttonY && mouseY <= buttonY + buttonHeight;
     }
 
-    public static ButtonConfig updateButtonState(ButtonWidget button, boolean enabled) {
-        MutableText newText = enabled ? Text.literal("ON").styled(style -> style.withColor(0xFFFFFFFF))
-                               : Text.literal("OFF").styled(style -> style.withColor(0xFFC4FFFF));        
+    public static ButtonConfig updateButtonState(Button button, boolean enabled) {
+        MutableComponent newText = enabled ? Component.literal("ON").withStyle(style -> style.withColor(0xFFFFFFFF))
+                               : Component.literal("OFF").withStyle(style -> style.withColor(0xFFC4FFFF));        
         button.setMessage(newText);
         return new ButtonConfig(button.getX(), button.getY(), button.getWidth(), button.getHeight(), newText.getString())
             .withType(ButtonType.TOGGLE)

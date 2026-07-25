@@ -1,21 +1,21 @@
 package me.valkeea.fishyaddons.util.text;
 
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Style;
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.Style;
 
 public class TextUtils {
     private TextUtils() {}
 
-    private static final java.util.LinkedHashMap<Text, Text> stripColorCache = new java.util.LinkedHashMap<Text, Text>(16, 0.75f, true) {
+    private static final java.util.LinkedHashMap<Component, Component> stripColorCache = new java.util.LinkedHashMap<Component, Component>(16, 0.75f, true) {
         @Override
-        protected boolean removeEldestEntry(java.util.Map.Entry<Text, Text> eldest) {
+        protected boolean removeEldestEntry(java.util.Map.Entry<Component, Component> eldest) {
             return size() > 10;
         }
     };
 
-    public static Text stripColor(Text text) {
-        Text cached = stripColorCache.get(text);
+    public static Component stripColor(Component text) {
+        Component cached = stripColorCache.get(text);
         if (cached != null) {
             return cached;
         }
@@ -33,16 +33,16 @@ public class TextUtils {
             newStyle = newStyle.withItalic(true);
         }
         
-        MutableText base;
+        MutableComponent base;
         if (text.getSiblings().isEmpty()) {
             // Leaf node - use its content
-            base = Text.literal(text.getString()).setStyle(newStyle);
+            base = Component.literal(text.getString()).setStyle(newStyle);
         } else {
             // Container node - start empty and only add siblings
-            base = Text.empty().setStyle(newStyle);
+            base = Component.empty().setStyle(newStyle);
         }
 
-        for (Text sibling : text.getSiblings()) {
+        for (Component sibling : text.getSiblings()) {
             base.append(stripColor(sibling));
         }
         
@@ -50,10 +50,10 @@ public class TextUtils {
         return base;
     }
 
-    public static Text stripFormatting(Text text) {
-        if (text == null) return Text.literal("");
+    public static Component stripFormatting(Component text) {
+        if (text == null) return Component.literal("");
         String cleanString = stripColor(text.getString());
-        return Text.literal(cleanString);
+        return Component.literal(cleanString);
     }    
 
     public static String stripColor(String text) {

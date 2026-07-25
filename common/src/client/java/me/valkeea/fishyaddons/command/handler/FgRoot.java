@@ -10,11 +10,11 @@ import me.valkeea.fishyaddons.util.FishyNotis;
 import me.valkeea.fishyaddons.vconfig.config.impl.ItemConfig;
 import me.valkeea.fishyaddons.vconfig.ui.manager.ScreenManager;
 import me.valkeea.fishyaddons.vconfig.ui.screen.VCState;
-import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
+import net.fabricmc.fabric.api.client.command.v2.ClientCommands;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
 
 public class FgRoot implements CommandHandler {
     
@@ -33,7 +33,7 @@ public class FgRoot implements CommandHandler {
             .then(confirmClearCmd())
             .then(cancelClearCmd())
             .then(helpCmd())
-            .executes(context -> {
+            .executes(ctx -> {
                 VCState.setSearchTo("safeguard");
                 ScreenManager.openConfigScreen();
                 return 1;
@@ -45,13 +45,13 @@ public class FgRoot implements CommandHandler {
     }    
     
     private static LiteralArgumentBuilder<FabricClientCommandSource> addCmd() {
-        return ClientCommandManager.literal("add")
+        return ClientCommands.literal("add")
         .executes(ctx -> {
 
-            var mc = MinecraftClient.getInstance();
-            if (mc.player == null || mc.world == null) return 1;
+            var mc = Minecraft.getInstance();
+            if (mc.player == null || mc.level == null) return 1;
 
-            var held = mc.player.getMainHandStack();
+            var held = mc.player.getMainHandItem();
             if (held == null || held.isEmpty()) {
                 FishyNotis.notice("You must be holding an item to use this command.");
                 return 1;
@@ -63,20 +63,20 @@ public class FgRoot implements CommandHandler {
                 return 1;
             }
 
-            var name = held.getName();
+            var name = held.getCustomName();
             FGUtil.addToFg(uuid, name);
 
-            FishyNotis.format(Text.literal("Your ").formatted(Formatting.GRAY)
+            FishyNotis.format(Component.literal("Your ").withStyle(ChatFormatting.GRAY)
                 .append(name)
-                .append(Text.literal(" is now protected.").formatted(Formatting.GRAY)));
+                .append(Component.literal(" is now protected.").withStyle(ChatFormatting.GRAY)));
 
             return 1;
         });
     }
 
     private static LiteralArgumentBuilder<FabricClientCommandSource> removeCmd() {
-        return ClientCommandManager.literal("remove")
-        .then(ClientCommandManager.argument("uuid", StringArgumentType.greedyString())
+        return ClientCommands.literal("remove")
+        .then(ClientCommands.argument("uuid", StringArgumentType.greedyString())
         .executes(ctx -> {
             String uuid = StringArgumentType.getString(ctx, "uuid");
             if (!onRemove(uuid)) FishyNotis.notice("Provided UUID isn't protected or is invalid.");
@@ -84,10 +84,10 @@ public class FgRoot implements CommandHandler {
         }))
         .executes(ctx -> {
 
-            var mc = MinecraftClient.getInstance();
+            var mc = Minecraft.getInstance();
             if (mc.player == null) return 1;
 
-            var held = mc.player.getMainHandStack();
+            var held = mc.player.getMainHandItem();
             if (held == null || held.isEmpty()) {
                 FishyNotis.notice("You must be holding an item to use this command.");
                 return 1;
@@ -101,7 +101,7 @@ public class FgRoot implements CommandHandler {
     }
 
     private static LiteralArgumentBuilder<FabricClientCommandSource> listCmd() {
-        return ClientCommandManager.literal("list")
+        return ClientCommands.literal("list")
         .executes(ctx -> {
             CmdHelper.sendSortedProtectedList();
             return 1;
@@ -110,8 +110,8 @@ public class FgRoot implements CommandHandler {
 
 
     private static LiteralArgumentBuilder<FabricClientCommandSource> clearCmd() {
-        return ClientCommandManager.literal("clear")
-        .executes(context -> {
+        return ClientCommands.literal("clear")
+        .executes(ctx -> {
             if (!CmdChat.pendingClear) {
                 CmdChat.pendingClear = true;
                 FishyNotis.send("Are you SURE you want to clear all protected items?");
@@ -124,8 +124,8 @@ public class FgRoot implements CommandHandler {
     }
 
     private static LiteralArgumentBuilder<FabricClientCommandSource> confirmClearCmd() {
-        return ClientCommandManager.literal("confirmclear")
-        .executes(context -> {
+        return ClientCommands.literal("confirmclear")
+        .executes(ctx -> {
             ItemConfig.clearAll();
             FishyNotis.send("All protected items have been cleared.");
             CmdChat.pendingClear = false;
@@ -134,8 +134,8 @@ public class FgRoot implements CommandHandler {
     }
 
     private static LiteralArgumentBuilder<FabricClientCommandSource> cancelClearCmd() {
-        return ClientCommandManager.literal("cancelclear")
-        .executes(context -> {
+        return ClientCommands.literal("cancelclear")
+        .executes(ctx -> {
             FishyNotis.notice("/fa guard clear was canceled.");
             CmdChat.pendingClear = false;
             return 1;
@@ -143,8 +143,8 @@ public class FgRoot implements CommandHandler {
     }
 
     private static LiteralArgumentBuilder<FabricClientCommandSource> helpCmd() {
-        return ClientCommandManager.literal("help")
-        .executes(context -> {
+        return ClientCommands.literal("help")
+        .executes(ctx -> {
             FishyNotis.themed("Usage: §bfa/fa guard §8< §7add §8| §7remove §8| §7list §8| §7clear §8>");
             return 1;
         });
@@ -158,9 +158,9 @@ public class FgRoot implements CommandHandler {
 
             var name = ItemConfig.getDisplayName(uuid);
             if (name != null) {
-                FishyNotis.format(Text.literal("Your ").formatted(Formatting.GRAY)
+                FishyNotis.format(Component.literal("Your ").withStyle(ChatFormatting.GRAY)
                     .append(name)
-                    .append(Text.literal(" is no longer protected.").formatted(Formatting.GRAY)));
+                    .append(Component.literal(" is no longer protected.").withStyle(ChatFormatting.GRAY)));
             }
             FGUtil.removeFromFg(uuid);
         }

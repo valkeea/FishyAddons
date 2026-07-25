@@ -2,31 +2,31 @@ package me.valkeea.fishyaddons.impl;
 
 import org.jetbrains.annotations.Nullable;
 
-import net.minecraft.client.sound.Sound;
-import net.minecraft.client.sound.SoundInstance;
-import net.minecraft.client.sound.SoundManager;
-import net.minecraft.client.sound.WeightedSoundSet;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.random.Random;
+import net.minecraft.client.resources.sounds.Sound;
+import net.minecraft.client.resources.sounds.SoundInstance;
+import net.minecraft.client.sounds.SoundManager;
+import net.minecraft.client.sounds.WeighedSoundEvents;
+import net.minecraft.resources.Identifier;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.RandomSource;
 
 /**
  * Custom sound instance for control over sound playback
  */
 public class MutableSoundInstance implements SoundInstance, BypassVolumeSound {
     private final SoundEvent soundEvent;
-    private final SoundCategory category;
+    private final SoundSource category;
     private final float volume;
     private final float pitch;
     private final boolean repeatable;
     private final int repeatDelay;
-    private final AttenuationType attenuationType;
+    private final Attenuation attenuationType;
     private final double x;
     private final double y; 
     private final double z;
     private final boolean relative;
-    private final Random random;
+    private final RandomSource random;
     private final boolean bypassVolumeSettings;
     private Sound sound;
 
@@ -48,10 +48,10 @@ public class MutableSoundInstance implements SoundInstance, BypassVolumeSound {
 
     @Override
     @Nullable
-    public WeightedSoundSet getSoundSet(SoundManager soundManager) {
-        WeightedSoundSet soundSet = soundManager.get(getId());
+    public WeighedSoundEvents resolve(SoundManager soundManager) {
+        WeighedSoundEvents soundSet = soundManager.getSoundEvent(getIdentifier());
         if (soundSet == null) {
-            this.sound = SoundManager.MISSING_SOUND;
+            this.sound = SoundManager.EMPTY_SOUND;
         } else {
             this.sound = soundSet.getSound(random);
         }
@@ -60,19 +60,19 @@ public class MutableSoundInstance implements SoundInstance, BypassVolumeSound {
 
     @Override
     public Sound getSound() {
-        return sound != null ? sound : SoundManager.MISSING_SOUND;
+        return sound != null ? sound : SoundManager.EMPTY_SOUND;
     }
 
     @Override
-    public AttenuationType getAttenuationType() {
+    public Attenuation getAttenuation() {
         return attenuationType;
     }
 
-    @Override public Identifier getId() { return soundEvent.id(); }
-    @Override public SoundCategory getCategory() { return category; }
-    @Override public boolean isRepeatable() { return repeatable; }
+    @Override public Identifier getIdentifier() { return soundEvent.location(); }
+    @Override public SoundSource getSource() { return category; }
+    @Override public boolean isLooping() { return repeatable; }
     @Override public boolean isRelative() { return relative; }
-    @Override public int getRepeatDelay() { return repeatDelay; }
+    @Override public int getDelay() { return repeatDelay; }
     @Override public float getVolume() { return volume; }
     @Override public float getPitch() { return pitch; }
     @Override public double getX() { return x; }
@@ -86,24 +86,24 @@ public class MutableSoundInstance implements SoundInstance, BypassVolumeSound {
 
     public static class Builder {
         private SoundEvent soundEvent;
-        private SoundCategory category = SoundCategory.MASTER;
+        private SoundSource category = SoundSource.MASTER;
         private float volume = 1.0F;
         private float pitch = 1.0F;
         private boolean repeatable = false;
         private int repeatDelay = 0;
-        private AttenuationType attenuationType = AttenuationType.NONE;
+        private Attenuation attenuationType = Attenuation.NONE;
         private double x = 0.0;
         private double y = 0.0;
         private double z = 0.0;
         private boolean relative = true;
-        private Random random = Random.create();
+        private RandomSource random = RandomSource.create();
         private boolean bypassVolumeSettings = false;
 
         public Builder(SoundEvent soundEvent) {
             this.soundEvent = soundEvent;
         }
 
-        public Builder category(SoundCategory category) {
+        public Builder category(SoundSource category) {
             this.category = category;
             return this;
         }
@@ -128,7 +128,7 @@ public class MutableSoundInstance implements SoundInstance, BypassVolumeSound {
             return this;
         }
 
-        public Builder attenuationType(AttenuationType attenuationType) {
+        public Builder attenuationType(Attenuation attenuationType) {
             this.attenuationType = attenuationType;
             return this;
         }
@@ -171,7 +171,7 @@ public class MutableSoundInstance implements SoundInstance, BypassVolumeSound {
 
     public static MutableSoundInstance ambient(SoundEvent soundEvent, float pitch, float volume) {
         return new Builder(soundEvent)
-                .category(SoundCategory.AMBIENT)
+                .category(SoundSource.AMBIENT)
                 .pitch(pitch)
                 .volume(volume)
                 .build();
@@ -179,7 +179,7 @@ public class MutableSoundInstance implements SoundInstance, BypassVolumeSound {
 
     public static MutableSoundInstance repeating(SoundEvent soundEvent, float pitch, float volume, int repeatDelay) {
         return new Builder(soundEvent)
-                .category(SoundCategory.MASTER)
+                .category(SoundSource.MASTER)
                 .pitch(pitch)
                 .volume(volume)
                 .repeatable(true)

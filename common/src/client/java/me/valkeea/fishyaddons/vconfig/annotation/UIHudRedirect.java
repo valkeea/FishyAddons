@@ -5,8 +5,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import me.valkeea.fishyaddons.vconfig.core.UICategory;
 import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
+import me.valkeea.fishyaddons.vconfig.core.UICategory;
 
 /**
  * Marks a config entry as a redirect to a HUD editor for a specific element.

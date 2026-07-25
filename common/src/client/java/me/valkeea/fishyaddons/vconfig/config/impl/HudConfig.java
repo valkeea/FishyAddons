@@ -7,7 +7,7 @@ import com.google.gson.reflect.TypeToken;
 
 import me.valkeea.fishyaddons.vconfig.config.BaseConfig;
 import me.valkeea.fishyaddons.vconfig.config.ConfigSection;
-import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.Minecraft;
 
 @SuppressWarnings("squid:S6548")
 public class HudConfig extends BaseConfig {
@@ -31,16 +31,16 @@ public class HudConfig extends BaseConfig {
     public static int getHudX(String hudKey, int defaultX) {
         Object value = INSTANCE.hud.getValues().getOrDefault(hudKey + "X", defaultX);
         int intValue = value instanceof Number n ? n.intValue() : defaultX;
-        var window = MinecraftClient.getInstance().getWindow();
-        int maxX = window.getFramebufferWidth() / window.getScaleFactor() - getHudSize(hudKey, 12);
+        var window = Minecraft.getInstance().getWindow();
+        int maxX = window.getWidth() / window.getGuiScale() - getHudSize(hudKey, 12);
         return Math.clamp(intValue, 0, maxX);
     }
 
     public static int getHudY(String hudKey, int defaultY) {
         Object value = INSTANCE.hud.getValues().getOrDefault(hudKey + "Y", defaultY);
         int intValue = value instanceof Number n ? n.intValue() : defaultY;
-        var window = MinecraftClient.getInstance().getWindow();
-        int maxY = window.getFramebufferHeight() / window.getScaleFactor() - getHudSize(hudKey, 12);
+        var window = Minecraft.getInstance().getWindow();
+        int maxY = window.getHeight() / window.getGuiScale() - getHudSize(hudKey, 12);
         return Math.clamp(intValue, 0, maxY);
     }
 

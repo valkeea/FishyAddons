@@ -3,16 +3,16 @@ package me.valkeea.fishyaddons.ui.list;
 import java.util.Map;
 
 import me.valkeea.fishyaddons.vconfig.config.impl.ShortcutsConfig;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gui.Click;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.text.Text;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.network.chat.Component;
 
 public class ChatEntryList extends GenericEntryList {
-    public ChatEntryList(MinecraftClient client, int width, int height, int y, int itemHeight, TabbedListScreen parentScreen) {
+    public ChatEntryList(Minecraft client, int width, int height, int y, int itemHeight, TabbedListScreen parentScreen) {
         super(client, width, height, y, itemHeight, parentScreen);
     }
 
@@ -42,17 +42,17 @@ public class ChatEntryList extends GenericEntryList {
     }
 
     @Override
-    public void getGuideText(DrawContext context, TextRenderer tr, int x, int y) {
-        context.drawTextWithShadow(tr, Text.literal("Detected String"), x - 5, y - 10, 0xFFAAAAAA);
-        context.drawTextWithShadow(tr, Text.literal("Replaced in chat with:"), x + 110, y - 10, 0xFFAAAAAA);
+    public void getGuideText(GuiGraphicsExtractor context, Font tr, int x, int y) {
+        context.text(tr, Component.literal("Detected String"), x - 5, y - 10, 0xFFAAAAAA);
+        context.text(tr, Component.literal("Replaced in chat with:"), x + 110, y - 10, 0xFFAAAAAA);
     }     
 
     public GenericEntry getHoveredChatEntry() {
-        return this.getHoveredEntry();
+        return this.getHovered();
     }
 
     @Override
-    public void appendClickableNarrations(net.minecraft.client.gui.screen.narration.NarrationMessageBuilder builder) {
+    public void updateWidgetNarration(net.minecraft.client.gui.narration.NarrationElementOutput builder) {
         // Access
     }
 
@@ -69,19 +69,19 @@ public class ChatEntryList extends GenericEntryList {
     @Override public String getDefaultInput() { return ""; }
     @Override public String getDefaultOutput() { return ""; }
 
-    public boolean handleMouseClicked(Click click, TabbedListScreen screen) {
+    public boolean handleMouseClicked(MouseButtonEvent click, TabbedListScreen screen) {
 
         var entry = getHoveredChatEntry();
 
         if (entry == null) return false;
-        if (entry.inputWidget instanceof TextFieldWidget field) {
+        if (entry.inputWidget instanceof EditBox field) {
             if (field.mouseClicked(click, false)) {
                 field.setFocused(true);
                 screen.setFocused(field);
                 return true;
             }
 
-        } else if (entry.inputWidget instanceof ButtonWidget btn && btn.mouseClicked(click, false)) {
+        } else if (entry.inputWidget instanceof Button btn && btn.mouseClicked(click, false)) {
             btn.setFocused(true);
             screen.setFocused(btn);
             return true;

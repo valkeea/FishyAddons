@@ -2,10 +2,10 @@ package me.valkeea.fishyaddons.vconfig.ui.widget;
 
 import me.valkeea.fishyaddons.vconfig.ui.layout.Dimensions;
 import me.valkeea.fishyaddons.vconfig.ui.render.VCRenderContext;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gui.Click;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.text.Text;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.network.chat.Component;
 
 @SuppressWarnings("squid:S107")
 public class VCSlider {
@@ -85,7 +85,7 @@ public class VCSlider {
         render(rCtx.context, rCtx.textRenderer, rCtx.mouseX, rCtx.mouseY, rCtx.themeColor);
     }
     
-    public void render(DrawContext ctx, TextRenderer textRenderer, int mouseX, int mouseY, int themeColor) {
+    public void render(GuiGraphicsExtractor ctx, Font textRenderer, int mouseX, int mouseY, int themeColor) {
 
         int trackY = y + (sliderH - 4) / 2;
         ctx.fill(x, trackY, x + sliderW, trackY + 4, 0xC0333333);
@@ -114,7 +114,7 @@ public class VCSlider {
         if ((kHovered || isDragging) && showPreview) {
             int labelX = isDragging ? kX + knobW : mouseX + knobW;
             int labelY = isDragging ? kY - knobH : mouseY - knobH;
-            ctx.drawText(
+            ctx.text(
                 textRenderer,
                 getLabel(themeColor),
                 labelX, labelY,
@@ -124,7 +124,7 @@ public class VCSlider {
         }
     }
     
-    public boolean mouseClicked(Click click) {
+    public boolean mouseClicked(MouseButtonEvent click) {
         double mouseX = click.x();
         double mouseY = click.y();
         int button = click.button();
@@ -135,7 +135,7 @@ public class VCSlider {
         return false;
     }
     
-    public boolean mouseReleased(Click click) {
+    public boolean mouseReleased(MouseButtonEvent click) {
         if (click.button() == 0 && isDragging) {
             isDragging = false;
             updateValue(click.x(), true);
@@ -144,7 +144,7 @@ public class VCSlider {
         return false;
     }
     
-    public boolean mouseDragged(Click click) {
+    public boolean mouseDragged(MouseButtonEvent click) {
         if (isDragging && click.button() == 0) {
             updateValue(click.x(), usingSteps());
             return true;
@@ -193,7 +193,7 @@ public class VCSlider {
         return isDragging;
     }
     
-    private Text getLabel(int defaultColor) {
+    private Component getLabel(int defaultColor) {
         double actualValue = getValue();
         
         if (labels != null && labels.length > 0) {
@@ -203,7 +203,7 @@ public class VCSlider {
         }
     }
 
-    private Text getDescriptiveLabel(double value, int defaultColor) {
+    private Component getDescriptiveLabel(double value, int defaultColor) {
 
         int index = stepIndex();
         int valueAmt = labels.length;
@@ -219,7 +219,7 @@ public class VCSlider {
             : getNumericLabel(value, defaultColor);
     }
 
-    private Text getNumericLabel(double value, int defaultColor) {
+    private Component getNumericLabel(double value, int defaultColor) {
         value = displayFormat.equals(DEFAULT_FORMAT) ? value * 100 : value;
         return style(String.format(displayFormat, value), defaultColor);
     }
@@ -229,8 +229,8 @@ public class VCSlider {
         return String.format(displayFormat, actualValue * 100);
     }
 
-    private Text style(String s, int color) {
-        return Text.literal(s).styled(st -> st.withColor(color));
+    private Component style(String s, int color) {
+        return Component.literal(s).withStyle(st -> st.withColor(color));
     }
 
     public void setShowPreview(boolean show) {

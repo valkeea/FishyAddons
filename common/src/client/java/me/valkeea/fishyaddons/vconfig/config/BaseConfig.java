@@ -17,7 +17,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 
 import me.valkeea.fishyaddons.vconfig.api.ConfigKey;
-import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.Minecraft;
 
 public abstract class BaseConfig {
     protected static final String VERSION_KEY = "configVersion";
@@ -34,7 +34,7 @@ public abstract class BaseConfig {
     private boolean isRestoring = false;
     
     protected BaseConfig(String filename) {
-        File root = new File(MinecraftClient.getInstance().runDirectory, "config/fishyaddons");
+        File root = new File(Minecraft.getInstance().gameDirectory, "config/fishyaddons");
         root.mkdirs();
         this.configFile = new File(root, filename);
         this.backupDir = new File(root, "backup");
@@ -58,7 +58,7 @@ public abstract class BaseConfig {
             } else {
                 log("Marked migration complete: " + sourceName);
             }
-        } catch (IOException e) {
+        } catch (IOException _) {
             logError("Failed to create migration marker for " + sourceName);
         }
     }
@@ -73,7 +73,7 @@ public abstract class BaseConfig {
             File backupFile = new File(datedBackupDir, oldFile.getName());
             Files.copy(oldFile.toPath(), backupFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
             log("Backed up " + oldFile.getName() + " before migration");
-        } catch (IOException e) {
+        } catch (IOException _) {
             logError("Failed to backup old config file: " + oldFile.getName());
         }
     }
@@ -184,7 +184,7 @@ public abstract class BaseConfig {
             if (tempFile.exists()) { // Clean up temp file on failure
                 try {
                     Files.delete(tempFile.toPath());
-                } catch (IOException ex) {
+                } catch (IOException _) {
                     // Ignore cleanup failure
                 }
             }
@@ -235,7 +235,7 @@ public abstract class BaseConfig {
         }
         try {
             Files.delete(dir.toPath());
-        } catch (IOException e) {
+        } catch (IOException _) {
             logError("Failed to delete directory: " + dir.getAbsolutePath());
         }
     }
@@ -244,7 +244,7 @@ public abstract class BaseConfig {
      * By default attempts to migrate from the old monolithic file
      */
     protected boolean tryMigrate() {
-        File oldConfig = new File(MinecraftClient.getInstance().runDirectory, "config/fishyaddons/fishyaddons.json");
+        File oldConfig = new File(Minecraft.getInstance().gameDirectory, "config/fishyaddons/fishyaddons.json");
         if (!oldConfig.exists()) return false;
         
         try (var reader = new FileReader(oldConfig)) {

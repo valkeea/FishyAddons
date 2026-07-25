@@ -10,7 +10,7 @@ import me.valkeea.fishyaddons.tracker.profit.TrackedItemData;
 import me.valkeea.fishyaddons.util.text.StringUtils;
 import me.valkeea.fishyaddons.vconfig.api.Config;
 import me.valkeea.fishyaddons.vconfig.api.StringKey;
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.Component;
 
 /**
  * Manages active goal selection and progress calculation.
@@ -24,7 +24,7 @@ public class GoalManager {
     private double cachedProgress = 0.0;
     private boolean progressInvalidated = true;
     
-    private List<Text> cachedBreakdown = null;
+    private List<Component> cachedBreakdown = null;
     private boolean breakdownInvalidated = true;
     private long lastPriceFetch = 0;
     private static final long PRICE_CACHE_MS = 300000;
@@ -197,8 +197,8 @@ public class GoalManager {
 
         double gainedRawValue = 0.0;
         boolean hasInvalidPrices = false;
-        List<Text> lines = new ArrayList<>();
-        List<Text> missing = new ArrayList<>();
+        List<Component> lines = new ArrayList<>();
+        List<Component> missing = new ArrayList<>();
         int fillerCount = 0;
         
         for (var entry : ingredients.entrySet()) {
@@ -216,7 +216,7 @@ public class GoalManager {
                 double itemProgress = (double) gain / required * 100;
                 double ingredientTotalValue = itemValue * required;
                 String priceStatus = itemValue > 0 ? "§6" : "§c";
-                lines.add(Text.literal(String.format("  %s%s: §f%,d§7/§f%,d §7(§e%.1f%%§7) %s%,.0f coins", 
+                lines.add(Component.literal(String.format("  %s%s: §f%,d§7/§f%,d §7(§e%.1f%%§7) %s%,.0f coins", 
                     statusClr, displayName, gain, required, itemProgress, priceStatus, ingredientTotalValue)));  
 
                 if (itemValue > 0) {
@@ -226,7 +226,7 @@ public class GoalManager {
                 }
 
             } else {
-                missing.add(Text.literal(String.format("  %s%s: §f0§7/§f%,d §7(§70%%§7)", 
+                missing.add(Component.literal(String.format("  %s%s: §f0§7/§f%,d §7(§70%%§7)", 
                     statusClr, displayName, required)));
                 fillerCount++;
             }
@@ -235,7 +235,7 @@ public class GoalManager {
         if (!missing.isEmpty()) {
             lines.addAll(missing);
             if (fillerCount > 0) {
-                lines.add(Text.literal("    §7§o(0-gain ingredients ignored in calculation)"));
+                lines.add(Component.literal("    §7§o(0-gain ingredients ignored in calculation)"));
             }
         }
         
@@ -247,7 +247,7 @@ public class GoalManager {
     /**
      * Get a breakdown of progress for each ingredient in the active goal, for tooltip display.
      */
-    public List<Text> getGoalBreakdown() {
+    public List<Component> getGoalBreakdown() {
         if (!breakdownInvalidated && cachedBreakdown != null) {
             long now = System.currentTimeMillis();
             if ((now - lastPriceFetch) < PRICE_CACHE_MS) {
@@ -256,22 +256,22 @@ public class GoalManager {
             breakdownInvalidated = true;
         }
         
-        List<Text> lines = new ArrayList<>();
+        List<Component> lines = new ArrayList<>();
         
         if (activeGoal == null) {
-            lines.add(Text.literal("§cNo active goal"));
+            lines.add(Component.literal("§cNo active goal"));
             return lines;
         }
         
         var goalRecipe = getActiveGoalRecipe();
         if (goalRecipe == null) {
-            lines.add(Text.literal("§cGoal recipe not found"));
+            lines.add(Component.literal("§cGoal recipe not found"));
             return lines;
         }
         
         Map<String, Integer> ingredients = goalRecipe.getIngredients();
         if (ingredients.isEmpty()) {
-            lines.add(Text.literal("§cNo ingredients in recipe"));
+            lines.add(Component.literal("§cNo ingredients in recipe"));
             return lines;
         }
         
@@ -281,18 +281,18 @@ public class GoalManager {
         var upper = StringUtils.capitalize(activeGoal);
 
         lines.add(styleText("§l" + upper + " §7(§6" + (goalValueInvalid ? "?" : String.format("%,.0f", goalValue)) + " coins§7)", theme));
-        lines.add(Text.literal(LINE));
+        lines.add(Component.literal(LINE));
         
         GoalBreakdownData gbd = buildGBD(ingredients);
         lines.addAll(gbd.lines);
         
-        lines.add(Text.literal(LINE));
+        lines.add(Component.literal(LINE));
         lines.add(styleText("§lGained Profit:", theme));
         addProfitLines(lines, gbd.gainedRawValue, gbd.hasInvalidPrices, goalValue, goalValueInvalid);
         
         addRateLines(lines, theme, gbd.gainedRawValue, gbd.hasInvalidPrices, goalValue, goalValueInvalid);
 
-        lines.add(Text.literal(LINE));
+        lines.add(Component.literal(LINE));
         lines.add(styleText("Click the line to forget this goal!", 0x555555));
         
         cachedBreakdown = new ArrayList<>(lines);
@@ -302,58 +302,58 @@ public class GoalManager {
         return lines;
     }
 
-    private void addProfitLines(List<Text> lines, double rawGained, boolean hasInvalidPrices, double goalValue, boolean goalValueInvalid) {
+    private void addProfitLines(List<Component> lines, double rawGained, boolean hasInvalidPrices, double goalValue, boolean goalValueInvalid) {
         if (hasInvalidPrices) {
-            lines.add(Text.literal("  §7Ingredient value: §c[Compromised]"));
+            lines.add(Component.literal("  §7Ingredient value: §c[Compromised]"));
         } else {
-            lines.add(Text.literal(String.format("  §7Ingredient value: §f%,.0f coins", rawGained)));
+            lines.add(Component.literal(String.format("  §7Ingredient value: §f%,.0f coins", rawGained)));
         }
         
         double gainedGoalValue = goalValue * getProgress();
 
         if (goalValueInvalid) {
-            lines.add(Text.literal("  §7Craft value: §c[Invalid/Unknown]"));
+            lines.add(Component.literal("  §7Craft value: §c[Invalid/Unknown]"));
         } else {
-            lines.add(Text.literal(String.format("  §7Craft value: §f%,.0f coins", gainedGoalValue)));
+            lines.add(Component.literal(String.format("  §7Craft value: §f%,.0f coins", gainedGoalValue)));
         }
         
         if (!hasInvalidPrices && !goalValueInvalid && rawGained > 0) {
             double profit = gainedGoalValue - rawGained;
             String profitColor = profit >= 0 ? "§a" : "§c";
             String profitPrefix = profit >= 0 ? "+" : "";
-            lines.add(Text.literal(String.format("  §7Craft Profit: %s%s%,.0f coins", 
+            lines.add(Component.literal(String.format("  §7Craft Profit: %s%s%,.0f coins", 
                 profitColor, profitPrefix, profit)));
         }
     }
 
-    private void addRateLines(List<Text> lines, int theme, double rawGained, boolean hasInvalidPrices, double goalValue, boolean goalValueInvalid) {
+    private void addRateLines(List<Component> lines, int theme, double rawGained, boolean hasInvalidPrices, double goalValue, boolean goalValueInvalid) {
         long durationMs = CollectionData.getSessionDuration();
         long durationMinutes = durationMs / 60000;
         
         if (durationMinutes <= 0) {
-            lines.add(Text.literal(LINE));
-            lines.add(Text.literal("§7No session time data"));
+            lines.add(Component.literal(LINE));
+            lines.add(Component.literal("§7No session time data"));
             return;
         }
         
-        lines.add(Text.literal(LINE));
+        lines.add(Component.literal(LINE));
         lines.add(styleText("§lProfit difference (per hour):", theme));
         
         double hoursElapsed = durationMinutes / 60.0;
         double gainedGoalValue = goalValue * getProgress();
         
         if (hasInvalidPrices) {
-            lines.add(Text.literal("  §7Raw Value/hr: §c[Compromised]"));
+            lines.add(Component.literal("  §7Raw Value/hr: §c[Compromised]"));
         } else {
             double rawValuePerHour = rawGained / hoursElapsed;
-            lines.add(Text.literal(String.format("  §7Raw Value/hr: §f%,.0f§7 coins", rawValuePerHour)));
+            lines.add(Component.literal(String.format("  §7Raw Value/hr: §f%,.0f§7 coins", rawValuePerHour)));
         }
         
         if (goalValueInvalid) {
-            lines.add(Text.literal("  §7Craft Value/hr: §c[Invalid/Unknown]"));
+            lines.add(Component.literal("  §7Craft Value/hr: §c[Invalid/Unknown]"));
         } else {
             double craftedValuePerHour = gainedGoalValue / hoursElapsed;
-            lines.add(Text.literal(String.format("  §7Craft Value/hr: §f%,.0f§7 coins", craftedValuePerHour)));
+            lines.add(Component.literal(String.format("  §7Craft Value/hr: §f%,.0f§7 coins", craftedValuePerHour)));
         }
         
         if (!hasInvalidPrices && !goalValueInvalid && rawGained > 0) {
@@ -361,15 +361,15 @@ public class GoalManager {
         }
     }
 
-    private void addProfitabilityComparison(List<Text> lines, double rawPerHr, double goalPerHr) {
+    private void addProfitabilityComparison(List<Component> lines, double rawPerHr, double goalPerHr) {
         if (goalPerHr > rawPerHr) {
             double improvement = ((goalPerHr - rawPerHr) / rawPerHr) * 100;
-            lines.add(Text.literal(String.format("  §a✓ Crafting is §e%.1f%%§a more profitable", improvement)));
+            lines.add(Component.literal(String.format("  §a✓ Crafting is §e%.1f%%§a more profitable", improvement)));
         } else if (rawPerHr > goalPerHr) {
             double loss = ((rawPerHr - goalPerHr) / rawPerHr) * 100;
-            lines.add(Text.literal(String.format("  §c✖ Selling raw is §e%.1f%%§c more profitable", loss)));
+            lines.add(Component.literal(String.format("  §c✖ Selling raw is §e%.1f%%§c more profitable", loss)));
         } else {
-            lines.add(Text.literal("  §7= Equal profitability"));
+            lines.add(Component.literal("  §7= Equal profitability"));
         }
     }
 
@@ -431,16 +431,16 @@ public class GoalManager {
         return formatted.toString();
     }    
 
-    private Text styleText(String text, int color) {
-        return Text.literal(text).styled(s -> s.withColor(color));
+    private Component styleText(String text, int color) {
+        return Component.literal(text).withStyle(s -> s.withColor(color));
     }
     
     private static class GoalBreakdownData {
-        final List<Text> lines;
+        final List<Component> lines;
         final double gainedRawValue;
         final boolean hasInvalidPrices;
         
-        GoalBreakdownData(List<Text> lines, double gainedRawValue, boolean hasInvalidPrices) {
+        GoalBreakdownData(List<Component> lines, double gainedRawValue, boolean hasInvalidPrices) {
             this.lines = lines;
             this.gainedRawValue = gainedRawValue;
             this.hasInvalidPrices = hasInvalidPrices;

@@ -105,7 +105,8 @@ public class WaypointConfig {
 
     @VCListener(
         value = {BooleanKey.FWP_ENABLED, BooleanKey.FWP_INFO},
-        ints = IntKey.FWP_DISTANCE
+        ints = IntKey.FWP_DISTANCE,
+        phase = VCListener.Phase.CHANGE
     )
     public static void refreshChains() {
         WaypointChains.refresh();

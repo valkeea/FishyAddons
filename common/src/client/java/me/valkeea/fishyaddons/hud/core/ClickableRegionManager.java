@@ -7,8 +7,8 @@ import java.util.function.Consumer;
 import me.valkeea.fishyaddons.feature.qol.CopyChat;
 import me.valkeea.fishyaddons.tool.FishyMode;
 import me.valkeea.fishyaddons.util.text.TextUtils;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.text.Text;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.network.chat.Component;
 
 /**
  * Manages clickable regions for HUD elements (e.g., clickable lines, menu items).
@@ -45,7 +45,7 @@ public class ClickableRegionManager {
                     region.invokeClick();
                     return true;
             }
-            if (button == 1 && region.isHovered(mouseX, mouseY) && region.getData() instanceof Text text) {
+            if (button == 1 && region.isHovered(mouseX, mouseY) && region.getData() instanceof Component text) {
                 CopyChat.toClipboard(TextUtils.stripColor(text.getString()));
                 return true;
             }
@@ -68,7 +68,7 @@ public class ClickableRegionManager {
     }
     
     /** Render tooltips for hovered regions */
-    public void renderTooltips(DrawContext context, HudDrawer drawer, double mouseX, double mouseY) {
+    public void renderTooltips(GuiGraphicsExtractor context, HudDrawer drawer, double mouseX, double mouseY) {
         for (ClickableRegion<?> region : regions) {
             if (region.isHovered(mouseX, mouseY) && region.hasTooltip()) {
                 region.renderTooltip(context, drawer, (int)mouseX, (int)mouseY);
@@ -88,7 +88,7 @@ public class ClickableRegionManager {
         private int button;
         private T data;
         private Consumer<T> onClick;
-        private List<Text> tooltip;
+        private List<Component> tooltip;
         
         public ClickableRegion(int x, int y, int width, int height, T data, Consumer<T> onClick) {
             this(x, y, width, height, 0, data, onClick);
@@ -128,7 +128,7 @@ public class ClickableRegionManager {
         }
         
         /** Set tooltip for this region */
-        public ClickableRegion<T> withTooltip(List<Text> tooltip) {
+        public ClickableRegion<T> withTooltip(List<Component> tooltip) {
             this.tooltip = tooltip;
             return this;
         }
@@ -139,7 +139,7 @@ public class ClickableRegionManager {
         }
         
         /** Render tooltip at mouse position */
-        public void renderTooltip(DrawContext context, HudDrawer drawer, int mouseX, int mouseY) {
+        public void renderTooltip(GuiGraphicsExtractor context, HudDrawer drawer, int mouseX, int mouseY) {
             if (hasTooltip()) {
                 drawer.drawTooltip(context, tooltip, mouseX, mouseY, FishyMode.getThemeColor());
             }

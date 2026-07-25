@@ -1,32 +1,32 @@
 package me.valkeea.fishyaddons.event.impl;
 
 import me.valkeea.fishyaddons.event.BaseEvent;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.render.RenderTickCounter;
+import net.minecraft.client.DeltaTracker;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 
 public class HudRenderEvent extends BaseEvent {
-    private final DrawContext context;
-    private final RenderTickCounter tickCounter;
-    private final MinecraftClient client;
+    private final GuiGraphicsExtractor context;
+    private final DeltaTracker tickCounter;
+    private final Minecraft client;
     private final boolean inScreenContext;
 
-    public HudRenderEvent(DrawContext context, RenderTickCounter tickCounter, MinecraftClient client, boolean inScreenContext) {
+    public HudRenderEvent(GuiGraphicsExtractor context, DeltaTracker tickCounter, Minecraft client, boolean inScreenContext) {
         this.context = context;
         this.tickCounter = tickCounter;
         this.client = client;
         this.inScreenContext = inScreenContext;
     }
 
-    public DrawContext getContext() {
+    public GuiGraphicsExtractor getContext() {
         return context;
     }
 
-    public RenderTickCounter getTickCounter() {
+    public DeltaTracker getTickCounter() {
         return tickCounter;
     }
 
-    public MinecraftClient getClient() {
+    public Minecraft getClient() {
         return client;
     }
 

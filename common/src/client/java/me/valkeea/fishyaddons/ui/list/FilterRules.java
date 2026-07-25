@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import me.valkeea.fishyaddons.compat.McApi;
 import me.valkeea.fishyaddons.feature.filter.FilterConfig;
 import me.valkeea.fishyaddons.feature.filter.FilterConfig.Rule;
 import me.valkeea.fishyaddons.ui.GuiUtil;
@@ -17,13 +18,12 @@ import me.valkeea.fishyaddons.vconfig.ui.widget.VCLabelField;
 import me.valkeea.fishyaddons.vconfig.ui.widget.VCPopup;
 import me.valkeea.fishyaddons.vconfig.ui.widget.VCTextField;
 import me.valkeea.fishyaddons.vconfig.ui.widget.VCVisuals;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.Click;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.text.Style;
-import net.minecraft.text.Text;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.Style;
 
 public class FilterRules extends Screen {
     private static final String TITLE_TEXT = "─ α Chat Filter Rules α ─";
@@ -51,13 +51,13 @@ public class FilterRules extends Screen {
     private VCPopup popup = null;
 
     public FilterRules() {
-        super(Text.literal(TITLE_TEXT));
+        super(Component.literal(TITLE_TEXT));
     }
 
     @Override
     protected void init() {
         entries.clear();        
-        this.clearChildren();
+        this.clearWidgets();
         calcDimensions(UIScaleCalculator.calculateUIScaleLegacy());
 
         for (Map.Entry<String, Rule> entry : FilterConfig.getUserCreatedRules().entrySet()) {
@@ -80,35 +80,35 @@ public class FilterRules extends Screen {
             int addBtnY = this.height - 40;
             addBtn = new FaButton(
                 this.width / 2 - entryW / 2, addBtnY, btnW, btnH,
-                Text.literal("Add").styled(style -> style.withColor(0xFFCCFFCC)),
+                Component.literal("Add").withStyle(style -> style.withColor(0xFFCCFFCC)),
                 btn -> {
                     addMode = true;
                     addEntry = new AddEntry();
-                    this.addDrawableChild(addEntry.keyField);
-                    this.addDrawableChild(addEntry.saveBtn);
-                    this.addDrawableChild(addEntry.cancelBtn);
-                    this.remove(addBtn);
+                    this.addRenderableWidget(addEntry.keyField);
+                    this.addRenderableWidget(addEntry.saveBtn);
+                    this.addRenderableWidget(addEntry.cancelBtn);
+                    this.removeWidget(addBtn);
                 }
             );
             addBtn.setUIScale(uiScale);
-            this.addDrawableChild(addBtn);
+            this.addRenderableWidget(addBtn);
         }      
 
         var backButton = new FaButton(
             this.width / 2 - entryW / 2 + btnW, this.height - 40, btnW, btnH,
-            Text.literal("Back").styled(style -> style.withColor(0xFF808080)),
+            Component.literal("Back").withStyle(style -> style.withColor(0xFF808080)),
             btn -> ScreenManager.openConfigScreen()
         );
         backButton.setUIScale(uiScale);
-        this.addDrawableChild(backButton);
+        this.addRenderableWidget(backButton);
 
         var closeButton = new FaButton(
             this.width / 2 - entryW / 2 + btnW * 2, this.height - 40, btnW, btnH,
-            Text.literal("Close").styled(style -> style.withColor(0xFF808080)),
-            btn -> this.close()
+            Component.literal("Close").withStyle(style -> style.withColor(0xFF808080)),
+            btn -> this.onClose()
         );
         closeButton.setUIScale(uiScale);
-        this.addDrawableChild(closeButton);
+        this.addRenderableWidget(closeButton);
     }
 
     private static void calcDimensions(float scale) {
@@ -124,8 +124,8 @@ public class FilterRules extends Screen {
     }
 
     @Override
-    public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        super.render(context, mouseX, mouseY, delta);
+    public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+        super.extractRenderState(context, mouseX, mouseY, delta);
 
         var title = VCText.header(TITLE_TEXT, null);
 
@@ -143,24 +143,24 @@ public class FilterRules extends Screen {
                 " -§d If you wish to filter sea creature messages, please use §bCustom Sea Creature Messages §dinstead.",
             };
             for (String instruction : instructions) {     
-                Text text = Text.literal(instruction);
-                GuiUtil.drawScaledCenteredText(context, this.textRenderer, text.getString(),
+                Component text = Component.literal(instruction);
+                GuiUtil.drawScaledCenteredText(context, this.font, text.getString(),
                     x, y, 0xFF55FFFF, uiScale - 0.1f);
                 y += lineHeight;
             }
         } else {
             GuiUtil.drawScaledCenteredText(
-                context, this.textRenderer, title, this.width / 2, 15, 0xFF55FFFF, uiScale - 0.1f);
+                context, this.font, title, this.width / 2, 15, 0xFF55FFFF, uiScale - 0.1f);
         }
        
         addList(context);
 
         if (popup != null) {          
-            popup.render(context, this.textRenderer, mouseX, mouseY, delta);
+            popup.render(context, this.font, mouseX, mouseY, delta);
         }
     }
 
-    private void addList(DrawContext context) {
+    private void addList(GuiGraphicsExtractor context) {
         int listTop = 40;
         int listBottom = this.height - 60;
         int listHeight = listBottom - listTop;
@@ -196,7 +196,7 @@ public class FilterRules extends Screen {
         }
     }
 
-    private void renderScrollIndicator(DrawContext context, int x, int y, int listHeight, int totalEntries) {
+    private void renderScrollIndicator(GuiGraphicsExtractor context, int x, int y, int listHeight, int totalEntries) {
         int scrollbarWidth = 4;
         context.fill(x, y, x + scrollbarWidth, y + listHeight, 0x44000000);
         if (totalEntries > maxVisibleEntries) {
@@ -213,27 +213,27 @@ public class FilterRules extends Screen {
 
     private class AddEntry {
         private final VCTextField keyField;
-        private ButtonWidget saveBtn;
-        private ButtonWidget cancelBtn;
+        private Button saveBtn;
+        private Button cancelBtn;
 
         public AddEntry() {
             final int offScreenY = -1000;
             
-            this.keyField = new VCTextField(FilterRules.this.textRenderer, 0, offScreenY, fieldW, fieldH, Text.literal("Key"));
-            this.keyField.setDrawsBackground(false);
-            this.keyField.setText("");
+            this.keyField = new VCTextField(FilterRules.this.font, 0, offScreenY, fieldW, fieldH, Component.literal("Key"));
+            this.keyField.setBordered(false);
+            this.keyField.setValue("");
             this.keyField.setEditable(true);
             this.keyField.setMaxLength(100);
             this.keyField.setUIScale(uiScale);
             this.keyField.setFocused(true);
-            this.keyField.setPlaceholder(Text.literal("Filtered String...").styled(style -> style.withColor(0xFF808080)));
+            this.keyField.setHint(Component.literal("Filtered String...").withStyle(style -> style.withColor(0xFF808080)));
             FilterRules.this.setFocused(this.keyField);
 
             this.saveBtn = new FaButton(
                 0, offScreenY, delBtnW, fieldH,
-                Text.literal("✔").styled(s -> s.withColor(0xFFCCFFCC)),
+                Component.literal("✔").withStyle(s -> s.withColor(0xFFCCFFCC)),
                 btn -> {
-                    String key = this.keyField.getText().trim();
+                    String key = this.keyField.getValue().trim();
                     if (!checkForDupes(key)) {
                         return;
                     }
@@ -248,16 +248,16 @@ public class FilterRules extends Screen {
 
             this.cancelBtn = new FaButton(
                 0, offScreenY, delBtnW, fieldH,
-                Text.literal("❌").styled(s -> s.withColor(0xFFFF8080)),
+                Component.literal("❌").withStyle(s -> s.withColor(0xFFFF8080)),
                 btn -> abortEntry()
             );
         }
 
         public void abortEntry() {
             addMode = false;
-            FilterRules.this.remove(this.keyField);
-            FilterRules.this.remove(this.saveBtn);
-            FilterRules.this.remove(this.cancelBtn);
+            FilterRules.this.removeWidget(this.keyField);
+            FilterRules.this.removeWidget(this.saveBtn);
+            FilterRules.this.removeWidget(this.cancelBtn);
             FilterRules.this.init();
         }
 
@@ -298,15 +298,15 @@ public class FilterRules extends Screen {
 
     private class Entry {
         private final VCLabelField keyField;
-        private final ButtonWidget editBtn;
-        private ButtonWidget delBtn;
-        private ButtonWidget toggleBtn;
-        private ButtonWidget modeBtn;
+        private final Button editBtn;
+        private Button delBtn;
+        private Button toggleBtn;
+        private Button modeBtn;
 
         public Entry(String key) {
             final int offScreenY = -1000;
             
-            this.keyField = new VCLabelField(FilterRules.this.textRenderer, 0, offScreenY, fieldW, fieldH, Text.literal("Key"));
+            this.keyField = new VCLabelField(FilterRules.this.font, 0, offScreenY, fieldW, fieldH, Component.literal("Key"));
             this.keyField.setText(key);
             this.keyField.setUIScale(uiScale);
             this.keyField.setFocused(false);
@@ -315,9 +315,9 @@ public class FilterRules extends Screen {
 
             this.editBtn = VCButton.createNavigationButton(
                 0, offScreenY, btnW, fieldH,
-                Text.literal("Edit").styled(s -> s.withColor(0xFFE2CAE9)),
+                Component.literal("Edit").withStyle(s -> s.withColor(0xFFE2CAE9)),
                 btn -> 
-                    MinecraftClient.getInstance().setScreen(new FilterEditScreen(
+                    McApi.setScreen(new FilterEditScreen(
                         key, rule != null ? rule : new Rule(), FilterRules.this
                     )),
                 uiScale - 0.1f
@@ -326,12 +326,12 @@ public class FilterRules extends Screen {
             boolean mode = rule.requireFullMatch();
             this.modeBtn = VCButton.createNavigationButton(
                 0, offScreenY, modeBtnW, fieldH,
-                mode ? Text.literal("Exact") : Text.literal("Anywhere"),
+                mode ? Component.literal("Exact") : Component.literal("Anywhere"),
                 btn -> {
                     Rule currentRule = FilterConfig.getUserCreatedRules().get(key);
                     boolean currentMode = currentRule != null && currentRule.requireFullMatch();
                     FilterConfig.setRequireFullMatch(key, !currentMode);
-                    btn.setMessage(!currentMode ? Text.literal("Exact") : Text.literal("Anywhere"));
+                    btn.setMessage(!currentMode ? Component.literal("Exact") : Component.literal("Anywhere"));
                 },
                 uiScale - 0.1f
             );
@@ -348,15 +348,15 @@ public class FilterRules extends Screen {
 
             this.delBtn = VCButton.createNavigationButton(
                 0, offScreenY, delBtnW, fieldH,
-                Text.literal("🗑").setStyle(Style.EMPTY.withColor(0xFF808080)),
+                Component.literal("🗑").setStyle(Style.EMPTY.withColor(0xFF808080)),
                 btn -> {
                     FilterConfig.removeUserRule(key);
                     entries.remove(this);
-                    FilterRules.this.remove(this.keyField);
-                    FilterRules.this.remove(this.editBtn);
-                    FilterRules.this.remove(this.modeBtn);
-                    FilterRules.this.remove(this.delBtn);
-                    FilterRules.this.remove(this.toggleBtn);
+                    FilterRules.this.removeWidget(this.keyField);
+                    FilterRules.this.removeWidget(this.editBtn);
+                    FilterRules.this.removeWidget(this.modeBtn);
+                    FilterRules.this.removeWidget(this.delBtn);
+                    FilterRules.this.removeWidget(this.toggleBtn);
                     FilterRules.this.init();
                 }, uiScale
             );
@@ -384,14 +384,14 @@ public class FilterRules extends Screen {
         }
 
         public void addToScreen() {
-            FilterRules.this.addDrawableChild(this.keyField);
-            FilterRules.this.addDrawableChild(this.editBtn);
-            FilterRules.this.addDrawableChild(this.modeBtn);
-            FilterRules.this.addDrawableChild(this.delBtn);
-            FilterRules.this.addDrawableChild(this.toggleBtn);
+            FilterRules.this.addRenderableWidget(this.keyField);
+            FilterRules.this.addRenderableWidget(this.editBtn);
+            FilterRules.this.addRenderableWidget(this.modeBtn);
+            FilterRules.this.addRenderableWidget(this.delBtn);
+            FilterRules.this.addRenderableWidget(this.toggleBtn);
         }
 
-        public boolean mouseClicked(Click click) {
+        public boolean mouseClicked(MouseButtonEvent click) {
 
             double mouseX = click.x();
             double mouseY = click.y();
@@ -420,7 +420,7 @@ public class FilterRules extends Screen {
     }
 
     @Override
-    public boolean mouseClicked(Click click, boolean doubled) {
+    public boolean mouseClicked(MouseButtonEvent click, boolean doubled) {
         if (popup != null) {
             return popup.mouseClicked(click);
         }
@@ -467,13 +467,13 @@ public class FilterRules extends Screen {
     }        
 
     @Override
-    public boolean mouseReleased(Click click) {
+    public boolean mouseReleased(MouseButtonEvent click) {
         isDraggingScrollbar = false;
         return super.mouseReleased(click);
     }
 
     @Override
-    public boolean mouseDragged(Click click, double offsetX, double offsetY) {
+    public boolean mouseDragged(MouseButtonEvent click, double offsetX, double offsetY) {
         if (isDraggingScrollbar) {
             int listTop = 40;
             int listBottom = this.height - 60;
@@ -500,7 +500,7 @@ public class FilterRules extends Screen {
         return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
     }
 
-    public void popup(Text title, String continueButtonText, Runnable onContinue, String discardButtonText, Runnable onDiscard) {
+    public void popup(Component title, String continueButtonText, Runnable onContinue, String discardButtonText, Runnable onDiscard) {
         popup = new VCPopup(
 			title,
 			discardButtonText,
@@ -509,13 +509,13 @@ public class FilterRules extends Screen {
             onContinue::run,
             uiScale
         );
-        this.popup.init(this.textRenderer, this.width, this.height);
+        this.popup.init(this.font, this.width, this.height);
     }
 
     public void dupePopup(String input) {
         String truncated = input.length() > 7 ? input.substring(0, 7) + "..." : input;        
         this.popup = new VCPopup(
-            Text.literal("Entry with key '" + truncated + "' already exists!"),
+            Component.literal("Entry with key '" + truncated + "' already exists!"),
             "Continue Editing", () -> this.popup = null,
             "Discard Entry", () -> {
                 if (addEntry != null) {
@@ -525,6 +525,6 @@ public class FilterRules extends Screen {
             },
             1.0f
         );
-        this.popup.init(this.textRenderer, this.width, this.height);
+        this.popup.init(this.font, this.width, this.height);
     } 
 }

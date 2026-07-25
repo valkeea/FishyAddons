@@ -64,12 +64,12 @@ public class CollectionTracker {
 
     private static void scan(ScreenOpenEvent event, String title, boolean collection) {
 
-        var handler = event.screen.getScreenHandler();
+        var handler = event.screen.getMenu();
         if (handler == null) return;
 
         var recipeSlot = handler.slots.get(32);
-        var recipe = recipeSlot.hasStack()
-                    && recipeSlot.getStack().getName().getString().toLowerCase().contains("supercraft");
+        var recipe = recipeSlot.hasItem()
+                    && recipeSlot.getItem().getHoverName().getString().toLowerCase().contains("supercraft");
 
         if (!recipe && !collection) return;
 
@@ -79,12 +79,12 @@ public class CollectionTracker {
         else ProgressScanner.scanCollectionGui(title, provider);
     }
 
-    private static SlotStackProvider createSlotProvider(net.minecraft.screen.ScreenHandler handler) {
+    private static SlotStackProvider createSlotProvider(net.minecraft.world.inventory.AbstractContainerMenu handler) {
         return index -> {
             if (index >= 0 && index < handler.slots.size()) {
-                return handler.slots.get(index).getStack();
+                return handler.slots.get(index).getItem();
             }
-            return net.minecraft.item.ItemStack.EMPTY;
+            return net.minecraft.world.item.ItemStack.EMPTY;
         };
     }
 

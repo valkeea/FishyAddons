@@ -11,8 +11,8 @@ import me.valkeea.fishyaddons.command.handler.FpRoot;
 import me.valkeea.fishyaddons.command.handler.FwpRoot;
 import me.valkeea.fishyaddons.vconfig.ui.manager.ScreenManager;
 import me.valkeea.fishyaddons.vconfig.ui.screen.VCState;
-import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
+import net.fabricmc.fabric.api.client.command.v2.ClientCommands;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 
 public class CmdManager {
@@ -34,7 +34,7 @@ public class CmdManager {
     }
     
     private static void registerFaCommand(CommandDispatcher<FabricClientCommandSource> dispatcher, String root) {
-        LiteralArgumentBuilder<FabricClientCommandSource> builder = ClientCommandManager.literal(root);
+        var builder = ClientCommands.literal(root);
         MAIN_HANDLER.register(builder);
 
         builder
@@ -43,7 +43,7 @@ public class CmdManager {
             .then(buildSubcommandRoot("waypoint", WAYPOINT_HANDLER))
 
             .then(
-                ClientCommandManager.argument(
+                ClientCommands.argument(
                     "query",
                     StringArgumentType.greedyString()
                 ).executes(context -> {
@@ -69,8 +69,7 @@ public class CmdManager {
     ) {
         String[] rootNames = handler.getRootNames();
         for (String rootName : rootNames) {
-            LiteralArgumentBuilder<FabricClientCommandSource> builder = 
-                ClientCommandManager.literal(rootName);
+            var builder = ClientCommands.literal(rootName);
             handler.register(builder);
             dispatcher.register(builder);
         }
@@ -81,8 +80,7 @@ public class CmdManager {
         String rootLiteral,
         CommandHandler handler
     ) {
-        LiteralArgumentBuilder<FabricClientCommandSource> builder = 
-            ClientCommandManager.literal(rootLiteral);
+        var builder = ClientCommands.literal(rootLiteral);
         handler.register(builder);
         return builder;
     }    

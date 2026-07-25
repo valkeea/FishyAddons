@@ -18,13 +18,13 @@ import me.valkeea.fishyaddons.vconfig.annotation.VCModule;
 import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
 import me.valkeea.fishyaddons.vconfig.api.Config;
 import me.valkeea.fishyaddons.vconfig.config.impl.ColorConfig;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.PlainTextContent;
-import net.minecraft.text.StringVisitable;
-import net.minecraft.text.Style;
-import net.minecraft.text.Text;
-import net.minecraft.text.TextColor;
-import net.minecraft.text.TextContent;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.ComponentContents;
+import net.minecraft.network.chat.FormattedText;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.Style;
+import net.minecraft.network.chat.TextColor;
+import net.minecraft.network.chat.contents.PlainTextContents;
 
 @VCModule
 public class FaColors {
@@ -34,10 +34,10 @@ public class FaColors {
 
     private static final Map<String, List<Segment>> segmentCache = new WeakHashMap<>();
     
-    private static final Map<Text, Text> rewriteCache = new WeakHashMap<>();
-    private static final Map<Text, Text> sidebarCache = new WeakHashMap<>();
-    private static final Map<Text, Text> labelCache = new WeakHashMap<>();
-    private static final Map<Text, Text> tooltipCache = new WeakHashMap<>();
+    private static final Map<Component, Component> rewriteCache = new WeakHashMap<>();
+    private static final Map<Component, Component> sidebarCache = new WeakHashMap<>();
+    private static final Map<Component, Component> labelCache = new WeakHashMap<>();
+    private static final Map<Component, Component> tooltipCache = new WeakHashMap<>();
 
     private static boolean useGlobal = false;
     private static boolean useCustom = false;
@@ -83,9 +83,8 @@ public class FaColors {
 
                 global.clear();
 
-                map.entrySet().stream()
-                    .forEach(entry -> global.put(entry.getKey(), 
-                        TextColor.fromRgb(Integer.parseInt(entry.getValue(), 16))));
+                map.entrySet().forEach(e -> global.put(e.getKey(), 
+                        TextColor.fromRgb(Integer.parseInt(e.getValue(), 16))));
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -174,7 +173,7 @@ public class FaColors {
     }
 
     // Find matched names in parsed Text structure
-    private static List<Segment> findMatchedNames(Text parsedText) {
+    private static List<Segment> findMatchedNames(Component parsedText) {
         List<Segment> segments = new ArrayList<>();
         
         parsedText.visit((style, text) -> {
@@ -279,7 +278,7 @@ public class FaColors {
     public static <T> Optional<T> applyRecolorAll(
             String input,
             Style baseStyle,
-            StringVisitable.StyledVisitor<T> visitor
+            FormattedText.StyledContentConsumer<T> visitor
     ) {
         for (var seg : createSegments(input)) {
             if (seg.fullStyle != null) {
@@ -291,21 +290,21 @@ public class FaColors {
         return Optional.empty();
     }
 
-    private static Text multiple(Text input) {
-        var content = input.getContent();
+    private static Component multiple(Component input) {
+        var content = input.getContents();
         boolean needsRecolor = false;
 
-        if (content instanceof PlainTextContent plain) {
-            List<Segment> segments = createSegments(plain.string());
+        if (content instanceof PlainTextContents plain) {
+            List<Segment> segments = createSegments(plain.text());
             needsRecolor = segments.stream().anyMatch(seg -> seg.color != null || seg.fullStyle != null);
         }
 
-        List<Text> processedSiblings = null;
+        List<Component> processedSiblings = null;
         boolean siblingsToRecolor = false;
         if (!input.getSiblings().isEmpty()) {
             processedSiblings = new ArrayList<>(input.getSiblings().size());
             for (var sibling : input.getSiblings()) {
-                Text processed = multiple(sibling);
+                Component processed = multiple(sibling);
                 processedSiblings.add(processed);
                 if (processed != sibling) {
                     siblingsToRecolor = true;
@@ -315,10 +314,10 @@ public class FaColors {
 
         if (!needsRecolor && !siblingsToRecolor) return input;
 
-        var result = Text.empty().setStyle(input.getStyle());
+        var result = Component.empty().setStyle(input.getStyle());
 
-        if (content instanceof PlainTextContent plain) {
-            for (var seg : createSegments(plain.string())) {
+        if (content instanceof PlainTextContents plain) {
+            for (var seg : createSegments(plain.text())) {
                 
                 Style segStyle;
                 if (seg.fullStyle != null) {
@@ -327,7 +326,7 @@ public class FaColors {
                     segStyle = seg.color == null ? input.getStyle() : input.getStyle().withColor(seg.color);
                 }
 
-                result.append(Text.literal(seg.text).setStyle(segStyle));
+                result.append(Component.literal(seg.text).setStyle(segStyle));
             }
         }
 
@@ -337,10 +336,10 @@ public class FaColors {
         return result;
     }
     
-    public static Text multipleCached(Text input) {
-        Text cached = rewriteCache.get(input);
+    public static Component multipleCached(Component input) {
+        Component cached = rewriteCache.get(input);
         if (cached != null) return cached;
-        Text rewritten = multiple(input);
+        Component rewritten = multiple(input);
         rewriteCache.put(input, rewritten);
         return rewritten;
     }
@@ -349,8 +348,8 @@ public class FaColors {
      * Recolors player names in labels. Handles nested Text structures
      * with full / partial match and flattened formatting code strings.
      */
-    public static Text first(Text input) {
-        Text cached = labelCache.get(input);
+    public static Component first(Component input) {
+        Component cached = labelCache.get(input);
         if (cached != null) return cached;
 
         var fullString = input.getString();
@@ -367,10 +366,10 @@ public class FaColors {
             return input;
         }
 
-        var content = input.getContent();
+        var content = input.getContents();
 
-        if (content instanceof PlainTextContent plain) {
-            String str = plain.string();
+        if (content instanceof PlainTextContents plain) {
+            String str = plain.text();
             
             if (str.contains("§")) {
                 var result = rebuildFlattened(input);
@@ -381,8 +380,8 @@ public class FaColors {
             // Exact match (common)
             TextColor color = combinedMap.get(str);
             if (color != null) {
-                MutableText colored = Text.literal(str).setStyle(input.getStyle().withColor(color));
-                for (Text sibling : input.getSiblings()) {
+                MutableComponent colored = Component.literal(str).setStyle(input.getStyle().withColor(color));
+                for (Component sibling : input.getSiblings()) {
                     colored.append(sibling);
                 }
                 labelCache.put(input, colored);
@@ -394,18 +393,18 @@ public class FaColors {
         return complex(input, content);
     }
 
-    private static Text complex(Text input, TextContent content) {
+    private static Component complex(Component input, ComponentContents content) {
         boolean needsRecolor = false;
         
-        if (content instanceof PlainTextContent plain) {
-            String str = plain.string();
+        if (content instanceof PlainTextContents plain) {
+            String str = plain.text();
             needsRecolor = combinedMap.containsKey(str);
         }
 
-        List<Text> processedSiblings = new ArrayList<>(input.getSiblings().size());
+        List<Component> processedSiblings = new ArrayList<>(input.getSiblings().size());
         boolean siblingsToRecolor = false;
         for (var sibling : input.getSiblings()) {
-            Text processed = first(sibling);
+            Component processed = first(sibling);
             processedSiblings.add(processed);
             if (processed != sibling) {
                 siblingsToRecolor = true;
@@ -417,13 +416,13 @@ public class FaColors {
             return input;
         }
 
-        MutableText result;
-        if (content instanceof PlainTextContent plain) {
-            String str = plain.string();
+        MutableComponent result;
+        if (content instanceof PlainTextContents plain) {
+            String str = plain.text();
             var color = combinedMap.get(str);
 
             if (color != null) {
-                result = Text.literal(str).setStyle(input.getStyle().withColor(color));
+                result = Component.literal(str).setStyle(input.getStyle().withColor(color));
             } else result = input.copy();
 
         } else {
@@ -439,12 +438,12 @@ public class FaColors {
 
 
     // Rebuild flattened text to allow colors
-    private static Text rebuildFlattened(Text input) {
-        if (!(input.getContent() instanceof PlainTextContent plain)) {
+    private static Component rebuildFlattened(Component input) {
+        if (!(input.getContents() instanceof PlainTextContents plain)) {
             return input;
         }
         
-        var str = plain.string();
+        var str = plain.text();
         var cleanStr = Enhancer.stripFormattingCodes(str);
 
         for (Map.Entry<String, TextColor> entry : combinedMap.object2ObjectEntrySet()) {
@@ -462,14 +461,14 @@ public class FaColors {
     /**
      * Recursively apply player color to Text nodes that contain the player name.
      */
-    private static Text applyColorToMatch(Text text, String playerName, TextColor playerColor) {
-        if (text.getContent() instanceof PlainTextContent plain) {
-            var content = plain.string();
+    private static Component applyColorToMatch(Component text, String playerName, TextColor playerColor) {
+        if (text.getContents() instanceof PlainTextContents plain) {
+            var content = plain.text();
 
             if (content.contains(playerName)) {
-                var result = Text.literal(content).setStyle(text.getStyle().withColor(playerColor));
+                var result = Component.literal(content).setStyle(text.getStyle().withColor(playerColor));
 
-                for (Text sibling : text.getSiblings()) {
+                for (Component sibling : text.getSiblings()) {
                     result.append(applyColorToMatch(sibling, playerName, playerColor));
                 }
                 return result;
@@ -486,17 +485,17 @@ public class FaColors {
         return result;
     }
     
-    public static Text recolorSidebarText(Text input) {
+    public static Component recolorSidebarText(Component input) {
         if (!shouldColor() || !ZoneUtils.isDungeonInstance()) return input;
 
-        Text cached = sidebarCache.get(input);
+        Component cached = sidebarCache.get(input);
         if (cached != null) return cached;
 
         boolean needsRecolor = false;
         TextColor foundColor = null;
 
-        if (input.getContent() instanceof PlainTextContent plain) {
-            String str = plain.string();
+        if (input.getContents() instanceof PlainTextContents plain) {
+            String str = plain.text();
             foundColor = combinedMap.object2ObjectEntrySet().stream()
                 .filter(e -> str.contains(e.getKey()))
                 .map(Map.Entry::getValue)
@@ -505,12 +504,12 @@ public class FaColors {
             needsRecolor = foundColor != null;
         }
 
-        List<Text> processedSiblings = null;
+        List<Component> processedSiblings = null;
         boolean siblingsToRecolor = false;
         if (!input.getSiblings().isEmpty()) {
             processedSiblings = new ArrayList<>(input.getSiblings().size());
             for (var sibling : input.getSiblings()) {
-                Text processed = recolorSidebarText(sibling);
+                Component processed = recolorSidebarText(sibling);
                 processedSiblings.add(processed);
                 if (processed != sibling) {
                     siblingsToRecolor = true;
@@ -523,17 +522,17 @@ public class FaColors {
             return input;
         }
 
-        Text result;
+        Component result;
         if (needsRecolor) {
-            result = Text.literal(((PlainTextContent) input.getContent()).string())
+            result = Component.literal(((PlainTextContents) input.getContents()).text())
                 .setStyle(input.getStyle().withColor(foundColor));
         } else {
             result = input.copy();
         }
 
         if (processedSiblings != null) {
-            var mutableResult = result instanceof MutableText mutableText ? mutableText : Text.empty().setStyle(result.getStyle());
-            if (!(result instanceof MutableText)) {
+            var mutableResult = result instanceof MutableComponent mutableText ? mutableText : Component.empty().setStyle(result.getStyle());
+            if (!(result instanceof MutableComponent)) {
                 mutableResult.append(result);
             }
 
@@ -545,15 +544,15 @@ public class FaColors {
         return result;
     }    
 
-    public static Text tooltip(Text input) {
-        if (input.getContent() instanceof PlainTextContent plain) {
-            var str = plain.string();
+    public static Component tooltip(Component input) {
+        if (input.getContents() instanceof PlainTextContents plain) {
+            var str = plain.text();
             List<Segment> segments = createSegments(str);
             
             boolean needsRecolor = segments.stream().anyMatch(seg -> seg.color != null || seg.fullStyle != null);
             if (!needsRecolor && input.getSiblings().isEmpty()) return input;
             
-            var result = Text.empty().setStyle(input.getStyle());
+            var result = Component.empty().setStyle(input.getStyle());
             
             for (var seg : segments) {
                 Style segStyle;
@@ -564,7 +563,7 @@ public class FaColors {
                     segStyle = seg.color == null ? input.getStyle() : input.getStyle().withColor(seg.color);
                 }
 
-                result.append(Text.literal(seg.text).setStyle(segStyle));
+                result.append(Component.literal(seg.text).setStyle(segStyle));
             }
             
             input.getSiblings().stream()
@@ -586,10 +585,10 @@ public class FaColors {
         }
     }
 
-    public static Text tooltipCached(Text input) {
-        Text cached = tooltipCache.get(input);
+    public static Component tooltipCached(Component input) {
+        Component cached = tooltipCache.get(input);
         if (cached != null) return cached;
-        Text rewritten = tooltip(input);
+        Component rewritten = tooltip(input);
         tooltipCache.put(input, rewritten);
         return rewritten;
     }
@@ -608,7 +607,6 @@ public class FaColors {
 
     public static void loadUserMap() {
         user.clear();
-        ColorConfig.getFaC().entrySet().stream()
-            .forEach(entry -> user.put(entry.getKey(), TextColor.fromRgb(entry.getValue())));
+        ColorConfig.getFaC().entrySet().forEach(entry -> user.put(entry.getKey(), TextColor.fromRgb(entry.getValue())));
     }
 }

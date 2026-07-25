@@ -2,8 +2,8 @@ package me.valkeea.fishyaddons.vconfig.ui.widget.dropdown.item;
 
 import me.valkeea.fishyaddons.feature.waypoints.ChainConfig;
 import me.valkeea.fishyaddons.feature.waypoints.WaypointChains;
-import me.valkeea.fishyaddons.vconfig.api.Config;
 import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
+import me.valkeea.fishyaddons.vconfig.api.Config;
 
 public class WaypointChainItem implements ToggleMenuItem {
     private final BooleanKey configKey;

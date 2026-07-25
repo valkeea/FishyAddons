@@ -3,6 +3,7 @@ package me.valkeea.fishyaddons.hud.ui;
 import java.awt.Rectangle;
 import java.util.List;
 
+import me.valkeea.fishyaddons.compat.McApi;
 import me.valkeea.fishyaddons.feature.qol.ItemSearchOverlay;
 import me.valkeea.fishyaddons.hud.base.InteractiveHudElement;
 import me.valkeea.fishyaddons.hud.core.HudElementState;
@@ -11,11 +12,12 @@ import me.valkeea.fishyaddons.ui.GuiUtil;
 import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
 import me.valkeea.fishyaddons.vconfig.api.IntKey;
 import me.valkeea.fishyaddons.vconfig.ui.widget.VCTextField;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.Click;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.input.KeyInput;
-import net.minecraft.text.Text;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.network.chat.Component;
 
 public class SearchHudElement extends InteractiveHudElement {
     private static final String SEARCH_PLACEHOLDER = "right-click to search...";
@@ -29,9 +31,9 @@ public class SearchHudElement extends InteractiveHudElement {
     
     public SearchHudElement() {
         super(BooleanKey.INV_SEARCH, "Item Search", 100, 10, 20, 0xFFFFFFFF, false, true);
-        var client = MinecraftClient.getInstance();
-        if (client != null && client.textRenderer != null) {
-            searchField = new VCTextField(client.textRenderer, 10, 10, 150, 15, Text.literal(SEARCH_PLACEHOLDER));
+        var mc = Minecraft.getInstance();
+        if (mc.font != null) {
+            searchField = new VCTextField(mc.font, 10, 10, 150, 15, Component.literal(SEARCH_PLACEHOLDER));
             searchField.setVisible(false);
             searchField.interceptInventory(true);
         }
@@ -54,13 +56,13 @@ public class SearchHudElement extends InteractiveHudElement {
     }
 
     @Override
-    public void postRenderCustom(DrawContext context, MinecraftClient mc, HudElementState state, int mouseX, int mouseY) {
+    public void postRenderCustom(GuiGraphicsExtractor context, Minecraft mc, HudElementState state, int mouseX, int mouseY) {
         if (!shouldRender()) return;
         
         initIfNeeded();
         if (searchField == null) return;
         
-        if (isSearching() && mc.currentScreen instanceof net.minecraft.client.gui.screen.ingame.HandledScreen<?> hs) {
+        if (isSearching() && McApi.screen() instanceof AbstractContainerScreen<?> hs) {
             ItemSearchOverlay.getInstance().renderOverlay(context, hs, getSearchTerm());
         }
         
@@ -70,9 +72,9 @@ public class SearchHudElement extends InteractiveHudElement {
     
     private void initIfNeeded() {
         if (searchField == null) {
-            var client = MinecraftClient.getInstance();
-            if (client != null && client.textRenderer != null) {
-                searchField = new VCTextField(client.textRenderer, 10, 10, 150, 15, Text.literal(SEARCH_PLACEHOLDER));
+            var mc = Minecraft.getInstance();
+            if (mc.font != null) {
+                searchField = new VCTextField(mc.font, 10, 10, 150, 15, Component.literal(SEARCH_PLACEHOLDER));
                 searchField.interceptInventory(true);
             }
         }
@@ -88,12 +90,12 @@ public class SearchHudElement extends InteractiveHudElement {
         int scaledHeight = (int)(15 * scale);
 
         if (searchField.getWidth() != scaledWidth || searchField.getHeight() != scaledHeight) {
-            String currentText = searchField.getText();
+            String currentText = searchField.getValue();
             boolean wasFocused = searchField.isFocused();
-            searchField = new VCTextField(MinecraftClient.getInstance().textRenderer, 
+            searchField = new VCTextField(Minecraft.getInstance().font, 
                                          hudX, hudY, scaledWidth, scaledHeight, 
-                                         Text.literal(SEARCH_PLACEHOLDER));
-            searchField.setText(currentText);
+                                         Component.literal(SEARCH_PLACEHOLDER));
+            searchField.setValue(currentText);
             searchField.interceptInventory(true);
             if (wasFocused) {
                 searchField.setFocused(false);
@@ -105,7 +107,7 @@ public class SearchHudElement extends InteractiveHudElement {
         searchField.setVisible(true);
     }
     
-    private void renderContent(DrawContext context, int mouseX, int mouseY) {
+    private void renderContent(GuiGraphicsExtractor context, int mouseX, int mouseY) {
         
         var state = getCachedState();
         int hudX = state.x;
@@ -115,17 +117,17 @@ public class SearchHudElement extends InteractiveHudElement {
         int scaledWidth = (int)(150 * scale);
         int scaledHeight = (int)(15 * scale);
 
-        if (searchField.getText().isEmpty()) {
+        if (searchField.getValue().isEmpty()) {
             String placeholderText = isEditingMode() ? EDITING_MODE_TEXT : SEARCH_PLACEHOLDER;
             int placeholderColor = isEditingMode() ? 0x80FFFFFF : 0x80808080;
-            context.drawText(
-                MinecraftClient.getInstance().textRenderer, 
-                Text.literal(placeholderText), 
+            context.text(
+                Minecraft.getInstance().font, 
+                Component.literal(placeholderText), 
                 hudX + 4, hudY + (scaledHeight - 8) / 2, 
                 placeholderColor, false);
         }
         
-        searchField.render(context, mouseX, mouseY, 0);
+        searchField.extractRenderState(context, mouseX, mouseY, 0);
 
         if (overlayActive) {
             GuiUtil.wireRect(
@@ -139,7 +141,7 @@ public class SearchHudElement extends InteractiveHudElement {
         return searchField;
     }
     
-    public boolean handleCharTyped(net.minecraft.client.input.CharInput input) {
+    public boolean handleCharTyped(net.minecraft.client.input.CharacterEvent input) {
         if (!shouldRender()) return false;
         
         if (searchField != null && searchField.isVisible() && searchField.isFocused()) {
@@ -148,7 +150,7 @@ public class SearchHudElement extends InteractiveHudElement {
         return false;
     }
 
-    public boolean handleKeyPressed(KeyInput keyInput) {
+    public boolean handleKeyPressed(KeyEvent keyInput) {
         if (!shouldRender()) return false;
         
         if (searchField != null && searchField.isVisible()) {
@@ -157,7 +159,7 @@ public class SearchHudElement extends InteractiveHudElement {
         return false;
     }    
     
-    public boolean handleMouseClick(Click click, boolean doubled) {
+    public boolean handleMouseClick(MouseButtonEvent click, boolean doubled) {
         if (!shouldRender()) return false;
 
         double mouseX = click.x();
@@ -194,7 +196,7 @@ public class SearchHudElement extends InteractiveHudElement {
     }
     
     public String getSearchTerm() {
-        return searchField != null ? searchField.getText() : "";
+        return searchField != null ? searchField.getValue() : "";
     }
     
     public boolean isOverlayActive() {
@@ -207,7 +209,7 @@ public class SearchHudElement extends InteractiveHudElement {
     
     public void clearSearch() {
         if (searchField != null) {
-            searchField.setText("");
+            searchField.setValue("");
         }
     }
 
@@ -239,7 +241,7 @@ public class SearchHudElement extends InteractiveHudElement {
     }
 
     @Override
-    public Rectangle getBounds(MinecraftClient mc) {
+    public Rectangle getBounds(Minecraft mc) {
         var state = getCachedState();
         float scale = state.size / 15.0F;
         int scaledWidth = (int)(150 * scale);
@@ -258,7 +260,7 @@ public class SearchHudElement extends InteractiveHudElement {
     }
     
     @Override
-    protected List<Text> getDisplayLines(HudElementState state) {
+    protected List<Component> getDisplayLines(HudElementState state) {
         return List.of();
     }
 }

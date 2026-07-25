@@ -9,9 +9,9 @@ import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
 import me.valkeea.fishyaddons.vconfig.api.Config;
 import me.valkeea.fishyaddons.vconfig.api.DoubleKey;
 import me.valkeea.fishyaddons.vconfig.api.StringKey;
-import net.minecraft.client.sound.SoundInstance;
-import net.minecraft.registry.Registries;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.resources.sounds.SoundInstance;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.Identifier;
 
 /**
  * Replaces Hypixel's fishing catch sound.
@@ -45,7 +45,7 @@ public class CatchAlert {
     /**
      * Called every frame when player's bobber is being rendered.
      */
-    public static void onFishingLineRendered() {
+    public static void onBobberRendered() {
         sinceRender = 0;
     }
 
@@ -71,8 +71,8 @@ public class CatchAlert {
         var soundIdentifier = Identifier.tryParse(id);
         if (soundIdentifier == null) return null;
 
-        var sound = Registries.SOUND_EVENT.get(soundIdentifier);
-        if (sound == null || Registries.SOUND_EVENT.getId(sound) == null) return null;
+        var sound = BuiltInRegistries.SOUND_EVENT.getValue(soundIdentifier);
+        if (sound == null || BuiltInRegistries.SOUND_EVENT.getKey(sound) == null) return null;
 
         return trueVol 
             ? MutableSoundInstance.masterBypass(sound, PITCH_REF, volume, noRandom)

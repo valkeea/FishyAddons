@@ -2,10 +2,10 @@ package me.valkeea.fishyaddons.vconfig.ui.manager;
 
 import org.jetbrains.annotations.Nullable;
 
+import me.valkeea.fishyaddons.compat.McApi;
 import me.valkeea.fishyaddons.tool.GuiScheduler;
 import me.valkeea.fishyaddons.vconfig.ui.screen.VCScreen;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.screens.Screen;
 
 public class ScreenManager {
     
@@ -56,15 +56,14 @@ public class ScreenManager {
     public static Screen getConfigOrCurrent() {
         return isConfigScreenActive()
             ? getCachedScreen()
-            : MinecraftClient.getInstance().currentScreen;
+            : McApi.screen();
     }
     
     /**
      * Check if the current screen is the config screen.
      */
     public static boolean isConfigScreenActive() {
-        var mc = MinecraftClient.getInstance();
-        return mc.currentScreen instanceof VCScreen;
+        return McApi.screen() instanceof VCScreen;
     }
     
     /**

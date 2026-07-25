@@ -1,13 +1,13 @@
 package me.valkeea.fishyaddons.util;
 
 import me.valkeea.fishyaddons.api.skyblock.Profile;
+import me.valkeea.fishyaddons.compat.McApi;
 import me.valkeea.fishyaddons.event.impl.FaEvents;
 import me.valkeea.fishyaddons.event.impl.GuiChangeEvent;
 import me.valkeea.fishyaddons.event.impl.ScreenOpenEvent;
 import me.valkeea.fishyaddons.tool.RunDelayed;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.ingame.GenericContainerScreen;
-import net.minecraft.client.gui.screen.ingame.InventoryScreen;
+import net.minecraft.client.gui.screens.inventory.ContainerScreen;
+import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 
 @SuppressWarnings("squid:S6548")
 public class ContainerScanner {
@@ -75,9 +75,9 @@ public class ContainerScanner {
 
     /** Check if the current screen is a player inventory or server gui */
     public static boolean isGuiOrInv() {
-        var mc = MinecraftClient.getInstance();
-        return mc.currentScreen != null &&
-               (mc.currentScreen instanceof InventoryScreen ||
-                mc.currentScreen instanceof GenericContainerScreen);
+        var screen = McApi.screen();
+        return screen != null &&
+               (screen instanceof InventoryScreen ||
+                screen instanceof ContainerScreen);
     }    
 }

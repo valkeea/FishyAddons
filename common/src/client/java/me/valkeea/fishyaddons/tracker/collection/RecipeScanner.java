@@ -10,9 +10,9 @@ import java.util.regex.Pattern;
 
 import me.valkeea.fishyaddons.hud.elements.interactive.CollectionDisplay;
 import me.valkeea.fishyaddons.util.ServerCommand;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.item.ItemStack;
-import net.minecraft.text.Text;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.ItemStack;
 
 /**
  * Scans recipes to extract item craft conversion ratios.
@@ -45,12 +45,12 @@ public class RecipeScanner {
             return false;
         }
 
-        var itemName = craftSlot.getName().getString();
+        var itemName = craftSlot.getHoverName().getString();
         if (itemName == null || itemName.isEmpty()) {
             return false;
         }
         
-        var stackName = recipeSlot.getName().getString();
+        var stackName = recipeSlot.getHoverName().getString();
         if (stackName.equals("Supercraft")) {
             
             boolean foundCollectionRecipe = scanSupercraftSlot(itemName, recipeSlot);
@@ -72,17 +72,17 @@ public class RecipeScanner {
     private static boolean scanSupercraftSlot(String enchantedName, ItemStack stack) {
         if (stack == null || stack.isEmpty()) return false;
         
-        var lore = stack.get(DataComponentTypes.LORE);
+        var lore = stack.get(DataComponents.LORE);
         if (lore == null) return false;
         
-        List<Text> tooltip = lore.lines();
+        List<Component> tooltip = lore.lines();
         if (tooltip == null || tooltip.isEmpty()) return false;
         
         int required = 0;
         int ingredientCount = 0;
         String itemName = null;
 
-        for (Text line : tooltip) {
+        for (Component line : tooltip) {
 
             String lineStr = line.getString();
             String cleanLine = lineStr.replaceAll("§.", "").trim();
@@ -131,7 +131,7 @@ public class RecipeScanner {
         var craftedItemStack = CollectionTracker.getProvider().get(CRAFTED_SLOT);
         if (craftedItemStack == null || craftedItemStack.isEmpty()) return;
 
-        String itemName = craftedItemStack.getName().getString();
+        String itemName = craftedItemStack.getHoverName().getString();
         if (itemName == null || itemName.isEmpty()) return;      
 
         Map<String, Integer> ingredients = extractAllIngredients(supercraftStack);
@@ -149,13 +149,13 @@ public class RecipeScanner {
     private static Map<String, Integer> extractAllIngredients(ItemStack supercraftStack) {
         Map<String, Integer> ingredients = new HashMap<>();
         
-        var lore = supercraftStack.get(DataComponentTypes.LORE);
+        var lore = supercraftStack.get(DataComponents.LORE);
         if (lore == null) return ingredients;
         
-        List<Text> tooltip = lore.lines();
+        List<Component> tooltip = lore.lines();
         if (tooltip == null || tooltip.isEmpty()) return ingredients;
         
-        for (Text line : tooltip) {
+        for (Component line : tooltip) {
             String lineStr = line.getString();
             String cleanLine = lineStr.replaceAll("§.", "").trim();
             

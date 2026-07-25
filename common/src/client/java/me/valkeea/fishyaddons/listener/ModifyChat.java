@@ -10,14 +10,14 @@ public class ModifyChat {
 
     public static void init() {
 
-        ClientSendMessageEvents.MODIFY_COMMAND.register(command -> {
-            trackChatMode(command);
+        ClientSendMessageEvents.MODIFY_COMMAND.register(cmd -> {
+            trackChatMode(cmd);
             
-            String remapped = CommandAlias.getActualCommand("/" + command.trim());
+            String remapped = CommandAlias.getActualCommand("/" + cmd.trim());
             if (remapped != null && remapped.startsWith("/")) {
                 return remapped.substring(1);
             }
-            return ChatReplacement.apply(command);
+            return ChatReplacement.apply(cmd);
         });
 
         ClientSendMessageEvents.MODIFY_CHAT.register(ChatReplacement::apply);
@@ -26,10 +26,10 @@ public class ModifyChat {
     /**
      * Tracks changes to chat mode when Hypixel chat commands are used.
      */
-    private static void trackChatMode(String command) {
-        if (command == null) return;
+    private static void trackChatMode(String cmd) {
+        if (cmd == null) return;
         
-        String[] parts = command.trim().split("\\s+");
+        String[] parts = cmd.trim().split("\\s+");
         if (parts.length >= 2 && "chat".equalsIgnoreCase(parts[0])) {
             String chatMode = parts[1].toLowerCase();
             GameChat.changedChannel(chatMode);

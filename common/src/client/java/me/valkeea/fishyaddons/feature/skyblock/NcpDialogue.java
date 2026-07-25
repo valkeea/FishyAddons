@@ -5,11 +5,11 @@ import java.util.concurrent.TimeUnit;
 
 import me.valkeea.fishyaddons.tool.RunDelayed;
 import me.valkeea.fishyaddons.util.text.FromText;
-import me.valkeea.fishyaddons.vconfig.api.Config;
 import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
+import me.valkeea.fishyaddons.vconfig.api.Config;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
 
 public class NcpDialogue {
     private static final long BASE_DELAY = 650;
@@ -17,7 +17,7 @@ public class NcpDialogue {
     private static final Random RANDOM = new Random();
     private NcpDialogue() {}
     
-    public static boolean checkForCommands(Text message) {
+    public static boolean checkForCommands(Component message) {
 
         var option = findAcceptButton(message);
         if (option != null) {
@@ -27,7 +27,7 @@ public class NcpDialogue {
             
             if ((runnable != null)) {
                 long delay = BASE_DELAY + RANDOM.nextInt(RANDOM_DELAY_RANGE);
-                RunDelayed.run(() -> MinecraftClient.getInstance().player.networkHandler.sendChatCommand(
+                RunDelayed.run(() -> Minecraft.getInstance().player.connection.sendCommand(
                     runnable.replace("/", "")),
                     delay, runnable + "_" + timeStamp
                 );
@@ -37,15 +37,15 @@ public class NcpDialogue {
         return false;
     }
 
-    private static Text findAcceptButton(Text text) {
+    private static Component findAcceptButton(Component text) {
 
         if (text.getString().contains("[") &&
-            (text.getContent().toString().contains("§a") || FromText.findNodeWithColor(text, Formatting.GREEN) != null)) {
+            (text.getContents().toString().contains("§a") || FromText.findNodeWithColor(text, ChatFormatting.GREEN) != null)) {
             return text;
         }
 
-        for (Text sibling : text.getSiblings()) {
-            Text found = findAcceptButton(sibling);
+        for (Component sibling : text.getSiblings()) {
+            Component found = findAcceptButton(sibling);
             if (found != null) {
                 return found;
             }

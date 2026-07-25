@@ -8,7 +8,6 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 public class BzResponse {
-    
     private final Gson gson;
     
     public BzResponse() {
@@ -24,15 +23,13 @@ public class BzResponse {
         int failedProducts = 0;
         
         try {
-            JsonObject root = gson.fromJson(responseBody, JsonObject.class);
-            
+            var root = gson.fromJson(responseBody, JsonObject.class);
             if (!root.has("success") || !root.get("success").getAsBoolean()) {
                 System.err.println("Bazaar API returned success=false");
                 return result;
             }
             
-            JsonObject products = root.getAsJsonObject("products");
-            
+            var products = root.getAsJsonObject("products");
             for (Map.Entry<String, JsonElement> entry : products.entrySet()) {
                 String productId = entry.getKey();
                 if (!parseProduct(entry, productId, result)) {
@@ -54,9 +51,9 @@ public class BzResponse {
     
     private boolean parseProduct(Map.Entry<String, JsonElement> entry, String productId, Map<String, PriceData> result) {
         try {
-            JsonObject product = entry.getValue().getAsJsonObject();
-            
-            JsonObject quickStatus = product.getAsJsonObject("quick_status");
+            var product = entry.getValue().getAsJsonObject();
+            var quickStatus = product.getAsJsonObject("quick_status");
+
             if (quickStatus != null) {
                 double buyPrice = quickStatus.has("buyPrice") 
                     ? quickStatus.get("buyPrice").getAsDouble() 
@@ -68,7 +65,8 @@ public class BzResponse {
                 result.put(productId, new PriceData(buyPrice, sellPrice));
             }
             return true;
-        } catch (Exception e) {
+
+        } catch (Exception _) {
             return false;
         }
     }

@@ -143,7 +143,7 @@ public class SlayerTables {
             if (parts.length > 0) {
                 return Integer.parseInt(parts[0]);
             }
-        } catch (NumberFormatException e) {
+        } catch (NumberFormatException _) {
             // Failed to parse XP
         }
         return 0;

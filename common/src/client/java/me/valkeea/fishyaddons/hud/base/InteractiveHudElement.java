@@ -12,10 +12,10 @@ import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
 import me.valkeea.fishyaddons.vconfig.api.Config;
 import me.valkeea.fishyaddons.vconfig.api.IntKey;
 import me.valkeea.fishyaddons.vconfig.ui.widget.dropdown.VCToggleMenu;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.Click;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.text.Text;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.network.chat.Component;
 
 /**
  * Elements with interactive features:
@@ -72,7 +72,7 @@ public abstract class InteractiveHudElement extends BaseHudElement {
      */
     protected int getTotalLineCount() {
         var state = getCachedState();
-        List<Text> lines = getDisplayLines(state);
+        List<Component> lines = getDisplayLines(state);
         return lines != null ? lines.size() : 0;
     }
     
@@ -114,8 +114,8 @@ public abstract class InteractiveHudElement extends BaseHudElement {
      * Update menu positions on cache refresh
      */
     protected void updateMenuPositions() {
-        var window = MinecraftClient.getInstance().getWindow();
-        int height = window.getFramebufferHeight() / window.getScaleFactor();
+        var window = Minecraft.getInstance().getWindow();
+        int height = window.getHeight() / window.getGuiScale();
         float scale = getHudSize() / 12.0F;
         int verticalSpace = height - getHudY() - MENU_PADDING;
         
@@ -141,7 +141,7 @@ public abstract class InteractiveHudElement extends BaseHudElement {
     /**
      * Handle mouse click on menus
      */
-    protected boolean handleMenuClick(Click click, float scale) {
+    protected boolean handleMenuClick(MouseButtonEvent click, float scale) {
         for (VCToggleMenu menu : toggleMenus) {
             if (menu.isVisible() && menu.mouseClicked(click, false, scale)) {
                 return true;
@@ -187,7 +187,7 @@ public abstract class InteractiveHudElement extends BaseHudElement {
      * Override to provide tooltips for any line.
      * Default implementation returns line tooltip if line is clickable, otherwise empty.
      */
-    protected List<Text> getTooltipForLine(int lineIndex, Text line) {
+    protected List<Component> getTooltipForLine(int lineIndex, Component line) {
         // Default: use clickable line tooltips
         if (isLineClickable(lineIndex, line)) {
             return getLineTooltip(lineIndex, line);
@@ -196,7 +196,7 @@ public abstract class InteractiveHudElement extends BaseHudElement {
     }
 
 
-    protected void renderButtons(DrawContext context, MinecraftClient mc, HudElementState state) {
+    protected void renderButtons(GuiGraphicsExtractor context, Minecraft mc, HudElementState state) {
         float scale = state.size / 12.0F;
         
         if (buttonManager == null || buttonManager.size() == 0) {
@@ -207,15 +207,15 @@ public abstract class InteractiveHudElement extends BaseHudElement {
         }
 
         var window = mc.getWindow();
-        double actualMouseX = mc.mouse.getX() * window.getFramebufferWidth() / (window.getScaleFactor() * window.getWidth());
-        double actualMouseY = mc.mouse.getY() * window.getFramebufferHeight() / (window.getScaleFactor() * window.getHeight());
+        double actualMouseX = mc.mouseHandler.xpos() * window.getWidth() / (window.getGuiScale() * window.getScreenWidth());
+        double actualMouseY = mc.mouseHandler.ypos() * window.getHeight() / (window.getGuiScale() * window.getScreenHeight());
         
         var drawer = new HudDrawer(mc, context, state);
         buttonManager.render(drawer, actualMouseX, actualMouseY);
     }
     
-    protected void drawTextLines(HudDrawer drawer, MinecraftClient mc, HudElementState state) {
-        List<Text> lines = getDisplayLines(state);
+    protected void drawTextLines(HudDrawer drawer, Minecraft mc, HudElementState state) {
+        List<Component> lines = getDisplayLines(state);
         if (lines == null) return;
         
         int size = state.size;
@@ -224,18 +224,18 @@ public abstract class InteractiveHudElement extends BaseHudElement {
         regionManager.clear();
         
         for (int i = 0; i < lines.size(); i++) {
-            Text line = lines.get(i);
+            Component line = lines.get(i);
             if (line == null) continue;
             
             int y = i * (size);
             drawer.drawText(line, 0, y, state.color);
             
             boolean clickable = isLineClickable(i, line);
-            List<Text> tooltip = getTooltipForLine(i, line);
+            List<Component> tooltip = getTooltipForLine(i, line);
             boolean hasTooltip = tooltip != null && !tooltip.isEmpty();
             
             if (clickable || hasTooltip) {
-                int lineWidth = mc.textRenderer.getWidth(line);
+                int lineWidth = mc.font.width(line);
                 int scaledY = (int)(state.y + i * size * scale);
                 
                 var region = regionManager.addLine(
@@ -258,14 +258,14 @@ public abstract class InteractiveHudElement extends BaseHudElement {
     /**
      * Check if inventory screen is open
      */
-    protected boolean isInventoryOpen(MinecraftClient mc) {
-        return HudUtils.isInventoryOpen(mc);
+    protected boolean isInventoryOpen(Minecraft mc) {
+        return HudUtils.isInventoryOpen();
     }
     
-    public boolean handleMouseClick(Click click) {
+    public boolean handleMouseClick(MouseButtonEvent click) {
         if (isEditingMode() || !shouldRender()) return false;
         
-        var mc = MinecraftClient.getInstance();
+        var mc = Minecraft.getInstance();
         var state = getCachedState();
         float scale = state.size / 12.0F;
 
@@ -287,7 +287,7 @@ public abstract class InteractiveHudElement extends BaseHudElement {
     /**
      * Render line count control
      */
-    protected void renderLineCountControl(DrawContext context, MinecraftClient mc, HudElementState state, int mouseX, int mouseY) {
+    protected void renderLineCountControl(GuiGraphicsExtractor context, Minecraft mc, HudElementState state, int mouseX, int mouseY) {
         if (maxVisibleLines < 0 || getMaxLinesConfigKey() == null || buttonManager == null) return;
         
         var drawer = new HudDrawer(mc, context, state);
@@ -321,30 +321,30 @@ public abstract class InteractiveHudElement extends BaseHudElement {
     }
     
     /** Get lines to display in the HUD */
-    protected abstract List<Text> getDisplayLines(HudElementState state);
+    protected abstract List<Component> getDisplayLines(HudElementState state);
 
     /** Draw custom content inside matrix */
-    protected void drawCustomContent(HudDrawer drawer, MinecraftClient mc, HudElementState state) {}    
+    protected void drawCustomContent(HudDrawer drawer, Minecraft mc, HudElementState state) {}    
     
     /** Whether to show buttons (default: when inventory is open) */
-    protected boolean shouldShowButtons(MinecraftClient mc) {
+    protected boolean shouldShowButtons(Minecraft mc) {
         return isInventoryOpen(mc);
     }
     
     /** Whether a specific line should be clickable, default: false */
     @SuppressWarnings("squid:S1172")
-    protected boolean isLineClickable(int lineIndex, Text line) {
+    protected boolean isLineClickable(int lineIndex, Component line) {
         return false;
     }
     
     /** Get tooltip for a clickable line, default: empty */
     @SuppressWarnings("squid:S1172")
-    protected List<Text> getLineTooltip(int lineIndex, Text line) {
+    protected List<Component> getLineTooltip(int lineIndex, Component line) {
         return List.of();
     }
     
     /** Handle click on a line */
-    protected void handleLineClick(Text line) {}
+    protected void handleLineClick(Component line) {}
     
     /** Get clickable region manager for custom region setup */
     protected ClickableRegionManager getRegionManager() {
@@ -365,7 +365,7 @@ public abstract class InteractiveHudElement extends BaseHudElement {
             return true;
         }
         
-        var mc = MinecraftClient.getInstance();
+        var mc = Minecraft.getInstance();
         var state = getCachedState();
         
         int padding = 5;
@@ -401,7 +401,7 @@ public abstract class InteractiveHudElement extends BaseHudElement {
     }
     
     @Override
-    protected final void postRender(DrawContext context, MinecraftClient mc, HudElementState state, int mouseX, int mouseY) {
+    protected final void postRender(GuiGraphicsExtractor context, Minecraft mc, HudElementState state, int mouseX, int mouseY) {
 
         if (!isEditingMode() && shouldShowButtons(mc)) {
             renderButtons(context, mc, state);
@@ -410,8 +410,8 @@ public abstract class InteractiveHudElement extends BaseHudElement {
         
         if (!isEditingMode() && isInventoryOpen(mc)) {
             var window = mc.getWindow();
-            double actualMouseX = mc.mouse.getX() * window.getFramebufferWidth() / (window.getScaleFactor() * window.getWidth());
-            double actualMouseY = mc.mouse.getY() * window.getFramebufferHeight() / (window.getScaleFactor() * window.getHeight());
+            double actualMouseX = mc.mouseHandler.xpos() * window.getWidth() / (window.getGuiScale() * window.getScreenWidth());
+            double actualMouseY = mc.mouseHandler.ypos() * window.getHeight() / (window.getGuiScale() * window.getScreenHeight());
             var drawer = new HudDrawer(mc, context, state);
             regionManager.renderTooltips(context, drawer, actualMouseX, actualMouseY);
         }
@@ -422,26 +422,26 @@ public abstract class InteractiveHudElement extends BaseHudElement {
     /**
      * Custom rendering after matrix pop
      */
-    protected void postRenderCustom(DrawContext context, MinecraftClient mc, HudElementState state, int mouseX, int mouseY) {}
+    protected void postRenderCustom(GuiGraphicsExtractor context, Minecraft mc, HudElementState state, int mouseX, int mouseY) {}
 
     @Override
-    protected void renderContent(HudDrawer drawer, MinecraftClient mc, HudElementState state) {
+    protected void renderContent(HudDrawer drawer, Minecraft mc, HudElementState state) {
         drawTextLines(drawer, mc, state);
         drawCustomContent(drawer, mc, state);
     }
     
     @Override
-    protected int calculateContentWidth(MinecraftClient mc) {
+    protected int calculateContentWidth(Minecraft mc) {
         var state = getCachedState();
-        List<Text> lines = getDisplayLines(state);
+        List<Component> lines = getDisplayLines(state);
         if (lines == null) return 12;
         return HudUtils.getMaxLineWidth(mc, lines, state.size / 12.0F);
     }
     
     @Override
-    protected int calculateContentHeight(MinecraftClient mc) {
+    protected int calculateContentHeight(Minecraft mc) {
         var state = getCachedState();
-        List<Text> lines = getDisplayLines(state);
+        List<Component> lines = getDisplayLines(state);
         if (lines == null) return 12;
         return (int)(lines.size() * 12 * (state.size / 12.0F));
     }

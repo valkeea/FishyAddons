@@ -9,6 +9,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
+import com.mojang.blaze3d.platform.InputConstants;
+
 import me.valkeea.fishyaddons.event.EventPhase;
 import me.valkeea.fishyaddons.event.EventPriority;
 import me.valkeea.fishyaddons.event.impl.FaEvents;
@@ -20,11 +22,10 @@ import me.valkeea.fishyaddons.vconfig.annotation.VCModule;
 import me.valkeea.fishyaddons.vconfig.api.Config;
 import me.valkeea.fishyaddons.vconfig.api.StringKey;
 import me.valkeea.fishyaddons.vconfig.config.impl.ItemConfig;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.ingame.HandledScreen;
-import net.minecraft.client.util.InputUtil;
-import net.minecraft.screen.slot.Slot;
-import net.minecraft.screen.slot.SlotActionType;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.world.inventory.ContainerInput;
+import net.minecraft.world.inventory.Slot;
 
 @VCModule
 public class GuiIcons {
@@ -59,22 +60,22 @@ public class GuiIcons {
         refresh();
     }
 
-    private static boolean checkClick(Slot hovered, int button, HandledScreen<?> screen) {
+    private static boolean checkClick(Slot hovered, int button, AbstractContainerScreen<?> screen) {
         if (hovered == null || !anyBlocked()) return false;
         if (handleIcons(hovered)) { return true; }
 
-        if (handleShift(hovered.id)) {
+        if (handleShift(hovered.index)) {
             int keyCode = 340;
-            var cl = MinecraftClient.getInstance();
+            var cl = Minecraft.getInstance();
             
             if (cl.options != null) {
-                keyCode = cl.options.sneakKey.getDefaultKey().getCode();
+                keyCode = cl.options.keyShift.getDefaultKey().getValue();
             }
 
-            boolean shiftDown = InputUtil.isKeyPressed(cl.getWindow(), keyCode);
+            boolean shiftDown = InputConstants.isKeyDown(cl.getWindow(), keyCode);
 
             if (shiftDown) {
-                ((HandledScreenAccessor) screen).callOnMouseClick(hovered, hovered.id, button, SlotActionType.PICKUP);
+                ((HandledScreenAccessor) screen).callOnMouseClick(hovered, hovered.index, button, ContainerInput.PICKUP);
                 return true;
             }
         }
@@ -82,7 +83,7 @@ public class GuiIcons {
     }
 
     private static boolean handleIcons(Slot hovered) {
-        return isBlocked(hovered.id);
+        return isBlocked(hovered.index);
     }
 
     @VCListener(strings = StringKey.KEY_HIDE_GUI)    
@@ -116,17 +117,17 @@ public class GuiIcons {
     public static boolean isBlocked(int slotIndex) {
         if (!enabled) return false;
         return getSlotsFor(ContainerScanner.current()).contains(slotIndex)
-               && !isShiftDown(MinecraftClient.getInstance());
+               && !isShiftDown(Minecraft.getInstance());
     }
 
     public static boolean handleShift(int slotIndex) {
         return getSlotsFor(ContainerScanner.current()).contains(slotIndex);
     }    
 
-    private static boolean isShiftDown(MinecraftClient cl) {
+    private static boolean isShiftDown(Minecraft cl) {
         if (cl.options == null) return false;
-        int keyCode = cl.options.sneakKey.getDefaultKey().getCode();
-        return InputUtil.isKeyPressed(cl.getWindow(), keyCode);
+        int keyCode = cl.options.keyShift.getDefaultKey().getValue();
+        return InputConstants.isKeyDown(cl.getWindow(), keyCode);
     }   
 
     /**

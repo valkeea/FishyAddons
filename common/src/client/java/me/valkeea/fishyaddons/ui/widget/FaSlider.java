@@ -1,7 +1,7 @@
 package me.valkeea.fishyaddons.ui.widget;
 
-import net.minecraft.client.gui.Click;
-import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.input.MouseButtonEvent;
 
 public class FaSlider {
     private static final int BASE_SLIDER_WIDTH = 70;
@@ -58,7 +58,7 @@ public class FaSlider {
         this.knobHeight = Math.max(6, (int)(BASE_KNOB_HEIGHT * scale));
     }
     
-    public void render(DrawContext context, int mouseX, int mouseY) {
+    public void render(GuiGraphicsExtractor context, int mouseX, int mouseY) {
         int themeColor = me.valkeea.fishyaddons.tool.FishyMode.getThemeColor();      
         int trackY = y + (sliderHeight - 4) / 2;
         context.fill(x, trackY, x + sliderWidth, trackY + 4, 0xC0333333);
@@ -84,7 +84,7 @@ public class FaSlider {
         context.fill(knobX + knobWidth - 1, knobY, knobX + knobWidth, knobY + knobHeight, 0xC0666666);
     }
     
-    public boolean mouseClicked(Click click) {
+    public boolean mouseClicked(MouseButtonEvent click) {
         double mouseX = click.x();
         double mouseY = click.y();
         int button = click.button();
@@ -96,7 +96,7 @@ public class FaSlider {
         return false;
     }
     
-    public boolean mouseReleased(Click click) {
+    public boolean mouseReleased(MouseButtonEvent click) {
         if (click.button() == 0 && isDragging) {
             isDragging = false;
             return true;
@@ -104,7 +104,7 @@ public class FaSlider {
         return false;
     }
     
-    public boolean mouseDragged(Click click) {
+    public boolean mouseDragged(MouseButtonEvent click) {
         if (isDragging && click.button() == 0) {
             updateValue(click.x());
             return true;

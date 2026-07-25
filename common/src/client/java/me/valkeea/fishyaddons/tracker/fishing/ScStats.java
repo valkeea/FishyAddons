@@ -18,10 +18,10 @@ import me.valkeea.fishyaddons.util.FishyNotis;
 import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
 import me.valkeea.fishyaddons.vconfig.api.Config;
 import me.valkeea.fishyaddons.vconfig.config.impl.StatConfig;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.entity.decoration.ArmorStandEntity;
-import net.minecraft.text.Text;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.decoration.ArmorStand;
+import net.minecraft.world.phys.Vec3;
 
 public class ScStats {
     private static final double POSITION_CHECK_THRESHOLD = 5.0;
@@ -37,8 +37,8 @@ public class ScStats {
         Island.BAYOU,
         Island.JERRY,
         Island.CH,
-        Island.DEN,
         Island.FI,
+        Island.DEN,
         Island.HUB,
         Island.PARK,
         Island.LOTUS
@@ -57,7 +57,7 @@ public class ScStats {
     private int jawbusSinceVial = 0;
     private boolean loaded = false;  
 
-    private static Vec3d lastCheckedPosition = null;    
+    private static Vec3 lastCheckedPosition = null;    
     private static boolean enabled = false;
     private static boolean countDh = false;
     private static boolean announce = false;
@@ -111,15 +111,15 @@ public class ScStats {
      * Set sub-area context (hotspot or plhlegblast pool) based on nearby armor stand
      * @param hspt The detected hotspot armor stand, or null if none found
      */
-    public static void setSubArea(@Nullable ArmorStandEntity hspt) {
-        if (getInstance().hotspotAreas.contains(area) && enabled && MinecraftClient.getInstance().player != null) {
+    public static void setSubArea(@Nullable ArmorStand hspt) {
+        if (getInstance().hotspotAreas.contains(area) && enabled && Minecraft.getInstance().player != null) {
             if (hspt == null) {
                 resetHspt();
                 return;
             }
 
-            var playerPos = MinecraftClient.getInstance().player.getEntityPos();
-            var hsptPos = hspt.getEntityPos();
+            var playerPos = Minecraft.getInstance().player.position();
+            var hsptPos = hspt.position();
             var horizontalDistance = Math.sqrt(Math.pow(playerPos.x - hsptPos.x, 2) + Math.pow(playerPos.z - hsptPos.z, 2));
 
             if (horizontalDistance <= 13.0 && !isHotspot) {
@@ -150,13 +150,13 @@ public class ScStats {
     }    
     
     private static boolean updatePoolStatus() {
-        var client = MinecraftClient.getInstance();
+        var client = Minecraft.getInstance();
 
         if (client.player == null) {
             return false;
         }
         
-        var currentPos = client.player.getEntityPos();
+        var currentPos = client.player.position();
         if (lastCheckedPosition != null) {
 
             var distanceMoved = currentPos.distanceTo(lastCheckedPosition);
@@ -169,7 +169,7 @@ public class ScStats {
         return isPool3d(currentPos);
     }
     
-    private static boolean isPool3d(Vec3d pos) {
+    private static boolean isPool3d(Vec3 pos) {
         
         double x = pos.x;
         double y = pos.y;
@@ -199,7 +199,6 @@ public class ScStats {
     }
 
     public void handleMatch(ScCatchEvent event) {
-
         if (!enabled) return;
 
         String id = event.seaCreatureId;
@@ -388,7 +387,7 @@ public class ScStats {
 
     private static void announceAfter(String msg) {
         final String m = msg;
-        RunDelayed.run(() -> FishyNotis.send(Text.literal(m)), 100, null);
+        RunDelayed.run(() -> FishyNotis.send(Component.literal(m)), 100, null);
     }
 
     public void sendStats() {
@@ -406,7 +405,7 @@ public class ScStats {
 
         if (!validAreas.contains(currentArea) && !isCi && !isHotspot) {
             sb.append("§b" + currentArea.displayName() + "§c(Invalid Area)");
-            FishyNotis.send(Text.literal(sb.toString()));
+            FishyNotis.send(Component.literal(sb.toString()));
             return;
         }
 
@@ -420,7 +419,7 @@ public class ScStats {
             buildAreaStats(sb, currentArea);
         }
     
-        FishyNotis.send(Text.literal(sb.toString()));
+        FishyNotis.send(Component.literal(sb.toString()));
     }
     
     private StringBuilder buildAreaStats(StringBuilder sb, Island currentArea) {

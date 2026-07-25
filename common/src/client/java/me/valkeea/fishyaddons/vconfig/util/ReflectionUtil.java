@@ -13,7 +13,7 @@ public class ReflectionUtil {
     public static void setOrForceAccess(Field field, Object instance, Object value) throws IllegalAccessException {
         try {
             field.set(instance, value);
-        } catch (IllegalAccessException e) {
+        } catch (IllegalAccessException _) {
             field.setAccessible(true);
             field.set(instance, value);
         }
@@ -26,7 +26,7 @@ public class ReflectionUtil {
     public static MethodHandle tryFirst(Method method) throws IllegalAccessException {
         try {
             return MethodHandles.lookup().unreflect(method);
-        } catch (IllegalAccessException e) {
+        } catch (IllegalAccessException _) {
             method.setAccessible(true);
             return MethodHandles.lookup().unreflect(method);
         }

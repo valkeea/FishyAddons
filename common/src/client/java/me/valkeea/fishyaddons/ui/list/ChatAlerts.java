@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+import me.valkeea.fishyaddons.compat.McApi;
 import me.valkeea.fishyaddons.feature.qol.FishyPresets;
 import me.valkeea.fishyaddons.ui.GuiUtil;
 import me.valkeea.fishyaddons.ui.element.DropdownMenu;
@@ -21,13 +22,12 @@ import me.valkeea.fishyaddons.vconfig.ui.widget.VCLabelField;
 import me.valkeea.fishyaddons.vconfig.ui.widget.VCPopup;
 import me.valkeea.fishyaddons.vconfig.ui.widget.VCTextField;
 import me.valkeea.fishyaddons.vconfig.ui.widget.VCVisuals;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.Click;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.text.Style;
-import net.minecraft.text.Text;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.Style;
 
 public class ChatAlerts extends Screen {
     private static final String TITLE_TEXT = "Chat Alerts";
@@ -63,7 +63,7 @@ public class ChatAlerts extends Screen {
     private VCTooltip uploadTooltip = null;  
 
     public ChatAlerts() {
-        super(Text.literal(TITLE_TEXT));
+        super(Component.literal(TITLE_TEXT));
         parent = ScreenManager.getConfigOrCurrent();        
     }
 
@@ -71,7 +71,7 @@ public class ChatAlerts extends Screen {
     protected void init() {
 
         entries.clear();        
-        this.clearChildren();
+        this.clearWidgets();
         calcDimensions(UIScaleCalculator.calculateUIScaleLegacy());
 
         for (Map.Entry<String, AlertData> entry : AlertConfig.getChatAlerts().entrySet()) {
@@ -95,63 +95,63 @@ public class ChatAlerts extends Screen {
             int addBtnY = this.height - 40;
             addBtn = new FaButton(
                 this.width / 2 - entryW / 2, addBtnY, btnW, btnH,
-                Text.literal("Add").styled(style -> style.withColor(0xFFCCFFCC)),
+                Component.literal("Add").withStyle(style -> style.withColor(0xFFCCFFCC)),
                 btn -> {
                     if (entries.size() >= maxVisibleEntries) {
                         scrollOffset = entries.size() - maxVisibleEntries + 1;
                     }
                     addMode = true;
                     addEntry = new AddEntry();
-                    this.addDrawableChild(addEntry.keyField);
-                    this.addDrawableChild(addEntry.saveBtn);
-                    this.addDrawableChild(addEntry.cancelBtn);
-                    this.remove(addBtn);
+                    this.addRenderableWidget(addEntry.keyField);
+                    this.addRenderableWidget(addEntry.saveBtn);
+                    this.addRenderableWidget(addEntry.cancelBtn);
+                    this.removeWidget(addBtn);
                 }
             );
             addBtn.setUIScale(uiScale);
-            this.addDrawableChild(addBtn);
+            this.addRenderableWidget(addBtn);
         }      
 
         var backButton = new FaButton(
             this.width / 2 - entryW / 2 + btnW, this.height - 40, btnW, btnH,
-            Text.literal("Back").styled(style -> style.withColor(0xFF808080)),
+            Component.literal("Back").withStyle(style -> style.withColor(0xFF808080)),
             btn -> ScreenManager.openConfigScreen() 
         );
         backButton.setUIScale(uiScale);
-        this.addDrawableChild(backButton);
+        this.addRenderableWidget(backButton);
 
         var closeButton = new FaButton(
             this.width / 2 - entryW / 2 + btnW * 2, this.height - 40, btnW, btnH,
-            Text.literal("Close").styled(style -> style.withColor(0xFF808080)),
-            btn -> this.close()
+            Component.literal("Close").withStyle(style -> style.withColor(0xFF808080)),
+            btn -> this.onClose()
         );
         closeButton.setUIScale(uiScale);
-        this.addDrawableChild(closeButton);
+        this.addRenderableWidget(closeButton);
 
         downloadBtnX = this.width / 2 + entryW / 2 - btnW * 2;
         downloadBtnY = this.height - 40;
-        this.addDrawableChild(new FaButton(
+        this.addRenderableWidget(new FaButton(
             downloadBtnX, downloadBtnY, btnW, btnH,
-            Text.literal("📁⤒").styled(style -> style.withBold(true).withColor(0xFFE2CAE9)),
+            Component.literal("📁⤒").withStyle(style -> style.withBold(true).withColor(0xFFE2CAE9)),
             b -> showPresetDropdown(downloadBtnX, downloadBtnY)
         ));
 
         uploadBtnX = this.width / 2 + entryW / 2 - btnW;
         uploadBtnY = this.height - 40;
-        this.addDrawableChild(new FaButton(
+        this.addRenderableWidget(new FaButton(
             uploadBtnX, uploadBtnY, btnW, btnH,
-            Text.literal("📁⤓").styled(style -> style.withBold(true).withColor(0xFFB0FFB0)),
+            Component.literal("📁⤓").withStyle(style -> style.withBold(true).withColor(0xFFB0FFB0)),
             b -> presetPopup()
         ));
 
         downloadTooltip = new VCTooltip(
             Arrays.asList(
-                Text.literal("Download From File:"),
-                Text.literal("- §8Format: preset.alert.<name>.json"),
-                Text.literal("- §8All presets are stored in config/fishyaddons/preset"),
-                Text.literal("  §8and can be re-downloaded"),
-                Text.literal("  §8'example' contains the proper json structure"),
-                Text.literal("- §dTip: §7To update fishing alerts, re-download 'fishing'")
+                Component.literal("Download From File:"),
+                Component.literal("- §8Format: preset.alert.<name>.json"),
+                Component.literal("- §8All presets are stored in config/fishyaddons/preset"),
+                Component.literal("  §8and can be re-downloaded"),
+                Component.literal("  §8'example' contains the proper json structure"),
+                Component.literal("- §dTip: §7To update fishing alerts, re-download 'fishing'")
             ),
             VCVisuals.getThemeColor(),
             uiScale
@@ -159,9 +159,9 @@ public class ChatAlerts extends Screen {
 
         uploadTooltip = new VCTooltip(
             Arrays.asList(
-                Text.literal("Save as Preset:"),
-                Text.literal("- §8Creates a working preset with all current alerts."),
-                Text.literal("- §8Can be shared with others or saved for later use")
+                Component.literal("Save as Preset:"),
+                Component.literal("- §8Creates a working preset with all current alerts."),
+                Component.literal("- §8Can be shared with others or saved for later use")
             ),
             VCVisuals.getThemeColor(),
             uiScale
@@ -180,8 +180,8 @@ public class ChatAlerts extends Screen {
     }
 
     @Override
-    public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        super.render(context, mouseX, mouseY, delta);
+    public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+        super.extractRenderState(context, mouseX, mouseY, delta);
 
         if (entries.isEmpty()) {
             int y = this.height / 2;
@@ -196,14 +196,14 @@ public class ChatAlerts extends Screen {
                 " -§dIf you add a chat filter, the original message should be used as a trigger!",
             };
             for (String instruction : instructions) {
-                Text text = Text.literal(instruction);
-                GuiUtil.drawScaledCenteredText(context, this.textRenderer, text.getString(),
+                Component text = Component.literal(instruction);
+                GuiUtil.drawScaledCenteredText(context, this.font, text.getString(),
                     x, y, 0xFF55FFFF, uiScale - 0.1f);
                 y += lineHeight;
             }
         } else {
             GuiUtil.drawScaledCenteredText(
-                context, this.textRenderer, VCText.header(TITLE_TEXT, Style.EMPTY.withBold(true)), this.width / 2, 15, 0xFF55FFFF, uiScale - 0.1f);
+                context, this.font, VCText.header(TITLE_TEXT, Style.EMPTY.withBold(true)), this.width / 2, 15, 0xFF55FFFF, uiScale - 0.1f);
         }
 
         if (presetDropdown != null && presetDropdown.isVisible()) {
@@ -212,24 +212,24 @@ public class ChatAlerts extends Screen {
         addList(context);
 
         if (popup != null) {          
-            popup.render(context, this.textRenderer, mouseX, mouseY, delta);
+            popup.render(context, this.font, mouseX, mouseY, delta);
         }
 
         if (popup != null && presetNameField != null) {
             presetNameField.setY(popup.getY() + 30);
-            presetNameField.render(context, mouseX, mouseY, delta);
+            presetNameField.extractRenderState(context, mouseX, mouseY, delta);
         }
 
         if (isInside(downloadBtnX, downloadBtnY, btnW, btnH, mouseX, mouseY)) {
-            downloadTooltip.renderAuto(context, this.textRenderer, downloadBtnX - 60, downloadBtnY - 60, this.width, this.height);
+            downloadTooltip.renderAuto(context, this.font, downloadBtnX - 60, downloadBtnY - 60, this.width, this.height);
         }
 
         if (isInside(uploadBtnX, uploadBtnY, btnW, btnH, mouseX, mouseY)) {
-            uploadTooltip.renderAuto(context, this.textRenderer, uploadBtnX - 60, uploadBtnY - 60, this.width, this.height);
+            uploadTooltip.renderAuto(context, this.font, uploadBtnX - 60, uploadBtnY - 60, this.width, this.height);
         }
     }
 
-    private void addList(DrawContext context) {
+    private void addList(GuiGraphicsExtractor context) {
         int listTop = 40;
         int listBottom = this.height - 60;
         int listHeight = listBottom - listTop;
@@ -266,7 +266,7 @@ public class ChatAlerts extends Screen {
         }
     }
 
-    private void renderScrollIndicator(DrawContext context, int x, int y, int listHeight, int totalEntries) {
+    private void renderScrollIndicator(GuiGraphicsExtractor context, int x, int y, int listHeight, int totalEntries) {
         int scrollbarWidth = 4;
         context.fill(x, y, x + scrollbarWidth, y + listHeight, 0x44000000);
         if (totalEntries > maxVisibleEntries) {
@@ -283,27 +283,27 @@ public class ChatAlerts extends Screen {
 
     private class AddEntry {
         private final VCTextField keyField;
-        private ButtonWidget saveBtn;
-        private ButtonWidget cancelBtn;
+        private Button saveBtn;
+        private Button cancelBtn;
 
         public AddEntry() {
             final int offScreenY = -1000;
             
-            this.keyField = new VCTextField(ChatAlerts.this.textRenderer, 0, offScreenY, fieldW, fieldH, Text.literal("Key"));
-            this.keyField.setDrawsBackground(false);
-            this.keyField.setText("");
+            this.keyField = new VCTextField(ChatAlerts.this.font, 0, offScreenY, fieldW, fieldH, Component.literal("Key"));
+            this.keyField.setBordered(false);
+            this.keyField.setValue("");
             this.keyField.setEditable(true);
             this.keyField.setMaxLength(100);
             this.keyField.setUIScale(uiScale);
             this.keyField.setFocused(true);
-            this.keyField.setPlaceholder(Text.literal("Detected String...").styled(style -> style.withColor(0xFF808080)));
+            this.keyField.setHint(Component.literal("Detected String...").withStyle(style -> style.withColor(0xFF808080)));
             ChatAlerts.this.setFocused(this.keyField);
 
             this.saveBtn = new FaButton(
                 0, offScreenY, delBtnW, fieldH,
-                Text.literal("✔").styled(s -> s.withColor(0xCCFFCC)),
+                Component.literal("✔").withStyle(s -> s.withColor(0xCCFFCC)),
                 btn -> {
-                    String key = this.keyField.getText().trim();
+                    String key = this.keyField.getValue().trim();
                     if (!checkForDupes(key)) {
                         return;
                     }
@@ -316,16 +316,16 @@ public class ChatAlerts extends Screen {
 
             this.cancelBtn = new FaButton(
                 0, offScreenY, delBtnW, fieldH,
-                Text.literal("❌").styled(s -> s.withColor(0xFFFF8080)),
+                Component.literal("❌").withStyle(s -> s.withColor(0xFFFF8080)),
                 btn -> abortEntry()
             );
         }
 
         public void abortEntry() {
             addMode = false;
-            ChatAlerts.this.remove(this.keyField);
-            ChatAlerts.this.remove(this.saveBtn);
-            ChatAlerts.this.remove(this.cancelBtn);
+            ChatAlerts.this.removeWidget(this.keyField);
+            ChatAlerts.this.removeWidget(this.saveBtn);
+            ChatAlerts.this.removeWidget(this.cancelBtn);
             ChatAlerts.this.init();
         }
 
@@ -366,37 +366,37 @@ public class ChatAlerts extends Screen {
 
     private class Entry {
         private final VCLabelField keyField;
-        private final ButtonWidget editBtn;
-        private ButtonWidget delBtn;
-        private ButtonWidget toggleBtn;
+        private final Button editBtn;
+        private Button delBtn;
+        private Button toggleBtn;
 
         public Entry(String key) {
             final int offScreenY = -1000;
             
-            this.keyField = new VCLabelField(ChatAlerts.this.textRenderer, 0, offScreenY, fieldW, fieldH, Text.literal("Key"));
+            this.keyField = new VCLabelField(ChatAlerts.this.font, 0, offScreenY, fieldW, fieldH, Component.literal("Key"));
             this.keyField.setText(key);
             this.keyField.setUIScale(uiScale);
             this.keyField.setFocused(false);
             this.editBtn = VCButton.createNavigationButton(
                 0, offScreenY, btnW, fieldH,
-                Text.literal("Edit").styled(s -> s.withColor(0xFFE2CAE9)),
+                Component.literal("Edit").withStyle(s -> s.withColor(0xFFE2CAE9)),
                 btn -> {
                     AlertData data = AlertConfig.getChatAlerts().get(key);
-                    MinecraftClient.getInstance().setScreen(new AlertEditScreen(key, data));
+                    McApi.setScreen(new AlertEditScreen(key, data));
                 },
                 uiScale - 0.1f
             );
 
             this.delBtn = VCButton.createNavigationButton(
                 0, offScreenY, delBtnW, fieldH,
-                Text.literal("🗑").setStyle(Style.EMPTY.withColor(0xFF808080)),
+                Component.literal("🗑").setStyle(Style.EMPTY.withColor(0xFF808080)),
                 btn -> {
                     AlertConfig.removeChatAlert(key);
                     entries.remove(this);
-                    ChatAlerts.this.remove(this.keyField);
-                    ChatAlerts.this.remove(this.editBtn);
-                    ChatAlerts.this.remove(this.delBtn);
-                    ChatAlerts.this.remove(this.toggleBtn);
+                    ChatAlerts.this.removeWidget(this.keyField);
+                    ChatAlerts.this.removeWidget(this.editBtn);
+                    ChatAlerts.this.removeWidget(this.delBtn);
+                    ChatAlerts.this.removeWidget(this.toggleBtn);
                     ChatAlerts.this.init();
                 }, uiScale
             );
@@ -432,13 +432,13 @@ public class ChatAlerts extends Screen {
         }
 
         public void addToScreen() {
-            ChatAlerts.this.addDrawableChild(this.keyField);
-            ChatAlerts.this.addDrawableChild(this.editBtn);
-            ChatAlerts.this.addDrawableChild(this.delBtn);
-            ChatAlerts.this.addDrawableChild(this.toggleBtn);
+            ChatAlerts.this.addRenderableWidget(this.keyField);
+            ChatAlerts.this.addRenderableWidget(this.editBtn);
+            ChatAlerts.this.addRenderableWidget(this.delBtn);
+            ChatAlerts.this.addRenderableWidget(this.toggleBtn);
         }
 
-        public boolean mouseClicked(Click click) {
+        public boolean mouseClicked(MouseButtonEvent click) {
 
             double mouseX = click.x();
             double mouseY = click.y();
@@ -463,7 +463,7 @@ public class ChatAlerts extends Screen {
     }
 
     @Override
-    public boolean mouseClicked(Click click, boolean doubled) {
+    public boolean mouseClicked(MouseButtonEvent click, boolean doubled) {
         if (popup != null && presetNameField != null && presetNameField.mouseClicked(click, doubled)) {
             presetNameField.setFocused(true);
             this.setFocused(presetNameField);
@@ -534,13 +534,13 @@ public class ChatAlerts extends Screen {
     }        
 
     @Override
-    public boolean mouseReleased(Click click) {
+    public boolean mouseReleased(MouseButtonEvent click) {
         isDraggingScrollbar = false;
         return super.mouseReleased(click);
     }
 
     @Override
-    public boolean mouseDragged(Click click, double offsetX, double offsetY) {
+    public boolean mouseDragged(MouseButtonEvent click, double offsetX, double offsetY) {
         if (isDraggingScrollbar) {
             int listTop = 40;
             int listBottom = this.height - 60;
@@ -571,7 +571,7 @@ public class ChatAlerts extends Screen {
         List<String> suffixes = FishyPresets.listPresetSuffixes(FishyPresets.PresetType.ALERT);
 
         if (suffixes.isEmpty()) {
-            popup(Text.literal("No presets found for this tab."), "OK", () -> popup = null, "", () -> {});
+            popup(Component.literal("No presets found for this tab."), "OK", () -> popup = null, "", () -> {});
             return;
         }
         
@@ -597,7 +597,7 @@ public class ChatAlerts extends Screen {
         }
     }
 
-    public void popup(Text title, String continueButtonText, Runnable onContinue, String discardButtonText, Runnable onDiscard) {
+    public void popup(Component title, String continueButtonText, Runnable onContinue, String discardButtonText, Runnable onDiscard) {
         popup = new VCPopup(
 			title,
 			discardButtonText,
@@ -606,36 +606,36 @@ public class ChatAlerts extends Screen {
             onContinue::run,
             uiScale
         );
-        this.popup.init(this.textRenderer, this.width, this.height);
+        this.popup.init(this.font, this.width, this.height);
     }
 
     private void presetPopup() {
-        presetNameField = new VCTextField(this.textRenderer, this.width / 2 - 60,
-            this.height / 2 - 35, 120, 20, Text.literal("Preset Name"));
+        presetNameField = new VCTextField(this.font, this.width / 2 - 60,
+            this.height / 2 - 35, 120, 20, Component.literal("Preset Name"));
 
         presetNameField.setMaxLength(15);
-        presetNameField.setText("");
+        presetNameField.setValue("");
         this.setFocused(presetNameField);
 
         this.popup = new VCPopup(
-            Text.literal("Enter preset name:"),
+            Component.literal("Enter preset name:"),
             "Cancel", () -> {
-                this.remove(presetNameField);
+                this.removeWidget(presetNameField);
                 presetNameField = null;
                 this.popup = null;
             },
             "Save", () -> {
-            String suffix = presetNameField.getText().trim();
+            String suffix = presetNameField.getValue().trim();
             if (!suffix.isEmpty()) {
                 savePreset(suffix);
             }
             popup = null;
-            this.remove(presetNameField);
+            this.removeWidget(presetNameField);
             presetNameField = null;
         },
         1.0f
         );
-        this.popup.init(this.textRenderer, this.width, this.height);
+        this.popup.init(this.font, this.width, this.height);
     }
 
     public void dupePopup(String input) {
@@ -643,7 +643,7 @@ public class ChatAlerts extends Screen {
         String truncated = input.length() > 7 ? input.substring(0, 7) + "..." : input;
 
         this.popup = new VCPopup(
-            Text.literal("Entry with key '" + truncated + "' already exists!"),
+            Component.literal("Entry with key '" + truncated + "' already exists!"),
             "Continue Editing", () -> this.popup = null,
             "Discard Entry", () -> {
                 if (addEntry != null) {
@@ -653,7 +653,7 @@ public class ChatAlerts extends Screen {
             },
             1.0f
         );
-        this.popup.init(this.textRenderer, this.width, this.height);
+        this.popup.init(this.font, this.width, this.height);
     }
 
     private void savePreset(String suffix) {
@@ -662,7 +662,7 @@ public class ChatAlerts extends Screen {
     }
 
     @Override
-    public void close() {
-        this.client.setScreen(parent);
+    public void onClose() {
+        McApi.setScreen(parent);
     }
 }

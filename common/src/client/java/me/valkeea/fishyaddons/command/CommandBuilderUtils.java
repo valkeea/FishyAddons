@@ -9,10 +9,10 @@ import me.valkeea.fishyaddons.ui.list.TabbedListScreen;
 import me.valkeea.fishyaddons.util.FishyNotis;
 import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
 import me.valkeea.fishyaddons.vconfig.api.Config;
-import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
+import net.fabricmc.fabric.api.client.command.v2.ClientCommands;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.Screen;
 
 public class CommandBuilderUtils {
     private CommandBuilderUtils() {}
@@ -85,16 +85,16 @@ public class CommandBuilderUtils {
             boolean includeToggle,
             IntSupplier defaultAction) {
         
-        LiteralArgumentBuilder<FabricClientCommandSource> builder = ClientCommandManager.literal(literalName);
+        var builder = ClientCommands.literal(literalName);
         
-        builder.then(ClientCommandManager.literal("on")
+        builder.then(ClientCommands.literal("on")
             .executes(context -> {
                 Config.set(key, true);
                 FishyNotis.on(label);
                 return 1;
             }));
         
-        builder.then(ClientCommandManager.literal("off")
+        builder.then(ClientCommands.literal("off")
             .executes(context -> {
                 Config.set(key, false);
                 FishyNotis.off(label);
@@ -102,7 +102,7 @@ public class CommandBuilderUtils {
             }));
         
         if (includeToggle) {
-            builder.then(ClientCommandManager.literal("toggle")
+            builder.then(ClientCommands.literal("toggle")
                 .executes(context -> {
                     boolean current = Config.get(key);
                     Config.set(key, !current);
@@ -131,7 +131,7 @@ public class CommandBuilderUtils {
     public static LiteralArgumentBuilder<FabricClientCommandSource> createGuiCommand(
             String literalName,
             Screen screen) {
-        return ClientCommandManager.literal(literalName)
+        return ClientCommands.literal(literalName)
             .executes(ctx -> openGuiAction(screen).getAsInt());
     }
     
@@ -139,35 +139,31 @@ public class CommandBuilderUtils {
     public static LiteralArgumentBuilder<FabricClientCommandSource> createSimpleCommand(
             String literalName,
             IntSupplier action) {
-        return ClientCommandManager.literal(literalName)
+        return ClientCommands.literal(literalName)
             .executes(ctx -> action.getAsInt());
     }
 
     // --- Actions ---
     
-    /** Opens a GUI screen as the default action, checking if already in GUI. */
+    /** Open a UI screen as the default action, checking if already in GUI. */
     public static IntSupplier openGuiAction(Screen screen) {
         return () -> {
             if (CmdHelper.checkGUI() == 1) return 1;
-            MinecraftClient.getInstance().execute(() -> 
-                GuiScheduler.scheduleGui(screen)
-            );
+            Minecraft.getInstance().execute(() -> GuiScheduler.scheduleGui(screen));
             return 1;
         };
     }
     
-    /** Opens a tabbed GUI screen. */
+    /** Open a tab */
     public static IntSupplier openTabbedGuiAction(TabbedListScreen.Tab tab) {
         return () -> {
             if (CmdHelper.checkGUI() == 1) return 1;
-            MinecraftClient.getInstance().execute(() -> 
-                GuiScheduler.scheduleGui(new TabbedListScreen(tab))
-            );
+            Minecraft.getInstance().execute(() -> GuiScheduler.scheduleGui(new TabbedListScreen(tab)));
             return 1;
         };
     }
     
-    /** Shows a help message as the default action. */
+    /** Show a help message as the default action. */
     public static IntSupplier helpAction(String helpMessage) {
         return () -> {
             FishyNotis.themed(helpMessage);
@@ -193,7 +189,7 @@ public class CommandBuilderUtils {
         }
         
         public boolean has(int index) { return index >= 0 && index < args.length; }
-        public int length() { return args.length; }
+
         
         /** Check if argument at index matches any of the provided values (case-insensitive). */
         public boolean matches(int index, String... values) {
@@ -205,36 +201,6 @@ public class CommandBuilderUtils {
                 }
             }
             return false;
-        }
-        
-        /** Get a slice of arguments from start index to end (exclusive). */
-        public String[] slice(int start, int end) {
-            if (start < 0 || start >= args.length) return new String[0];
-            int actualEnd = Math.min(end, args.length);
-            String[] result = new String[actualEnd - start];
-            System.arraycopy(args, start, result, 0, result.length);
-            return result;
-        }
-        
-        /** Get all arguments from start index onwards. */
-        public String[] sliceFrom(int start) {
-            return slice(start, args.length);
-        }
-        
-        /** Join arguments from start index with a delimiter. */
-        public String join(int start, String delimiter) {
-            if (!has(start)) return "";
-            StringBuilder sb = new StringBuilder();
-            for (int i = start; i < args.length; i++) {
-                if (i > start) sb.append(delimiter);
-                sb.append(args[i]);
-            }
-            return sb.toString();
-        }
-        
-        /** Join all arguments from start index with spaces. */
-        public String joinFrom(int start) {
-            return join(start, " ");
         }
     }        
 }

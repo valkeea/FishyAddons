@@ -49,10 +49,14 @@ public class StringUtils {
         
         for (String dWord : desiredWords) {
             for (String iWord : inputWords) {
+
                 int distance = levenshteinDistance(dWord, iWord);
-                int maxLen = Math.max(dWord.length(), iWord.length());
+                int dl = dWord == null ? 0 : dWord.length();
+                int il = iWord == null ? 0 : iWord.length();
+                int maxLen = Math.max(dl, il);
                 
                 int threshold;
+                
                 if (maxLen <= 4) {
                     threshold = 1;
                 } else if (maxLen <= 8) {

@@ -2,24 +2,25 @@ package me.valkeea.fishyaddons.ui.list;
 
 import java.util.Map;
 
+import com.mojang.blaze3d.platform.InputConstants;
+
 import me.valkeea.fishyaddons.util.Keyboard;
 import me.valkeea.fishyaddons.vconfig.config.impl.ShortcutsConfig;
 import me.valkeea.fishyaddons.vconfig.ui.widget.FaButton;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gui.Click;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.client.input.KeyInput;
-import net.minecraft.client.util.InputUtil;
-import net.minecraft.text.Text;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.narration.NarrationElementOutput;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.network.chat.Component;
 
 public class KeybindEntryList extends GenericEntryList {
     private static final String PROMPT = "> Press a Key <";
 
-    public KeybindEntryList(MinecraftClient client, int width, int height, int y, int itemHeight, TabbedListScreen parentScreen) {
+    public KeybindEntryList(Minecraft client, int width, int height, int y, int itemHeight, TabbedListScreen parentScreen) {
         super(client, width, height, y, itemHeight, parentScreen);
     }
 
@@ -54,9 +55,9 @@ public class KeybindEntryList extends GenericEntryList {
     }
 
     @Override
-    public void getGuideText(DrawContext context, TextRenderer tr, int x, int y) {
-        context.drawTextWithShadow(tr, Text.literal("Keybind"), x - 5, y - 10, 0xFFAAAAAA);
-        context.drawTextWithShadow(tr, Text.literal("Executed Command"), x + 110, y - 10, 0xFFAAAAAA);
+    public void getGuideText(GuiGraphicsExtractor context, Font tr, int x, int y) {
+        context.text(tr, Component.literal("Keybind"), x - 5, y - 10, 0xFFAAAAAA);
+        context.text(tr, Component.literal("Executed Command"), x + 110, y - 10, 0xFFAAAAAA);
     }
 
     @Override
@@ -85,11 +86,11 @@ public class KeybindEntryList extends GenericEntryList {
     }
 
     public GenericEntry getHoveredKeybindEntry() {
-        return this.getHoveredEntry();
+        return this.getHovered();
     }
 
     @Override
-    public void appendClickableNarrations(NarrationMessageBuilder builder) {
+    public void updateWidgetNarration(NarrationElementOutput builder) {
         // Access
     }
 
@@ -111,12 +112,12 @@ public class KeybindEntryList extends GenericEntryList {
         private final GenericEntry entry;
         private final KeybindEntryList entryList;
         private final TabbedListScreen parentScreen;
-        private final PressAction customPress;
+        private final OnPress customPress;
 
         public KeybindButtonWidget(String keyValue, GenericEntry entry, KeybindEntryList entryList, TabbedListScreen parentScreen) {
             super(
                 - 40, 5, 100, 20,
-                net.minecraft.text.Text.literal(keyValue.isEmpty() ? "Set Key" : Keyboard.getDisplayNameFor(keyValue)),
+                net.minecraft.network.chat.Component.literal(keyValue.isEmpty() ? "Set Key" : Keyboard.getDisplayNameFor(keyValue)),
                 b -> {}
             );
             this.keyValue = keyValue;
@@ -126,12 +127,12 @@ public class KeybindEntryList extends GenericEntryList {
             this.customPress = b -> {
                 this.setFocused(true);
                 listening = true;
-                this.setMessage(net.minecraft.text.Text.literal(PROMPT));
+                this.setMessage(net.minecraft.network.chat.Component.literal(PROMPT));
             };
         }
 
         @Override
-        public boolean keyPressed(KeyInput input) {
+        public boolean keyPressed(KeyEvent input) {
 
             if (listening) {
                 String keyName = Keyboard.getGlfwKeyName(input.key());
@@ -139,7 +140,7 @@ public class KeybindEntryList extends GenericEntryList {
                     keyValue = keyName;
                 } else {
 
-                    String translationKey = InputUtil.fromKeyCode(input).getTranslationKey();
+                    String translationKey = InputConstants.getKey(input).getName();
                     if (translationKey.startsWith("key.keyboard.")) {
                         keyValue = translationKey.substring("key.keyboard.".length()).toUpperCase();
                     } else {
@@ -148,7 +149,7 @@ public class KeybindEntryList extends GenericEntryList {
                 }
                 handleKeyChange();
                 listening = false;
-                this.setMessage(net.minecraft.text.Text.literal(Keyboard.getDisplayNameFor(keyValue)));
+                this.setMessage(net.minecraft.network.chat.Component.literal(Keyboard.getDisplayNameFor(keyValue)));
                 if (parentScreen != null) parentScreen.refreshEntryList();
                 this.setFocused(false);
                 return true;
@@ -157,7 +158,7 @@ public class KeybindEntryList extends GenericEntryList {
         }
 
         @Override
-        public boolean mouseClicked(Click click, boolean doubled) {
+        public boolean mouseClicked(MouseButtonEvent click, boolean doubled) {
             if (listening) {
                 keyValue = "MOUSE" + click.button();
                 handleKeyChange();
@@ -181,8 +182,8 @@ public class KeybindEntryList extends GenericEntryList {
 
             if (duplicateExists) {
                 parentScreen.showFishyPopup(
-                    net.minecraft.text.Text.literal("Keybind '" + keyValue + "' already exists!"),
-                    net.minecraft.text.Text.literal("Overwrite Existing"), () -> {
+                    net.minecraft.network.chat.Component.literal("Keybind '" + keyValue + "' already exists!"),
+                    net.minecraft.network.chat.Component.literal("Overwrite Existing"), () -> {
 
                         entryList.removeEntry(keyValue);
                         entryList.children().stream()
@@ -196,7 +197,7 @@ public class KeybindEntryList extends GenericEntryList {
                             entry.outputField.setFocused(true);
                         }
                     },
-                    net.minecraft.text.Text.literal("Discard Change"), () -> {
+                    net.minecraft.network.chat.Component.literal("Discard Change"), () -> {
                         entryList.removeEntry(entry);
                         parentScreen.addingNewEntry = false;
                         parentScreen.fishyPopup = null;
@@ -229,18 +230,18 @@ public class KeybindEntryList extends GenericEntryList {
         }
     }
 
-    public boolean handleMouseClicked(Click click, TabbedListScreen screen) {
+    public boolean handleMouseClicked(MouseButtonEvent click, TabbedListScreen screen) {
         GenericEntry entry = getHoveredKeybindEntry();
 
         if (entry == null) return false;
-        if (entry.inputWidget instanceof TextFieldWidget field) {
+        if (entry.inputWidget instanceof EditBox field) {
             if (field.mouseClicked(click, false)) {
                 field.setFocused(true);
                 screen.setFocused(field);
                 return true;
             }
 
-        } else if (entry.inputWidget instanceof ButtonWidget btn && btn.mouseClicked(click, false)) {
+        } else if (entry.inputWidget instanceof Button btn && btn.mouseClicked(click, false)) {
             btn.setFocused(true);
             screen.setFocused(btn);
             return true;

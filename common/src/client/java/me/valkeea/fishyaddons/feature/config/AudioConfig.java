@@ -16,8 +16,8 @@ import me.valkeea.fishyaddons.vconfig.core.UICategory;
 import me.valkeea.fishyaddons.vconfig.ui.widget.dropdown.item.SoundSearchItem;
 import me.valkeea.fishyaddons.vconfig.ui.widget.dropdown.item.ToggleItem;
 import me.valkeea.fishyaddons.vconfig.ui.widget.dropdown.item.ToggleMenuItem;
-import net.minecraft.registry.Registries;
-import net.minecraft.util.Identifier;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.Identifier;
 
 @VCModule(UICategory.AUDIO)
 public class AudioConfig {
@@ -58,8 +58,8 @@ public class AudioConfig {
 
     public static List<ToggleMenuItem> getReelItems() {
 
-        var ids = Registries.SOUND_EVENT.stream()
-            .map(Registries.SOUND_EVENT::getId)
+        var ids = BuiltInRegistries.SOUND_EVENT.stream()
+            .map(BuiltInRegistries.SOUND_EVENT::getKey)
             .filter(java.util.Objects::nonNull)
             .map(Identifier::toString)
             .sorted()
@@ -116,8 +116,8 @@ public class AudioConfig {
     private static String feroOverride;
 
     public static List<ToggleMenuItem> getFeroItems() {
-        var ids = Registries.SOUND_EVENT.stream()
-            .map(Registries.SOUND_EVENT::getId)
+        var ids = BuiltInRegistries.SOUND_EVENT.stream()
+            .map(BuiltInRegistries.SOUND_EVENT::getKey)
             .filter(java.util.Objects::nonNull)
             .map(Identifier::toString)
             .sorted()

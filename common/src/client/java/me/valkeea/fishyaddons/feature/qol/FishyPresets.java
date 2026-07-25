@@ -41,9 +41,11 @@ public class FishyPresets {
     public static java.util.List<String> listPresetSuffixes(PresetType type) {
         java.util.List<String> result = new ArrayList<>();
         Path dir = getPresetDir();
+
         if (!Files.exists(dir)) return result;
+
         try (var stream = Files.list(dir)) {
-            Pattern pattern = Pattern.compile("preset\\." + Pattern.quote(getTypeName(type)) + "\\.(.+)\\.json");
+            var pattern = Pattern.compile("preset\\." + Pattern.quote(getTypeName(type)) + "\\.(.+)\\.json");
             stream.forEach(path -> {
                 String fileName = path.getFileName().toString();
                 Matcher matcher = pattern.matcher(fileName);
@@ -51,9 +53,11 @@ public class FishyPresets {
                     result.add(matcher.group(1));
                 }
             });
+
         } catch (Exception e) {
             e.printStackTrace();
         }
+
         return result;
     }
 
@@ -108,7 +112,7 @@ public class FishyPresets {
     );
 
     public static void ensureDefaultPresets() {
-        Path path = getPresetDir().resolve("preset.commands.default.json");
+        var path = getPresetDir().resolve("preset.commands.default.json");
         if (!Files.exists(path)) {
             saveStringPreset(PresetType.COMMANDS, "mastermode", EXAMPLE_COMMANDS_PRESET);
             saveStringPreset(PresetType.KEYBINDS, "example", EXAMPLE_KEYBINDS_PRESET);
@@ -119,7 +123,7 @@ public class FishyPresets {
     }
 
     public static Map<String, String> loadStringPreset(PresetType type, String suffix) {
-        Path path = getPresetDir().resolve("preset." + getTypeName(type) + "." + suffix + JSON);
+        var path = getPresetDir().resolve("preset." + getTypeName(type) + "." + suffix + JSON);
         if (!Files.exists(path)) return Map.of();
         try {
             String json = Files.readString(path);
@@ -131,7 +135,7 @@ public class FishyPresets {
     }
 
     public static Map<String, AlertConfig.AlertData> loadAlertPreset(String suffix) {
-        Path path = getPresetDir().resolve(ALERT_PRESET + suffix + JSON);
+        var path = getPresetDir().resolve(ALERT_PRESET + suffix + JSON);
         if (!Files.exists(path)) return Map.of();
         try {
             String json = Files.readString(path);
@@ -143,7 +147,7 @@ public class FishyPresets {
     }
 
     public static void saveStringPreset(PresetType type, String suffix, Map<String, String> data) {
-        Path path = getPresetDir().resolve("preset." + getTypeName(type) + "." + suffix + JSON);
+        var path = getPresetDir().resolve("preset." + getTypeName(type) + "." + suffix + JSON);
         try {
             Files.createDirectories(path.getParent());
             if (!Files.exists(path)) {
@@ -155,7 +159,7 @@ public class FishyPresets {
     }
 
     public static void saveAlertPreset(String suffix, Map<String, AlertConfig.AlertData> data) {
-        Path path = getPresetDir().resolve(ALERT_PRESET + suffix + JSON);
+        var path = getPresetDir().resolve(ALERT_PRESET + suffix + JSON);
         try {
             Files.createDirectories(path.getParent());
             if (!Files.exists(path)) {

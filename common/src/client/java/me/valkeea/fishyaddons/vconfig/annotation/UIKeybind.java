@@ -5,8 +5,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import me.valkeea.fishyaddons.vconfig.core.UICategory;
 import me.valkeea.fishyaddons.vconfig.api.StringKey;
+import me.valkeea.fishyaddons.vconfig.core.UICategory;
 
 /**
  * Marks a String field as a keybind control.

@@ -7,7 +7,7 @@ import org.jetbrains.annotations.Nullable;
 
 import me.valkeea.fishyaddons.vconfig.core.UICategory;
 import me.valkeea.fishyaddons.vconfig.ui.control.UIControl;
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.Component;
 
 /**
  * Represents a configuration entry in VCScreen.
@@ -26,7 +26,7 @@ public class VCEntry {
     public final String cleanName;
     public final String[] description;
     public final List<UIControl> controls;
-    public final List<Text> tooltipText;
+    public final List<Component> tooltipText;
     public final UICategory category;    
     public final @Nullable List<VCEntry> subEntries;
     public final @Nullable VCEntry parent;
@@ -50,7 +50,7 @@ public class VCEntry {
         private final String name;
         private final String[] description;
         private List<UIControl> controls = null;
-        private List<Text> tooltipText = null;
+        private List<Component> tooltipText = null;
         private UICategory category = null;
         private List<VCEntry> subEntries = null;        
         private VCEntry parent = null;
@@ -70,7 +70,7 @@ public class VCEntry {
             return this;
         }
         
-        public Builder tooltipText(List<Text> tooltipText) {
+        public Builder tooltipText(List<Component> tooltipText) {
             this.tooltipText = tooltipText;
             return this;
         }

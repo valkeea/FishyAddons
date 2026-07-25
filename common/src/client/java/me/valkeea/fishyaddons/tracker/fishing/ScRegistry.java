@@ -93,47 +93,47 @@ public class ScRegistry {
     
     private void initializeCreatures() {
 
-        SpawnRequirement always = new SpawnRequirement("always", () -> true);
+        var always = new SpawnRequirement("always", () -> true);
 
-        SpawnRequirement inHotspot = new SpawnRequirement("hotspot", 
+        var inHotspot = new SpawnRequirement("hotspot", 
             () -> {
-                try { return ScStats.isHspt(); } catch (Exception e) { return false; }
+                try { return ScStats.isHspt(); } catch (Exception _) { return false; }
             });
 
-        SpawnRequirement inPool = new SpawnRequirement("pool", 
+        var inPool = new SpawnRequirement("pool", 
             () -> {
-                try { return ScStats.isPool(); } catch (Exception e) { return false; }
+                try { return ScStats.isPool(); } catch (Exception _) { return false; }
             });
 
-        SpawnRequirement notPool = new SpawnRequirement("not_pool", 
+        var notPool = new SpawnRequirement("not_pool", 
             () -> {
-                try { return !ScStats.isPool(); } catch (Exception e) { return true; }
+                try { return !ScStats.isPool(); } catch (Exception _) { return true; }
             });
 
-        SpawnRequirement isSpooky = new SpawnRequirement("spooky", 
+        var isSpooky = new SpawnRequirement("spooky", 
             () -> {
                 try { 
                     return ActivityMonitor.getInstance().isActive(Currently.SPOOKY);
-                } catch (Exception e) { return false; }
+                } catch (Exception _) { return false; }
             });
 
-        SpawnRequirement isShark = new SpawnRequirement("shark", 
+        var isShark = new SpawnRequirement("shark", 
             () -> {
                 try { 
                     return ActivityMonitor.getInstance().isActive(Currently.SHARK);
-                } catch (Exception e) { return false; }
+                } catch (Exception _) { return false; }
             });            
 
-        SpawnRequirement basic = new SpawnRequirement("basic_island", 
+        var basic = new SpawnRequirement("basic_island", 
             () -> {
                 try {
                     return ScStats.getArea().isBasic();
-                } catch (Exception e) { return true; }
+                } catch (Exception _) { return true; }
             });
             
-        SpawnRequirement water = new SpawnRequirement("water", 
+        var water = new SpawnRequirement("water", 
             () -> {
-                try { return !ScStats.getArea().key().contains("crimson"); } catch (Exception e) { return true; }
+                try { return !ScStats.getArea().key().contains("crimson"); } catch (Exception _) { return true; }
             });
 
         // Crimson Isles
@@ -261,7 +261,7 @@ public class ScRegistry {
             hash.append(ActivityMonitor.getInstance().isActive(Currently.SHARK)).append("|");
             hash.append(ScStats.getArea());
             return hash.toString();
-        } catch (Exception e) {
+        } catch (Exception _) {
             return String.valueOf(System.currentTimeMillis());
         }
     }

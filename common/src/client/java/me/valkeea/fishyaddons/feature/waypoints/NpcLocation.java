@@ -13,6 +13,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import org.jetbrains.annotations.Nullable;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonDeserializationContext;
@@ -32,13 +34,13 @@ import me.valkeea.fishyaddons.util.text.StringUtils;
 import me.valkeea.fishyaddons.vconfig.annotation.VCListener;
 import me.valkeea.fishyaddons.vconfig.annotation.VCModule;
 import me.valkeea.fishyaddons.vconfig.api.IntKey;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.entity.decoration.ArmorStandEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.text.Text;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Box;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.client.Minecraft;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.decoration.ArmorStand;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 
 @VCModule
 public class NpcLocation {
@@ -81,7 +83,7 @@ public class NpcLocation {
         }
     }
     
-    private static Map<String, BlockPos> loadAreaData(String area) {
+    private static @Nullable Map<String, BlockPos> loadAreaData(String area) {
         try (InputStream is = NpcLocation.class.getResourceAsStream(NPC_LOCATIONS_RESOURCE)) {
             if (is == null) return null;
             
@@ -131,8 +133,8 @@ public class NpcLocation {
             
             if (!similar.isEmpty()) {
                 FishyNotis.themed("Unknown NPC. Did you mean;");
-                similar.forEach(key -> FishyNotis.alert(Text.literal("§7- §8" + key)
-                .styled(style -> style.withClickEvent(new net.minecraft.text.ClickEvent.RunCommand("fa npc " + key)))));
+                similar.forEach(key -> FishyNotis.alert(Component.literal("§7- §8" + key)
+                .withStyle(style -> style.withClickEvent(new net.minecraft.network.chat.ClickEvent.RunCommand("fa npc " + key)))));
             } else {
                 FishyNotis.send("NPC not found: " + npcName);
             }
@@ -148,7 +150,7 @@ public class NpcLocation {
             return;
         }
 
-        FishyNotis.send(Text.literal("§7Drawing waypoints for all NPCs in " + area.displayName())
+        FishyNotis.send(Component.literal("§7Drawing waypoints for all NPCs in " + area.displayName())
             .append(ChatButton.create("fa npc clear", "Clear")));
 
         areaNpcs.forEach((name, pos) -> 
@@ -161,7 +163,7 @@ public class NpcLocation {
 
     // --- Dev ---
 
-    private static final File OUTPUT_FILE = new File(MinecraftClient.getInstance().runDirectory, "npc_locations.json");
+    private static final File OUTPUT_FILE = new File(Minecraft.getInstance().gameDirectory, "npc_locations.json");
     private static final Map<String, Map<String, BlockPos>> scanned = new HashMap<>();
     private static Map<String, Map<String, BlockPos>> knownNpcs = null;      
     
@@ -185,49 +187,53 @@ public class NpcLocation {
     }
 
     public static void saveNpc() {
-        var mc = MinecraftClient.getInstance();
-        if (mc.world == null || mc.player == null) return;
+        var mc = Minecraft.getInstance();
+        if (mc.level == null || mc.player == null) return;
         
         ensureFullDatasetLoaded();
         
         var p = mc.player;
-        var w = mc.world;
+        var w = mc.level;
         int r = 3;
 
-        for (var as : w.getEntitiesByClass(
-                ArmorStandEntity.class,
-                p.getBoundingBox().expand(r),
+        for (var as : w.getEntitiesOfClass(
+                ArmorStand.class,
+                p.getBoundingBox().inflate(r),
                 e -> true)) {
     
-            var name = as.getCustomName() != null ? as.getCustomName().getString() : null;
+            var n = as.getCustomName();
+            var name = n != null ? n.getString() : null;
             if (name == null || name.isEmpty() || name.equals(name.toUpperCase())) continue;
 
-            var asPos = as.getBlockPos();
-            if (p.getBlockPos().isWithinDistance(asPos, r)) {
+            var asPos = as.blockPosition();
+            if (p.blockPosition().closerThan(asPos, r)) {
 
-                var npc = w.getEntitiesByClass(
-                    PlayerEntity.class,
-                    new Box(asPos).expand(2),
+                var npc = w.getEntitiesOfClass(
+                    Player.class,
+                    new AABB(asPos).inflate(2),
                     e -> true
                 ).stream().findFirst();
                 
                 if (npc.isPresent()) {
-
-                    var area = SkyblockAreas.getIsland().key();
-                    var vec = new Vec3d((int) npc.get().getX(), (int) npc.get().getY(), (int) npc.get().getZ());
-                    var pos = BlockPos.ofFloored(vec);
-
-                    if (!knownNpcs.containsKey(area) || !knownNpcs.get(area).containsKey(name) || 
-                        !knownNpcs.get(area).get(name).equals(pos)) {
-                        scanned.computeIfAbsent(area, k -> new HashMap<>()).put(name, pos);
-                        FishyNotis.send("Saved NPC: " + name + " at " + pos.toShortString());
-                        TempWaypoint.setBeacon(pos, FishyMode.getThemeColor(), name, duration);
-                        saveToFile();
-                    }
+                    updateOrAdd(npc.get(), name);
                 }
             }
         }
-    } 
+    }
+
+    private static void updateOrAdd(Player npc, String name) {
+        var area = SkyblockAreas.getIsland().key();
+        var vec = new Vec3((int) npc.getX(), (int) npc.getY(), (int) npc.getZ());
+        var pos = BlockPos.containing(vec);
+
+        if (!knownNpcs.containsKey(area) || !knownNpcs.get(area).containsKey(name) || 
+            !knownNpcs.get(area).get(name).equals(pos)) {
+            scanned.computeIfAbsent(area, k -> new HashMap<>()).put(name, pos);
+            FishyNotis.send("Saved NPC: " + name + " at " + pos.toShortString());
+            TempWaypoint.setBeacon(pos, FishyMode.getThemeColor(), name, duration);
+            saveToFile();
+        }
+    }
 
     private static void saveToFile() {
         try (var writer = new FileWriter(OUTPUT_FILE)) {
@@ -235,5 +241,7 @@ public class NpcLocation {
         } catch (IOException e) {
             e.printStackTrace();
         }
-    }    
+    }
+
+    private NpcLocation() {}
 }

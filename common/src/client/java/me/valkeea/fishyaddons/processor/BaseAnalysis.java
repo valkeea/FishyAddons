@@ -62,7 +62,7 @@ public class BaseAnalysis {
     /**
      * Analyze message with support for modifications done by other mods
      */
-    public static MessageAnalysis onRender(String originalMessage, net.minecraft.text.Text modifiedText) {
+    public static MessageAnalysis onRender(String originalMessage, net.minecraft.network.chat.Component modifiedText) {
         var baseAnalysis = onPacket(originalMessage);
 
         long startTime = System.nanoTime();

@@ -8,13 +8,13 @@ import me.valkeea.fishyaddons.hud.core.ElementRegistry;
 import me.valkeea.fishyaddons.hud.core.HudDrawer;
 import me.valkeea.fishyaddons.hud.core.HudElement;
 import me.valkeea.fishyaddons.hud.core.HudElementState;
-import me.valkeea.fishyaddons.vconfig.api.Config;
 import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
+import me.valkeea.fishyaddons.vconfig.api.Config;
 import me.valkeea.fishyaddons.vconfig.config.impl.HudConfig;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gl.RenderPipelines;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.text.Text;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.network.chat.Component;
 
 public class EffectDisplay implements HudElement {
     private boolean editingMode = false;
@@ -23,7 +23,7 @@ public class EffectDisplay implements HudElement {
     private boolean intersects = false;
 
     @Override
-    public void render(DrawContext context, MinecraftClient mc, int mouseX, int mouseY) {
+    public void render(GuiGraphicsExtractor context, Minecraft mc, int mouseX, int mouseY) {
         if (!editingMode && !Config.get(BooleanKey.HUD_EFFECTS_ENABLED)) return;
 
         var state = getCachedState();
@@ -44,7 +44,7 @@ public class EffectDisplay implements HudElement {
         int maxTextWidth = 0;
         for (var e : entries) {
             String time = EffectTimers.formatTime(e.remainingMs());
-            int tw = (int)(mc.textRenderer.getWidth(time) * scale);
+            int tw = (int)(mc.font.width(time) * scale);
             maxTextWidth = Math.max(maxTextWidth, tw);
         }
 
@@ -59,16 +59,16 @@ public class EffectDisplay implements HudElement {
             context.fill(shadowX1, shadowY1, shadowX2, shadowY2, 0x80000000);
         }
 
-        context.getMatrices().pushMatrix();
-        context.getMatrices().translate(hudX, hudY);
-        context.getMatrices().scale(scale, scale); 
+        context.pose().pushMatrix();
+        context.pose().translate(hudX, hudY);
+        context.pose().scale(scale, scale); 
 
         int y = 0;
 
         for (var e : entries) {
 
             if (e.textureId != null) {
-                context.drawTexture(
+                context.blit(
                     RenderPipelines.GUI_TEXTURED,
                     e.textureId,
                     0, y, 0, 0, 16, 16, 16, 16
@@ -76,42 +76,42 @@ public class EffectDisplay implements HudElement {
             }
 
             String time = EffectTimers.formatTime(e.remainingMs());
-            HudDrawer.drawText(context, Text.literal(time), 18, y + 4, color, state.outlined);
+            HudDrawer.drawText(context, Component.literal(time), 18, y + 4, color, state.outlined);
 
             y += intersects ? -20 : 20;
         }
 
-        context.getMatrices().popMatrix();
+        context.pose().popMatrix();
     }
 
-    private boolean editingOrEmpty(boolean empty, DrawContext context, int hudX, int hudY, float scale, int color, HudElementState state) {
+    private boolean editingOrEmpty(boolean empty, GuiGraphicsExtractor context, int hudX, int hudY, float scale, int color, HudElementState state) {
         if (editingMode && empty) {
 
-            context.getMatrices().pushMatrix();
-            context.getMatrices().translate(hudX, hudY);
-            context.getMatrices().scale(scale, scale); 
+            context.pose().pushMatrix();
+            context.pose().translate(hudX, hudY);
+            context.pose().scale(scale, scale); 
 
             int y = 0;
 
             context.fill(0, y, 16, y + 16, 0xFF3A3A3A);
-            HudDrawer.drawText(context, Text.literal("59m"), 18, y + 4, color, state.outlined);
+            HudDrawer.drawText(context, Component.literal("59m"), 18, y + 4, color, state.outlined);
 
             y += 20;
             
             context.fill(0, y, 16, y + 16, 0xFF3A3A3A);
-            HudDrawer.drawText(context, Text.literal("1h 12m"), 18, y + 4, color, state.outlined);
+            HudDrawer.drawText(context, Component.literal("1h 12m"), 18, y + 4, color, state.outlined);
 
-            context.getMatrices().popMatrix();
+            context.pose().popMatrix();
             return true;
 
         } else return empty;
     }
 
     public void updateSpace() {
-        var mc = MinecraftClient.getInstance();
+        var mc = Minecraft.getInstance();
         int totalH = (int)(Math.max(1, EffectTimers.getInstance().listActive().size()) * 20 * Math.max(0.5f, getHudSize() / 12.0F));
         var window = mc.getWindow();
-        int screenHeight = window.getFramebufferHeight() / window.getScaleFactor();
+        int screenHeight = window.getHeight() / window.getGuiScale();
         
         if (getHudY() + totalH > screenHeight) {
             intersects = true;
@@ -132,7 +132,7 @@ public class EffectDisplay implements HudElement {
     }
 
     @Override
-    public Rectangle getBounds(MinecraftClient mc) {
+    public Rectangle getBounds(Minecraft mc) {
         int hudX = getHudX();
         int hudY = getHudY();
         int size = getHudSize();

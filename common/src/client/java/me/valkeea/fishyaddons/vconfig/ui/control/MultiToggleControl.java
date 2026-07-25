@@ -3,6 +3,7 @@ package me.valkeea.fishyaddons.vconfig.ui.control;
 import java.util.List;
 import java.util.function.Supplier;
 
+import me.valkeea.fishyaddons.compat.McApi;
 import me.valkeea.fishyaddons.vconfig.ui.layout.Dimensions;
 import me.valkeea.fishyaddons.vconfig.ui.model.Bounds;
 import me.valkeea.fishyaddons.vconfig.ui.model.ClickContext;
@@ -12,8 +13,8 @@ import me.valkeea.fishyaddons.vconfig.ui.render.VCText;
 import me.valkeea.fishyaddons.vconfig.ui.widget.VCButton;
 import me.valkeea.fishyaddons.vconfig.ui.widget.dropdown.VCToggleMenu;
 import me.valkeea.fishyaddons.vconfig.ui.widget.dropdown.item.ToggleMenuItem;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.input.KeyInput;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.input.KeyEvent;
 
 public class MultiToggleControl extends AbstractUIControl {
     private static final int BASE_WIDTH = 60;
@@ -75,8 +76,8 @@ public class MultiToggleControl extends AbstractUIControl {
             null
         );
         
-        var mc = MinecraftClient.getInstance();
-        int screenH = (int) Math.floor(mc.getWindow().getHeight() / ctx.uiScale);
+        var mc = Minecraft.getInstance();
+        int screenH = (int) Math.floor(mc.getWindow().getScreenHeight() / ctx.uiScale);
         int available = screenH - lastBounds.y - BASE_HEIGHT * 2;
         activeDropdown.setMaxVisibleEntries(Dimensions.SCALE, available);
     }
@@ -84,7 +85,7 @@ public class MultiToggleControl extends AbstractUIControl {
     @Override
     public boolean renderOverlay(VCRenderContext ctx, int scrollX, int endY) {
         if (activeDropdown != null && activeDropdown.isVisible()) {
-            var screen = MinecraftClient.getInstance().currentScreen;
+            var screen = McApi.screen();
             if (screen != null) {
                 activeDropdown.render(ctx.context, screen, ctx.mouseX, ctx.mouseY, Dimensions.SCALE);
                 return true;
@@ -125,8 +126,8 @@ public class MultiToggleControl extends AbstractUIControl {
     }
     
     @Override
-    public boolean handleKeyPress(KeyInput input) {
-        if (activeDropdown != null && activeDropdown.isVisible() && input.getKeycode() == 256) {
+    public boolean handleKeyPress(KeyEvent input) {
+        if (activeDropdown != null && activeDropdown.isVisible() && input.input() == 256) {
             activeDropdown.setVisible(false);
             activeDropdown = null;
             return true;

@@ -4,12 +4,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 public class AhResponse {
-    
     private final Gson gson;
     
     public AhResponse() {
@@ -21,28 +19,27 @@ public class AhResponse {
     }
     
     public ParseResult parsePage(String responseBody) {
-        ParseResult result = new ParseResult();
-        int failedAuctions = 0;
+        var result = new ParseResult();
+        int failed = 0;
         
         try {
-            JsonObject root = gson.fromJson(responseBody, JsonObject.class);
-            
+
+            var root = gson.fromJson(responseBody, JsonObject.class);
             if (!root.has("success") || !root.get("success").getAsBoolean()) {
                 System.err.println("Auction API returned success=false");
                 return result;
             }
             
             result.totalPages = root.get("totalPages").getAsInt();
-            JsonArray auctions = root.getAsJsonArray("auctions");
-            
+            var auctions = root.getAsJsonArray("auctions");
             for (JsonElement auctionElement : auctions) {
                 if (!processAuction(auctionElement, result)) {
-                    failedAuctions++;
+                    failed++;
                 }
             }
             
-            if (failedAuctions > 0) {
-                System.err.println("Warning: Failed to parse " + failedAuctions + " auctions (recovered " + result.itemsProcessed + ")");
+            if (failed > 0) {
+                System.err.println("Warning: Failed to parse " + failed + " auctions (recovered " + result.itemsProcessed + ")");
             }
             
         } catch (Exception e) {
@@ -55,8 +52,8 @@ public class AhResponse {
     
     private boolean processAuction(JsonElement auctionElement, ParseResult result) {
         try {
-            JsonObject auction = auctionElement.getAsJsonObject();
-            
+
+            var auction = auctionElement.getAsJsonObject();
             if (!auction.has("bin") || !auction.get("bin").getAsBoolean()) {
                 return true;
             }
@@ -79,11 +76,10 @@ public class AhResponse {
             
             // Keep lowest price for each rarity
             rarityPrices.compute(rarity, (k, v) -> v == null || price < v ? price : v);
-            
             result.itemsProcessed++;
+
             return true;
-        } catch (Exception e) {
-            // Skip and continue with others
+        } catch (Exception _) {
             return false;
         }
     }
@@ -100,7 +96,6 @@ public class AhResponse {
         for (var entry : itemPrices.entrySet()) {
             String itemName = entry.getKey();
             Map<String, Double> rarityPrices = entry.getValue();
-            
             var tieredData = new TieredPriceData(rarityPrices);
             cache.put(itemName, tieredData);
         }

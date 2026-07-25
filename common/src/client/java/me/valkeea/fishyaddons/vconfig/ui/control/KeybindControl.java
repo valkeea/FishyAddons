@@ -6,7 +6,7 @@ import me.valkeea.fishyaddons.vconfig.ui.model.Bounds;
 import me.valkeea.fishyaddons.vconfig.ui.model.ClickContext;
 import me.valkeea.fishyaddons.vconfig.ui.render.VCRenderContext;
 import me.valkeea.fishyaddons.vconfig.ui.widget.VCKeybind;
-import net.minecraft.client.input.KeyInput;
+import net.minecraft.client.input.KeyEvent;
 
 public class KeybindControl extends AbstractUIControl {
     private final StringBinding keyBinding;
@@ -55,7 +55,7 @@ public class KeybindControl extends AbstractUIControl {
     }
     
     @Override
-    public boolean handleKeyPress(KeyInput input) {
+    public boolean handleKeyPress(KeyEvent input) {
         if (widget == null) return false;
         if (widget.keyPressed(input)) {
             cachedValueDirty = true;

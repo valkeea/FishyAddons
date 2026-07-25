@@ -1,11 +1,11 @@
 package me.valkeea.fishyaddons.vconfig.ui.render;
 
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 
 public class VCRenderContext {
-    public final DrawContext context;
-    public final TextRenderer textRenderer;
+    public final GuiGraphicsExtractor context;
+    public final Font textRenderer;
     public final int mouseX;
     public final int mouseY;
     public final float delta;
@@ -13,8 +13,8 @@ public class VCRenderContext {
     public final int entryWidth;
     
     public VCRenderContext(
-        DrawContext context,
-        TextRenderer textRenderer,
+        GuiGraphicsExtractor context,
+        Font textRenderer,
         int mouseX,
         int mouseY,
         float delta,

@@ -6,10 +6,10 @@ import me.valkeea.fishyaddons.feature.skyblock.timer.CakeTimer;
 import me.valkeea.fishyaddons.hud.base.SimpleHudElement;
 import me.valkeea.fishyaddons.tool.FishyMode;
 import me.valkeea.fishyaddons.util.SpriteUtil;
-import me.valkeea.fishyaddons.vconfig.api.Config;
 import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
+import me.valkeea.fishyaddons.vconfig.api.Config;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 
 public class CakeDisplay extends SimpleHudElement {
 
@@ -31,7 +31,7 @@ public class CakeDisplay extends SimpleHudElement {
     }
     
     @Override
-    protected Text getText() {
+    protected Component getText() {
         
         String displayText;
         String symbolText = "";
@@ -48,9 +48,9 @@ public class CakeDisplay extends SimpleHudElement {
             displayText = CakeTimer.formatTimeLeft(timeLeft);
         }
    
-        return Text.empty()
-            .append(Text.literal(symbolText).styled(s -> s.withColor(0xFF808080)))
-            .append(Text.literal(displayText).styled(s2 -> s2.withColor(getCachedState().color)));
+        return Component.empty()
+            .append(Component.literal(symbolText).withStyle(s -> s.withColor(0xFF808080)))
+            .append(Component.literal(displayText).withStyle(s2 -> s2.withColor(getCachedState().color)));
 
     }
 

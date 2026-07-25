@@ -4,8 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.text.Text;
+import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
 
 /**
  * HUD button layout, rendering, and click detection
@@ -101,7 +101,7 @@ public class HudButtonManager {
         for (HudButton button : buttons) {
             boolean hovered = button.isHovered(mouseX, mouseY);
             drawer.drawButton(button.x, button.y, button.width, button.height, 
-                            Text.literal(button.label), hovered, true);
+                            Component.literal(button.label), hovered, true);
         }
     }
     
@@ -136,7 +136,7 @@ public class HudButtonManager {
      * Render line count control under or next to buttons.
      * Returns region data for click handling.
      */
-    public LineCountControlRegions renderLineCountControl(MinecraftClient mc, HudDrawer drawer,
+    public LineCountControlRegions renderLineCountControl(Minecraft mc, HudDrawer drawer,
                                                             int elementWidth, int stateColor, int currentValue, 
                                                             double mouseX, double mouseY) {
         int buttonsWidth = getTotalW();
@@ -149,11 +149,11 @@ public class HudButtonManager {
         boolean minusHovered = mouseX >= minusX && mouseX <= minusX + minusWidth 
                            && mouseY >= controlY && mouseY <= controlY + buttonHeight;
         drawer.textButton(minusX, controlY, minusWidth, buttonHeight, 
-                         Text.literal("−"), minusHovered);
+                         Component.literal("−"), minusHovered);
         
         int countX = minusX + minusWidth + (int)(2 * scale);
-        Text countText = Text.literal(String.valueOf(currentValue));
-        int countWidth = (int)(mc.textRenderer.getWidth(countText) * scale);
+        Component countText = Component.literal(String.valueOf(currentValue));
+        int countWidth = (int)(mc.font.width(countText) * scale);
         drawer.drawText(countText, countX, controlY + (int)(4 * scale), stateColor);
         
         int plusX = countX + countWidth + (int)(2 * scale);
@@ -161,7 +161,7 @@ public class HudButtonManager {
         boolean plusHovered = mouseX >= plusX && mouseX <= plusX + plusWidth 
                            && mouseY >= controlY && mouseY <= controlY + buttonHeight;
         drawer.textButton(plusX, controlY, plusWidth, buttonHeight, 
-                         Text.literal("+"), plusHovered);
+                         Component.literal("+"), plusHovered);
         
         return new LineCountControlRegions(
             minusX, controlY, minusWidth, buttonHeight,

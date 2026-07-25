@@ -1,0 +1,56 @@
+package me.valkeea.fishyaddons.mixin;
+
+import java.util.List;
+import java.util.stream.IntStream;
+
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+
+import me.valkeea.fishyaddons.feature.item.safeguard.FGUtil;
+import me.valkeea.fishyaddons.feature.item.safeguard.GuiHandler;
+import me.valkeea.fishyaddons.feature.visual.FaColors;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.ItemStack;
+
+@SuppressWarnings("squid:S1118")
+@Mixin(Screen.class)
+public abstract class MixinScreen {
+
+    @Inject(
+        method = "getTooltipFromItem",
+        at = @At("RETURN"),
+        cancellable = true
+    )
+    private static void onGetTooltipFromItem(
+            Minecraft cl,
+            ItemStack stack,
+            CallbackInfoReturnable<List<Component>> cir
+    ) {
+        List<Component> originalTooltip = cir.getReturnValue();
+
+        if (originalTooltip == null || originalTooltip.isEmpty()) return;
+        if (FGUtil.tooltipEnabled() && GuiHandler.isProtectedCached(stack)) {
+            
+            int nbtIndex = IntStream.range(0, originalTooltip.size())
+                .filter(i -> originalTooltip.get(i).getString().startsWith("NBT:"))
+                .findFirst()
+                .orElse(-1);
+
+            originalTooltip.add(nbtIndex == -1 ? originalTooltip.size() : nbtIndex, Component.literal("§8§oFA Guarded"));
+        }
+
+        if (FaColors.shouldColor()) {
+            
+            for (int i = 0; i < originalTooltip.size(); i++) {
+                var original = originalTooltip.get(i);
+                var recolored = FaColors.tooltipCached(original);
+
+                if (recolored != original) originalTooltip.set(i, recolored);
+            }
+        }
+    }
+}

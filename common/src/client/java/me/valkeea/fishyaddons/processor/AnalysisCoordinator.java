@@ -4,7 +4,7 @@ import org.jetbrains.annotations.Nullable;
 
 import me.valkeea.fishyaddons.feature.filter.FilterConfig;
 import me.valkeea.fishyaddons.feature.filter.RuleFactory;
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.Component;
 
 @SuppressWarnings("squid:S6548")
 public class AnalysisCoordinator {
@@ -82,7 +82,7 @@ public class AnalysisCoordinator {
      * Analyzes a message that may have been modified by other mods.
      * (this allows users to use either original, or messages modified by other mods)
      */
-    public AnalysisResult analyzeMessage(String originalMessage, @Nullable Text modifiedText) {   
+    public AnalysisResult analyzeMessage(String originalMessage, @Nullable Component modifiedText) {   
 
         var baseResult = analyzeMessage(originalMessage);
         

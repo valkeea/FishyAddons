@@ -15,7 +15,7 @@ import com.google.gson.reflect.TypeToken;
 import me.valkeea.fishyaddons.util.JsonUtil;
 import me.valkeea.fishyaddons.vconfig.config.BaseConfig;
 import me.valkeea.fishyaddons.vconfig.config.ConfigSection;
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.Component;
 
 @SuppressWarnings("squid:S6548")
 public class ItemConfig extends BaseConfig {
@@ -121,7 +121,7 @@ public class ItemConfig extends BaseConfig {
                         int to = entry.getValue().getAsInt();
                         slotData.set(BOUND_PREFIX + from, to);
                         slotData.set(BOUND_PREFIX + to, from);
-                    } catch (NumberFormatException e) {
+                    } catch (NumberFormatException _) {
                         logError("Invalid bound slot key: " + entry.getKey());
                     }
                 }
@@ -143,7 +143,7 @@ public class ItemConfig extends BaseConfig {
                 try {
                     int slot = Integer.parseInt(key.substring(BOUND_PREFIX.length()));
                     boundSlots.put(slot, value);
-                } catch (NumberFormatException e) {
+                } catch (NumberFormatException _) {
                     logError("Invalid bound slot key: " + key);
                 }
             }
@@ -177,7 +177,7 @@ public class ItemConfig extends BaseConfig {
                         String itemStackData = entry.getValue().getAsString();
                         equipmentData.set(ITEMSTACK_PREFIX + slot, itemStackData);
 
-                    } catch (NumberFormatException e) {
+                    } catch (NumberFormatException _) {
                         logError("Invalid equipment slot: " + entry.getKey());
                     }
                 }
@@ -236,7 +236,7 @@ public class ItemConfig extends BaseConfig {
     
     // --- Protected Items ---
     
-    public static synchronized void addUUID(String uuid, Text displayName) {
+    public static synchronized void addUUID(String uuid, Component displayName) {
         String serialized = JsonUtil.serializeText(displayName);
         INSTANCE.protectedItems.set(uuid, serialized);
     }
@@ -253,7 +253,7 @@ public class ItemConfig extends BaseConfig {
         return INSTANCE.protectedItems.getValues().containsKey(uuid);
     }
     
-    public static synchronized Text getDisplayName(String uuid) {
+    public static synchronized Component getDisplayName(String uuid) {
         String serialized = INSTANCE.protectedItems.getValues().get(uuid);
         return serialized != null ? JsonUtil.deserializeText(serialized) : null;
     }
@@ -330,7 +330,7 @@ public class ItemConfig extends BaseConfig {
                 try {
                     int slot = Integer.parseInt(key.substring(ITEMSTACK_PREFIX.length()));
                     result.put(slot, entry.getValue());
-                } catch (NumberFormatException e) {
+                } catch (NumberFormatException _) {
                     INSTANCE.logError("Invalid itemstack slot key: " + key);
                 }
             }

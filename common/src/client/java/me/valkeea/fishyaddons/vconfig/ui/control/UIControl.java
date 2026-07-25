@@ -4,8 +4,8 @@ import me.valkeea.fishyaddons.vconfig.ui.model.Bounds;
 import me.valkeea.fishyaddons.vconfig.ui.model.ClickContext;
 import me.valkeea.fishyaddons.vconfig.ui.model.DragContext;
 import me.valkeea.fishyaddons.vconfig.ui.render.VCRenderContext;
-import net.minecraft.client.input.CharInput;
-import net.minecraft.client.input.KeyInput;
+import net.minecraft.client.input.CharacterEvent;
+import net.minecraft.client.input.KeyEvent;
 
 public interface UIControl {
 
@@ -102,7 +102,7 @@ public interface UIControl {
      * @param input The key input context
      * @return true if the key press was consumed by this control, false otherwise
      */
-    default boolean handleKeyPress(KeyInput input) {
+    default boolean handleKeyPress(KeyEvent input) {
         return false;
     }
 
@@ -111,7 +111,7 @@ public interface UIControl {
      * @param charInput The character input context
      * @return true if the character input was consumed by this control, false otherwise
      */
-    default boolean handleCharInput(CharInput charInput) {
+    default boolean handleCharInput(CharacterEvent charInput) {
         return false;
     }    
     

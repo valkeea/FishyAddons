@@ -10,9 +10,9 @@ import me.valkeea.fishyaddons.tracker.SkillTracker;
 import me.valkeea.fishyaddons.util.text.Color;
 import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
 import me.valkeea.fishyaddons.vconfig.config.impl.HudConfig;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.text.Text;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.network.chat.Component;
 
 public class SkillXpDisplay implements HudElement {
     private static final String HUD_KEY = BooleanKey.HUD_SKILL_XP.getString();
@@ -23,49 +23,49 @@ public class SkillXpDisplay implements HudElement {
     private boolean editingMode = false;
     
     private static class SkillDisplayCache {
-        final Text skillLabel;
-        final Text rateValue;
-        final Text xpValue;
+        final Component skillLabel;
+        final Component rateValue;
+        final Component xpValue;
         final int totalWidth;
-        final Text catchLabel;
-        final Text mobLabel; 
-        final Text catchRateText;
-        final Text mobRateText;
-        final Text catchTotal;
-        final Text mobTotal;
+        final Component catchLabel;
+        final Component mobLabel; 
+        final Component catchRateText;
+        final Component mobRateText;
+        final Component catchTotal;
+        final Component mobTotal;
         final int fishingWidth;
         final boolean hasFishingData;
         
-        SkillDisplayCache(SkillData data, MinecraftClient mc) {
+        SkillDisplayCache(SkillData data, Minecraft mc) {
 
             String formattedXp = HudUtils.formatNum(data.xp);
             String formattedRate = HudUtils.formatNum(data.rate);
             
-            this.skillLabel = Text.literal(data.skillName + "§7: ");
-            this.rateValue = Text.literal(formattedRate + RATE_SUFFIX);
-            this.xpValue = Text.literal("§8(§7" + formattedXp + "§8)");
+            this.skillLabel = Component.literal(data.skillName + "§7: ");
+            this.rateValue = Component.literal(formattedRate + RATE_SUFFIX);
+            this.xpValue = Component.literal("§8(§7" + formattedXp + "§8)");
             
-            this.totalWidth = mc.textRenderer.getWidth(skillLabel) + 
-                             mc.textRenderer.getWidth(rateValue) + 
-                             mc.textRenderer.getWidth(xpValue);
+            this.totalWidth = mc.font.width(skillLabel) + 
+                             mc.font.width(rateValue) + 
+                             mc.font.width(xpValue);
             
             boolean isFishing = data.skillName.toLowerCase().contains("fishing");
             this.hasFishingData = isFishing && data.catches > 0 && data.mobs > 0;
             
             if (hasFishingData) {
-                this.catchLabel = Text.literal(" Catches: ");
-                this.mobLabel = Text.literal("Mobs: ");
-                this.catchRateText = Text.literal(HudUtils.formatNum(data.catchRate) + RATE_SUFFIX);
-                this.mobRateText = Text.literal(HudUtils.formatNum(data.mobRate) + RATE_SUFFIX);
-                this.catchTotal = Text.literal(String.format(TOTAL_FORMAT, data.catches));
-                this.mobTotal = Text.literal(String.format(TOTAL_FORMAT, data.mobs));
+                this.catchLabel = Component.literal(" Catches: ");
+                this.mobLabel = Component.literal("Mobs: ");
+                this.catchRateText = Component.literal(HudUtils.formatNum(data.catchRate) + RATE_SUFFIX);
+                this.mobRateText = Component.literal(HudUtils.formatNum(data.mobRate) + RATE_SUFFIX);
+                this.catchTotal = Component.literal(String.format(TOTAL_FORMAT, data.catches));
+                this.mobTotal = Component.literal(String.format(TOTAL_FORMAT, data.mobs));
                 
-                this.fishingWidth = mc.textRenderer.getWidth(catchLabel) + 
-                                   mc.textRenderer.getWidth(catchRateText) + 
-                                   mc.textRenderer.getWidth(catchTotal) +
-                                   mc.textRenderer.getWidth(mobLabel) + 
-                                   mc.textRenderer.getWidth(mobRateText) + 
-                                   mc.textRenderer.getWidth(mobTotal);
+                this.fishingWidth = mc.font.width(catchLabel) + 
+                                   mc.font.width(catchRateText) + 
+                                   mc.font.width(catchTotal) +
+                                   mc.font.width(mobLabel) + 
+                                   mc.font.width(mobRateText) + 
+                                   mc.font.width(mobTotal);
             } else {
                 this.catchLabel = this.mobLabel = this.catchRateText = this.mobRateText = 
                 this.catchTotal = this.mobTotal = null;
@@ -101,16 +101,16 @@ public class SkillXpDisplay implements HudElement {
     private static final java.util.Map<String, SkillDisplayCache> skillCaches = new java.util.concurrent.ConcurrentHashMap<>();
 
     @Override
-    public void render(DrawContext context, MinecraftClient mc, int mouseX, int mouseY) {
+    public void render(GuiGraphicsExtractor context, Minecraft mc, int mouseX, int mouseY) {
         if (!editingMode && !SkillTracker.isEnabled()) return;
         
         var tracker = SkillTracker.getInstance();
         if (tracker.getTrackedSkills().isEmpty()) {
 
             if (editingMode) {
-                context.drawText(
-                    mc.textRenderer,
-                    Text.literal("Skill Tracker"),
+                context.text(
+                    mc.font,
+                    Component.literal("Skill Tracker"),
                     getHudX(),
                     getHudY(),
                     getHudColor(),
@@ -145,11 +145,11 @@ public class SkillXpDisplay implements HudElement {
                 tracker.getMobRate()
             );
 
-            skillCaches.put(skillName, new SkillDisplayCache(data, MinecraftClient.getInstance()));
+            skillCaches.put(skillName, new SkillDisplayCache(data, Minecraft.getInstance()));
         }
     }
 
-    private void renderSingleSkill(DrawContext context, SkillTracker tracker, HudElementState state, MinecraftClient mc) {
+    private void renderSingleSkill(GuiGraphicsExtractor context, SkillTracker tracker, HudElementState state, Minecraft mc) {
         String skillName = tracker.getTrackedSkill();
         if (skillName == null) return;
         
@@ -159,7 +159,7 @@ public class SkillXpDisplay implements HudElement {
         renderSkillDisplay(context, java.util.List.of(cache), state, mc);
     }
 
-    private void renderMultipleSkills(DrawContext context, HudElementState state, MinecraftClient mc) {
+    private void renderMultipleSkills(GuiGraphicsExtractor context, HudElementState state, Minecraft mc) {
         java.util.List<SkillDisplayCache> caches = skillCaches.values().stream()
             .sorted((a, b) -> a.skillLabel.getString().compareTo(b.skillLabel.getString()))
             .toList();
@@ -167,12 +167,12 @@ public class SkillXpDisplay implements HudElement {
         renderSkillDisplay(context, caches, state, mc);
     }
 
-    private void drawBackground(DrawContext context, int x, int y, int width, int height) {
+    private void drawBackground(GuiGraphicsExtractor context, int x, int y, int width, int height) {
         context.fill(x + 1, y + 2, x + width + 2, y + height - 1, 0x80000000);
     }
 
-    private void renderSkillDisplay(DrawContext context, java.util.List<SkillDisplayCache> caches, 
-                                   HudElementState state, MinecraftClient mc) {
+    private void renderSkillDisplay(GuiGraphicsExtractor context, java.util.List<SkillDisplayCache> caches, 
+                                   HudElementState state, Minecraft mc) {
         if (!editingMode && caches.isEmpty()) return;
         
         int hudX = state.x;
@@ -182,9 +182,9 @@ public class SkillXpDisplay implements HudElement {
         float scale = size / 12.0F;
 
         if (editingMode && caches.isEmpty()) {
-            context.drawText(
-                mc.textRenderer, 
-                Text.literal("Skill XP Tracker"), 
+            context.text(
+                mc.font, 
+                Component.literal("Skill XP Tracker"), 
                 hudX, 
                 hudY, 
                 state.color, 
@@ -201,9 +201,9 @@ public class SkillXpDisplay implements HudElement {
             drawBackground(context, hudX, hudY, (int)(maxWidth * scale), totalHeight);
         }
 
-        context.getMatrices().pushMatrix();
-        context.getMatrices().translate(hudX, hudY);
-        context.getMatrices().scale(scale, scale);
+        context.pose().pushMatrix();
+        context.pose().translate(hudX, hudY);
+        context.pose().scale(scale, scale);
 
         for (int i = 0; i < caches.size(); i++) {
             var cache = caches.get(i);
@@ -213,48 +213,48 @@ public class SkillXpDisplay implements HudElement {
 
         drawTimeLine(context, mc, caches.size(), lineHeight, scale, state);
 
-        context.getMatrices().popMatrix();
+        context.pose().popMatrix();
     }
     
-    private void drawSkillLine(DrawContext context, MinecraftClient mc, SkillDisplayCache cache, 
+    private void drawSkillLine(GuiGraphicsExtractor context, Minecraft mc, SkillDisplayCache cache, 
                                int yOffset, HudElementState state) {
         int currentX = 0;
         
         var drawer = new HudDrawer(mc, context, state);
         // Draw skill label
         drawer.drawText(cache.skillLabel, currentX, yOffset, state.color);
-        currentX += mc.textRenderer.getWidth(cache.skillLabel);
+        currentX += mc.font.width(cache.skillLabel);
         
         // Draw rate value
         drawer.drawText(cache.rateValue, currentX, yOffset, 0xFFFFFFFF);
-        currentX += mc.textRenderer.getWidth(cache.rateValue);
+        currentX += mc.font.width(cache.rateValue);
         
         // Draw XP value
         drawer.drawText(cache.xpValue, currentX, yOffset, 0xFFAAAAAA);
-        currentX += mc.textRenderer.getWidth(cache.xpValue);
+        currentX += mc.font.width(cache.xpValue);
         
         // Draw fishing stats if available
         if (cache.hasFishingData) {
             drawer.drawText(cache.catchLabel, currentX, yOffset, state.color);
-            currentX += mc.textRenderer.getWidth(cache.catchLabel);
+            currentX += mc.font.width(cache.catchLabel);
 
             drawer.drawText(cache.catchRateText, currentX, yOffset, 0xFFFFFFFF);
-            currentX += mc.textRenderer.getWidth(cache.catchRateText);
+            currentX += mc.font.width(cache.catchRateText);
             
             drawer.drawText(cache.catchTotal, currentX, yOffset, 0xFFAAAAAA);
-            currentX += mc.textRenderer.getWidth(cache.catchTotal);
+            currentX += mc.font.width(cache.catchTotal);
 
             drawer.drawText(cache.mobLabel, currentX, yOffset, state.color);
-            currentX += mc.textRenderer.getWidth(cache.mobLabel);
+            currentX += mc.font.width(cache.mobLabel);
 
             drawer.drawText(cache.mobRateText, currentX, yOffset, 0xFFFFFFFF);
-            currentX += mc.textRenderer.getWidth(cache.mobRateText);
+            currentX += mc.font.width(cache.mobRateText);
             
             drawer.drawText(cache.mobTotal, currentX, yOffset, 0xFFAAAAAA);
         }
     }
 
-    private void drawTimeLine(DrawContext context, MinecraftClient mc, int lineIndex, 
+    private void drawTimeLine(GuiGraphicsExtractor context, Minecraft mc, int lineIndex, 
                                 int lineHeight, float scale, HudElementState state) {
 
         String timeText;
@@ -288,11 +288,11 @@ public class SkillXpDisplay implements HudElement {
         
         int yOffset = (int)(lineIndex * lineHeight / scale);
         var drawer = new HudDrawer(mc, context, state);
-        drawer.drawText(Text.literal(timeText), 0, yOffset, color);
+        drawer.drawText(Component.literal(timeText), 0, yOffset, color);
     }
 
     @Override
-    public Rectangle getBounds(MinecraftClient mc) {
+    public Rectangle getBounds(Minecraft mc) {
         int hudX = getHudX();
         int hudY = getHudY();
         int size = getHudSize();

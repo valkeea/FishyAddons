@@ -8,12 +8,12 @@ import java.util.Map;
 import me.valkeea.fishyaddons.api.skyblock.GameMode;
 import me.valkeea.fishyaddons.feature.skyblock.FishingHotspot;
 import me.valkeea.fishyaddons.tracker.profit.ValuableMobs;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.decoration.ArmorStandEntity;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.decoration.ArmorStand;
+import net.minecraft.world.phys.Vec3;
 
 public class NearbyEntities {
     private NearbyEntities() {}
@@ -38,9 +38,9 @@ public class NearbyEntities {
 
         if (!GameMode.skyblock()) return;
 
-        var mc = MinecraftClient.getInstance();
+        var mc = Minecraft.getInstance();
         var player = mc.player;
-        var world = mc.world;
+        var world = mc.level;
         if (world == null || player == null) return;
         
         if (tickCounter % 200 == 0) {
@@ -48,8 +48,8 @@ public class NearbyEntities {
             obfuscation.clear();
         }
         
-        List<ArmorStandEntity> nearbyHspts = new ArrayList<>();
-        List<ArmorStandEntity> nearbyVals = new ArrayList<>();
+        List<ArmorStand> nearbyHspts = new ArrayList<>();
+        List<ArmorStand> nearbyVals = new ArrayList<>();
 
         for (var stand : findArmorStands(world, player, RADIUS)) {
 
@@ -70,16 +70,16 @@ public class NearbyEntities {
     /**
      * Finds all armor stands within the specified radius
      */
-    public static List<ArmorStandEntity> findArmorStands(ClientWorld world, ClientPlayerEntity player, double radius) {
+    public static List<ArmorStand> findArmorStands(ClientLevel world, LocalPlayer player, double radius) {
 
-        List<ArmorStandEntity> stands = new ArrayList<>();
+        List<ArmorStand> stands = new ArrayList<>();
 
-        for (var entity : world.getEntitiesByClass(
-                ArmorStandEntity.class,
-                player.getBoundingBox().expand(radius),
+        for (var entity : world.getEntitiesOfClass(
+                ArmorStand.class,
+                player.getBoundingBox().inflate(radius),
                 e -> true)) {
 
-            if (entity instanceof ArmorStandEntity stand) {
+            if (entity instanceof ArmorStand stand) {
                 stands.add(stand);
             }
         }
@@ -90,30 +90,30 @@ public class NearbyEntities {
     /**
      * Checks view based on camera direction
      */
-    public static boolean lookingAt(ArmorStandEntity stand) {
+    public static boolean lookingAt(ArmorStand stand) {
         
-        var mc = MinecraftClient.getInstance();
+        var mc = Minecraft.getInstance();
         var player = mc.player;
-        if (player == null || mc.world == null) return false;
+        if (player == null || mc.level == null) return false;
 
         double distance = player.distanceTo(stand);
         if (distance < 8.0) return true;
         
-        var cameraPos = mc.gameRenderer.getCamera().getCameraPos();
+        var cameraPos = mc.gameRenderer.getMainCamera().position();
 
-        float yaw = mc.gameRenderer.getCamera().getYaw();
-        float pitch = mc.gameRenderer.getCamera().getPitch();
+        float yaw = mc.gameRenderer.getMainCamera().yRot();
+        float pitch = mc.gameRenderer.getMainCamera().xRot();
         double yawRad = Math.toRadians(yaw);
         double pitchRad = Math.toRadians(pitch);
         
-        var cameraDirection = new Vec3d(
+        var cameraDirection = new Vec3(
             -Math.sin(yawRad) * Math.cos(pitchRad),
             -Math.sin(pitchRad),
             Math.cos(yawRad) * Math.cos(pitchRad)
         ).normalize();
         
-        Vec3d toEntity = stand.getEntityPos().subtract(cameraPos).normalize();
-        double dot = cameraDirection.dotProduct(toEntity);
+        Vec3 toEntity = stand.position().subtract(cameraPos).normalize();
+        double dot = cameraDirection.dot(toEntity);
         double fovCos = Math.cos(Math.toRadians(60.0));
         
         return dot > fovCos;
@@ -122,19 +122,19 @@ public class NearbyEntities {
     /**
      * Checks if an armor stand is in radius of the player
      */
-    public static boolean isInRange(ArmorStandEntity stand, double radius) {
-        var mc = MinecraftClient.getInstance();
+    public static boolean isInRange(ArmorStand stand, double radius) {
+        var mc = Minecraft.getInstance();
         var player = mc.player;
-        if (player == null || mc.world == null) return false;
+        if (player == null || mc.level == null) return false;
 
-        return player.squaredDistanceTo(stand) <= radius * radius;
+        return player.distanceToSqr(stand) <= radius * radius;
     }
 
     /**
      * Extracts the label text from an armor stand.
      * Can be used for any mob after spawn.
      */
-    public static String extractLabel(ArmorStandEntity stand) {
+    public static String extractLabel(ArmorStand stand) {
         if (stand.getCustomName() == null) return "";
         
         int entityId = stand.getId();

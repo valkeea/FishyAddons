@@ -15,8 +15,8 @@ import me.valkeea.fishyaddons.vconfig.annotation.VCModule;
 import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
 import me.valkeea.fishyaddons.vconfig.api.Config;
 import me.valkeea.fishyaddons.vconfig.config.impl.AlertConfig.AlertData;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.Minecraft;
+import net.minecraft.resources.Identifier;
 
 @VCModule
 public class ChatAlert {
@@ -58,40 +58,40 @@ public class ChatAlert {
     }
 
     public static void executeAlert(AlertData data) {
-        var client = MinecraftClient.getInstance();
+        var mc = Minecraft.getInstance();
 
         if (data.getMsg() != null && !data.getMsg().isBlank() &&
-            client.player != null) {
-            handleMsg(data, client);
+            mc.player != null) {
+            handleMsg(data, mc);
         }
 
         if (data.getOnscreen() != null && !data.getOnscreen().isBlank() &&
-            client.inGameHud != null) {
+            mc.gui != null) {
             TitleDisplay.setTitle(data.getOnscreen(), data.getColor());
         }
 
         if (data.getSoundId() != null && !data.getSoundId().isBlank() &&
-            client.player != null) {
+            mc.player != null) {
             try {
                 var id = Identifier.tryParse(data.getSoundId());
                 if (id != null) {
                     PlaySound.dynamic(id.toString(),
                     data.getVolume(), 1.0F, false);
                 }
-            } catch (Exception ignored) {
+            } catch (Exception _) {
                 // Ignore sound playback errors
             }
         }
     }    
 
-    private static void handleMsg(AlertData data, MinecraftClient client) {
+    private static void handleMsg(AlertData data, Minecraft mc) {
         String message = data.getMsg().trim();
         boolean isInParty = GameChat.isInParty() || GameChat.partyToggled();
 
         if (message.isBlank()) return;
 
         if (message.contains("<pos>")) {
-            String coords = PlayerPosition.getCoordsString(client);
+            String coords = PlayerPosition.getCoordsString(mc);
             message = message.replace("<pos>", coords);
         }
 

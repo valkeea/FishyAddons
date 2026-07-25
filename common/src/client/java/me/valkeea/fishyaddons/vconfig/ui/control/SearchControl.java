@@ -3,6 +3,7 @@ package me.valkeea.fishyaddons.vconfig.ui.control;
 import java.util.List;
 import java.util.function.Supplier;
 
+import me.valkeea.fishyaddons.compat.McApi;
 import me.valkeea.fishyaddons.vconfig.binding.ConfigBinding.StringBinding;
 import me.valkeea.fishyaddons.vconfig.ui.layout.Dimensions;
 import me.valkeea.fishyaddons.vconfig.ui.model.Bounds;
@@ -13,10 +14,10 @@ import me.valkeea.fishyaddons.vconfig.ui.render.VCRenderContext;
 import me.valkeea.fishyaddons.vconfig.ui.widget.VCTextField;
 import me.valkeea.fishyaddons.vconfig.ui.widget.dropdown.VCSearchDropdown;
 import me.valkeea.fishyaddons.vconfig.ui.widget.dropdown.item.ToggleMenuItem;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.input.CharInput;
-import net.minecraft.client.input.KeyInput;
-import net.minecraft.text.Text;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.input.CharacterEvent;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.network.chat.Component;
 
 public class SearchControl extends AbstractUIControl {
     private static final int FIELD_WIDTH = Dimensions.FIELD_W;
@@ -58,12 +59,12 @@ public class SearchControl extends AbstractUIControl {
         if (!field.isFocused() && cachedValueDirty) {
             cachedFieldValue = fieldBinding.get();
             markCacheFresh();
-            if (!field.getText().equals(cachedFieldValue)) {
-                field.setText(cachedFieldValue);
+            if (!field.getValue().equals(cachedFieldValue)) {
+                field.setValue(cachedFieldValue);
             }
         }
         
-        field.render(context.context, context.mouseX, context.mouseY, 0);
+        field.extractRenderState(context.context, context.mouseX, context.mouseY, 0);
         
         fieldBounds = new Bounds(x, y, FIELD_WIDTH, BASE_HEIGHT);
         lastBounds = fieldBounds;
@@ -112,18 +113,18 @@ public class SearchControl extends AbstractUIControl {
             field
         );
         
-        var mc = MinecraftClient.getInstance();
-        int screenH = (int) Math.floor(mc.getWindow().getHeight() / ctx.uiScale);
+        var mc = Minecraft.getInstance();
+        int screenH = (int) Math.floor(mc.getWindow().getScreenHeight() / ctx.uiScale);
         int available = screenH - dropdownY - BASE_HEIGHT * 2;
         activeDropdown.setMaxVisibleEntries(Dimensions.SCALE, available);
     }
 
     @Override
-    public boolean handleKeyPress(KeyInput input) {
+    public boolean handleKeyPress(KeyEvent input) {
         if (field != null && field.isFocused()) {
             boolean handled = field.keyPressed(input);
             if (handled) {
-                cachedFieldValue = field.getText();
+                cachedFieldValue = field.getValue();
                 fieldBinding.set(cachedFieldValue);
             }
             return handled;
@@ -132,11 +133,11 @@ public class SearchControl extends AbstractUIControl {
     }
 
     @Override
-    public boolean handleCharInput(CharInput input) {
+    public boolean handleCharInput(CharacterEvent input) {
         if (field != null && field.isFocused()) {
             boolean handled = field.charTyped(input);
             if (handled) {
-                cachedFieldValue = field.getText();
+                cachedFieldValue = field.getValue();
                 fieldBinding.set(cachedFieldValue);
             }
             return handled;
@@ -167,7 +168,7 @@ public class SearchControl extends AbstractUIControl {
     public boolean renderOverlay(VCRenderContext ctx, int scrollX, int endY) {
         
         if (activeDropdown != null && activeDropdown.isVisible()) {
-            var screen = MinecraftClient.getInstance().currentScreen;
+            var screen = McApi.screen();
             if (screen != null) {
                 activeDropdown.render(ctx.context, screen, ctx.mouseX, ctx.mouseY, Dimensions.SCALE);
                 return true;
@@ -175,13 +176,13 @@ public class SearchControl extends AbstractUIControl {
 
         } else if (field != null && field.isHovered()) {
 
-            var text = field.getText();
-            if (text != null && !text.isEmpty()) {
+            var text = field.getValue();
+            if (!text.isEmpty()) {
 
                 RenderUtils.preview(
                     ctx.context, ctx.textRenderer,
-                    List.of(Text.literal(text)
-                    .styled(s -> s.withColor(ctx.themeColor))),
+                    List.of(Component.literal(text)
+                    .withStyle(s -> s.withColor(ctx.themeColor))),
                     ctx.mouseX, ctx.mouseY,
                     ctx.themeColor,
                     Dimensions.SCALE
@@ -234,12 +235,12 @@ public class SearchControl extends AbstractUIControl {
         field = new VCTextField(
             context.textRenderer,
             x, y, FIELD_WIDTH, BASE_HEIGHT,
-            Text.literal(cachedFieldValue)
+            Component.literal(cachedFieldValue)
         );
         
         field.setUIScale(Dimensions.SCALE);
-        field.setText(cachedFieldValue);
-        field.setChangedListener(text -> {
+        field.setValue(cachedFieldValue);
+        field.setResponder(text -> {
             cachedFieldValue = text;
             fieldBinding.set(text);
         });

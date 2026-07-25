@@ -9,19 +9,19 @@ import com.google.gson.JsonObject;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.JsonOps;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.CustomModelDataComponent;
-import net.minecraft.component.type.NbtComponent;
-import net.minecraft.component.type.ProfileComponent;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.RegistryOps;
-import net.minecraft.registry.RegistryWrapper;
-import net.minecraft.text.Text;
-import net.minecraft.text.TextCodecs;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.Minecraft;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.ComponentSerialization;
+import net.minecraft.resources.Identifier;
+import net.minecraft.resources.RegistryOps;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.CustomData;
+import net.minecraft.world.item.component.CustomModelData;
+import net.minecraft.world.item.component.ResolvableProfile;
 
 public class JsonUtil {
     private JsonUtil() {}
@@ -32,18 +32,18 @@ public class JsonUtil {
     /**
      * Serialize a Text component to JSON string
      */
-    public static String serializeText(Text text) {
+    public static String serializeText(Component text) {
         if (text == null) {
             return "";
         }
 
         try {
-            var client = MinecraftClient.getInstance();
-            if (client.world == null) return "";
+            var client = Minecraft.getInstance();
+            if (client.level == null) return "";
 
-            RegistryWrapper.WrapperLookup registries = client.world.getRegistryManager();
-            RegistryOps<JsonElement> ops = RegistryOps.of(JsonOps.INSTANCE, registries);
-            DataResult<JsonElement> result = TextCodecs.CODEC.encodeStart(ops, text);
+            HolderLookup.Provider registries = client.level.registryAccess();
+            RegistryOps<JsonElement> ops = RegistryOps.create(JsonOps.INSTANCE, registries);
+            DataResult<JsonElement> result = ComponentSerialization.CODEC.encodeStart(ops, text);
             String serialized = result.result().map(GSON::toJson).orElse("");
             if (serialized.isEmpty()) {
                 LOGGER.warn("Text serialization resulted in empty string");
@@ -58,9 +58,9 @@ public class JsonUtil {
     /**
      * Deserialize a Text component from JSON string or plain text
      */
-    public static Text deserializeText(String jsonOrPlain) {
+    public static Component deserializeText(String jsonOrPlain) {
         if (jsonOrPlain == null || jsonOrPlain.isEmpty()) {
-            return Text.empty();
+            return Component.empty();
         }
 
         String trimmed = jsonOrPlain.trim();
@@ -68,19 +68,19 @@ public class JsonUtil {
         if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
             try {
                 var json = GSON.fromJson(trimmed, JsonElement.class);
-                var client = MinecraftClient.getInstance();
-                if (client.world == null) {
+                var client = Minecraft.getInstance();
+                if (client.level == null) {
                     LOGGER.debug("Cannot deserialize Text: client world is null, falling back to literal");
-                    return Text.literal(jsonOrPlain);
+                    return Component.literal(jsonOrPlain);
                 }
 
-                RegistryWrapper.WrapperLookup registries = client.world.getRegistryManager();
-                RegistryOps<JsonElement> ops = RegistryOps.of(JsonOps.INSTANCE, registries);
-                DataResult<Text> result = TextCodecs.CODEC.parse(ops, json);
-                Text parsed = result.result().orElse(null);
+                HolderLookup.Provider registries = client.level.registryAccess();
+                RegistryOps<JsonElement> ops = RegistryOps.create(JsonOps.INSTANCE, registries);
+                DataResult<Component> result = ComponentSerialization.CODEC.parse(ops, json);
+                Component parsed = result.result().orElse(null);
                 if (parsed == null) {
                     LOGGER.debug("Failed to parse as Text component, falling back to literal");
-                    return Text.literal(jsonOrPlain);
+                    return Component.literal(jsonOrPlain);
                 }
                 return parsed;
             } catch (Exception e) {
@@ -88,7 +88,7 @@ public class JsonUtil {
             }
         }
 
-        return Text.literal(jsonOrPlain);
+        return Component.literal(jsonOrPlain);
     }
 
     private static final String COUNT = "count";
@@ -109,30 +109,30 @@ public class JsonUtil {
         if (itemStack == null || itemStack.isEmpty()) return "";
         
         try {
-            var client = MinecraftClient.getInstance();
-            if (client.world == null) return "";
+            var client = Minecraft.getInstance();
+            if (client.level == null) return "";
             
             JsonObject obj = new JsonObject();
             
-            var itemId = Registries.ITEM.getId(itemStack.getItem());
+            var itemId = BuiltInRegistries.ITEM.getKey(itemStack.getItem());
             obj.addProperty("id", itemId.toString());
             obj.addProperty(COUNT, itemStack.getCount());
             
-            var customName = itemStack.get(DataComponentTypes.CUSTOM_NAME);
+            var customName = itemStack.get(DataComponents.CUSTOM_NAME);
             if (customName != null) obj.addProperty("name", customName.getString());
             
-            var profile = itemStack.get(DataComponentTypes.PROFILE);
+            var profile = itemStack.get(DataComponents.PROFILE);
             if (profile != null) serialize(obj, profile, client);
             
-            var customData = itemStack.get(DataComponentTypes.CUSTOM_DATA);
+            var customData = itemStack.get(DataComponents.CUSTOM_DATA);
             if (customData != null) serialize(obj, customData, client);
             
-            var customModelData = itemStack.get(DataComponentTypes.CUSTOM_MODEL_DATA);
+            var customModelData = itemStack.get(DataComponents.CUSTOM_MODEL_DATA);
             if (customModelData != null) serialize(obj, customModelData, client);
             
-            if (itemStack.hasGlint()) obj.addProperty(GLINT, true);
+            if (itemStack.hasFoil()) obj.addProperty(GLINT, true);
             
-            var dyedColor = itemStack.get(DataComponentTypes.DYED_COLOR);
+            var dyedColor = itemStack.get(DataComponents.DYED_COLOR);
             if (dyedColor != null) obj.addProperty(DYED_COLOR, dyedColor.rgb());
             
             String result = GSON.toJson(obj);
@@ -157,8 +157,8 @@ public class JsonUtil {
         }
         
         try {
-            var client = MinecraftClient.getInstance();
-            if (client.world == null) return ItemStack.EMPTY;
+            var client = Minecraft.getInstance();
+            if (client.level == null) return ItemStack.EMPTY;
             
             JsonObject obj = GSON.fromJson(json, JsonObject.class);
             
@@ -168,24 +168,24 @@ public class JsonUtil {
             var itemId = Identifier.tryParse(itemIdStr);
             if (itemId == null) return ItemStack.EMPTY;
             
-            if (!Registries.ITEM.containsId(itemId)) return ItemStack.EMPTY;
+            if (!BuiltInRegistries.ITEM.containsKey(itemId)) return ItemStack.EMPTY;
             
-            Item item = Registries.ITEM.get(itemId);
+            Item item = BuiltInRegistries.ITEM.getValue(itemId);
             int count = obj.has(COUNT) ? obj.get(COUNT).getAsInt() : 1;
             var stack = new ItemStack(item, count);
             
             if (obj.has("name")) {
                 var customName = obj.get("name").getAsString();
-                stack.set(DataComponentTypes.CUSTOM_NAME, Text.literal(customName));
+                stack.set(DataComponents.CUSTOM_NAME, Component.literal(customName));
             }
             
             if (obj.has(PROFILE)) setProfile(stack, obj.get(PROFILE), client);
             if (obj.has(CUSTOM_DATA)) setCustomData(stack, obj.get(CUSTOM_DATA), client);
             if (obj.has(CUSTOM_MODEL_DATA)) setCustomModelData(stack, obj.get(CUSTOM_MODEL_DATA), client);
-            if (obj.has(GLINT) && obj.get(GLINT).getAsBoolean()) stack.set(DataComponentTypes.ENCHANTMENT_GLINT_OVERRIDE, true);
+            if (obj.has(GLINT) && obj.get(GLINT).getAsBoolean()) stack.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, true);
             if (obj.has(DYED_COLOR)) {
                 int rgb = obj.get(DYED_COLOR).getAsInt();
-                stack.set(DataComponentTypes.DYED_COLOR, new net.minecraft.component.type.DyedColorComponent(rgb));
+                stack.set(DataComponents.DYED_COLOR, new net.minecraft.world.item.component.DyedItemColor(rgb));
             }
 
             return stack;
@@ -196,28 +196,28 @@ public class JsonUtil {
         }
     }
 
-    private static void serialize(JsonObject obj, ProfileComponent profile, MinecraftClient client) {
-        serializeComponent(obj, profile, ProfileComponent.CODEC, PROFILE, client);
+    private static void serialize(JsonObject obj, ResolvableProfile profile, Minecraft client) {
+        serializeComponent(obj, profile, ResolvableProfile.CODEC, PROFILE, client);
     }
 
-    private static void serialize(JsonObject obj, NbtComponent customData, MinecraftClient client) {
-        serializeComponent(obj, customData, NbtComponent.CODEC, CUSTOM_DATA, client);
+    private static void serialize(JsonObject obj, CustomData customData, Minecraft client) {
+        serializeComponent(obj, customData, CustomData.CODEC, CUSTOM_DATA, client);
     }
 
-    private static void serialize(JsonObject obj, CustomModelDataComponent customModelData, MinecraftClient client) {
-        serializeComponent(obj, customModelData, CustomModelDataComponent.CODEC, CUSTOM_MODEL_DATA, client);
+    private static void serialize(JsonObject obj, CustomModelData customModelData, Minecraft client) {
+        serializeComponent(obj, customModelData, CustomModelData.CODEC, CUSTOM_MODEL_DATA, client);
     }    
 
-    private static void setProfile(ItemStack stack, JsonElement json, MinecraftClient client) {
-        deserializeComponent(stack, json, ProfileComponent.CODEC, DataComponentTypes.PROFILE, client);
+    private static void setProfile(ItemStack stack, JsonElement json, Minecraft client) {
+        deserializeComponent(stack, json, ResolvableProfile.CODEC, DataComponents.PROFILE, client);
     }
 
-    private static void setCustomData(ItemStack stack, JsonElement json, MinecraftClient client) {
-        deserializeComponent(stack, json, NbtComponent.CODEC, DataComponentTypes.CUSTOM_DATA, client);
+    private static void setCustomData(ItemStack stack, JsonElement json, Minecraft client) {
+        deserializeComponent(stack, json, CustomData.CODEC, DataComponents.CUSTOM_DATA, client);
     }
 
-    private static void setCustomModelData(ItemStack stack, JsonElement json, MinecraftClient client) {
-        deserializeComponent(stack, json, CustomModelDataComponent.CODEC, DataComponentTypes.CUSTOM_MODEL_DATA, client);
+    private static void setCustomModelData(ItemStack stack, JsonElement json, Minecraft client) {
+        deserializeComponent(stack, json, CustomModelData.CODEC, DataComponents.CUSTOM_MODEL_DATA, client);
     }
 
     private static <T> void serializeComponent(
@@ -225,11 +225,11 @@ public class JsonUtil {
         T component, 
         com.mojang.serialization.Codec<T> codec, 
         String key, 
-        MinecraftClient client
+        Minecraft client
     ) {
         try {
-            RegistryWrapper.WrapperLookup registries = client.world.getRegistryManager();
-            RegistryOps<JsonElement> ops = RegistryOps.of(JsonOps.INSTANCE, registries);
+            HolderLookup.Provider registries = client.level.registryAccess();
+            RegistryOps<JsonElement> ops = RegistryOps.create(JsonOps.INSTANCE, registries);
             DataResult<JsonElement> result = codec.encodeStart(ops, component);
             result.result().ifPresent(json -> obj.add(key, json));
         } catch (Exception e) {
@@ -241,12 +241,12 @@ public class JsonUtil {
         ItemStack stack,
         JsonElement json,
         com.mojang.serialization.Codec<T> codec,
-        net.minecraft.component.ComponentType<T> componentType,
-        MinecraftClient client
+        net.minecraft.core.component.DataComponentType<T> componentType,
+        Minecraft client
     ) {
         try {
-            RegistryWrapper.WrapperLookup registries = client.world.getRegistryManager();
-            RegistryOps<JsonElement> ops = RegistryOps.of(JsonOps.INSTANCE, registries);
+            HolderLookup.Provider registries = client.level.registryAccess();
+            RegistryOps<JsonElement> ops = RegistryOps.create(JsonOps.INSTANCE, registries);
             DataResult<T> result = codec.parse(ops, json);
             result.result().ifPresent(value -> stack.set(componentType, value));
         } catch (Exception e) {

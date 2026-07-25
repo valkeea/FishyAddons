@@ -9,17 +9,18 @@ import java.util.stream.IntStream;
 
 import me.valkeea.fishyaddons.api.skyblock.SkyblockAreas;
 import me.valkeea.fishyaddons.api.skyblock.SkyblockAreas.Island;
+import me.valkeea.fishyaddons.compat.McApi;
 import me.valkeea.fishyaddons.tool.GuiScheduler;
 import me.valkeea.fishyaddons.util.FishyNotis;
 import me.valkeea.fishyaddons.util.ZoneUtils;
-import me.valkeea.fishyaddons.vconfig.api.Config;
 import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
+import me.valkeea.fishyaddons.vconfig.api.Config;
 import me.valkeea.fishyaddons.vconfig.ui.screen.ColorWheel;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.ChatScreen;
-import net.minecraft.text.Text;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.ChatScreen;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.phys.Vec3;
 
 /**
  * Command access for waypoint management.
@@ -34,8 +35,8 @@ public class WaypointCmd {
     /** Add a waypoint to the next available position in the last modified chain */
     public static int addNext() {
 
-        var mc = MinecraftClient.getInstance();
-        if (mc.player == null || mc.world == null) {
+        var mc = Minecraft.getInstance();
+        if (mc.player == null || mc.level == null) {
             return 0;
         }
 
@@ -76,8 +77,8 @@ public class WaypointCmd {
     }
 
     public static int addWaypoint(String chainName, int orderNumber) {
-        var mc = MinecraftClient.getInstance();
-        if (mc.player == null || mc.world == null) {
+        var mc = Minecraft.getInstance();
+        if (mc.player == null || mc.level == null) {
             FishyNotis.warn("You must be in a world to add waypoints!");
             return 0;
         }
@@ -103,8 +104,8 @@ public class WaypointCmd {
         if (existingChain != null) {
             for (var waypoint : existingChain.waypoints) {
                 if (waypoint.label().endsWith(" " + orderNumber)) {
-                    FishyNotis.alert(Text.literal("§cWaypoint §3" + orderNumber + " §calready exists in chain '§3" + chainName + "§c'!"));
-                    FishyNotis.alert(Text.literal("§8Use '§3/fwp remove " + chainName + " " + orderNumber + "§8' first to replace it."));
+                    FishyNotis.alert(Component.literal("§cWaypoint §3" + orderNumber + " §calready exists in chain '§3" + chainName + "§c'!"));
+                    FishyNotis.alert(Component.literal("§8Use '§3/fwp remove " + chainName + " " + orderNumber + "§8' first to replace it."));
                     return 0;
                 }
             }
@@ -127,7 +128,7 @@ public class WaypointCmd {
         setLastModified(chainName);
         ChainConfig.save();
         WaypointChains.clearUserChainCache(); // Clear cache after adding waypoint
-        FishyNotis.alert(Text.literal("§7Added waypoint §3" + orderNumber + " §7to chain '§3" + chainName + "§7' in " + area.displayName() + "!"));
+        FishyNotis.alert(Component.literal("§7Added waypoint §3" + orderNumber + " §7to chain '§3" + chainName + "§7' in " + area.displayName() + "!"));
         return 1;
     }
 
@@ -152,11 +153,11 @@ public class WaypointCmd {
                     if (chain.waypoints.isEmpty()) USER_CHAINS.remove(chain);
                     ChainConfig.save();
                     WaypointChains.clearUserChainCache();
-                    FishyNotis.alert(Text.literal("§aRemoved waypoint " + orderNumber + " from chain '§3" + chainName + "§7'!"));
+                    FishyNotis.alert(Component.literal("§aRemoved waypoint " + orderNumber + " from chain '§3" + chainName + "§7'!"));
                     return 1;
 
                 } else {
-                    FishyNotis.alert(Text.literal("§cWaypoint " + orderNumber + " not found in chain '§3" + chainName + "§7'!"));
+                    FishyNotis.alert(Component.literal("§cWaypoint " + orderNumber + " not found in chain '§3" + chainName + "§7'!"));
                     return 0;
                 }
             }
@@ -183,7 +184,7 @@ public class WaypointCmd {
         }
 
         if (areaChains.isEmpty()) {
-            FishyNotis.alert(Text.literal("§7No waypoint chains found in " + area + "."));
+            FishyNotis.alert(Component.literal("§7No waypoint chains found in " + area + "."));
             return 0;
         }
 
@@ -198,9 +199,8 @@ public class WaypointCmd {
                 "Toggle"
             );
 
-            var chainInfo = Text.literal("§3" + chain.name() + " §8- §7" + chain.waypoints.size() + " waypoints " + " §8(" + visibilityStatus + "§8)");
-
-            MinecraftClient.getInstance().player.sendMessage(chainInfo.copy().append(toggleButton), false);
+            var chainInfo = Component.literal("§3" + chain.name() + " §8- §7" + chain.waypoints.size() + " waypoints " + " §8(" + visibilityStatus + "§8)");
+            Minecraft.getInstance().player.sendSystemMessage(chainInfo.copy().append(toggleButton));
         }
         return 1;
     }
@@ -225,13 +225,13 @@ public class WaypointCmd {
                 FishyNotis.themed("Chain Info: " + chainName + " (" + area + ")");
                 
                 if (chain.waypoints.isEmpty()) {
-                    FishyNotis.alert(Text.literal("§7This chain is empty."));
+                    FishyNotis.alert(Component.literal("§7This chain is empty."));
                     return 1;
                 }
                 
                 int nextWaypoint = -1;
-                var mc = MinecraftClient.getInstance();
-                Vec3d playerPos = mc.player != null ? mc.player.getEntityPos() : new Vec3d(0, 0, 0);
+                var mc = Minecraft.getInstance();
+                Vec3 playerPos = mc.player != null ? mc.player.position() : new Vec3(0, 0, 0);
                 
                 nextWaypoint = IntStream.range(0, chain.waypoints.size())
                     .filter(i -> !chain.waypoints.get(i).visited())
@@ -242,12 +242,12 @@ public class WaypointCmd {
                 boolean isActive = WaypointChains.isChainActive(chainName, areaKey);
 
                 if (avgRunTime != null) {
-                    FishyNotis.alert(Text.literal("§7Session AVG: §b" + avgRunTime));
+                    FishyNotis.alert(Component.literal("§7Session AVG: §b" + avgRunTime));
                 }
                 
                 if (isActive) {
                     long elapsedTime = System.currentTimeMillis() - WaypointChains.getChainStartTime(chainName, areaKey);
-                    FishyNotis.alert(Text.literal("§7Current run: §3" + formatTime(elapsedTime) + " elapsed"));
+                    FishyNotis.alert(Component.literal("§7Current run: §3" + formatTime(elapsedTime) + " elapsed"));
                 }
                 
                 int color = ChainConfig.getChainColor(chainName, areaKey);
@@ -256,21 +256,21 @@ public class WaypointCmd {
                     "/fwp color " + chainName,
                     "Edit"
                 );
-                FishyNotis.alert(Text.literal("§7Custom color: ").append(Text.literal(colorHex + " ").styled(style ->
+                FishyNotis.alert(Component.literal("§7Custom color: ").append(Component.literal(colorHex + " ").withStyle(style ->
                     style.withColor(color & 0xFFFFFFFF))).append(editBtn));
 
                 if (nextWaypoint != -1) {
                     Waypoint next = chain.waypoints.get(nextWaypoint);
-                    double nextDistance = mc.player != null ? playerPos.distanceTo(new Vec3d(
+                    double nextDistance = mc.player != null ? playerPos.distanceTo(new Vec3(
                         next.position.getX() + 0.5,
                         next.position.getY() + 0.5,
                         next.position.getZ() + 0.5
                     )) : 0;
 
-                    FishyNotis.alert(Text.literal("§7Next: §3" + next.label() + " §8(§a" + String.format("%.1f", nextDistance) + "m§8)"));
+                    FishyNotis.alert(Component.literal("§7Next: §3" + next.label() + " §8(§a" + String.format("%.1f", nextDistance) + "m§8)"));
                 }
                 
-                FishyNotis.alert(Text.literal("§7Waypoints:"));
+                FishyNotis.alert(Component.literal("§7Waypoints:"));
                 for (int i = 0; i < chain.waypoints.size(); i++) {
                     var waypoint = chain.waypoints.get(i);
                     boolean wasVisited = waypoint.visited();
@@ -278,7 +278,7 @@ public class WaypointCmd {
                     String status = wasVisited ? "§a✓" : (i == nextWaypoint ? "§p→" : "§8○");
                     String pos = waypoint.position.getX() + "," + waypoint.position.getY() + "," + waypoint.position.getZ();
 
-                    FishyNotis.alert(Text.literal("  " + status + " §7" + (i + 1) + ". §f" + waypoint.label() + " §8(" + pos + ")"));
+                    FishyNotis.alert(Component.literal("  " + status + " §7" + (i + 1) + ". §f" + waypoint.label() + " §8(" + pos + ")"));
                 }
                 
                 return 1;
@@ -314,7 +314,7 @@ public class WaypointCmd {
 
         ChainConfig.save();
         WaypointChains.clearUserChainCache();
-        FishyNotis.alert(Text.literal("§7Renamed chain '§3" + oldName + "§7' to '§3" + newName + "§7' in §b" + area.displayName() + "§7!"));
+        FishyNotis.alert(Component.literal("§7Renamed chain '§3" + oldName + "§7' to '§3" + newName + "§7' in §b" + area.displayName() + "§7!"));
         return 1;
     }
     
@@ -331,7 +331,7 @@ public class WaypointCmd {
         if (removed) {
             ChainConfig.save();
             WaypointChains.clearUserChainCache(); // Clear cache after clearing chain
-            FishyNotis.alert(Text.literal("§aCleared chain '§3" + chainName + "§7' from " + area.displayName() + "!"));
+            FishyNotis.alert(Component.literal("§aCleared chain '§3" + chainName + "§7' from " + area.displayName() + "!"));
             return 1;
         } else {
             chainNotFound(chainName, area.displayName());
@@ -355,7 +355,7 @@ public class WaypointCmd {
                     waypoint.setVisited(false);
                     ChainConfig.saveUserProgress();
                 }
-                FishyNotis.alert(Text.literal("§aReset completion status for chain '§3" + chainName + "§7'!"));
+                FishyNotis.alert(Component.literal("§aReset completion status for chain '§3" + chainName + "§7'!"));
                 return 1;
             }
         }
@@ -381,8 +381,7 @@ public class WaypointCmd {
 
         setLastModified(chainName);
 
-        var mc = MinecraftClient.getInstance();
-        if (mc.currentScreen != null && !(mc.currentScreen instanceof ChatScreen)) {
+        if (McApi.screenIsActive() && !McApi.isScreen(ChatScreen.class)) {
             FishyNotis.warn("Error opening screen.");
             return 0;
         }
@@ -393,7 +392,7 @@ public class WaypointCmd {
             ChainConfig.setChainColor(chainName, area.key(), selected);
 
             String colorHex = String.format("#%06X", selected & 0xFFFFFFFF);
-            FishyNotis.alert(Text.literal("§7Set color for chain '§3" + chainName + "§7' to ").append(Text.literal(colorHex + "§7!").styled(style ->
+            FishyNotis.alert(Component.literal("§7Set color for chain '§3" + chainName + "§7' to ").append(Component.literal(colorHex + "§7!").withStyle(style ->
                 style.withColor(selected & 0xFFFFFFFF))));
         }));
 
@@ -433,7 +432,7 @@ public class WaypointCmd {
         boolean isVisible = ChainConfig.isChainVisible(chainName, area.key());
 
         String status = isVisible ? "§avisible" : "§7hidden";
-        FishyNotis.alert(Text.literal("§7Chain '§3" + chainName + "§7' is now " + status + "!"));
+        FishyNotis.alert(Component.literal("§7Chain '§3" + chainName + "§7' is now " + status + "!"));
         
         return 1;
     }
@@ -473,7 +472,7 @@ public class WaypointCmd {
         if (parts.length > 0) {
             try {
                 return Integer.parseInt(parts[parts.length - 1]);
-            } catch (NumberFormatException e) {
+            } catch (NumberFormatException _) {
                 return 0;
             }
         }
@@ -481,12 +480,12 @@ public class WaypointCmd {
     }
 
     private static BlockPos blockUnderPlayer() {
-        var mc = MinecraftClient.getInstance();
-        if (mc.player == null || mc.world == null) {
+        var mc = Minecraft.getInstance();
+        if (mc.player == null || mc.level == null) {
             return null;
         }
 
-        return mc.player.getBlockPos().down();
+        return mc.player.blockPosition().below();
     }
 
     private static void setLastModified(String chainName) {
@@ -496,7 +495,7 @@ public class WaypointCmd {
     }
 
     private static void chainNotFound(String chainName, String area) {
-        FishyNotis.alert(Text.literal("§cChain '§3" + chainName + "§c' not found in " + area + "§c!"));
+        FishyNotis.alert(Component.literal("§cChain '§3" + chainName + "§c' not found in " + area + "§c!"));
     }
 
     private static void areaNotFound() {

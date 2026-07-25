@@ -32,19 +32,19 @@ public class InventorySnapshot {
 
     private static Map<Integer, SlotContent> scan(GuiChangeEvent event) {
 
-        var screenHandler = event.screen.getScreenHandler();
+        var screenHandler = event.screen.getMenu();
 
         return IntStream.range(0, screenHandler.slots.size())
             .filter(i -> {
                 int idx = SlotHandler.remap(event.screen, i);
-                return idx != -1 && screenHandler.slots.get(i).hasStack();
+                return idx != -1 && screenHandler.slots.get(i).hasItem();
             })
             .boxed()
             .collect(Collectors.toMap(
                 i -> SlotHandler.remap(event.screen, i),
                 i -> new SlotContent(
-                    screenHandler.slots.get(i).getStack().getName().getString(),
-                    screenHandler.slots.get(i).getStack().getCount()
+                    screenHandler.slots.get(i).getItem().getHoverName().getString(),
+                    screenHandler.slots.get(i).getItem().getCount()
                 )
             ));
     }

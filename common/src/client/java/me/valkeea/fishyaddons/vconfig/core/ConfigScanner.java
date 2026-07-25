@@ -90,7 +90,7 @@ public class ConfigScanner {
                 try {
                     Class<?> clazz = Class.forName(className);
                     classes.add(clazz);
-                } catch (ClassNotFoundException | NoClassDefFoundError e) {
+                } catch (ClassNotFoundException | NoClassDefFoundError _) {
                     VCLogger.warn(ConfigScanner.class, "Could not load class " + className);
                 }
             }
@@ -125,7 +125,7 @@ public class ConfigScanner {
         try {
             Class<?> clazz = Class.forName(className);
             classes.add(clazz);
-        } catch (ClassNotFoundException | NoClassDefFoundError e) {
+        } catch (ClassNotFoundException | NoClassDefFoundError _) {
             VCLogger.warn(ConfigScanner.class, "Could not load class " + className);
         }
     }

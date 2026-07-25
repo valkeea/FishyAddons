@@ -3,11 +3,12 @@ package me.valkeea.fishyaddons.hud.core;
 import java.util.ArrayList;
 import java.util.List;
 
+import me.valkeea.fishyaddons.compat.McApi;
 import me.valkeea.fishyaddons.hud.base.InteractiveHudElement;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.ingame.HandledScreen;
-import net.minecraft.client.gui.screen.ingame.InventoryScreen;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 
 public class ScreenRenderContext {
     
@@ -27,8 +28,8 @@ public class ScreenRenderContext {
         currentMouseX = mouseX;
         currentMouseY = mouseY;
         
-        var mc = MinecraftClient.getInstance();
-        if (mc.currentScreen instanceof HandledScreen || mc.currentScreen instanceof InventoryScreen) {
+        var screen = McApi.screen();
+        if (screen instanceof AbstractContainerScreen || screen instanceof InventoryScreen) {
             inScreenContext = true;
             
             for (InteractiveHudElement element : elements) {
@@ -51,7 +52,7 @@ public class ScreenRenderContext {
     /**
      * Render all hovered InteractiveHudElements.
      */
-    public static void renderHoveredElements(DrawContext context, MinecraftClient mc) {
+    public static void renderHoveredElements(GuiGraphicsExtractor context, Minecraft mc) {
         if (!inScreenContext || hoveredElements.isEmpty()) {
             return;
         }

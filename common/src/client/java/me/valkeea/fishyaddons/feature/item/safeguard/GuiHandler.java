@@ -11,9 +11,9 @@ import me.valkeea.fishyaddons.tool.ItemData;
 import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
 import me.valkeea.fishyaddons.vconfig.api.Config;
 import me.valkeea.fishyaddons.vconfig.config.impl.ItemConfig;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.ingame.GenericContainerScreen;
-import net.minecraft.item.ItemStack;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.inventory.ContainerScreen;
+import net.minecraft.world.item.ItemStack;
 
 public class GuiHandler {
     private GuiHandler() {}
@@ -30,21 +30,21 @@ public class GuiHandler {
 
     private static boolean handleClick(ScreenClickEvent event) {
 
-        var mc = MinecraftClient.getInstance();
+        var mc = Minecraft.getInstance();
         ItemStack stack;
         int slotId = -1;
 
         if (event.hoveredSlot != null) {
-            stack = event.hoveredSlot.getStack();
-            slotId = event.hoveredSlot.id;
+            stack = event.hoveredSlot.getItem();
+            slotId = event.hoveredSlot.index;
         } else {
-            stack = mc.player.currentScreenHandler.getCursorStack();
+            stack = mc.player.containerMenu.getCarried();
         }
 
         if (stack == null || stack.isEmpty() || !isProtectedCached(stack)) return false;
-        if (!(event.screen instanceof GenericContainerScreen gcs)) return false;
+        if (!(event.screen instanceof ContainerScreen cs)) return false;
         
-        if (BlacklistMatcher.isBlacklistedGUI(gcs) && Config.get(BooleanKey.FG_GUI_PROTECTION)) {
+        if (BlacklistMatcher.isBlacklistedGUI(cs) && Config.get(BooleanKey.FG_GUI_PROTECTION)) {
             int remapped = SlotHandler.remap(event.screen, slotId);
             if (remapped != -1) {
                 FGUtil.triggerProtection();

@@ -17,18 +17,18 @@ import com.google.gson.reflect.TypeToken;
 
 import me.valkeea.fishyaddons.util.FishyNotis;
 import me.valkeea.fishyaddons.util.text.TextUtils;
-import me.valkeea.fishyaddons.vconfig.api.Config;
 import me.valkeea.fishyaddons.vconfig.annotation.VCInit;
 import me.valkeea.fishyaddons.vconfig.annotation.VCListener;
 import me.valkeea.fishyaddons.vconfig.annotation.VCModule;
 import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
-import net.minecraft.client.MinecraftClient;
+import me.valkeea.fishyaddons.vconfig.api.Config;
+import net.minecraft.client.Minecraft;
 
 @VCModule
 @SuppressWarnings("squid:S6548")
 public class CakeTimer {
     private static final CakeTimer INSTANCE = new CakeTimer();    
-    private static final File TIMER_FILE = new File(MinecraftClient.getInstance().runDirectory, "config/fishyaddons/display.json");
+    private static final File TIMER_FILE = new File(Minecraft.getInstance().gameDirectory, "config/fishyaddons/display.json");
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
     private static final Pattern CAKE_PATTERN = Pattern.compile("(?:Big Yum! You refresh|Yum! You gain) (.+) for 48 hours!");
@@ -90,7 +90,7 @@ public class CakeTimer {
         }
         
         scheduler.schedule(() -> {
-            var mc = MinecraftClient.getInstance();
+            var mc = Minecraft.getInstance();
             if (mc.player == null) return;
             
             long now = System.currentTimeMillis();
@@ -117,8 +117,8 @@ public class CakeTimer {
 
         scheduler.scheduleAtFixedRate(() -> {
 
-            var mc = MinecraftClient.getInstance();
-            if (mc.player == null || mc.world == null) return;
+            var mc = Minecraft.getInstance();
+            if (mc.player == null || mc.level == null) return;
             
             long now = System.currentTimeMillis();
             
@@ -237,7 +237,7 @@ public class CakeTimer {
             Map<String, Object> data = new HashMap<>();
 
             if (TIMER_FILE.exists()) {
-                try (FileReader reader = new FileReader(TIMER_FILE)) {
+                try (var reader = new FileReader(TIMER_FILE)) {
                     Map<String, Object> existing = GSON.fromJson(reader, new TypeToken<Map<String, Object>>(){}.getType());
                     if (existing != null) {
                         data.putAll(existing);
@@ -247,7 +247,7 @@ public class CakeTimer {
             
             data.put(KEY, activeCakes);
             
-            try (FileWriter writer = new FileWriter(TIMER_FILE)) {
+            try (var writer = new FileWriter(TIMER_FILE)) {
                 GSON.toJson(data, writer);
             }
 

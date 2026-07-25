@@ -1,13 +1,13 @@
 package me.valkeea.fishyaddons.event.impl;
 
 import me.valkeea.fishyaddons.event.BaseEvent;
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.Component;
 
 public class ScreenCloseEvent extends BaseEvent {
-    public final Text title;
+    public final Component title;
     public final String titleString;
 
-    public ScreenCloseEvent(Text title) {
+    public ScreenCloseEvent(Component title) {
         this.title = title;
         this.titleString = title.getString();
     }

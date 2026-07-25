@@ -19,8 +19,8 @@ import com.google.gson.GsonBuilder;
 
 import me.valkeea.fishyaddons.feature.filter.FilterConfig.Rule;
 import me.valkeea.fishyaddons.tracker.fishing.Sc;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.Minecraft;
+import net.minecraft.resources.Identifier;
 
 public class RuleFactory {
     private RuleFactory() {}
@@ -279,13 +279,13 @@ public class RuleFactory {
     
     private static SeaCreatureData loadFromAssets() {
         try {
-            var client = MinecraftClient.getInstance();
-            if (client != null && client.getResourceManager() != null) {
-                var resourceId = Identifier.of(FA, "data/sea_creatures.json");
-                var inputStream = client.getResourceManager()
+            var mc = Minecraft.getInstance();
+            if (mc != null && mc.getResourceManager() != null) {
+                var resourceId = Identifier.fromNamespaceAndPath(FA, "data/sea_creatures.json");
+                var inputStream = mc.getResourceManager()
                     .getResource(resourceId)
                     .orElseThrow()
-                    .getInputStream();
+                    .open();
                 
                 try (var reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8)) {
                     SeaCreatureData data = GSON.fromJson(reader, SeaCreatureData.class);

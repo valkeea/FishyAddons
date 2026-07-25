@@ -7,7 +7,7 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 public class ClientStop {
 
     public static void init () {
-        ClientLifecycleEvents.CLIENT_STOPPING.register(client -> {
+        ClientLifecycleEvents.CLIENT_STOPPING.register(mc -> {
             saveDiana();
             saveSlayer();
             saveScStats();

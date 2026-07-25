@@ -5,13 +5,14 @@ import java.util.List;
 
 import org.jetbrains.annotations.Nullable;
 
+import me.valkeea.fishyaddons.compat.McApi;
 import me.valkeea.fishyaddons.hud.core.HudElement;
 import me.valkeea.fishyaddons.hud.core.HudElementState;
 import me.valkeea.fishyaddons.mixin.HandledScreenAccessor;
 import me.valkeea.fishyaddons.tool.FishyMode;
 import me.valkeea.fishyaddons.tracker.collection.CollectionTracker;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 
 /**
  * Temporary UI text element for showing user feedback
@@ -57,9 +58,9 @@ public class UIFeedback implements HudElement {
         List<String> lines = message.lines().toList();
 
         if (x == null || y == null) {
-            var hsa = (HandledScreenAccessor) MinecraftClient.getInstance().currentScreen;
-            this.x = x != null ? x : hsa.getX() + 10 + hsa.getBackgroundWidth() + 20;
-            this.y = y != null ? y : hsa.getY() + hsa.getBackgroundHeight() / 3;
+            var hsa = (HandledScreenAccessor) McApi.screen();
+            this.x = x != null ? x : hsa.getX() + 10 + hsa.getImageWidth() + 20;
+            this.y = y != null ? y : hsa.getY() + hsa.getImageHeight() / 3;
 
         } else {
             this.x = x;
@@ -71,22 +72,22 @@ public class UIFeedback implements HudElement {
     }
 
     @Override
-    public void render(DrawContext context, MinecraftClient mc, int mouseX, int mouseY) {
+    public void render(GuiGraphicsExtractor context, Minecraft mc, int mouseX, int mouseY) {
         if (current != null && current.isActive()) {
             current.progress(context, mc, x, y);
         }
     }
 
     @Override
-    public Rectangle getBounds(MinecraftClient mc) {
+    public Rectangle getBounds(Minecraft mc) {
         if (current == null || !current.isActive()) {
             return new Rectangle(x, y, 0, 0);
         }
 
         int width = 0;
-        int height = mc.textRenderer.fontHeight * current.getLines().size();
+        int height = mc.font.lineHeight * current.getLines().size();
         for (String line : current.getLines()) {
-            width = Math.max(width, mc.textRenderer.getWidth(line));
+            width = Math.max(width, mc.font.width(line));
         }
 
         return new Rectangle(x, y, width, height);
@@ -137,15 +138,15 @@ public class UIFeedback implements HudElement {
             return 255;
         }
 
-        public void render(DrawContext context, MinecraftClient mc, int x, int y) {
+        public void render(GuiGraphicsExtractor context, Minecraft mc, int x, int y) {
 
             int alpha = getAlpha();
             int color = (alpha << 24) | FishyMode.getThemeColor() & 0xFFFFFF;
-            int lineHeight = mc.textRenderer.fontHeight;
+            int lineHeight = mc.font.lineHeight;
 
             for (int i = 0; i < lines.size(); i++) {
-                context.drawText(
-                    mc.textRenderer,
+                context.text(
+                    mc.font,
                     lines.get(i),
                     x,
                     y + i * lineHeight,
@@ -155,7 +156,7 @@ public class UIFeedback implements HudElement {
             }
         }
 
-        public void progress(DrawContext context, MinecraftClient mc, int x, int y) {
+        public void progress(GuiGraphicsExtractor context, Minecraft mc, int x, int y) {
             if (!active) return;
             tick();
             render(context, mc, x, y);

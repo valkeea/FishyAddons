@@ -2,6 +2,9 @@ package me.valkeea.fishyaddons.feature.item.animations;
 
 import java.util.function.DoubleConsumer;
 
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Axis;
+
 import me.valkeea.fishyaddons.ui.screen.HeldItemScreen;
 import me.valkeea.fishyaddons.vconfig.annotation.UIRedirect;
 import me.valkeea.fishyaddons.vconfig.annotation.UIToggle;
@@ -13,15 +16,13 @@ import me.valkeea.fishyaddons.vconfig.api.Config;
 import me.valkeea.fishyaddons.vconfig.api.StringKey;
 import me.valkeea.fishyaddons.vconfig.core.UICategory;
 import me.valkeea.fishyaddons.vconfig.ui.manager.ScreenManager;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.util.Hand;
-import net.minecraft.util.math.RotationAxis;
+import net.minecraft.world.InteractionHand;
 
 @VCModule(UICategory.ITEMS)
 public class HeldItems {
     private HeldItems() {}
 
-    public static void applyAllTransformations(MatrixStack matrices, Hand hand) {
+    public static void applyAllTransformations(PoseStack matrices, InteractionHand hand) {
         if (!isEnabled()) {
             return;
         }
@@ -34,7 +35,7 @@ public class HeldItems {
     /**
      * Apply position transformations in world coordinate space
      */
-    private static void position(MatrixStack matrices, Hand hand) {
+    private static void position(PoseStack matrices, InteractionHand hand) {
         if (isSeparateHandSettings()) {
             separatePosition(matrices, hand);
         } else {
@@ -45,7 +46,7 @@ public class HeldItems {
     /**
      * Apply rotation transformations around item center
      */
-    private static void rotation(MatrixStack matrices, Hand hand) {
+    private static void rotation(PoseStack matrices, InteractionHand hand) {
         if (isSeparateHandSettings()) {
             separateRotation(matrices, hand);
         } else {
@@ -56,13 +57,13 @@ public class HeldItems {
     /**
      * Apply scale transformations
      */
-    private static void scale(MatrixStack matrices) {
+    private static void scale(PoseStack matrices) {
         float scale = (float) getScale();
         matrices.scale(scale, scale, scale);
     }
 
-    private static void separatePosition(MatrixStack matrices, Hand hand) {
-        boolean isMainHand = hand == Hand.MAIN_HAND;
+    private static void separatePosition(PoseStack matrices, InteractionHand hand) {
+        boolean isMainHand = hand == InteractionHand.MAIN_HAND;
         
         if (isMainHand) {
             matrices.translate(
@@ -79,21 +80,21 @@ public class HeldItems {
         }
     }
 
-    private static void separateRotation(MatrixStack matrices, Hand hand) {
-        boolean isMainHand = hand == Hand.MAIN_HAND;
+    private static void separateRotation(PoseStack matrices, InteractionHand hand) {
+        boolean isMainHand = hand == InteractionHand.MAIN_HAND;
 
         if (isMainHand) {
-            matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees((float) getMainHandRotX()));
-            matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees((float) getMainHandRotY()));
-            matrices.multiply(RotationAxis.POSITIVE_Z.rotationDegrees((float) getMainHandRotZ()));
+            matrices.mulPose(Axis.XP.rotationDegrees((float) getMainHandRotX()));
+            matrices.mulPose(Axis.YP.rotationDegrees((float) getMainHandRotY()));
+            matrices.mulPose(Axis.ZP.rotationDegrees((float) getMainHandRotZ()));
         } else {
-            matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees((float) getOffHandRotX()));
-            matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees((float) getOffHandRotY()));
-            matrices.multiply(RotationAxis.POSITIVE_Z.rotationDegrees((float) getOffHandRotZ()));
+            matrices.mulPose(Axis.XP.rotationDegrees((float) getOffHandRotX()));
+            matrices.mulPose(Axis.YP.rotationDegrees((float) getOffHandRotY()));
+            matrices.mulPose(Axis.ZP.rotationDegrees((float) getOffHandRotZ()));
         }
     }
 
-    private static void globalPosition(MatrixStack matrices) {
+    private static void globalPosition(PoseStack matrices) {
         matrices.translate(
             getPosOffsetX(),
             getPosOffsetY(),
@@ -101,10 +102,10 @@ public class HeldItems {
         );
     }
 
-    private static void globalRotation(MatrixStack matrices) {
-        matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees((float) getRotOffsetX()));
-        matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees((float) getRotOffsetY()));
-        matrices.multiply(RotationAxis.POSITIVE_Z.rotationDegrees((float) getRotOffsetZ()));
+    private static void globalRotation(PoseStack matrices) {
+        matrices.mulPose(Axis.XP.rotationDegrees((float) getRotOffsetX()));
+        matrices.mulPose(Axis.YP.rotationDegrees((float) getRotOffsetY()));
+        matrices.mulPose(Axis.ZP.rotationDegrees((float) getRotOffsetZ()));
     }
 
 
@@ -222,18 +223,8 @@ public class HeldItems {
         return new SwingDirection(xFactor, yFactor, zFactor);
     }
     
-    private static class SwingDirection {
-        final float xFactor;
-        final float yFactor;
-        final float zFactor;
-        
-        SwingDirection(float xFactor, float yFactor, float zFactor) {
-            this.xFactor = xFactor;
-            this.yFactor = yFactor;
-            this.zFactor = zFactor;
-        }
-    }
-    
+    private record SwingDirection(float xFactor, float yFactor, float zFactor) {}
+
     private static SwingDirection cachedSwingDirection = null;
     private static float lastRotX = Float.NaN;
     private static float lastRotY = Float.NaN;
@@ -286,18 +277,15 @@ public class HeldItems {
     public static double getEquipIntensity() { return runtimeConfig.equipIntensity; }
 
     public static double getSwingXMovement() {
-        SwingDirection direction = getSwingDirection();
-        return direction.xFactor * runtimeConfig.swingIntensity;
+        return getSwingDirection().xFactor() * runtimeConfig.swingIntensity;
     }
 
     public static double getSwingYMovement() {
-        SwingDirection direction = getSwingDirection();
-        return direction.yFactor * runtimeConfig.swingIntensity;
+        return getSwingDirection().yFactor() * runtimeConfig.swingIntensity;
     }
 
     public static double getSwingZMovement() {
-        SwingDirection direction = getSwingDirection();
-        return direction.zFactor * runtimeConfig.swingIntensity;
+        return getSwingDirection().zFactor() * runtimeConfig.swingIntensity;
     }
 
     public static void setSwingIntensity(double value) { 

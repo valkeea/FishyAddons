@@ -2,42 +2,26 @@ package me.valkeea.fishyaddons.util;
 
 import org.jetbrains.annotations.Nullable;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.texture.Sprite;
-import net.minecraft.client.texture.SpriteAtlasTexture;
-import net.minecraft.client.util.SpriteIdentifier;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.texture.TextureAtlas;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.resources.model.sprite.SpriteId;
+import net.minecraft.resources.Identifier;
 
 public class SpriteUtil {
     private SpriteUtil() {}
     private static final String MODID = "fishyaddons";
 
     @Nullable
-    private static SpriteAtlasTexture getBlockAtlas() {
-        var client = MinecraftClient.getInstance();
-        if (client == null) {
-            return null;
-        }
-        
+    private static TextureAtlas getBlockAtlas() {
         try {
-            if (client.getTextureManager() != null) {
-                return tryGetAtlasFromTextureManager(client);
+            var texture = Minecraft.getInstance().getTextureManager().getTexture(
+                Identifier.withDefaultNamespace("textures/atlas/blocks.png"));
+
+            if (texture instanceof TextureAtlas atlas) {
+                return atlas;
             }
-            
-            return null;
-        } catch (Exception e) {
-            return null;
-        }
-    }
-    
-    @Nullable
-    private static SpriteAtlasTexture tryGetAtlasFromTextureManager(MinecraftClient client) {
-        try {
-            Object texture = client.getTextureManager().getTexture(Identifier.ofVanilla("textures/atlas/blocks.png"));
-            if (texture instanceof SpriteAtlasTexture sat) {
-                return sat;
-            }
-        } catch (Exception e) {
+        } catch (Exception _) {
             // Ignore
         }
 
@@ -53,17 +37,12 @@ public class SpriteUtil {
      * @return The sprite, or null if not found
      */
     @Nullable
-    public static Sprite getBlockSprite(Identifier spriteId) {
-        
+    public static TextureAtlasSprite getBlockSprite(Identifier spriteId) {
         var blockAtlas = getBlockAtlas();
-        if (blockAtlas == null) {
-            return null;
-        }
+        if (blockAtlas == null) return null;
         
         try {
-            var sprite = blockAtlas.getSprite(spriteId);
-            if (sprite != null) return sprite;
-
+            return blockAtlas.getSprite(spriteId);
         } catch (Exception e) {
             System.err.println("[FishyAddons] Failed to load sprite from atlas: " + spriteId + " - " + e.getMessage());
         }
@@ -78,33 +57,28 @@ public class SpriteUtil {
      * @param atlas The atlas to use for fallback (can be null)
      * @return The sprite, or missing sprite as fallback
      */
-    public static Sprite getBlockSpriteOrMissing(Identifier spriteId, @Nullable SpriteAtlasTexture atlas) {
+    public static TextureAtlasSprite getBlockSpriteOrMissing(Identifier spriteId, @Nullable TextureAtlas atlas) {
         var sprite = getBlockSprite(spriteId);
-        if (sprite != null) {
-            return sprite;
-        }
+        if (sprite != null) return sprite;
         
         if (atlas != null) {
             try {
-                return atlas.getMissingSprite();
-            } catch (Exception e) {
+                return atlas.missingSprite();
+            } catch (Exception _) {
                 // Atlas not initialized
             }
         }
-        
-        var client = MinecraftClient.getInstance();
-        if (client != null && client.getAtlasManager() != null) {
-            try {
-                var missingId = new SpriteIdentifier(
-                    Identifier.ofVanilla("textures/atlas/blocks"),
-                    Identifier.ofVanilla("missingno")
-                );
-                return client.getAtlasManager().getSprite(missingId);
 
-            } catch (Exception e) {
-                // Even missing sprite failed
-            }
+        try {
+            var missingId = new SpriteId(
+                Identifier.withDefaultNamespace("textures/atlas/blocks.png"),
+                Identifier.withDefaultNamespace("missingno"));
+            return Minecraft.getInstance().getAtlasManager().get(missingId);
+
+        } catch (Exception _) {
+            // Even missing sprite failed
         }
+
         
         return null;
     }
@@ -116,7 +90,7 @@ public class SpriteUtil {
      * @return The sprite identifier
      */
     public static Identifier createModSprite(String texturePath) {
-        return Identifier.of(MODID, "/textures/" + texturePath + ".png");
+        return Identifier.fromNamespaceAndPath(MODID, "/textures/" + texturePath + ".png");
     }  
     
     /**
@@ -126,7 +100,7 @@ public class SpriteUtil {
      * @return The sprite, or null if not found
      */
     @Nullable
-    public static Sprite getModBlockSprite(String texturePath) {
-        return getBlockSprite(Identifier.of(MODID, texturePath));
+    public static TextureAtlasSprite getModBlockSprite(String texturePath) {
+        return getBlockSprite(Identifier.fromNamespaceAndPath(MODID, texturePath));
     }
 }

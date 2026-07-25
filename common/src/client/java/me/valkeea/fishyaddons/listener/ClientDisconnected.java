@@ -12,7 +12,7 @@ public class ClientDisconnected {
     private ClientDisconnected() {}
     
     public static void init() {
-        ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> onClientDisconnected());
+        ClientPlayConnectionEvents.DISCONNECT.register((handler, mc) -> onClientDisconnected());
     }
 
     private static void onClientDisconnected() {

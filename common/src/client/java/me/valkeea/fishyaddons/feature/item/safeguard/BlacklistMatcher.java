@@ -3,17 +3,17 @@ package me.valkeea.fishyaddons.feature.item.safeguard;
 import java.util.ArrayList;
 import java.util.List;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.ingame.GenericContainerScreen;
-import net.minecraft.item.Item.TooltipContext;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.tooltip.TooltipType;
-import net.minecraft.text.Text;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.inventory.ContainerScreen;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.Item.TooltipContext;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
 
 public class BlacklistMatcher {
     private BlacklistMatcher() {}
 
-    public static boolean isBlacklistedGUI(GenericContainerScreen gui) {
+    public static boolean isBlacklistedGUI(ContainerScreen gui) {
         var guiTitle = getGuiTitle(gui);
         if (isBlacklistedByTitle(guiTitle)) return true;
         return isBlacklistedByItems(gui);
@@ -42,7 +42,7 @@ public class BlacklistMatcher {
         return false;
     }
 
-    private static boolean isBlacklistedByItems(GenericContainerScreen gui) {
+    private static boolean isBlacklistedByItems(ContainerScreen gui) {
         List<BlacklistManager.BlacklistEntry> itemCheckEntries = new ArrayList<>();
         for (var entry : BlacklistManager.getEnabledEntries()) {
             if (!entry.checkTitle) {
@@ -54,10 +54,10 @@ public class BlacklistMatcher {
             return false;
         }
         
-        for (int i = 0; i < Math.min(gui.getScreenHandler().slots.size(), 54); i++) {
-            var slot = gui.getScreenHandler().slots.get(i);
-            var stack = slot.getStack();
-            if (stack == null || stack.isEmpty()) continue;
+        for (int i = 0; i < Math.min(gui.getMenu().slots.size(), 54); i++) {
+            var slot = gui.getMenu().slots.get(i);
+            var stack = slot.getItem();
+            if (stack.isEmpty()) continue;
             
             if (isBlacklistedItem(stack, itemCheckEntries)) {
                 return true;
@@ -67,16 +67,18 @@ public class BlacklistMatcher {
     }
 
     private static boolean isBlacklistedItem(ItemStack stack, List<BlacklistManager.BlacklistEntry> entries) {
-        var client = MinecraftClient.getInstance();
-        List<Text> tooltip;
+        var client = Minecraft.getInstance();
+        List<Component> tooltip;
 
         try {
-            tooltip = stack.getTooltip(TooltipContext.DEFAULT, client.player, TooltipType.BASIC);
-        } catch (Exception e) {
+            tooltip = stack.getTooltipLines(TooltipContext.EMPTY, client.player, TooltipFlag.NORMAL);
+        } catch (Exception _) {
             return false;
         }
 
-        List<Text> limitedTooltip = tooltip.subList(0, Math.min(5, tooltip.size()));
+        int end = tooltip.size();
+        int start = Math.max(0, end - 5);
+        List<Component> limitedTooltip = tooltip.subList(start, end);
 
         for (var entry : entries) {
             if (matchesItemAgainstPatterns(stack, limitedTooltip, entry.matchPatterns)) {
@@ -86,21 +88,18 @@ public class BlacklistMatcher {
         return false;
     }
 
-    private static boolean matchesItemAgainstPatterns(ItemStack stack, List<Text> tooltip, List<String> patterns) {
+    private static boolean matchesItemAgainstPatterns(ItemStack stack, List<Component> tooltip, List<String> patterns) {
         if (patterns == null || patterns.isEmpty()) {
             return false;
         }
+
         for (var pattern : patterns) {
             var cleanPattern = getCleanIdentifier(pattern);
             if (cleanPattern == null) continue;
-
-            if (matchesCustomName(stack, cleanPattern)) {
-                return true;
-            }
-            if (matchesTooltip(tooltip, cleanPattern)) {
-                return true;
-            }
+            if (matchesCustomName(stack, cleanPattern)) return true;
+            if (matchesTooltip(tooltip, cleanPattern)) return true;
         }
+
         return false;
     }
 
@@ -121,8 +120,8 @@ public class BlacklistMatcher {
         return false;
     }
 
-    private static boolean matchesTooltip(List<Text> tooltip, String cleanIdentifier) {
-        for (Text line : tooltip) {
+    private static boolean matchesTooltip(List<Component> tooltip, String cleanIdentifier) {
+        for (Component line : tooltip) {
             var strippedLine = stripColor(line.getString());
             if (!strippedLine.isEmpty()) {
                 var cleanLine = strippedLine.toLowerCase().trim();
@@ -134,10 +133,10 @@ public class BlacklistMatcher {
         return false;
     }
 
-    public static String getGuiTitle(GenericContainerScreen gui) {
+    public static String getGuiTitle(ContainerScreen gui) {
         try {
             return gui.getTitle().getString();
-        } catch (Exception e) {
+        } catch (Exception _) {
             return null;
         }
     }

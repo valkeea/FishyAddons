@@ -15,12 +15,12 @@ import me.valkeea.fishyaddons.util.text.Color;
 import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
 import me.valkeea.fishyaddons.vconfig.api.Config;
 import me.valkeea.fishyaddons.vconfig.api.IntKey;
-import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderContext;
-import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.text.Text;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
+import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderContext;
+import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
+import net.minecraft.client.Minecraft;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.phys.Vec3;
 
 /**
  * Renders a collection of ordered waypoints depending on the detected area.
@@ -50,7 +50,7 @@ public class WaypointChains {
     public static void init() {
         refresh();
 
-        WorldRenderEvents.END_MAIN.register(context -> {
+        LevelRenderEvents.COLLECT_SUBMITS.register(ctx -> {
             if (!enabled) return;
             
             Island currentArea = SkyblockAreas.getIsland();
@@ -58,12 +58,12 @@ public class WaypointChains {
             
             List<WaypointChain> presetChains = getCachedPresetChains(currentArea.key());
             for (WaypointChain pc : presetChains) {
-                renderChain(context, pc, true);
+                renderChain(ctx, pc, true);
             }
             
             List<WaypointChain> userChains = getCachedUserChains(currentArea.key());
             for (WaypointChain uc : userChains) {
-                renderChain(context, uc, false);
+                renderChain(ctx, uc, false);
             }
         });
     }
@@ -71,7 +71,7 @@ public class WaypointChains {
     public static void onConnect() {
         clearAllCaches();
         
-        if (!presetsLoaded && MinecraftClient.getInstance().getResourceManager() != null) {
+        if (!presetsLoaded && Minecraft.getInstance().getResourceManager() != null) {
             try {
                 ChainConfig.loadPresetChains();
                 presetsLoaded = true;
@@ -149,11 +149,11 @@ public class WaypointChains {
     
     // --- Core rendering logic ---
 
-    private static void renderChain(WorldRenderContext context, WaypointChain chain, boolean isPreset) {
-        var client = MinecraftClient.getInstance();
+    private static void renderChain(LevelRenderContext ctx, WaypointChain chain, boolean isPreset) {
+        var client = Minecraft.getInstance();
         if (client.player == null) return;
 
-        Vec3d playerPos = client.player.getEntityPos();
+        Vec3 playerPos = client.player.position();
 
         if (!isPreset && chain.type == ChainType.USER_DEFINED) {
             checkForCompletion(chain);
@@ -163,7 +163,7 @@ public class WaypointChains {
         int nextWaypointIndex = findNextWaypointIndex(chain, isPreset);
         
         for (int i = 0; i < chain.waypoints.size(); i++) {
-            renderWaypoint(context, chain, i, playerPos, isPreset, nextWaypointIndex);
+            renderWaypoint(ctx, chain, i, playerPos, isPreset, nextWaypointIndex);
         }
     }
     
@@ -192,8 +192,8 @@ public class WaypointChains {
         return -1;
     }
     
-    private static void renderWaypoint(WorldRenderContext context, WaypointChain chain, int index, 
-                                     Vec3d playerPos, boolean isPreset, int nextWaypointIndex) {
+    private static void renderWaypoint(LevelRenderContext ctx, WaypointChain chain, int index, 
+                                     Vec3 playerPos, boolean isPreset, int nextWaypointIndex) {
         var waypoint = chain.waypoints.get(index);
         var pos = waypoint.position;
 
@@ -205,10 +205,10 @@ public class WaypointChains {
         String label = formatLabel(waypoint.label(), distance, isPreset, index, waypoint, nextWaypointIndex);
 
         var beaconData = new ChainBeaconData(pos, color, label, wasVisited);
-        Beacon.renderBeacon(context, beaconData);
+        Beacon.renderBeacon(ctx, beaconData);
     }
 
-    private static boolean getAndUpdateCompletion(Waypoint waypoint, BlockPos pos, Vec3d playerPos) {
+    private static boolean getAndUpdateCompletion(Waypoint waypoint, BlockPos pos, Vec3 playerPos) {
         boolean wasVisited = waypoint.visited();
 
         if (!wasVisited) {
@@ -237,8 +237,8 @@ public class WaypointChains {
         return Color.mulRGB(baseColor, 0.8f);
     }
 
-    private static double calcDistance(Vec3d playerPos, BlockPos pos) {
-        return playerPos.distanceTo(new Vec3d(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5));
+    private static double calcDistance(Vec3 playerPos, BlockPos pos) {
+        return playerPos.distanceTo(new Vec3(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5));
     }
 
     private static String formatLabel(String baseLabel, double distance, boolean isPreset, 
@@ -272,8 +272,8 @@ public class WaypointChains {
         if (allCompleted && chain.waypoints.size() > 1) {
 
             String chainKey = chain.area + "_" + chain.name();
-            var chainName = Text.literal(
-                chain.name()).styled(style -> style.withColor(ChainConfig.getChainColor(chain.name(), chain.area)));
+            var chainName = Component.literal(
+                chain.name()).withStyle(style -> style.withColor(ChainConfig.getChainColor(chain.name(), chain.area)));
 
             if (CHAIN_START_TIMES.containsKey(chainKey)) {
 
@@ -285,15 +285,15 @@ public class WaypointChains {
                 resetProgress(chain);
 
                 if (announce) {
-                    FishyNotis.alert(Text.literal("§a✓ §8Chain ")
-                    .append(chainName).append(Text.literal(" §8completed in §b" + timeStr + "§8!")));
+                    FishyNotis.alert(Component.literal("§a✓ §8Chain ")
+                    .append(chainName).append(Component.literal(" §8completed in §b" + timeStr + "§8!")));
                 }
                 
             } else {
                 resetProgress(chain);
                 if (announce) {
-                    FishyNotis.alert(Text.literal("§a✓ §8Chain ")
-                    .append(chainName).append(Text.literal(" §8completed!")));
+                    FishyNotis.alert(Component.literal("§a✓ §8Chain ")
+                    .append(chainName).append(Component.literal(" §8completed!")));
                 }
             }
         }
@@ -314,14 +314,14 @@ public class WaypointChains {
     
     public static void onRelicFound() {
 
-        var client = MinecraftClient.getInstance();
+        var client = Minecraft.getInstance();
         if (client.player != null) {
 
             var currentArea = SkyblockAreas.getIsland();
             var chain = ChainConfig.getPresetChain(BooleanKey.FWP_RELICS.getString(), currentArea.key());
 
             if (chain != null) {
-                Vec3d playerPos = client.player.getEntityPos();
+                Vec3 playerPos = client.player.position();
                 BlockPos nearest = findNearest(chain, playerPos);
 
                 if (nearest != null) {
@@ -331,7 +331,7 @@ public class WaypointChains {
         }
     }
     
-    private static BlockPos findNearest(WaypointChain chain, Vec3d playerPos) {
+    private static BlockPos findNearest(WaypointChain chain, Vec3 playerPos) {
 
         BlockPos nearest = null;
         double minDistance = Double.MAX_VALUE;
@@ -345,7 +345,7 @@ public class WaypointChains {
 
             if (wasVisited) continue;
             
-            double distance = playerPos.distanceTo(new Vec3d(
+            double distance = playerPos.distanceTo(new Vec3(
                 wp.position.getX() + 0.5,
                 wp.position.getY() + 0.5,
                 wp.position.getZ() + 0.5

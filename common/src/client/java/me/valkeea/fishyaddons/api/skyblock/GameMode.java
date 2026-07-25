@@ -4,13 +4,13 @@ import me.valkeea.fishyaddons.event.impl.EnvironmentChangeEvent;
 import me.valkeea.fishyaddons.event.impl.FaEvents;
 import me.valkeea.fishyaddons.listener.WorldEvent;
 import me.valkeea.fishyaddons.util.text.ScoreboardUtils;
-import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.Minecraft;
 
 @SuppressWarnings("squid:S6548")
 public class GameMode {
 
     private boolean isInSkyblock = false;
-    private boolean isInHypixel = false;
+    private boolean isOnHypixel = false;
     private boolean bypass = false;
 
     private static final GameMode INSTANCE = new GameMode();
@@ -18,22 +18,22 @@ public class GameMode {
     private GameMode() {}
 
     private boolean checkHypixel() {
+        var mc = Minecraft.getInstance();
+        var server = mc.getCurrentServer();
 
-        var client = MinecraftClient.getInstance();
-
-        if (client.getCurrentServerEntry() != null) {
-            String ip = client.getCurrentServerEntry().address.toLowerCase();
-            setInHypixel(ip.contains("hypixel.net"));
-            return isInHypixel;
+        if (server != null) {
+            String ip = server.ip.toLowerCase();
+            setOnHypixel(ip.contains("hypixel.net"));
+            return isOnHypixel;
 
         } else {
-            setInHypixel(false);
+            setOnHypixel(false);
             return false;
         }
     }
 
-    private void setInHypixel(boolean value) {
-        isInHypixel = value;
+    private void setOnHypixel(boolean value) {
+        isOnHypixel = value;
     }    
 
     private boolean checkSkyblock() {
@@ -48,8 +48,7 @@ public class GameMode {
      * Perform or re-schedule gamemode check.
      */
     public void updateSkyblockStatus() {
-
-        if (!isInHypixel && !checkHypixel()) {
+        if (!isOnHypixel && !checkHypixel()) {
             isInSkyblock = false;
             return;
         }
@@ -59,8 +58,8 @@ public class GameMode {
             return;
         }
 
-        var client = MinecraftClient.getInstance();
-        if (client.world == null || client.world.getScoreboard() == null) {
+        var mc = Minecraft.getInstance();
+        if (mc.level == null || mc.level.getScoreboard().getObjectives().isEmpty()) {
             isInSkyblock = false;
             WorldEvent.getInstance().reCheck(100);
             return;
@@ -94,6 +93,13 @@ public class GameMode {
      * Check if the player is currently in Hypixel Skyblock.
      */
     public static boolean skyblock() {
-        return INSTANCE.isInSkyblock && INSTANCE.isInHypixel;
+        return INSTANCE.isInSkyblock && INSTANCE.isOnHypixel;
+    }
+
+    /**
+     * Check if the player is currently on Hypixel.
+     */
+    public static boolean onHypixel() {
+        return INSTANCE.isOnHypixel;
     }
 }

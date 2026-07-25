@@ -3,6 +3,7 @@ package me.valkeea.fishyaddons.vconfig.api;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
+
 import me.valkeea.fishyaddons.vconfig.config.ConfigFile;
 
 public enum BooleanKey implements ConfigKey<Boolean> {
@@ -65,8 +66,6 @@ public enum BooleanKey implements ConfigKey<Boolean> {
     TRACK_SCS_WITH_DH("trackScsWithDh"),
     SC_SINCE("scSince"),
     TRACK_DIANA("trackDiana"),
-    TRACK_COCOON("trackCocoon"),
-    ALERT_COCOON("alertCocoon"),
     TRACK_SLAYER("trackSlayer"),
     
     // Hotspots

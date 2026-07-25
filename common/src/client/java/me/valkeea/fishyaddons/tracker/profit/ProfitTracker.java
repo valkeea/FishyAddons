@@ -1,12 +1,12 @@
 package me.valkeea.fishyaddons.tracker.profit;
 
+import me.valkeea.fishyaddons.compat.McApi;
 import me.valkeea.fishyaddons.tracker.collection.CollectionTracker;
 import me.valkeea.fishyaddons.ui.screen.Overlay;
 import me.valkeea.fishyaddons.util.FishyNotis;
 import me.valkeea.fishyaddons.util.text.FromText;
 import me.valkeea.fishyaddons.vconfig.ui.widget.VCPopup;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.Component;
 
 public class ProfitTracker {
     private static boolean enabled = false;
@@ -22,7 +22,7 @@ public class ProfitTracker {
         pricePerItem = perItem;
     }
 
-    public static boolean handleChat(String s, Text t) { 
+    public static boolean handleChat(String s, Component t) { 
 
         if (s.startsWith("loot share")) {
             InventoryTracker.onLsDetected();
@@ -41,19 +41,19 @@ public class ProfitTracker {
         return false;
     }
 
-    private static void countImmediate(ChatDropParser.ParseResult r, Text originalMessage) {
+    private static void countImmediate(ChatDropParser.ParseResult r, Component originalMessage) {
         var msg = r.bookDrop() ? originalMessage : null;
         TrackedItemData.registerPendingDrop(r.itemName, r.quantity);
         TrackedItemData.addDrop(r.itemName, r.quantity, msg);
     }
 
-    public static boolean checkForHoverEvents(Text message) {
+    public static boolean checkForHoverEvents(Component message) {
         if (!trackSackProfit)  return false;
-        Text hoverEvent = FromText.findShowText(message);
+        var hoverEvent = FromText.findShowText(message);
         return hoverEvent != null && processSackHover(hoverEvent);
     }
     
-    private static boolean processSackHover(Text hoverText) {
+    private static boolean processSackHover(Component hoverText) {
         var sackDrops = SackDropParser.parseSackHoverEvent(hoverText.getString());
         if (sackDrops.isEmpty()) return false;
         for (var drop : sackDrops) handleSackDrop(drop);
@@ -70,7 +70,7 @@ public class ProfitTracker {
     // --- Profile management ---
 
     public static void onDelete(String profile) {
-        FishyNotis.send(Text.literal("§cDeleted profile: " + profile));
+        FishyNotis.send(Component.literal("§cDeleted profile: " + profile));
         if (profile.equals(TrackerProfiles.getCurrentProfile())) {
             TrackerProfiles.setCurrentProfile("default");
             FishyNotis.notice("Switched to default profile");
@@ -88,18 +88,18 @@ public class ProfitTracker {
 
 	public static void createOrSavePopup(float scale) {
         var popup = new VCPopup(
-			Text.literal("Profile name:"),
-            () -> MinecraftClient.getInstance().setScreen(null),
+			Component.literal("Profile name:"),
+            () -> McApi.setScreen(null),
 			"Cancel",
 			profileName -> {
                 TrackerProfiles.saveOrCreate(profileName);
-                MinecraftClient.getInstance().setScreen(null);
+                McApi.setScreen(null);
             },
 			"Save",
 			scale
 		);
-        var cl = MinecraftClient.getInstance();
-        cl.setScreen(new Overlay(cl.currentScreen, popup));
+        var screen = McApi.screen();
+        McApi.setScreen(new Overlay(screen, popup));
 	}
     
     private ProfitTracker() {

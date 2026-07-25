@@ -6,7 +6,7 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 
 import me.valkeea.fishyaddons.feature.waypoints.WaypointCmd;
 import me.valkeea.fishyaddons.util.FishyNotis;
-import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
+import net.fabricmc.fabric.api.client.command.v2.ClientCommands;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 
 public class FwpRoot implements CommandHandler {
@@ -30,7 +30,7 @@ public class FwpRoot implements CommandHandler {
             .then(colorCmd())
             .then(toggleCmd())
             .then(setCmd())
-            .executes(context -> {
+            .executes(ctx -> {
                 FishyNotis.fwp();
                 return 1;
             });            
@@ -40,9 +40,9 @@ public class FwpRoot implements CommandHandler {
     private static final String ORDER = "orderNumber";
 
     private static LiteralArgumentBuilder<FabricClientCommandSource> addCmd() {
-        return ClientCommandManager.literal("add")
-        .then(ClientCommandManager.argument(NAME, StringArgumentType.word())
-        .then(ClientCommandManager.argument(ORDER, IntegerArgumentType.integer())
+        return ClientCommands.literal("add")
+        .then(ClientCommands.argument(NAME, StringArgumentType.word())
+        .then(ClientCommands.argument(ORDER, IntegerArgumentType.integer())
         .executes(ctx -> {
             String chainName = StringArgumentType.getString(ctx, NAME);
             int orderNumber = IntegerArgumentType.getInteger(ctx, ORDER);
@@ -51,14 +51,14 @@ public class FwpRoot implements CommandHandler {
     }
     
     private static LiteralArgumentBuilder<FabricClientCommandSource> addNextCmd() {
-        return ClientCommandManager.literal("addnext")
+        return ClientCommands.literal("addnext")
         .executes(ctx -> WaypointCmd.addNext());
     }
     
     private static LiteralArgumentBuilder<FabricClientCommandSource> removeCmd() {
-        return ClientCommandManager.literal("remove")
-        .then(ClientCommandManager.argument(NAME, StringArgumentType.word())
-        .then(ClientCommandManager.argument(ORDER, IntegerArgumentType.integer())
+        return ClientCommands.literal("remove")
+        .then(ClientCommands.argument(NAME, StringArgumentType.word())
+        .then(ClientCommands.argument(ORDER, IntegerArgumentType.integer())
         .executes(ctx -> {
             String chainName = StringArgumentType.getString(ctx, NAME);
             int orderNumber = IntegerArgumentType.getInteger(ctx, ORDER);
@@ -67,13 +67,13 @@ public class FwpRoot implements CommandHandler {
     }
     
     private static LiteralArgumentBuilder<FabricClientCommandSource> listCmd() {
-        return ClientCommandManager.literal("list")
+        return ClientCommands.literal("list")
         .executes(ctx -> WaypointCmd.listWaypoints());
     }
     
     private static LiteralArgumentBuilder<FabricClientCommandSource> infoCmd() {
-        return ClientCommandManager.literal("info")
-        .then(ClientCommandManager.argument(NAME, StringArgumentType.word())
+        return ClientCommands.literal("info")
+        .then(ClientCommands.argument(NAME, StringArgumentType.word())
         .executes(ctx -> {
             String chainName = StringArgumentType.getString(ctx, NAME);
             return WaypointCmd.showChainInfo(chainName);
@@ -81,9 +81,9 @@ public class FwpRoot implements CommandHandler {
     }
     
     private static LiteralArgumentBuilder<FabricClientCommandSource> renameCmd() {
-        return ClientCommandManager.literal("rename")
-        .then(ClientCommandManager.argument("oldName", StringArgumentType.word())
-        .then(ClientCommandManager.argument("newName", StringArgumentType.word())
+        return ClientCommands.literal("rename")
+        .then(ClientCommands.argument("oldName", StringArgumentType.word())
+        .then(ClientCommands.argument("newName", StringArgumentType.word())
         .executes(ctx -> {
             String oldName = StringArgumentType.getString(ctx, "oldName");
             String newName = StringArgumentType.getString(ctx, "newName");
@@ -92,8 +92,8 @@ public class FwpRoot implements CommandHandler {
     }
     
     private static LiteralArgumentBuilder<FabricClientCommandSource> clearCmd() {
-        return ClientCommandManager.literal("clear")
-        .then(ClientCommandManager.argument(NAME, StringArgumentType.word())
+        return ClientCommands.literal("clear")
+        .then(ClientCommands.argument(NAME, StringArgumentType.word())
         .executes(ctx -> {
             String chainName = StringArgumentType.getString(ctx, NAME);
             return WaypointCmd.clearChain(chainName);
@@ -101,8 +101,8 @@ public class FwpRoot implements CommandHandler {
     }
     
     private static LiteralArgumentBuilder<FabricClientCommandSource> resetCmd() {
-        return ClientCommandManager.literal("reset")
-        .then(ClientCommandManager.argument(NAME, StringArgumentType.word())
+        return ClientCommands.literal("reset")
+        .then(ClientCommands.argument(NAME, StringArgumentType.word())
         .executes(ctx -> {
             String chainName = StringArgumentType.getString(ctx, NAME);
             return WaypointCmd.resetChain(chainName);
@@ -110,8 +110,8 @@ public class FwpRoot implements CommandHandler {
     }
     
     private static LiteralArgumentBuilder<FabricClientCommandSource> colorCmd() {
-        return ClientCommandManager.literal("color")
-        .then(ClientCommandManager.argument(NAME, StringArgumentType.word())
+        return ClientCommands.literal("color")
+        .then(ClientCommands.argument(NAME, StringArgumentType.word())
         .executes(ctx -> {
             String chainName = StringArgumentType.getString(ctx, NAME);
             return WaypointCmd.openColorPicker(chainName);
@@ -119,8 +119,8 @@ public class FwpRoot implements CommandHandler {
     }
     
     private static LiteralArgumentBuilder<FabricClientCommandSource> toggleCmd() {
-        return ClientCommandManager.literal("toggle")
-        .then(ClientCommandManager.argument(NAME, StringArgumentType.word())
+        return ClientCommands.literal("toggle")
+        .then(ClientCommands.argument(NAME, StringArgumentType.word())
         .executes(ctx -> {
             String chainName = StringArgumentType.getString(ctx, NAME);
             return WaypointCmd.toggleChainVisibility(chainName);
@@ -129,8 +129,8 @@ public class FwpRoot implements CommandHandler {
     }
 
     private static LiteralArgumentBuilder<FabricClientCommandSource> setCmd() {
-        return ClientCommandManager.literal("set")
-        .then(ClientCommandManager.argument(NAME, StringArgumentType.word())
+        return ClientCommands.literal("set")
+        .then(ClientCommands.argument(NAME, StringArgumentType.word())
         .executes(ctx -> {
             String chainName = StringArgumentType.getString(ctx, NAME);
             return WaypointCmd.setLastModifiedChain(chainName);

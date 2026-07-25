@@ -14,12 +14,12 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import me.valkeea.fishyaddons.processor.BaseAnalysis;
-import me.valkeea.fishyaddons.vconfig.api.Config;
 import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
-import net.minecraft.client.MinecraftClient;
+import me.valkeea.fishyaddons.vconfig.api.Config;
+import net.minecraft.client.Minecraft;
 
+@SuppressWarnings("squid:S3776")
 public class FilterConfig {
-    private FilterConfig() {}
     private static File filterFile = null;
     
     public static class MessageContext {
@@ -373,7 +373,7 @@ public class FilterConfig {
     
     public static void loadConfig() {
         try {
-            File configDir = new File(MinecraftClient.getInstance().runDirectory, "config/fishyaddons");
+            File configDir = new File(Minecraft.getInstance().gameDirectory, "config/fishyaddons");
             filterFile = new File(configDir, "filter_rules.json");
             
             if (filterFile.exists()) {
@@ -438,7 +438,7 @@ public class FilterConfig {
         FilterConfigData configData = new FilterConfigData();
         
         if (file.exists()) {
-            try (FileReader reader = new FileReader(file)) {
+            try (var reader = new FileReader(file)) {
                 FilterConfigData existingConfig = new Gson().fromJson(reader, FilterConfigData.class);
                 if (existingConfig != null) {
                     configData.userRules = existingConfig.userRules != null ? 
@@ -458,28 +458,28 @@ public class FilterConfig {
             Rule defaultRule = DEFAULT_RULES.get(ruleName);
             
             if (defaultRule != null && ruleName.startsWith("sc_")) {
-                FilterConfigData.DefaultRuleModification mod = new FilterConfigData.DefaultRuleModification();
+                var modification = new FilterConfigData.DefaultRuleModification();
                 boolean hasModifications = false;
                 
                 if (userRule.isEnabled() != defaultRule.isEnabled()) {
-                    mod.enabled = userRule.isEnabled();
+                    modification.enabled = userRule.isEnabled();
                     hasModifications = true;
                 }
                 if (!java.util.Objects.equals(userRule.getReplacement(), defaultRule.getReplacement())) {
-                    mod.replacement = userRule.getReplacement();
+                    modification.replacement = userRule.getReplacement();
                     hasModifications = true;
                 }
                 if (!java.util.Objects.equals(userRule.getDhPrefix(), defaultRule.getDhPrefix())) {
-                    mod.dhPrefix = userRule.getDhPrefix();
+                    modification.dhPrefix = userRule.getDhPrefix();
                     hasModifications = true;
                 }
                 if (userRule.getPriority() != defaultRule.getPriority()) {
-                    mod.priority = userRule.getPriority();
+                    modification.priority = userRule.getPriority();
                     hasModifications = true;
                 }
                 
                 if (hasModifications) {
-                    configData.defaultRuleModifications.put(ruleName, mod);
+                    configData.defaultRuleModifications.put(ruleName, modification);
                 }
             }
         }
@@ -494,7 +494,7 @@ public class FilterConfig {
         FilterConfigData configData = new FilterConfigData();
         
         if (file.exists()) {
-            try (FileReader reader = new FileReader(file)) {
+            try (var reader = new FileReader(file)) {
                 FilterConfigData existingConfig = new Gson().fromJson(reader, FilterConfigData.class);
                 if (existingConfig != null) {
                     configData.defaultRuleModifications = existingConfig.defaultRuleModifications != null ? 
@@ -527,17 +527,17 @@ public class FilterConfig {
         Gson gson = new Gson();
         
         try (FileReader reader = new FileReader(file)) {
-            FilterConfigData configData = gson.fromJson(reader, FilterConfigData.class);
+            FilterConfigData data = gson.fromJson(reader, FilterConfigData.class);
             
-            if (configData == null) {
+            if (data == null) {
                 System.err.println("[FishyAddons] Invalid filter config data");
                 return;
             }
             
             USER_RULES.clear();
             
-            if (configData.userRules != null) {
-                for (Map.Entry<String, FilterConfigData.UserRule> entry : configData.userRules.entrySet()) {
+            if (data.userRules != null) {
+                for (var entry : data.userRules.entrySet()) {
                     String ruleName = entry.getKey();
                     FilterConfigData.UserRule userRule = entry.getValue();
                     
@@ -546,25 +546,27 @@ public class FilterConfig {
                 }
             }
             
-            if (configData.defaultRuleModifications != null) {
-                for (Map.Entry<String, FilterConfigData.DefaultRuleModification> entry : 
-                     configData.defaultRuleModifications.entrySet()) {
+            if (data.defaultRuleModifications != null) {
+                for (var entry : data.defaultRuleModifications.entrySet()) {
                     
                     String ruleName = entry.getKey();
-                    FilterConfigData.DefaultRuleModification mod = entry.getValue();
+                    var modification = entry.getValue();
                     Rule defaultRule = DEFAULT_RULES.get(ruleName);
                     
                     if (defaultRule != null) {
                         Rule modifiedRule = clone(defaultRule);
                         
-                        if (mod.enabled != null) {
-                            modifiedRule.setEnabled(mod.enabled);
+                        if (modification.enabled != null) {
+                            modifiedRule.setEnabled(modification.enabled);
                         }
-                        if (mod.replacement != null) {
-                            modifiedRule.setReplacement(mod.replacement);
+                        if (modification.replacement != null) {
+                            modifiedRule.setReplacement(modification.replacement);
                         }
-                        if (mod.priority != null) {
-                            modifiedRule.setPriority(mod.priority);
+                        if (modification.dhPrefix != null) {
+                            modifiedRule.setDhPrefix(modification.dhPrefix);
+                        }
+                        if (modification.priority != null) {
+                            modifiedRule.setPriority(modification.priority);
                         }
                         
                         USER_RULES.put(ruleName, modifiedRule);
@@ -603,7 +605,7 @@ public class FilterConfig {
         }
         
         try {
-            File backupDir = new File(MinecraftClient.getInstance().runDirectory, "config/fishyaddons/backup");
+            File backupDir = new File(Minecraft.getInstance().gameDirectory, "config/fishyaddons/backup");
             if (!backupDir.exists()) {
                 backupDir.mkdirs();
             }
@@ -614,4 +616,6 @@ public class FilterConfig {
             System.err.println("[FishyAddons] Failed to backup filter config: " + e.getMessage());
         }
     }
+
+    private FilterConfig() {}
 }

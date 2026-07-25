@@ -81,7 +81,7 @@ public class TimerHandler implements ChatHandler {
 
     private static long parseDuration(String number, String unit) {
         long n;
-        try { n = Long.parseLong(number); } catch (Exception e) { return 0L; }
+        try { n = Long.parseLong(number); } catch (Exception _) { return 0L; }
         char u = unit == null || unit.isEmpty() ? 's' : Character.toLowerCase(unit.charAt(0));
         return switch (u) {
             case 'd' -> n * 24L * 60L * 60L * 1000L;

@@ -4,15 +4,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import me.valkeea.fishyaddons.compat.McApi;
 import me.valkeea.fishyaddons.util.FishyNotis;
 import me.valkeea.fishyaddons.util.JsonUtil;
 import me.valkeea.fishyaddons.util.text.ChatButton;
 import me.valkeea.fishyaddons.vconfig.config.impl.ItemConfig;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.ChatScreen;
-import net.minecraft.text.Text;
-import net.minecraft.text.TextColor;
-import net.minecraft.util.Formatting;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.ChatScreen;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextColor;
 
 public class CmdHelper {
     private CmdHelper() {}
@@ -23,8 +24,8 @@ public class CmdHelper {
         List<Map.Entry<String, String>> entries = new ArrayList<>(ItemConfig.getProtectedUUIDs().entrySet());
 
         entries.sort((a, b) -> {
-            Text aText = JsonUtil.deserializeText(a.getValue());
-            Text bText = JsonUtil.deserializeText(b.getValue());
+            var aText = JsonUtil.deserializeText(a.getValue());
+            var bText = JsonUtil.deserializeText(b.getValue());
 
             char aColor = getFirstColorCode(aText);
             char bColor = getFirstColorCode(bText);
@@ -36,12 +37,12 @@ public class CmdHelper {
             if (bIndex == -1) bIndex = colorOrder.length();
             if (aIndex != bIndex)  return Integer.compare(aIndex, bIndex);
 
-            String aAlpha = aText.getString();
-            String bAlpha = bText.getString();
+            var aAlpha = aText.getString();
+            var bAlpha = bText.getString();
             return aAlpha.compareToIgnoreCase(bAlpha);
         });
 
-        FishyNotis.send(Text.literal("Protected Items:").formatted(Formatting.AQUA));
+        FishyNotis.send(Component.literal("Protected Items:").withStyle(ChatFormatting.AQUA));
         
         for (Map.Entry<String, String> e : entries) {
 
@@ -49,27 +50,27 @@ public class CmdHelper {
             var btn = ChatButton.create("/fg remove " + e.getKey(), "Remove");
 
             FishyNotis.alert(
-                Text.literal(" - ").styled(s -> s.withColor(0xFFAAAAAA))
-                .append(line).append(Text.literal(" "))
+                Component.literal(" - ").withStyle(s -> s.withColor(0xFFAAAAAA))
+                .append(line).append(Component.literal(" "))
                 .append(btn)
             );
         }
     }
 
-    private static char getFirstColorCode(Text text) {
+    private static char getFirstColorCode(Component text) {
 
         var color = getActualColor(text);
         char code = '\0';
         
         if (color != null) {
             var formatting = getFormattingFromTextColor(color);
-            if (formatting != null) code = formatting.getCode();
+            if (formatting != null) code = formatting.getChar();
         }
 
         return code;
     }
 
-    private static TextColor getActualColor(Text text) {
+    private static TextColor getActualColor(Component text) {
 
         var siblings = text.getSiblings();
         if (siblings.isEmpty()) return text.getStyle().getColor();
@@ -81,12 +82,12 @@ public class CmdHelper {
             .orElse(null);
     }
 
-    private static Formatting getFormattingFromTextColor(TextColor color) {
+    private static ChatFormatting getFormattingFromTextColor(TextColor color) {
         
-        int rgb = color.getRgb() & 0xFFFFFFFF;
-        for (var candidate : Formatting.values()) {
+        int rgb = color.getValue() & 0xFFFFFFFF;
+        for (var candidate : ChatFormatting.values()) {
 
-            var v = candidate.getColorValue();
+            var v = candidate.getColor();
             if (v != null && (v & 0xFFFFFFFF) == rgb) {
                 return candidate;
             }
@@ -96,18 +97,18 @@ public class CmdHelper {
     }
 
     public static void sendClickable(String onAccept, String onDecline) {
-        var mc = MinecraftClient.getInstance();
+        var mc = Minecraft.getInstance();
         if (mc.player == null) return;
-        Text yes = Text.literal("[Yes]")
-            .styled(style -> style.withClickEvent(new net.minecraft.text.ClickEvent.RunCommand(onAccept)).withColor(0xFFCCFFCC));
-        Text no = Text.literal("[No]")
-            .styled(style -> style.withClickEvent(new net.minecraft.text.ClickEvent.RunCommand(onDecline)).withColor(0xFFFF8080));
-        mc.player.sendMessage(Text.literal(" ").append(yes).append(Text.literal(" ")).append(no), false);
+        var yes = Component.literal("[Yes]")
+            .withStyle(style -> style.withClickEvent(new net.minecraft.network.chat.ClickEvent.RunCommand(onAccept)).withColor(0xFFCCFFCC));
+        var no = Component.literal("[No]")
+            .withStyle(style -> style.withClickEvent(new net.minecraft.network.chat.ClickEvent.RunCommand(onDecline)).withColor(0xFFFF8080));
+        mc.player.sendSystemMessage(Component.literal(" ").append(yes).append(Component.literal(" ")).append(no));
     }
     
     public static int checkGUI() {
-        if (MinecraftClient.getInstance().currentScreen != null
-            && !(MinecraftClient.getInstance().currentScreen instanceof ChatScreen)) {
+        var screen = McApi.screen();
+        if (screen != null && !(screen instanceof ChatScreen)) {
             return 1;
         }
         return 0;

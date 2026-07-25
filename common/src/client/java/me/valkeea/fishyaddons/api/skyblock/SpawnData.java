@@ -4,7 +4,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import me.valkeea.fishyaddons.api.skyblock.SkyblockAreas.Island;
-import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.Minecraft;
 
 public class SpawnData {
     private SpawnData() {}
@@ -34,6 +34,7 @@ public class SpawnData {
         // Dwarven Mines
         new SpawnZone(Island.DM, -50, -47, 198, 202, -125, -119),
         new SpawnZone(Island.DM, -1, 2, 147, 149, -70, -67),
+        new SpawnZone(Island.DM, -86, -84, 199, 201, -124, -122),
         // The End
         new SpawnZone(Island.END, -504, -502, 7, 12, -277, -273),
         new SpawnZone(Island.END, -572, -567, 6, 9, -320, -316),
@@ -62,15 +63,20 @@ public class SpawnData {
         new SpawnZone(Island.JERRY, -6, -3, 75, 78, 99, 102),
         // Rift
         new SpawnZone(Island.RIFT, -47, -40, 120, 125, 66, 72),
+        // Deep Caverns
+        new SpawnZone(Island.DEEP, 3, 5, 156, 158, 84, 86),
+        // Gold Mine
+        new SpawnZone(Island.GOLD_MINE, -9, -7, 67, 69, -394, -392),
+        new SpawnZone(Island.GOLD_MINE, -5, -3, 73, 75, -279, -276),
         // Lotus Atoll
-        new SpawnZone(Island.LOTUS, -17, -14, 70, 72, -1, 3)
+        new SpawnZone(Island.LOTUS, -17, -14, 70, 72, -1, 3)      
     );
 
     public static void updateIsland() {
-        var mc = MinecraftClient.getInstance();
-        if (mc.world == null || mc.player == null) return;
+        var mc = Minecraft.getInstance();
+        if (mc.level == null || mc.player == null) return;
 
-        var pos = mc.player.getBlockPos();
+        var pos = mc.player.blockPosition();
 
         int x = pos.getX();
         int y = pos.getY();

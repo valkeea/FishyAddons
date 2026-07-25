@@ -2,18 +2,18 @@ package me.valkeea.fishyaddons.vconfig.ui.widget;
 
 import me.valkeea.fishyaddons.tool.FishyMode;
 import me.valkeea.fishyaddons.util.SpriteUtil;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gl.RenderPipelines;
-import net.minecraft.client.gui.Click;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.client.input.CharInput;
-import net.minecraft.client.input.KeyInput;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.input.CharacterEvent;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 
-public class VCTextField extends TextFieldWidget {
+public class VCTextField extends EditBox {
     private static final Identifier BG_TEXTURE = SpriteUtil.createModSprite("gui/default/textbg");
 
     private boolean interceptInventory = false;
@@ -24,7 +24,7 @@ public class VCTextField extends TextFieldWidget {
     private int maxLength = 256;
     private int selectionStart = 0;
 
-    public VCTextField(TextRenderer textRenderer, int x, int y, int width, int height, Text message) {
+    public VCTextField(Font textRenderer, int x, int y, int width, int height, Component message) {
         super(textRenderer, x, y, width, height, message);
         this.setMaxLength(maxLength);
     }
@@ -46,13 +46,13 @@ public class VCTextField extends TextFieldWidget {
     }
 
     @Override
-    public void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
+    public void extractWidgetRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
         
         var focusedBg = SpriteUtil.createModSprite("gui/" + FishyMode.themeName() + "/textbg_highlighted");
         var texture = this.isFocused() ? focusedBg : BG_TEXTURE;
 
         if (drawsBg) {
-            context.drawTexture(
+            context.blit(
                 RenderPipelines.GUI_TEXTURED,
                 texture,
                 this.getX(), this.getY(),
@@ -62,8 +62,8 @@ public class VCTextField extends TextFieldWidget {
             );
         }
 
-        boolean oldDrawsBackground = this.drawsBackground();
-        this.setDrawsBackground(false);
+        boolean oldDrawsBackground = this.isBordered();
+        this.setBordered(false);
 
         int originalY = this.getY();
         int originalX = this.getX();
@@ -77,23 +77,23 @@ public class VCTextField extends TextFieldWidget {
         this.setY(adjustedY);
         this.setX(adjustedX);
         
-        this.setX(adjustedX + MinecraftClient.getInstance().textRenderer.fontHeight / 4);           
+        this.setX(adjustedX + Minecraft.getInstance().font.lineHeight / 4);           
         renderScaledText(context, mouseX, mouseY, delta);
         
-        this.setDrawsBackground(oldDrawsBackground);        
+        this.setBordered(oldDrawsBackground);        
         this.setY(originalY);
         this.setX(originalX);
     }
     
-    private void renderScaledText(DrawContext context, int mouseX, int mouseY, float delta) {
+    private void renderScaledText(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
         int scissorX = this.getX() - 1;
         int scissorY = this.getY() - 1;
         int scissorWidth = this.width - (int)(4 * uiScale) + 2;
         int scissorHeight = this.height + 2;
         
         context.enableScissor(scissorX, scissorY, scissorX + scissorWidth, scissorY + scissorHeight);
-        context.getMatrices().pushMatrix();
-        context.getMatrices().scale(uiScale, uiScale);
+        context.pose().pushMatrix();
+        context.pose().scale(uiScale, uiScale);
         
         float scaledX = this.getX() / uiScale;
         float scaledY = this.getY() / uiScale;
@@ -110,25 +110,25 @@ public class VCTextField extends TextFieldWidget {
         this.width = (int)(this.width / uiScale);
         this.height = (int)(this.height / uiScale);
         
-        super.renderWidget(context, (int)scaledMouseX, (int)scaledMouseY, delta);
+        super.extractWidgetRenderState(context, (int)scaledMouseX, (int)scaledMouseY, delta);
         
         this.setX(origX);
         this.setY(origY);
         this.width = origWidth;
         this.height = origHeight;
         
-        context.getMatrices().popMatrix();
+        context.pose().popMatrix();
         context.disableScissor();
     }
 
     @Override
-    public boolean mouseDragged(Click click, double offsetX, double offsetY) {
+    public boolean mouseDragged(MouseButtonEvent click, double offsetX, double offsetY) {
         isDragging = true;
         return super.mouseDragged(click, offsetX, offsetY);
     }
 
     @Override
-    public boolean mouseClicked(Click click, boolean doubled) {
+    public boolean mouseClicked(MouseButtonEvent click, boolean doubled) {
 
         double mouseX = click.x();
         double mouseY = click.y();
@@ -140,12 +140,12 @@ public class VCTextField extends TextFieldWidget {
             }
             double adjustedMouseY = mouseY;
             double horizontalOffset = Math.max(2, (int)(4 * uiScale)) +
-                                    MinecraftClient.getInstance().textRenderer.fontHeight / 3.0;
+                                    Minecraft.getInstance().font.lineHeight / 3.0;
             
             double adjustedMouseX = (mouseX - this.getX() - horizontalOffset) / uiScale + this.getX() - horizontalOffset;
             int originalWidth = this.width;
 
-            var adjustedClick = new Click(adjustedMouseX, adjustedMouseY, click.buttonInfo());
+            var adjustedClick = new MouseButtonEvent(adjustedMouseX, adjustedMouseY, click.buttonInfo());
 
             this.width = (int)(this.width / uiScale) + (int)horizontalOffset;
             boolean result = super.mouseClicked(adjustedClick, doubled);
@@ -161,44 +161,44 @@ public class VCTextField extends TextFieldWidget {
 
 
     @Override
-    public boolean mouseReleased(Click click) {
+    public boolean mouseReleased(MouseButtonEvent click) {
         if (isDragging) {
             int selectionEnd;
             if (uiScale != 1.0f) {
                 double horizontalOffset = Math.max(2, (int)(4 * uiScale)) +
-                                        MinecraftClient.getInstance().textRenderer.fontHeight / 3.0;
+                                        Minecraft.getInstance().font.lineHeight / 3.0;
                 selectionEnd = (int)((click.x() - this.getX() - horizontalOffset) / uiScale + this.getX() - horizontalOffset);
             } else {
                 selectionEnd = (int)click.x();
             }
             isDragging = false;
             if (selectionStart != selectionEnd) {
-                this.setSelectionStart(this.getCharacterIndex(selectionStart));
-                this.setSelectionEnd(this.getCharacterIndex(selectionEnd));
+                this.setCursorPosition(this.getCharacterIndex(selectionStart));
+                this.setHighlightPos(this.getCharacterIndex(selectionEnd));
             }
         }
         return super.mouseReleased(click);
     }
 
     @Override
-    public boolean keyPressed(KeyInput input) {
+    public boolean keyPressed(KeyEvent input) {
         int modifiers = input.modifiers();
         if ((modifiers & 2) != 0 && input.key() == 86) {
-            String clipboard = MinecraftClient.getInstance().keyboard.getClipboard();
+            String clipboard = Minecraft.getInstance().keyboardHandler.getClipboard();
             return writeText(clipboard);
         }
         if (this.isFocused() && interceptInventory &&
-            MinecraftClient.getInstance().options.inventoryKey.matchesKey(input)) {
+            Minecraft.getInstance().options.keyInventory.matches(input)) {
             return true;
         }
         return super.keyPressed(input);
     }
 
     @Override
-    public boolean charTyped(CharInput input) {
+    public boolean charTyped(CharacterEvent input) {
         if (this.isFocused()) {
-            if (input.asString().equals("§") && allowSection) {
-                return writeText(input.asString());
+            if (input.codepointAsString().equals("§") && allowSection) {
+                return writeText(input.codepointAsString());
             }
             return super.charTyped(input);
         }
@@ -206,14 +206,14 @@ public class VCTextField extends TextFieldWidget {
     }
 
     private boolean writeText(String text) {
-        String currentText = this.getText();
-        int cursorPos = this.getCursor();
+        String currentText = this.getValue();
+        int cursorPos = this.getCursorPosition();
         String newText = currentText.substring(
                         0, cursorPos) + text + currentText.substring(cursorPos);
         
         if (newText.length() <= this.maxLength) {
-            this.setText(newText);
-            this.setCursor(cursorPos + text.length(), false);
+            this.setValue(newText);
+            this.moveCursorTo(cursorPos + text.length(), false);
             return true;
         }
         return false;
@@ -223,13 +223,13 @@ public class VCTextField extends TextFieldWidget {
      * Converts a pixel X position to a character index in the text.
      */
     private int getCharacterIndex(int pixelX) {
-        var textRenderer = MinecraftClient.getInstance().textRenderer;
-        String text = this.getText();
+        var textRenderer = Minecraft.getInstance().font;
+        String text = this.getValue();
         int x = this.getX();
         int relativeX = pixelX - x;
         int width = 0;
         for (int i = 0; i < text.length(); i++) {
-            int charWidth = textRenderer.getWidth(String.valueOf(text.charAt(i)));
+            int charWidth = textRenderer.width(String.valueOf(text.charAt(i)));
             if (uiScale != 1.0f) {
                 charWidth = (int)(charWidth * uiScale);
             }

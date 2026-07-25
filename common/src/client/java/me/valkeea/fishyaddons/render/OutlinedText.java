@@ -1,9 +1,9 @@
 package me.valkeea.fishyaddons.render;
 
 import me.valkeea.fishyaddons.util.text.TextUtils;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.text.Text;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.network.chat.Component;
 
 public class OutlinedText {
 
@@ -13,14 +13,14 @@ public class OutlinedText {
      * @param textColor Color of the text
      */
     public static void withFormat(
-        DrawContext context,
-        TextRenderer textRenderer,
-        Text text,
+        GuiGraphicsExtractor gge,
+        Font textRenderer,
+        Component text,
         int x, int y,
         int textColor
     ) {
-        Text clean = TextUtils.stripColor(text);
-        outlinedText(context, textRenderer, text, clean, x, y, textColor);
+        Component clean = TextUtils.stripColor(text);
+        outlinedText(gge, textRenderer, text, clean, x, y, textColor);
     }
 
     /**
@@ -29,21 +29,21 @@ public class OutlinedText {
      * @param textColor Color of the text
      */    
     public static void withColor(
-        DrawContext context,
-        TextRenderer textRenderer,
-        Text text,
+        GuiGraphicsExtractor gge,
+        Font textRenderer,
+        Component text,
         int x, int y,
         int textColor
     ) {
-        Text clean = TextUtils.stripFormatting(text);
-        outlinedText(context, textRenderer, text, clean, x, y, textColor);
+        Component clean = TextUtils.stripFormatting(text);
+        outlinedText(gge, textRenderer, text, clean, x, y, textColor);
     }
 
     private static void outlinedText(
-        DrawContext context,
-        TextRenderer textRenderer,
-        Text text,
-        Text clean,
+        GuiGraphicsExtractor gge,
+        Font textRenderer,
+        Component text,
+        Component clean,
         int x, int y,
         int textColor
     ) {
@@ -51,7 +51,7 @@ public class OutlinedText {
         for (int dx = -1; dx <= 1; dx++) {
             for (int dy = -1; dy <= 1; dy++) {
                 if (dx != 0 || dy != 0) {
-                    context.drawText(
+                    gge.text(
                         textRenderer,
                         clean,
                         x + dx,
@@ -63,7 +63,7 @@ public class OutlinedText {
             }
         }
 
-        context.drawText(
+        gge.text(
             textRenderer,
             text,
             x,

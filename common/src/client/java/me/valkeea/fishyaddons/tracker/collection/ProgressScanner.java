@@ -6,9 +6,9 @@ import java.util.regex.Pattern;
 
 import me.valkeea.fishyaddons.tracker.collection.RecipeScanner.SlotStackProvider;
 import me.valkeea.fishyaddons.util.text.TextUtils;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.item.ItemStack;
-import net.minecraft.text.Text;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.ItemStack;
 
 /**
  * Scans collection GUIs for progress information to validate tracking.
@@ -109,10 +109,10 @@ public class ProgressScanner {
     private static ScanResult scanStack(ItemStack stack) {
         if (stack == null || stack.isEmpty()) return null;
         
-        var lore = stack.get(DataComponentTypes.LORE);
+        var lore = stack.get(DataComponents.LORE);
         if (lore == null) return null;
 
-        List<Text> tooltip = lore.lines();
+        List<Component> tooltip = lore.lines();
         if (tooltip == null || tooltip.isEmpty()) return null;
         
         var data = parseTooltip(tooltip);
@@ -122,11 +122,11 @@ public class ProgressScanner {
     /**
      * Parse all collection-related information from tooltip lines
      */
-    private static CollectionTooltipData parseTooltip(List<Text> tooltip) {
+    private static CollectionTooltipData parseTooltip(List<Component> tooltip) {
         var data = new CollectionTooltipData();
         String username = "";
         
-        for (Text line : tooltip) {
+        for (Component line : tooltip) {
             String cleanLine = TextUtils.stripColor(line.getString());
             if (cleanLine.isEmpty()) continue;
             
@@ -155,7 +155,7 @@ public class ProgressScanner {
                 if (data.totalValue == null || total > data.totalValue) {
                     data.totalValue = total;
                 }
-            } catch (NumberFormatException e) {
+            } catch (NumberFormatException _) {
                 // Ignore invalid numbers
             }
         }
@@ -186,7 +186,7 @@ public class ProgressScanner {
                     data.anyCoopContributionRounded = true;
                 }
             }
-        } catch (NumberFormatException e) {
+        } catch (NumberFormatException _) {
             // Ignore invalid numbers (non-collection co-op contribution lines)
         }
     }
@@ -259,13 +259,13 @@ public class ProgressScanner {
             return false;
         }
         
-        var lore = stack.get(DataComponentTypes.LORE);
+        var lore = stack.get(DataComponents.LORE);
         if (lore == null) return false;
 
-        List<Text> tooltip = lore.lines();
+        List<Component> tooltip = lore.lines();
         if (tooltip == null || tooltip.isEmpty()) return false;
 
-        for (Text line : tooltip) {
+        for (Component line : tooltip) {
             String cleanLine = line.getString().replaceAll("§.", "").trim().toLowerCase();
             if (cleanLine.contains("click to show rankings")) {
                 return false;
@@ -280,14 +280,14 @@ public class ProgressScanner {
         var stack = getSlotStack.get(slot);
         if (stack == null || stack.isEmpty())  return false;
 
-        var lore = stack.get(DataComponentTypes.LORE);
+        var lore = stack.get(DataComponents.LORE);
         if (lore == null) return false;
 
-        List<Text> tooltip = lore.lines();
+        List<Component> tooltip = lore.lines();
         if (tooltip == null || tooltip.isEmpty()) return false;
 
         boolean foundAny = false;
-        for (Text line : tooltip) {
+        for (Component line : tooltip) {
             String lineStr = line.getString();
             if (lineStr.replaceAll("§.", "").trim().isEmpty()) continue;
             
@@ -317,7 +317,7 @@ public class ProgressScanner {
             CollectionData.updateProgress(itemName, collectionAmount, false);
             return true;
 
-        } catch (NumberFormatException e) {
+        } catch (NumberFormatException _) {
             return false;
         }
     }
@@ -349,23 +349,23 @@ public class ProgressScanner {
     // Skill collection view
 
     private static boolean scanSkillMenu(SlotStackProvider getSlotStack) {
-        return scanRankings(getSlotStack, SKILL_INDEX, net.minecraft.item.Items.EXPERIENCE_BOTTLE);
+        return scanRankings(getSlotStack, SKILL_INDEX, net.minecraft.world.item.Items.EXPERIENCE_BOTTLE);
     }
     
-    private static boolean scanRankings(SlotStackProvider getSlotStack, int slotIndex, net.minecraft.item.Item expectedItem) {
+    private static boolean scanRankings(SlotStackProvider getSlotStack, int slotIndex, net.minecraft.world.item.Item expectedItem) {
 
         var testStack = getSlotStack.get(slotIndex);
         if (testStack == null || testStack.isEmpty()) return false;
         if (expectedItem != null && !testStack.getItem().equals(expectedItem)) return false;
 
-        var lore = testStack.get(DataComponentTypes.LORE);
+        var lore = testStack.get(DataComponents.LORE);
         if (lore == null) return false;
 
-        List<Text> tooltip = lore.lines();
+        List<Component> tooltip = lore.lines();
         if (tooltip == null || tooltip.isEmpty()) return false;
 
         boolean foundAny = false;
-        for (Text line : tooltip) {
+        for (Component line : tooltip) {
             String lineStr = line.getString();
             if (lineStr.replaceAll("§.", "").trim().isEmpty()) continue;
             

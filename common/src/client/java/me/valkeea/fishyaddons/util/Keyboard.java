@@ -5,18 +5,19 @@ import java.util.Map;
 
 import org.lwjgl.glfw.GLFW;
 
-import net.minecraft.client.input.KeyInput;
-import net.minecraft.client.util.InputUtil;
+import com.mojang.blaze3d.platform.InputConstants;
+
+import net.minecraft.client.input.KeyEvent;
 import net.minecraft.util.Util;
-import net.minecraft.util.Util.OperatingSystem;
+import net.minecraft.util.Util.OS;
 
 public class Keyboard {
     private Keyboard() {}
     private static final Map<Integer, String> GLFW_KEY_NAMES = new HashMap<>();
-	private static final boolean ON_MAC_OS = Util.getOperatingSystem() == OperatingSystem.OSX;
+	private static final boolean ON_MAC_OS = Util.getPlatform() == OS.OSX;
 	private static final int CTRL_MODIFIER = ON_MAC_OS ? 8 : 2;
     
-	public static boolean hasCtrlModifier(KeyInput input) {
+	public static boolean hasCtrlModifier(KeyEvent input) {
 		return (input.modifiers() & CTRL_MODIFIER) != 0;
 	}
 
@@ -28,7 +29,7 @@ public class Keyboard {
             if (field.getType() == int.class && field.getName().startsWith("GLFW_KEY_")) {
                 try {
                     GLFW_KEY_NAMES.put(field.getInt(null), field.getName());
-                } catch (Exception ignored) {
+                } catch (Exception _) {
                     // Reflection failed, skip
                 }
             }
@@ -42,7 +43,7 @@ public class Keyboard {
     public static int getKeyCodeFromString(String key) {
         try {
             return (int) org.lwjgl.glfw.GLFW.class.getField(key).get(null);
-        } catch (Exception e) {
+        } catch (Exception _) {
             return -1;
         }
     }        
@@ -73,10 +74,10 @@ public class Keyboard {
             int keyCode = getKeyCodeFromString(key);
             if (keyCode == -1) return null;
             
-            var inputKey = InputUtil.fromKeyCode(new KeyInput(keyCode, 0, 0));
+            var inputKey = InputConstants.getKey(new KeyEvent(keyCode, 0, 0));
             if (inputKey != null) {
 
-                var displayText = inputKey.getLocalizedText();
+                var displayText = inputKey.getDisplayName();
                 if (displayText != null) {
                     String displayName = displayText.getString();
                     if (displayName != null && !displayName.isEmpty()) {
@@ -84,7 +85,7 @@ public class Keyboard {
                     }
                 }
             }
-        } catch (Exception e) {
+        } catch (Exception _) {
             // Not able to get name via Minecraft's InputUtil
         }
         return null;

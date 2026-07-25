@@ -1,5 +1,6 @@
 package me.valkeea.fishyaddons.processor.handlers;
 
+import me.valkeea.fishyaddons.compat.McApi;
 import me.valkeea.fishyaddons.feature.skyblock.NcpDialogue;
 import me.valkeea.fishyaddons.processor.ChatHandler;
 import me.valkeea.fishyaddons.processor.ChatHandlerResult;
@@ -41,8 +42,8 @@ public class ClickEventHandler implements ChatHandler {
     }
 
     private boolean canAccessChatScreen() {
-        var screen = net.minecraft.client.MinecraftClient.getInstance().currentScreen;
-        return screen == null || screen instanceof net.minecraft.client.gui.screen.ChatScreen;
+        var screen = McApi.screen();
+        return screen == null || screen instanceof net.minecraft.client.gui.screens.ChatScreen;
     }
     
     @Override

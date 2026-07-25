@@ -10,9 +10,9 @@ import me.valkeea.fishyaddons.feature.waypoints.NpcLocation;
 import me.valkeea.fishyaddons.feature.waypoints.TempWaypoint;
 import me.valkeea.fishyaddons.util.TabScanner;
 import me.valkeea.fishyaddons.util.ZoneUtils;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLevelEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientWorldEvents;
-import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.Minecraft;
 
 @SuppressWarnings("squid:S6548")
 public class WorldEvent {
@@ -26,12 +26,10 @@ public class WorldEvent {
     private boolean timedCheck = false;
 
     private int scoreboardDelay = 0;
-    private MinecraftClient mc;
 
     public static void init() {
-        ClientWorldEvents.AFTER_CLIENT_WORLD_CHANGE.register((client, world) -> INSTANCE.onWorldLoad());
-        ClientTickEvents.END_CLIENT_TICK.register(client -> INSTANCE.onTick());
-        INSTANCE.mc = MinecraftClient.getInstance();
+        ClientLevelEvents.AFTER_CLIENT_LEVEL_CHANGE.register((mc, level) -> INSTANCE.onWorldLoad());
+        ClientTickEvents.END_CLIENT_TICK.register(mc -> INSTANCE.onTick(mc));
     }
 
     private void onWorldLoad() {
@@ -55,8 +53,8 @@ public class WorldEvent {
         checkedIsland = checkBypass;
     }
 
-    private void onTick() {
-        if (mc.world == null || mc.player == null) return;
+    private void onTick(Minecraft mc) {
+        if (mc.level == null || mc.player == null) return;
 
         if (!checkedIsland && !checkBypass) {
             SpawnData.updateIsland();

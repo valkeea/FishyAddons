@@ -10,13 +10,13 @@ import me.valkeea.fishyaddons.tool.ItemData;
 import me.valkeea.fishyaddons.tool.RunDelayed;
 import me.valkeea.fishyaddons.util.FishyNotis;
 import me.valkeea.fishyaddons.util.text.FromText;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.LoreComponent;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.text.Style;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.Style;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.component.ItemLore;
 
 public class InventoryTracker {
 
@@ -106,7 +106,7 @@ public class InventoryTracker {
     }
     
     private static void handlePlayerHeadAdded(ItemStack stack) {
-        var displayName = stack.getName();
+        var displayName = stack.getHoverName();
         var cleanName = displayName.getString().toLowerCase().replaceAll(CLEAN_REGEX, "").trim();
 
         if (!TRACKED_PLAYER_HEADS.contains(cleanName)) {
@@ -135,7 +135,7 @@ public class InventoryTracker {
     }
 
     private static void handleGhastTearAdded(ItemStack stack) {
-        var displayName = stack.getName();
+        var displayName = stack.getHoverName();
         var cleanName = displayName.getString().toLowerCase().replaceAll(CLEAN_REGEX, "").trim();
 
         if (TRACKED_GHAST_TEARS.contains(cleanName)) {
@@ -149,7 +149,7 @@ public class InventoryTracker {
     }
 
     private static void handleToolAdded(ItemStack stack) {
-        var displayName = stack.getName();
+        var displayName = stack.getHoverName();
         var cleanName = displayName.getString().toLowerCase().replaceAll(CLEAN_REGEX, "").trim();      
 
         if (TRACKED_TOOLS.contains(cleanName)) {
@@ -185,7 +185,7 @@ public class InventoryTracker {
 
     public static void handleBookAdded(ItemStack stack) {
 
-        var lore = stack.get(DataComponentTypes.LORE);
+        var lore = stack.get(DataComponents.LORE);
         if (lore == null) return;
 
         var bookInfo = extractBookInfoFromLore(lore);
@@ -205,26 +205,26 @@ public class InventoryTracker {
 
     private static class BookInfo {
         final String name;
-        final Text styledText;
+        final Component styledText;
         
-        BookInfo(String name, Text styledText) {
+        BookInfo(String name, Component styledText) {
             this.name = name;
             this.styledText = styledText;
         }
     }
     
-    private static BookInfo extractBookInfoFromLore(LoreComponent lore) {
-        for (Text line : lore.lines()) {
+    private static BookInfo extractBookInfoFromLore(ItemLore lore) {
+        for (Component line : lore.lines()) {
             var firstText = FromText.firstLiteral(line);
             
             if (firstText != null) {
                 var plainName = firstText.getString();
                 var numericName = toNumeric(plainName);
-                var ultimateText = FromText.findNodeWithColor(line, Formatting.LIGHT_PURPLE);
+                var ultimateText = FromText.findNodeWithColor(line, ChatFormatting.LIGHT_PURPLE);
 
                 if (ultimateText != null) {
-                    var styledUltimate = Text.literal(plainName)
-                        .styled(style -> style.withColor(Formatting.LIGHT_PURPLE).withBold(true));
+                    var styledUltimate = Component.literal(plainName)
+                        .withStyle(style -> style.withColor(ChatFormatting.LIGHT_PURPLE).withBold(true));
                     return new BookInfo(ULTIMATE_PREFIX + numericName, styledUltimate);
 
                 } else {

@@ -3,13 +3,13 @@ package me.valkeea.fishyaddons.hud.ui;
 import me.valkeea.fishyaddons.event.impl.FaEvents;
 import me.valkeea.fishyaddons.event.impl.HudRenderEvent;
 import me.valkeea.fishyaddons.tool.FishyMode;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gl.RenderPipelines;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.toast.Toast;
-import net.minecraft.client.toast.ToastManager;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.toasts.Toast;
+import net.minecraft.client.gui.components.toasts.ToastManager;
+import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 
 public class FishyToast implements Toast {
     private long startTime = -1;
@@ -27,10 +27,10 @@ public class FishyToast implements Toast {
     }    
 
     @Override
-    public void draw(DrawContext context, TextRenderer textRenderer, long startTime) {}
+    public void extractRenderState(GuiGraphicsExtractor context, Font textRenderer, long startTime) { /** Access */ }
 
     @Override
-    public Visibility getVisibility() {
+    public Visibility getWantedVisibility() {
         if (startTime < 0) return Toast.Visibility.SHOW;
         return (System.currentTimeMillis() - startTime) >= 4000L ? Toast.Visibility.HIDE : Toast.Visibility.SHOW;
     }
@@ -53,24 +53,24 @@ public class FishyToast implements Toast {
 
                 var mc = event.getClient();
                 var window = mc.getWindow();
-                int screenWidth = window.getFramebufferWidth() / window.getScaleFactor();
+                int screenWidth = window.getWidth() / window.getGuiScale();
                 int toastWidth = 160;
                 int toastHeight = 32;
                 int x = (screenWidth - toastWidth) / 2;
                 int y = 20;
 
-                event.getContext().drawTexture(
+                event.getContext().blit(
                     RenderPipelines.GUI_TEXTURED,
-                    Identifier.of("fishyaddons", "textures/gui/" + FishyMode.themeName() + "/fatoast.png"),
+                    Identifier.fromNamespaceAndPath("fishyaddons", "textures/gui/" + FishyMode.themeName() + "/fatoast.png"),
                     x, y, 0, 0, toastWidth, toastHeight, 160, 32
                 );
 
-                var tr = mc.textRenderer;
-                int titleWidth = tr.getWidth(currentToast.title);
-                int msgWidth = tr.getWidth(currentToast.message);
+                var tr = mc.font;
+                int titleWidth = tr.width(currentToast.title);
+                int msgWidth = tr.width(currentToast.message);
 
-                event.getContext().drawText(tr, Text.literal(currentToast.title), x + toastWidth / 2 - titleWidth / 2, y + 7, 0xFFFFFFFF, true);
-                event.getContext().drawText(tr, Text.literal(currentToast.message), x + toastWidth / 2 - msgWidth / 2, y + 18, 0xFFAAAAAA, false);
+                event.getContext().text(tr, Component.literal(currentToast.title), x + toastWidth / 2 - titleWidth / 2, y + 7, 0xFFFFFFFF, true);
+                event.getContext().text(tr, Component.literal(currentToast.message), x + toastWidth / 2 - msgWidth / 2, y + 18, 0xFFAAAAAA, false);
 
             } else {
                 currentToast = null;

@@ -7,21 +7,21 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import me.valkeea.fishyaddons.util.JsonUtil;
-import me.valkeea.fishyaddons.vconfig.api.Config;
 import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
+import me.valkeea.fishyaddons.vconfig.api.Config;
 import me.valkeea.fishyaddons.vconfig.config.impl.ItemConfig;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.ProfileComponent;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
+import net.minecraft.client.Minecraft;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.component.ResolvableProfile;
 
 public class EqTextures {
     private EqTextures() {}
     private static final Logger LOGGER = LoggerFactory.getLogger(EqTextures.class);
     
     private static final Map<Integer, ItemStack> skullItemStacks = new HashMap<>();
-    private static final Map<Integer, ProfileComponent> skullProfiles = new HashMap<>();
+    private static final Map<Integer, ResolvableProfile> skullProfiles = new HashMap<>();
     private static final Map<Integer, Boolean> emptySlots = new HashMap<>();
     
     private static boolean dataLoaded = false;
@@ -39,7 +39,7 @@ public class EqTextures {
     public static void saveSkullTexture(int slotIndex, ItemStack itemStack) {
         if (!Config.get(BooleanKey.EQ_DISPLAY)) return;
         
-        var profile = itemStack.getOrDefault(DataComponentTypes.PROFILE, null);
+        var profile = itemStack.get(DataComponents.PROFILE);
         if (profile != null) {
             skullProfiles.put(slotIndex, profile);
         }
@@ -138,8 +138,8 @@ public class EqTextures {
 
     private static void loadItemStack(int slot, String data) {
 
-        var client = MinecraftClient.getInstance();
-        if (client.world == null) return;
+        var client = Minecraft.getInstance();
+        if (client.level == null) return;
 
         var itemStack = JsonUtil.deserializeItemStack(data);
         if (itemStack.isEmpty() || itemStack.getItem() != Items.PLAYER_HEAD) {
@@ -149,7 +149,7 @@ public class EqTextures {
         
         skullItemStacks.put(slot, itemStack);
         
-        var profile = itemStack.getOrDefault(DataComponentTypes.PROFILE, null);
+        var profile = itemStack.get(DataComponents.PROFILE);
         if (profile != null) {
             skullProfiles.put(slot, profile);
         }

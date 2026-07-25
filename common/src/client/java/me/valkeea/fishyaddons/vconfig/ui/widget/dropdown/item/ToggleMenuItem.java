@@ -1,6 +1,6 @@
 package me.valkeea.fishyaddons.vconfig.ui.widget.dropdown.item;
 
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.Component;
 
 /**
  * Interface for items that can be toggled on/off in a dropdown
@@ -48,13 +48,13 @@ public interface ToggleMenuItem {
         return false;
     }
     
-    default Text getEnabledSuffix() {
-        var checkMark = Text.literal("✓").styled(style -> style.withColor(0xFFCCFFCC).withBold(true));
-        return Text.literal(" §8[").append(checkMark).append(Text.literal("§8]"));
+    default Component getEnabledSuffix() {
+        var checkMark = Component.literal("✓").withStyle(style -> style.withColor(0xFFCCFFCC).withBold(true));
+        return Component.literal(" §8[").append(checkMark).append(Component.literal("§8]"));
     }
     
-    default Text getDisabledSuffix() {
-        var crossMark = Text.literal("✗").styled(style -> style.withColor(0xFFFF8080).withBold(true));
-        return Text.literal(" §8[").append(crossMark).append(Text.literal("§8]"));
+    default Component getDisabledSuffix() {
+        var crossMark = Component.literal("✗").withStyle(style -> style.withColor(0xFFFF8080).withBold(true));
+        return Component.literal(" §8[").append(crossMark).append(Component.literal("§8]"));
     }
 }

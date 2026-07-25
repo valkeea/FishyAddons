@@ -13,10 +13,10 @@ import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
 import me.valkeea.fishyaddons.vconfig.api.Config;
 import me.valkeea.fishyaddons.vconfig.api.DoubleKey;
 import me.valkeea.fishyaddons.vconfig.api.StringKey;
-import net.minecraft.client.sound.SoundInstance;
-import net.minecraft.registry.Registries;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.resources.sounds.SoundInstance;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.Identifier;
+import net.minecraft.sounds.SoundEvents;
 
 @VCModule
 public class SkyblockCleaner {
@@ -34,9 +34,9 @@ public class SkyblockCleaner {
     private static final String FERO = StringKey.FERO_OVERRIDE_ID.getDefault();
 
     private static final Set<Identifier> HYPE_SOUNDS = Set.of(
-        Registries.SOUND_EVENT.getId(SoundEvents.ENTITY_GENERIC_EXPLODE.value()),
-        Registries.SOUND_EVENT.getId(SoundEvents.ENTITY_ZOMBIE_VILLAGER_CURE),
-        Registries.SOUND_EVENT.getId(SoundEvents.ENTITY_ENDERMAN_TELEPORT)
+        BuiltInRegistries.SOUND_EVENT.getKey(SoundEvents.GENERIC_EXPLODE.value()),
+        BuiltInRegistries.SOUND_EVENT.getKey(SoundEvents.ZOMBIE_VILLAGER_CURE),
+        BuiltInRegistries.SOUND_EVENT.getKey(SoundEvents.ENDERMAN_TELEPORT)
     );
 
     public static boolean runeSound(String path) {
@@ -67,17 +67,15 @@ public class SkyblockCleaner {
         if (sound == null || !GameMode.skyblock()) return null;
 
         try {
-            var soundId = sound.getId();
-            if (soundId == null) return null;
 
-            var fishingReplacement = CatchAlert.getReplacementSound(soundId);
-            if (fishingReplacement != null) return fishingReplacement;
+            var soundId = sound.getIdentifier();
+            var replacement = CatchAlert.getReplacementSound(soundId);
+            if (replacement != null) return replacement;
 
             var path = soundId.getPath();
             return getFeroReplacement(path, sound);
 
-        } catch (Exception e) {
-            // Ignore
+        } catch (Exception _) {
             return null;
         }
     }
@@ -89,15 +87,12 @@ public class SkyblockCleaner {
         if (sound == null || !GameMode.skyblock()) return false;
 
         try {
-            var soundId = sound.getId();
-            if (soundId == null) return false;
-
+            var soundId = sound.getIdentifier();
             var path = soundId.getPath();
             return muteHype(soundId) || mutePhantom(path) ||
                     muteRune(path) || muteThunder(path) || muteEman(path);
 
-        } catch (Exception e) {
-            // Ignore
+        } catch (Exception _) {
             return false;
         }
     }
@@ -144,8 +139,8 @@ public class SkyblockCleaner {
         var id = Identifier.tryParse(feroPath);
         if (id == null) return null;
 
-        var sound = Registries.SOUND_EVENT.get(id);
-        if (sound == null || Registries.SOUND_EVENT.getId(sound) == null) return null;
+        var sound = BuiltInRegistries.SOUND_EVENT.getValue(id);
+        if (sound == null || BuiltInRegistries.SOUND_EVENT.getKey(sound) == null) return null;
 
         return feroTrueVol 
             ? MutableSoundInstance.masterBypass(sound, 1.0f, feroOn, false)

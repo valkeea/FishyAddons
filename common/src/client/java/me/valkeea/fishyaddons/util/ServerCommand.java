@@ -1,9 +1,9 @@
 package me.valkeea.fishyaddons.util;
 
-import net.minecraft.client.MinecraftClient;
-
 import java.util.LinkedList;
 import java.util.Queue;
+
+import net.minecraft.client.Minecraft;
 
 /**
  * Queues commands if sent too quickly and retries once after cooldown.
@@ -24,13 +24,13 @@ public class ServerCommand {
      * @param command The command to send (without the leading slash)
      */
     public static void send(String command) {
-        var client = MinecraftClient.getInstance();
+        var client = Minecraft.getInstance();
         
         if (command.startsWith("/")) {
             command = command.substring(1);
         }
 
-        if (client.player == null || client.player.networkHandler == null) {
+        if (client.player == null || client.player.connection == null) {
             queueCommand(command);
             return;
         }
@@ -48,10 +48,10 @@ public class ServerCommand {
      * Send a command immediately without queuing.
      */
     private static void sendImmediate(String command) {
-        var client = MinecraftClient.getInstance();
+        var client = Minecraft.getInstance();
         
-        if (client.player != null && client.player.networkHandler != null) {
-            client.player.networkHandler.sendChatCommand(command);
+        if (client.player != null && client.player.connection != null) {
+            client.player.connection.sendCommand(command);
             lastCommandTime = System.currentTimeMillis();
         }
     }
@@ -72,8 +72,8 @@ public class ServerCommand {
             return;
         }
         
-        var client = MinecraftClient.getInstance();
-        if (client.player == null || client.player.networkHandler == null) {
+        var client = Minecraft.getInstance();
+        if (client.player == null || client.player.connection == null) {
             return;
         }
         

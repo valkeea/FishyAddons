@@ -1,9 +1,9 @@
 package me.valkeea.fishyaddons.vconfig.ui.model;
 
-import net.minecraft.client.gui.Click;
+import net.minecraft.client.input.MouseButtonEvent;
 
 public class DragContext {
-    public final Click click;
+    public final MouseButtonEvent click;
     public final int mouseX;
     public final int mouseY;
     public final double offsetX;
@@ -11,7 +11,7 @@ public class DragContext {
     public final int button;
     public final float uiScale;
     
-    public DragContext(Click click, int mouseX, int mouseY, double offsetX, double offsetY, float uiScale) {
+    public DragContext(MouseButtonEvent click, int mouseX, int mouseY, double offsetX, double offsetY, float uiScale) {
         this.click = click;
         this.mouseX = mouseX;
         this.mouseY = mouseY;
@@ -21,7 +21,7 @@ public class DragContext {
         this.uiScale = uiScale;
     }
 
-    public static DragContext fromDrag(Click click, double offsetX, double offsetY, float uiScale) {
+    public static DragContext fromDrag(MouseButtonEvent click, double offsetX, double offsetY, float uiScale) {
         return new DragContext(
             click,
             (int) click.x(),

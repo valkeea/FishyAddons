@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import me.valkeea.fishyaddons.compat.McApi;
 import me.valkeea.fishyaddons.feature.visual.FaColors;
 import me.valkeea.fishyaddons.vconfig.config.impl.ColorConfig;
 import me.valkeea.fishyaddons.vconfig.ui.manager.ScreenManager;
@@ -12,12 +13,11 @@ import me.valkeea.fishyaddons.vconfig.ui.screen.ColorWheel;
 import me.valkeea.fishyaddons.vconfig.ui.widget.FaButton;
 import me.valkeea.fishyaddons.vconfig.ui.widget.VCTextField;
 import me.valkeea.fishyaddons.vconfig.ui.widget.VCVisuals;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.Click;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.text.Text;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.network.chat.Component;
 
 public class CustomFaColors extends Screen {
 
@@ -41,22 +41,22 @@ public class CustomFaColors extends Screen {
     private int scrollKnobOffset = 0;
 
     private AddEntry addEntry = null;    
-    private ButtonWidget addBtn = null;
+    private Button addBtn = null;
 
     public CustomFaColors() {
-        super(Text.literal("User Color Overrides"));
+        super(Component.literal("User Color Overrides"));
     }
 
     @Override
     protected void init() {
         entries.clear();
-        this.clearChildren();
+        this.clearWidgets();
         for (Map.Entry<String, Integer> entry : ColorConfig.getFaC().entrySet()) {
             Entry e = new Entry(entry.getKey(), entry.getValue());
             entries.add(e);
-            this.addDrawableChild(e.nameField);
-            this.addDrawableChild(e.colorBtn);
-            this.addDrawableChild(e.delBtn);
+            this.addRenderableWidget(e.nameField);
+            this.addRenderableWidget(e.colorBtn);
+            this.addRenderableWidget(e.delBtn);
         }
 
         int totalEntries = entries.size() + (addMode ? 1 : 0);
@@ -73,38 +73,38 @@ public class CustomFaColors extends Screen {
             int addBtnY = 40 + entries.size() * ENTRY_HEIGHT;
             addBtn = new FaButton(
                 this.width / 2 - ENTRY_WIDTH / 2, addBtnY, 80, 20,
-                Text.literal("Add").styled(style -> style.withColor(0xFFCCFFCC)),
+                Component.literal("Add").withStyle(style -> style.withColor(0xFFCCFFCC)),
                 btn -> {
                     addMode = true;
                     addEntry = new AddEntry();
-                    this.addDrawableChild(addEntry.nameField);
-                    this.addDrawableChild(addEntry.colorBtn);
-                    this.addDrawableChild(addEntry.saveBtn);
-                    this.addDrawableChild(addEntry.cancelBtn);
-                    this.remove(addBtn);
+                    this.addRenderableWidget(addEntry.nameField);
+                    this.addRenderableWidget(addEntry.colorBtn);
+                    this.addRenderableWidget(addEntry.saveBtn);
+                    this.addRenderableWidget(addEntry.cancelBtn);
+                    this.removeWidget(addBtn);
                 }
             );
-            this.addDrawableChild(addBtn);
+            this.addRenderableWidget(addBtn);
         }
 
-        this.addDrawableChild(new FaButton(
+        this.addRenderableWidget(new FaButton(
             this.width / 2 - ENTRY_WIDTH / 2 + 80, this.height - 40, 80, 20,
-            Text.literal("Back").styled(style -> style.withColor(0xFF808080)),
+            Component.literal("Back").withStyle(style -> style.withColor(0xFF808080)),
             btn -> ScreenManager.openConfigScreen()
         ));
 
-        this.addDrawableChild(new FaButton(
+        this.addRenderableWidget(new FaButton(
             this.width / 2 - ENTRY_WIDTH / 2 + 160, this.height - 40, 80, 20,
-            Text.literal("Close").styled(style -> style.withColor(0xFF808080)),
-            btn -> this.close()
+            Component.literal("Close").withStyle(style -> style.withColor(0xFF808080)),
+            btn -> this.onClose()
         ));
     }
 
     @Override
-    public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        super.render(context, mouseX, mouseY, delta);
+    public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+        super.extractRenderState(context, mouseX, mouseY, delta);
 
-        context.drawText(this.textRenderer, VCText.header("User Color Overrides", null),
+        context.text(this.font, VCText.header("User Color Overrides", null),
             this.width / 2 - 80, 15, 0xFF55FFFF, false);
 
         int listTop = 40;
@@ -146,7 +146,7 @@ public class CustomFaColors extends Screen {
         }
     }
 
-    private void renderScrollIndicator(DrawContext context, int x, int y, int listHeight, int totalEntries) {
+    private void renderScrollIndicator(GuiGraphicsExtractor context, int x, int y, int listHeight, int totalEntries) {
         int scrollbarWidth = 3;
         context.fill(x, y, x + scrollbarWidth, y + listHeight, 0x44000000);
         if (totalEntries > maxVisibleEntries) {
@@ -160,13 +160,13 @@ public class CustomFaColors extends Screen {
     private class AddEntry {
         private final VCTextField nameField;
         private int color = 0xFFFFB8E4;
-        private ButtonWidget colorBtn;
-        private ButtonWidget saveBtn;
-        private ButtonWidget cancelBtn;
+        private Button colorBtn;
+        private Button saveBtn;
+        private Button cancelBtn;
 
         public AddEntry() {
-            this.nameField = new VCTextField(CustomFaColors.this.textRenderer, 0, 0, FIELD_WIDTH, FIELD_HEIGHT, Text.literal("Name"));
-            this.nameField.setText("");
+            this.nameField = new VCTextField(CustomFaColors.this.font, 0, 0, FIELD_WIDTH, FIELD_HEIGHT, Component.literal("Name"));
+            this.nameField.setValue("");
             this.nameField.setEditable(true);
             this.nameField.setMaxLength(32);
             this.nameField.setUIScale(UI_SCALE);
@@ -175,20 +175,20 @@ public class CustomFaColors extends Screen {
 
             this.colorBtn = new FaButton(
                 0, 0, COLOR_BTN_WIDTH, FIELD_HEIGHT,
-                Text.literal(COLOR_TEXT).styled(s -> s.withColor(color)),
+                Component.literal(COLOR_TEXT).withStyle(s -> s.withColor(color)),
                 btn -> 
-                    MinecraftClient.getInstance().setScreen(new ColorWheel(CustomFaColors.this, this.color, selected -> {
+                    McApi.setScreen(new ColorWheel(CustomFaColors.this, this.color, selected -> {
                         this.color = selected;
-                        this.colorBtn.setMessage(Text.literal(COLOR_TEXT).styled(s -> s.withColor(this.color)));
-                        this.nameField.setEditableColor(this.color);                        
-                        String name = this.nameField.getText().trim();
+                        this.colorBtn.setMessage(Component.literal(COLOR_TEXT).withStyle(s -> s.withColor(this.color)));
+                        this.nameField.setTextColor(this.color);                        
+                        String name = this.nameField.getValue().trim();
                         if (!name.isEmpty()) {
                             FaColors.saveUserEntry(name, this.color & 0xFFFFFFFF);
                             addMode = false;
-                            CustomFaColors.this.remove(this.nameField);
-                            CustomFaColors.this.remove(this.colorBtn);
-                            CustomFaColors.this.remove(this.saveBtn);
-                            CustomFaColors.this.remove(this.cancelBtn);
+                            CustomFaColors.this.removeWidget(this.nameField);
+                            CustomFaColors.this.removeWidget(this.colorBtn);
+                            CustomFaColors.this.removeWidget(this.saveBtn);
+                            CustomFaColors.this.removeWidget(this.cancelBtn);
                             CustomFaColors.this.init();
                         }
                     }))
@@ -196,16 +196,16 @@ public class CustomFaColors extends Screen {
 
             this.saveBtn = new FaButton(
                 0, 0, 20, FIELD_HEIGHT,
-                Text.literal("✔").styled(s -> s.withColor(0xFFCCFFCC)),
+                Component.literal("✔").withStyle(s -> s.withColor(0xFFCCFFCC)),
                 btn -> {
-                    String name = this.nameField.getText().trim();
+                    String name = this.nameField.getValue().trim();
                     if (!name.isEmpty()) {
                         FaColors.saveUserEntry(name, color & 0xFFFFFFFF);
                         addMode = false;
-                        CustomFaColors.this.remove(this.nameField);
-                        CustomFaColors.this.remove(this.colorBtn);
-                        CustomFaColors.this.remove(this.saveBtn);
-                        CustomFaColors.this.remove(this.cancelBtn);
+                        CustomFaColors.this.removeWidget(this.nameField);
+                        CustomFaColors.this.removeWidget(this.colorBtn);
+                        CustomFaColors.this.removeWidget(this.saveBtn);
+                        CustomFaColors.this.removeWidget(this.cancelBtn);
                         CustomFaColors.this.init();
                     }
                 }
@@ -213,13 +213,13 @@ public class CustomFaColors extends Screen {
 
             this.cancelBtn = new FaButton(
                 0, 0, 20, FIELD_HEIGHT,
-                Text.literal("🗑").styled(s -> s.withColor(0xFFFF8080)),
+                Component.literal("🗑").withStyle(s -> s.withColor(0xFFFF8080)),
                 btn -> {
                     addMode = false;
-                    CustomFaColors.this.remove(this.nameField);
-                    CustomFaColors.this.remove(this.colorBtn);
-                    CustomFaColors.this.remove(this.saveBtn);
-                    CustomFaColors.this.remove(this.cancelBtn);
+                    CustomFaColors.this.removeWidget(this.nameField);
+                    CustomFaColors.this.removeWidget(this.colorBtn);
+                    CustomFaColors.this.removeWidget(this.saveBtn);
+                    CustomFaColors.this.removeWidget(this.cancelBtn);
                     CustomFaColors.this.init();
                 }
             );
@@ -255,7 +255,7 @@ public class CustomFaColors extends Screen {
     }
 
     @Override
-    public boolean mouseClicked(Click click, boolean doubled) {
+    public boolean mouseClicked(MouseButtonEvent click, boolean doubled) {
 
         double mouseX = click.x();
         double mouseY = click.y();
@@ -299,13 +299,13 @@ public class CustomFaColors extends Screen {
     }
 
     @Override
-    public boolean mouseReleased(Click click) {
+    public boolean mouseReleased(MouseButtonEvent click) {
         isDraggingScrollbar = false;
         return super.mouseReleased(click);
     }
 
     @Override
-    public boolean mouseDragged(Click click, double offsetX, double offsetY) {
+    public boolean mouseDragged(MouseButtonEvent click, double offsetX, double offsetY) {
         if (isDraggingScrollbar) {
             int listTop = 40;
             int listBottom = this.height - 60;
@@ -344,28 +344,28 @@ public class CustomFaColors extends Screen {
         private int color;
         private String originalName;
         private int originalColor;
-        private final ButtonWidget colorBtn;
-        private ButtonWidget delBtn;
+        private final Button colorBtn;
+        private Button delBtn;
         private boolean changed = false;
 
         public Entry(String name, int color) {
             this.originalName = name;
             this.originalColor = color;
             this.color = color;
-            this.nameField = new VCTextField(CustomFaColors.this.textRenderer, 0, 0, FIELD_WIDTH, FIELD_HEIGHT, Text.literal("Name"));
-            this.nameField.setText(name);
+            this.nameField = new VCTextField(CustomFaColors.this.font, 0, 0, FIELD_WIDTH, FIELD_HEIGHT, Component.literal("Name"));
+            this.nameField.setValue(name);
             this.nameField.setEditable(true);
             this.nameField.setMaxLength(32);
             this.nameField.setUIScale(UI_SCALE);
             this.nameField.setFocused(false);
             this.colorBtn = new FaButton(
                 0, 0, COLOR_BTN_WIDTH, FIELD_HEIGHT,
-                Text.literal(COLOR_TEXT).styled(s -> s.withColor(color)),
+                Component.literal(COLOR_TEXT).withStyle(s -> s.withColor(color)),
                 btn -> 
-                    MinecraftClient.getInstance().setScreen(new ColorWheel(CustomFaColors.this, this.color, selected -> {
+                    McApi.setScreen(new ColorWheel(CustomFaColors.this, this.color, selected -> {
                         this.color = selected;
-                        btn.setMessage(Text.literal(COLOR_TEXT).styled(s -> s.withColor(this.color)));
-                        MinecraftClient.getInstance().setScreen(CustomFaColors.this);
+                        btn.setMessage(Component.literal(COLOR_TEXT).withStyle(s -> s.withColor(this.color)));
+                        McApi.setScreen(CustomFaColors.this);
                         this.changed = true;
                         FaColors.saveUserEntry(this.originalName, this.color & 0xFFFFFFFF);
                     }))
@@ -373,7 +373,7 @@ public class CustomFaColors extends Screen {
             
             this.delBtn = new FaButton(
                 0, 0, DEL_BTN_WIDTH, FIELD_HEIGHT,
-                Text.literal("❌").styled(style -> style.withColor(0xFF808080)),
+                Component.literal("❌").withStyle(style -> style.withColor(0xFF808080)),
                 btn -> FaColors.deleteUserEntry(this.originalName)
             );
         }
@@ -398,7 +398,7 @@ public class CustomFaColors extends Screen {
         }
 
         public void saveIfChanged() {
-            String newName = this.nameField.getText().trim();
+            String newName = this.nameField.getValue().trim();
             if (!newName.isEmpty() && (changed || !newName.equals(originalName) || color != originalColor)) {
                 if (!newName.equals(originalName)) {
                     FaColors.deleteUserEntry(originalName);

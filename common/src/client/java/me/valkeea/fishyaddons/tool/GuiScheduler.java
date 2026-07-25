@@ -1,7 +1,8 @@
 package me.valkeea.fishyaddons.tool;
 
+import me.valkeea.fishyaddons.compat.McApi;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.screens.Screen;
 
 public final class GuiScheduler {
     private static Screen nextScreen = null;
@@ -16,12 +17,12 @@ public final class GuiScheduler {
         ClientTickEvents.END_CLIENT_TICK.register(mc -> {
             if (nextScreen != null) {
 
-                var current = mc.currentScreen;
+                var current = McApi.screen();
                 if (current != null && current.equals(nextScreen)) {
-                    current.close();
+                    current.onClose();
                 }
                 
-                mc.setScreen(nextScreen);
+                McApi.setScreen(nextScreen);
                 nextScreen = null;
             }
         });

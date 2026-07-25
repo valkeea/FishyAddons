@@ -4,9 +4,9 @@ import me.valkeea.fishyaddons.hud.core.HudDrawer;
 import me.valkeea.fishyaddons.hud.core.HudElementState;
 import me.valkeea.fishyaddons.tool.FishyMode;
 import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 
 /**
  * Elements with a text component and optional icon, with ability to add custom rendering
@@ -21,14 +21,14 @@ public abstract class SimpleHudElement extends BaseHudElement {
     }
 
     @Override
-    protected void renderEditingMode(HudDrawer drawer, MinecraftClient mc, HudElementState state) {
+    protected void renderEditingMode(HudDrawer drawer, Minecraft mc, HudElementState state) {
         if (!hasContent(getText())) {
-            drawer.drawFormattedText(Text.literal(getDisplayName()), state.x, state.y, FishyMode.getThemeColor());
+            drawer.drawFormattedText(Component.literal(getDisplayName()), state.x, state.y, FishyMode.getThemeColor());
         }
     }
 
     @Override
-    protected void renderContent(HudDrawer drawer, MinecraftClient mc, HudElementState state) {
+    protected void renderContent(HudDrawer drawer, Minecraft mc, HudElementState state) {
 
         var text = getText();
         var iconId = getIcon();
@@ -39,7 +39,7 @@ public abstract class SimpleHudElement extends BaseHudElement {
             int w = iconDims[0];
             int h = iconDims[1];
 
-            drawer.drawIcon(iconId, 0, -mc.textRenderer.fontHeight / 3, w, h);
+            drawer.drawIcon(iconId, 0, -mc.font.lineHeight / 3, w, h);
 
             if (hasContent(text)) {
                 drawer.drawFormattedText(text, 14, 0, state.color);
@@ -53,7 +53,7 @@ public abstract class SimpleHudElement extends BaseHudElement {
     }
 
     @Override
-    protected int calculateContentWidth(MinecraftClient mc) {
+    protected int calculateContentWidth(Minecraft mc) {
 
         var text = getText();
         var iconId = getIcon();
@@ -61,21 +61,21 @@ public abstract class SimpleHudElement extends BaseHudElement {
 
         if (iconId != null) width += getIconDimensions()[0] + 2;
         if (hasContent(text)) { 
-            width += mc.textRenderer.getWidth(text);
+            width += mc.font.width(text);
         } else {
-            width += mc.textRenderer.getWidth(getDisplayName());
+            width += mc.font.width(getDisplayName());
         }
 
         return Math.max(12, width);
     }
 
     @Override
-    protected int calculateContentHeight(MinecraftClient mc) {
-        return getIcon() != null ? getIconDimensions()[1] : mc.textRenderer.fontHeight;
+    protected int calculateContentHeight(Minecraft mc) {
+        return getIcon() != null ? getIconDimensions()[1] : mc.font.lineHeight;
     }
 
     /** Add custom rendering after the text is drawn */
-    protected void renderCustom(HudDrawer drawer, MinecraftClient mc, HudElementState state) {}
+    protected void renderCustom(HudDrawer drawer, Minecraft mc, HudElementState state) {}
 
     /** Override to return the icon to display, default: null */
     protected Identifier getIcon() {
@@ -88,15 +88,15 @@ public abstract class SimpleHudElement extends BaseHudElement {
     }    
 
     /** Return the text to display, or null/empty if nothing should be shown */
-    protected abstract Text getText();
+    protected abstract Component getText();
 
     /** Check if a Text object has non-empty content */
-    private static boolean hasContent(Text text) {
+    private static boolean hasContent(Component text) {
         if (text == null) return false;
         try {
             String str = text.getString();
-            return str != null && !str.isEmpty();
-        } catch (NullPointerException e) {
+            return !str.isEmpty();
+        } catch (NullPointerException _) {
             return false;
         }
     }

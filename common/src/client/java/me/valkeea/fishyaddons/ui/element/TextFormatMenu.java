@@ -7,12 +7,12 @@ import me.valkeea.fishyaddons.util.text.Enhancer;
 import me.valkeea.fishyaddons.util.text.GradientRenderer;
 import me.valkeea.fishyaddons.vconfig.ui.render.RenderUtils;
 import me.valkeea.fishyaddons.vconfig.ui.widget.VCVisuals;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gui.Click;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.client.input.KeyInput;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
 
 public class TextFormatMenu {
     private final List<FormatEntry> formatEntries;
@@ -21,7 +21,7 @@ public class TextFormatMenu {
     private final int y;
     private final int width;
     private final Consumer<String> onSelect;
-    private TextFieldWidget externalField;
+    private EditBox externalField;
     private final float uiScale;
     
     private boolean visible = false;
@@ -50,7 +50,7 @@ public class TextFormatMenu {
     }
     
     public TextFormatMenu(int x, int y, int width, Consumer<String> onSelect, 
-                                 TextFieldWidget externalField, float uiScale) {
+                                 EditBox externalField, float uiScale) {
         this.x = x;
         this.y = y + (int)(24 * uiScale);
         this.width = width;
@@ -130,12 +130,12 @@ public class TextFormatMenu {
         return mouseX >= x && mouseX <= x + width && mouseY >= y && mouseY <= y + menuHeight;
     }
     
-    public void render(DrawContext context, Screen screen, int mouseX, int mouseY) {
+    public void render(GuiGraphicsExtractor context, Screen screen, int mouseX, int mouseY) {
         if (!visible || filteredEntries.isEmpty()) return;
         
-        context.createNewRootLayer();
+        context.nextStratum();
         
-        var textRenderer = screen.getTextRenderer();
+        var textRenderer = screen.getFont();
         
         int totalEntries = filteredEntries.size();
         int visibleEntries = Math.min(totalEntries, maxEntries);
@@ -180,7 +180,7 @@ public class TextFormatMenu {
         }
     }
     
-    private void renderFormatEntry(DrawContext context, TextRenderer textRenderer, FormatEntry entry, 
+    private void renderFormatEntry(GuiGraphicsExtractor context, Font textRenderer, FormatEntry entry, 
                                   int entryX, int entryY, int height, boolean hovered) {
 
         int themeColor = VCVisuals.getThemeColor();
@@ -202,25 +202,25 @@ public class TextFormatMenu {
             RenderUtils.border(context, entryX, entryY + (int)(2 * uiScale), colorPreviewSize, colorPreviewSize, 0xFF666666);
             
             var indicator = getFormatIndicator(entry.code);
-            int indicatorWidth = textRenderer.getWidth(indicator);
-            context.drawText(textRenderer, indicator, 
+            int indicatorWidth = textRenderer.width(indicator);
+            context.text(textRenderer, indicator, 
                 entryX + (colorPreviewSize - indicatorWidth) / 2, 
                 entryY + (int)((2 + (colorPreviewSize - 8) / 2.0) * uiScale), 
                 0xFFFFFFFF, false);
         }
         
         float textScale = uiScale * 0.9f;
-        context.getMatrices().pushMatrix();
-        context.getMatrices().scale(textScale, textScale);
+        context.pose().pushMatrix();
+        context.pose().scale(textScale, textScale);
         
         int scaledTextX = (int)(textX / textScale);
         int scaledTextY = (int)((entryY + height / 2.0 - 4) / textScale);
         
-        context.drawText(textRenderer, entry.displayName, scaledTextX, scaledTextY, textColor, false);
-        context.getMatrices().popMatrix();
+        context.text(textRenderer, entry.displayName, scaledTextX, scaledTextY, textColor, false);
+        context.pose().popMatrix();
     }
     
-    private void renderGradientPreview(DrawContext context, int x, int y, int width, int height, String gradientName) {
+    private void renderGradientPreview(GuiGraphicsExtractor context, int x, int y, int width, int height, String gradientName) {
         int[] gradientColors = GradientRenderer.getGradientColors(gradientName);
         
         if (gradientColors.length >= 2) {
@@ -258,7 +258,7 @@ public class TextFormatMenu {
         }
     }
     
-    public boolean mouseClicked(Click click) {
+    public boolean mouseClicked(MouseButtonEvent click) {
         if (!visible) return false;
         double mouseX = click.x();
         double mouseY = click.y();
@@ -311,7 +311,7 @@ public class TextFormatMenu {
         onSelect.accept(text);
     }
     
-    public boolean keyPressed(KeyInput input) {
+    public boolean keyPressed(KeyEvent input) {
         if (!visible) return false;
         
         int keyCode = input.key();
@@ -358,7 +358,7 @@ public class TextFormatMenu {
         }
     }
 
-    public boolean mouseDragged(Click click) {
+    public boolean mouseDragged(MouseButtonEvent click) {
         if (!visible) return false;
         if (isDraggingScrollbar) {
             int totalEntries = filteredEntries.size();
@@ -387,7 +387,7 @@ public class TextFormatMenu {
     public void setVisible(boolean visible) {
         this.visible = visible;
         if (visible && externalField != null) {
-            updateFilter(externalField.getText());
+            updateFilter(externalField.getValue());
         }
     }
     

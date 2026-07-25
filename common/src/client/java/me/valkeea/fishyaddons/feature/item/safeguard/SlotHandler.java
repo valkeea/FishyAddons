@@ -1,19 +1,20 @@
 package me.valkeea.fishyaddons.feature.item.safeguard;
 
+import com.mojang.blaze3d.platform.InputConstants;
+
 import me.valkeea.fishyaddons.event.EventPhase;
 import me.valkeea.fishyaddons.event.EventPriority;
 import me.valkeea.fishyaddons.event.impl.FaEvents;
 import me.valkeea.fishyaddons.tool.PlaySound;
 import me.valkeea.fishyaddons.util.ContainerScanner;
 import me.valkeea.fishyaddons.vconfig.config.impl.ItemConfig;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.ingame.HandledScreen;
-import net.minecraft.client.gui.screen.ingame.InventoryScreen;
-import net.minecraft.client.util.InputUtil;
-import net.minecraft.item.ItemStack;
-import net.minecraft.screen.ScreenHandler;
-import net.minecraft.screen.slot.Slot;
-import net.minecraft.screen.slot.SlotActionType;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.gui.screens.inventory.InventoryScreen;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.ContainerInput;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
 
 public class SlotHandler {
     private SlotHandler() {}
@@ -22,63 +23,62 @@ public class SlotHandler {
         FaEvents.SCREEN_MOUSE_CLICK.register(event -> {
             if (event.hoveredSlot != null &&
                 (isLockedClick(event.screen, event.hoveredSlot) ||
-                 isBoundClick(event.screen, event.hoveredSlot, event.hoveredSlot.id, remap(event.screen, event.hoveredSlot.id)))) {
+                 isBoundClick(event.screen, event.hoveredSlot, event.hoveredSlot.index, remap(event.screen, event.hoveredSlot.index)))) {
                 event.setConsumed(true);
             }
         }, EventPriority.HIGHEST, EventPhase.PRE);
     }
 
-    private static boolean isLockedClick(HandledScreen<?> screen, Slot hovered) {
+    private static boolean isLockedClick(AbstractContainerScreen<?> screen, Slot hovered) {
         if (!FGUtil.isKeyBound()) return false;
-        int index = hovered.id;
+        int index = hovered.index;
         int invIndex = remap(screen, index);
         if (invIndex == -1) return false;
         return FGUtil.isSlotLocked(invIndex);
     }
 
-    private static boolean isBoundClick(HandledScreen<?> screen, Slot hovered, int index, int invIndex) {
+    private static boolean isBoundClick(AbstractContainerScreen<?> screen, Slot hovered, int index, int invIndex) {
         if (isInvalidContext(screen, invIndex)) return false;
         if (!isShiftDown()) return true;
 
         int boundSlotId = ItemConfig.getBoundSlot(invIndex);
-        var handler = screen.getScreenHandler();
-        if (handler == null || remapInventory(boundSlotId) == -1) {
+        var handler = screen.getMenu();
+        if (remapInventory(boundSlotId) == -1) {
             return false;
         }
 
         var boundSlot = handler.getSlot(boundSlotId);
-        var hoveredStack = hovered.getStack();
-        var boundStack = boundSlot.getStack();
-
+        var hoveredStack = hovered.getItem();
+        var boundStack = boundSlot.getItem();
         if (!canInsertItems(hovered, boundSlot, hoveredStack, boundStack)) {
             return true;
         }
 
         return swapOrMoveItems(
-            MinecraftClient.getInstance(),
+            Minecraft.getInstance(),
             handler, invIndex, boundSlotId,
             index, hoveredStack, boundStack
         );
     }
 
-    private static boolean isInvalidContext(HandledScreen<?> screen, int invIndex) {
+    private static boolean isInvalidContext(AbstractContainerScreen<?> screen, int invIndex) {
         return !FGUtil.isKeyBound() || !FGUtil.isSlotBound(invIndex) || !ContainerScanner.isGuiOrInv() ||
         !(screen instanceof InventoryScreen);
     }
 
     private static boolean isShiftDown() {
-        var mc = MinecraftClient.getInstance();
+        var mc = Minecraft.getInstance();
         if (mc.options == null) return false;
-        int keyCode = mc.options.sneakKey.getDefaultKey().getCode();
-        return InputUtil.isKeyPressed(mc.getWindow(), keyCode);
+        int keyCode = mc.options.keyShift.getDefaultKey().getValue();
+        return InputConstants.isKeyDown(mc.getWindow(), keyCode);
     } 
 
     private static boolean canInsertItems(Slot hovered, Slot boundSlot, ItemStack hoveredStack, ItemStack boundStack) {
-        return (hoveredStack.isEmpty() || boundSlot.canInsert(hoveredStack))
-            && (boundStack.isEmpty() || hovered.canInsert(boundStack));
+        return (hoveredStack.isEmpty() || boundSlot.mayPlace(hoveredStack))
+            && (boundStack.isEmpty() || hovered.mayPlace(boundStack));
     }
 
-    private static boolean swapOrMoveItems(MinecraftClient mc, ScreenHandler handler, int invIndex, int boundSlotId, int index, ItemStack hoveredStack, ItemStack boundStack) {
+    private static boolean swapOrMoveItems(Minecraft mc, AbstractContainerMenu handler, int invIndex, int boundSlotId, int index, ItemStack hoveredStack, ItemStack boundStack) {
 
         boolean hasHoveredStack = !hoveredStack.isEmpty();
         boolean hasBoundStack = !boundStack.isEmpty();
@@ -86,19 +86,20 @@ public class SlotHandler {
             return false;
         }
 
-        int syncId = handler.syncId;
-        var interactionManager = mc.interactionManager;
+        int syncId = handler.containerId;
+        var interactionManager = mc.gameMode;
         var player = mc.player;
 
         if (hasHoveredStack) {
-            interactionManager.clickSlot(syncId, invIndex, 0, SlotActionType.PICKUP, player);
-            interactionManager.clickSlot(syncId, boundSlotId, 0, SlotActionType.PICKUP, player);
+            interactionManager.handleContainerInput(syncId, invIndex, 0, ContainerInput.PICKUP, player);
+            interactionManager.handleContainerInput(syncId, boundSlotId, 0, ContainerInput.PICKUP, player);
             if (hasBoundStack) {
-                interactionManager.clickSlot(syncId, invIndex, 0, SlotActionType.PICKUP, player);
+                interactionManager.handleContainerInput(syncId, invIndex, 0, ContainerInput.PICKUP, player);
             }
+
         } else {
-            interactionManager.clickSlot(syncId, boundSlotId, 0, SlotActionType.PICKUP, player);
-            interactionManager.clickSlot(syncId, index, 0, SlotActionType.PICKUP, player);
+            interactionManager.handleContainerInput(syncId, boundSlotId, 0, ContainerInput.PICKUP, player);
+            interactionManager.handleContainerInput(syncId, index, 0, ContainerInput.PICKUP, player);
         }
 
         return true;
@@ -142,10 +143,8 @@ public class SlotHandler {
      * 
      * @return Remapped slot id, or -1 if invalid
      */
-    public static int remap(HandledScreen<?> screen, int slotId) {
-        ScreenHandler handler = screen.getScreenHandler();
-        if (handler == null) return -1;
-        
+    public static int remap(AbstractContainerScreen<?> screen, int slotId) {
+        var handler = screen.getMenu();
         int totalSlots = handler.slots.size();
         
         return screen instanceof InventoryScreen 

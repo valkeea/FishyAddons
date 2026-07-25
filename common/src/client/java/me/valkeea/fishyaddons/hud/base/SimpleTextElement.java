@@ -6,9 +6,9 @@ import me.valkeea.fishyaddons.hud.core.HudDrawer;
 import me.valkeea.fishyaddons.hud.core.HudElementState;
 import me.valkeea.fishyaddons.hud.core.HudUtils;
 import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.text.Text;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.network.chat.Component;
 
 /**
  * Elements with one text component and predefined styling.
@@ -26,17 +26,17 @@ public abstract class SimpleTextElement extends BaseHudElement {
     }
 
     @Override
-    protected final void renderContent(HudDrawer drawer, MinecraftClient mc, HudElementState state) {
+    protected final void renderContent(HudDrawer drawer, Minecraft mc, HudElementState state) {
 
-        Text text = getText();
+        Component text = getText();
         if (text == null || text.getString().isEmpty()) {
             if (isEditingMode()) {
-                text = Text.literal(placeholderText);
+                text = Component.literal(placeholderText);
             } else return;
         }
         
         int alignment = getTextAlignment();
-        int textWidth = mc.textRenderer.getWidth(text);
+        int textWidth = mc.font.width(text);
         int x = switch (alignment) {
             case 1 -> -textWidth / 2;
             case 2 -> -textWidth;
@@ -47,7 +47,7 @@ public abstract class SimpleTextElement extends BaseHudElement {
     }
 
     @Override
-    public void drawBackGround(DrawContext context, MinecraftClient mc, HudElementState state) {
+    public void drawBackGround(GuiGraphicsExtractor context, Minecraft mc, HudElementState state) {
         float scale = state.size / 12.0F;
         int textWidth = (int)(calculateContentWidth(mc) * scale);
         int textHeight = (int)(calculateContentHeight(mc) * scale);
@@ -61,21 +61,21 @@ public abstract class SimpleTextElement extends BaseHudElement {
     }
 
     @Override
-    protected final int calculateContentWidth(MinecraftClient mc) {
-        Text text = getText();
+    protected final int calculateContentWidth(Minecraft mc) {
+        Component text = getText();
         if (text == null || text.getString().isEmpty()) {
-            text = Text.literal(placeholderText);
+            text = Component.literal(placeholderText);
         }
-        return Math.max(80, mc.textRenderer.getWidth(text));
+        return Math.max(80, mc.font.width(text));
     }
 
     @Override
-    protected final int calculateContentHeight(MinecraftClient mc) {
-        return mc.textRenderer.fontHeight;
+    protected final int calculateContentHeight(Minecraft mc) {
+        return mc.font.lineHeight;
     }
 
     @Override
-    public Rectangle getBounds(MinecraftClient mc) {
+    public Rectangle getBounds(Minecraft mc) {
 
         var state = getCachedState();
         float scale = state.size / 12.0F;
@@ -111,5 +111,5 @@ public abstract class SimpleTextElement extends BaseHudElement {
     /**
      * Return the text to display, or null/empty if nothing should be shown
      */
-    protected abstract Text getText();
+    protected abstract Component getText();
 }

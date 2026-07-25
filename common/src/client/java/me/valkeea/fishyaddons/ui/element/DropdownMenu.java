@@ -5,9 +5,9 @@ import java.util.function.Consumer;
 
 import me.valkeea.fishyaddons.tool.FishyMode;
 import me.valkeea.fishyaddons.util.text.Color;
-import net.minecraft.client.gui.Click;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.MouseButtonEvent;
 
 public class DropdownMenu {
     private final List<String> entries;
@@ -30,10 +30,10 @@ public class DropdownMenu {
         this.onSelect = onSelect;
     }
 
-    public void render(DrawContext context, Screen screen, int mouseX, int mouseY) {
+    public void render(GuiGraphicsExtractor context, Screen screen, int mouseX, int mouseY) {
         if (!visible) return;
 
-        context.createNewRootLayer();
+        context.nextStratum();
 
         for (int i = 0; i < entries.size(); i++) {
 
@@ -44,16 +44,16 @@ public class DropdownMenu {
             int bgColor = hovered ? themeColor : 0xEE121212;
             int textColor = hovered ? 0xFF000000 : themeColor;
 
-            context.getMatrices().pushMatrix();      
+            context.pose().pushMatrix();      
             context.fill(x, entryY, x + width, entryY + entryHeight, bgColor);
-            context.drawText(screen.getTextRenderer(), entries.get(i), x + 6, entryY + (entryHeight - 8) / 2, textColor, false);
-            context.getMatrices().popMatrix();
+            context.text(screen.getFont(), entries.get(i), x + 6, entryY + (entryHeight - 8) / 2, textColor, false);
+            context.pose().popMatrix();
 
             if (hovered) hoveredIndex = i;
         }
     }
 
-    public boolean mouseClicked(Click click) {
+    public boolean mouseClicked(MouseButtonEvent click) {
         if (!visible) return false;
 
         for (int i = 0; i < entries.size(); i++) {

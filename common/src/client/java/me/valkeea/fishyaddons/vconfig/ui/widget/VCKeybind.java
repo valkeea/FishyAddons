@@ -4,10 +4,10 @@ import me.valkeea.fishyaddons.util.Keyboard;
 import me.valkeea.fishyaddons.vconfig.ui.layout.Colors;
 import me.valkeea.fishyaddons.vconfig.ui.render.RenderUtils;
 import me.valkeea.fishyaddons.vconfig.ui.render.VCText;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gui.Click;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.input.KeyInput;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
 
 public class VCKeybind {
     float uiScale;
@@ -32,7 +32,7 @@ public class VCKeybind {
         this.height = height;
     }
 
-    public void renderWidget(DrawContext context, TextRenderer tr, float uiScale) {
+    public void renderWidget(GuiGraphicsExtractor context, Font tr, float uiScale) {
         this.uiScale = uiScale;
         if (widthDirty) setWidth(getWidthForKey(key, tr));
         String buttonText = "> <";
@@ -66,7 +66,7 @@ public class VCKeybind {
         return key.equals("NONE");
     }
 
-    public boolean mouseClicked(Click click, boolean doubled) {
+    public boolean mouseClicked(MouseButtonEvent click, boolean doubled) {
         if (click.button() != 0 || !hovered) return false;
         if (listening || doubled) {
             setKey("NONE");
@@ -75,7 +75,7 @@ public class VCKeybind {
         return true;
     }
 
-    public boolean keyPressed(KeyInput input) {
+    public boolean keyPressed(KeyEvent input) {
         if (!listening) return false;
 
         int keyCode = input.key();
@@ -129,8 +129,8 @@ public class VCKeybind {
         this.hovered = hovered;
     }
 
-    private int getWidthForKey(String key, TextRenderer tr) {
+    private int getWidthForKey(String key, Font tr) {
         var s = Keyboard.getDisplayNameFor(key);
-        return tr.getWidth(s) + tr.fontHeight;
+        return tr.width(s) + tr.lineHeight;
     }    
 }

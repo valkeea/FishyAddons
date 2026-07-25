@@ -260,7 +260,7 @@ public class ConfigRegistry {
         try {
             Method getInstance = moduleClass.getDeclaredMethod("getInstance");
             return getInstance.invoke(null);
-        } catch (Exception ignored) {
+        } catch (Exception _) {
             // Not a singleton or getter is not accessible
         }
 
@@ -360,7 +360,7 @@ public class ConfigRegistry {
                 if (module.initOnlyModule()) {
                     toRemove.add(module);
                 }
-            } catch (Throwable e) {
+            } catch (Throwable _) {
                 LOGGER.error("Error initializing module: {}", module.getModuleClass().getName());
             }
         }
@@ -402,7 +402,7 @@ public class ConfigRegistry {
 
         try {
             ReflectionUtil.setOrForceAccess(field, instance, initialValue);
-        } catch (IllegalAccessException e) {
+        } catch (IllegalAccessException _) {
             LOGGER.error("Failed to initialize field: {}", field.getName());
             return; // Don't register if initial set failed
         }
@@ -410,7 +410,7 @@ public class ConfigRegistry {
         key.addListener(newValue -> {
             try {
                 ReflectionUtil.setOrForceAccess(field, instance, newValue);
-            } catch (IllegalAccessException e) {
+            } catch (IllegalAccessException _) {
                 LOGGER.error("Failed to auto-sync field: {}", field.getName());
             }
         });

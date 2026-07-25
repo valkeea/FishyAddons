@@ -1,6 +1,6 @@
 package me.valkeea.fishyaddons.render;
 
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.core.BlockPos;
 
 public interface IBeaconData {
     BlockPos getPos();

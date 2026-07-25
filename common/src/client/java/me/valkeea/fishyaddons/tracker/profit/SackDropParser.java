@@ -128,7 +128,7 @@ public class SackDropParser {
 
                 return new ParseResult(itemName, sackQuantity);
             }
-        } catch (NumberFormatException e) {
+        } catch (NumberFormatException _) {
             // Skip invalid quantity
         }
         
@@ -201,7 +201,7 @@ public class SackDropParser {
             registerIfValid(itemName, quantity);
             return true;
 
-        } catch (NumberFormatException e) {
+        } catch (NumberFormatException _) {
             return false;
         }
     }

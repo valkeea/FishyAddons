@@ -1,0 +1,110 @@
+plugins {
+	id 'net.fabricmc.fabric-loom' version "${loom_version}"
+	id 'maven-publish'
+}
+
+def refVersion = project.minecraft_version
+def refModule = project(':fabric-26.1.2')
+def refProps = new Properties()
+
+evaluationDependsOn(refModule.path)
+
+file("../fabric-${refVersion}/gradle.properties").withInputStream { 
+	refProps.load(it) 
+}
+
+version = refProps.getProperty('mod_version')
+group = refProps.getProperty('maven_group')
+
+loom {
+	splitEnvironmentSourceSets()
+}
+
+repositories {
+	maven { url = 'https://maven.terraformersmc.com/' }
+}
+
+dependencies {
+	minecraft "com.mojang:minecraft:${refProps.getProperty('minecraft_version')}"
+	implementation "net.fabricmc:fabric-loader:${refProps.getProperty('loader_version')}"
+	implementation "net.fabricmc.fabric-api:fabric-api:${refProps.getProperty('fabric_version')}"
+	implementation "com.terraformersmc:modmenu:${refProps.getProperty('modmenu_version')}"	
+	implementation("it.unimi.dsi:fastutil:8.5.12")
+	clientCompileOnly files { refModule.sourceSets.client.output.classesDirs }
+	clientRuntimeOnly files { refModule.sourceSets.client.output.classesDirs }	
+	testImplementation 'org.junit.jupiter:junit-jupiter:5.10.0'
+	testImplementation 'org.mockito:mockito-core:5.11.0'
+	testImplementation 'org.mockito:mockito-junit-jupiter:5.11.0'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+sourceSets {
+	client {
+		java {
+			srcDirs = ['src/client/java']
+		}
+		resources {
+			srcDirs = ['src/client/resources']
+		}
+	}
+	test {
+		java {
+			srcDirs = ['src/test/java']
+		}
+		resources {
+			srcDirs = ['src/test/resources']
+		}
+		compileClasspath += client.output
+		runtimeClasspath += client.output
+	}
+}
+
+tasks.named('processClientResources') {
+	inputs.property "version", version
+	inputs.property "loader_version", refProps.getProperty('loader_version')
+	inputs.property "fabric_version", refProps.getProperty('fabric_version')
+
+	filesMatching("fabric.mod.json") {
+		expand([
+			"version": version,
+			"loader_version": refProps.getProperty('loader_version'),
+			"fabric_version": refProps.getProperty('fabric_version')
+		])
+	}
+}
+
+tasks.withType(JavaCompile).configureEach {
+	it.options.release = 25
+}
+
+afterEvaluate {
+	tasks.named('compileClientJava').configure {
+		dependsOn refModule.tasks.named('compileClientJava')
+	}
+}
+
+tasks.named('compileTestJava').configure {
+	dependsOn tasks.named('compileClientJava')
+}
+
+java {
+	sourceCompatibility = JavaVersion.VERSION_25
+	targetCompatibility = JavaVersion.VERSION_25
+}
+
+test {
+	useJUnitPlatform()
+	testLogging {
+		events "passed", "skipped", "failed"
+		exceptionFormat "full"
+		showStandardStreams = true
+	}
+}
+
+tasks.named('jar').configure {
+	enabled = false
+}
+
+tasks.named('assemble').configure {
+	enabled = false
+}

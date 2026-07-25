@@ -4,16 +4,16 @@ import java.util.List;
 import java.util.function.Consumer;
 
 import me.valkeea.fishyaddons.vconfig.ui.widget.VCTextField;
-import net.minecraft.client.gui.Click;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.registry.Registries;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.Identifier;
 
 public class SoundSearchMenu extends SearchMenu {
     private final Consumer<String> onRightClick;
 
-    List<String> soundIds = Registries.SOUND_EVENT.stream()
-        .map(Registries.SOUND_EVENT::getId)
+    List<String> soundIds = BuiltInRegistries.SOUND_EVENT.stream()
+        .map(BuiltInRegistries.SOUND_EVENT::getKey)
         .filter(java.util.Objects::nonNull)
         .map(Identifier::toString)
         .sorted()
@@ -49,7 +49,7 @@ public class SoundSearchMenu extends SearchMenu {
     }
 
     @Override
-    public boolean mouseClicked(Click click) {
+    public boolean mouseClicked(MouseButtonEvent click) {
         if (!isVisible()) return false;
 
         if (click.button() == 1) {

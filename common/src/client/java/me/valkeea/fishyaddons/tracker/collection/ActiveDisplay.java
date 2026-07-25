@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import me.valkeea.fishyaddons.util.text.Color;
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.Component;
 
 @SuppressWarnings("squid:S6548")
 public class ActiveDisplay {
@@ -16,11 +16,11 @@ public class ActiveDisplay {
     private List<String> cachedRecipePrompts = null;
     private Map<String, Double> cachedRates = new HashMap<>();
     
-    private List<Text> cachedFormattedLines = null;
-    private List<Text> cachedRecipePromptLines = null;
+    private List<Component> cachedFormattedLines = null;
+    private List<Component> cachedRecipePromptLines = null;
     private static final long LINE_FORMAT_REFRESH_MS = 5000; 
     
-    private Text cachedTimerLine = null;
+    private Component cachedTimerLine = null;
     private long lastTimerUpdate = 0;
     private static final long TIMER_REFRESH_MS = 1000;
     
@@ -88,7 +88,7 @@ public class ActiveDisplay {
     /**
      * Get formatted collection lines.
      */
-    public List<Text> getFormattedCollectionLines(int color) {
+    public List<Component> getFormattedCollectionLines(int color) {
         if (linesInvalidated || cachedFormattedLines == null) {
             refreshFormattedLines(color);
             linesInvalidated = false;
@@ -99,7 +99,7 @@ public class ActiveDisplay {
     /**
      * Get formatted recipe prompt lines.
      */
-    public List<Text> getFormattedRecipePromptLines() {
+    public List<Component> getFormattedRecipePromptLines() {
         if (promptsInvalidated || cachedRecipePromptLines == null) {
             refreshRecipePromptLines();
         }
@@ -109,7 +109,7 @@ public class ActiveDisplay {
     /**
      * Get formatted timer line with 1-second caching.
      */
-    public Text getTimerLine(int displayColor) {
+    public Component getTimerLine(int displayColor) {
         long now = System.currentTimeMillis();
         if (cachedTimerLine == null || (now - lastTimerUpdate) >= TIMER_REFRESH_MS) {
             cachedTimerLine = formatTimerLine(displayColor);
@@ -138,7 +138,7 @@ public class ActiveDisplay {
     /**
      * Format a single collection line as a Text object.
      */
-    private Text formatCollectionLine(ProgressData col, int color) {
+    private Component formatCollectionLine(ProgressData col, int color) {
         long gained = CollectionData.getSessionGain(col.itemName);
         long total = CollectionData.getCurrentCollection(col.itemName);
         double rate = getCachedRate(col.itemName);
@@ -147,8 +147,8 @@ public class ActiveDisplay {
         String totalStr = " §8| §r" + formatNum(total) + " §8|";
         String rateStr = rate > 0 ? formatNum((long)rate) + "§8/h " : "§80/h ";
         
-        return Text.literal(enhancedName)
-            .styled(s -> s.withColor(color))
+        return Component.literal(enhancedName)
+            .withStyle(s -> s.withColor(color))
             .append(style(totalStr, 0xFF888888))
             .append(style(" " + rateStr, Color.desaturate(color, 0.8f)))
             .append(style(" +" + formatNum(gained), color));
@@ -165,9 +165,9 @@ public class ActiveDisplay {
         
         cachedRecipePromptLines = new ArrayList<>();
         if (!cachedRecipePrompts.isEmpty()) {
-            cachedRecipePromptLines.add(Text.literal("§cMissing crafts! Use /recipe or click the line."));
+            cachedRecipePromptLines.add(Component.literal("§cMissing crafts! Use /recipe or click the line."));
             for (String recipe : cachedRecipePrompts) {
-                cachedRecipePromptLines.add(Text.literal(" §7- " + enhanceItemName(recipe)));
+                cachedRecipePromptLines.add(Component.literal(" §7- " + enhanceItemName(recipe)));
             }
         }
     }
@@ -175,7 +175,7 @@ public class ActiveDisplay {
     /**
      * Format the timer line based on current tracking state.
      */
-    private Text formatTimerLine(int displayColor) {
+    private Component formatTimerLine(int displayColor) {
         int color;
         String timeStr;
 
@@ -242,7 +242,7 @@ public class ActiveDisplay {
         cachedRecipePrompts = CollectionData.getActivePendingRecipes();
     }
 
-    public static List<Text> getGoalBreakdown() {
+    public static List<Component> getGoalBreakdown() {
         return GoalManager.getInstance().getGoalBreakdown();
     }
 
@@ -318,8 +318,8 @@ public class ActiveDisplay {
         return String.valueOf(num);
     }
     
-    private static Text style(String s, int color) {
-        return Text.literal(s).styled(style -> style.withColor(color));
+    private static Component style(String s, int color) {
+        return Component.literal(s).withStyle(style -> style.withColor(color));
     }
 
     public static class ProgressData {

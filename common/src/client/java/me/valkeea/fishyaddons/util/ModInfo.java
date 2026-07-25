@@ -4,11 +4,12 @@ import java.util.Map;
 
 import org.lwjgl.glfw.GLFW;
 
+import com.mojang.blaze3d.platform.InputConstants;
+
 import me.valkeea.fishyaddons.hud.elements.custom.InfoDisplay;
 import me.valkeea.fishyaddons.vconfig.api.Config;
 import me.valkeea.fishyaddons.vconfig.api.StringKey;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.util.InputUtil;
+import net.minecraft.client.Minecraft;
 
 public class ModInfo {
     private static final int CLOSE_KEY = GLFW.GLFW_KEY_X;
@@ -58,7 +59,7 @@ public class ModInfo {
 
     public static void tick() {
         if (shouldShowInfo()) {
-            var mc = MinecraftClient.getInstance();
+            var mc = Minecraft.getInstance();
             var window = mc.getWindow();
 
             if (displayStartTime > 0 && System.currentTimeMillis() - displayStartTime > MAX_DISPLAY_TIME) {
@@ -66,7 +67,7 @@ public class ModInfo {
                 return;
             }
 
-            boolean closeKeyDown = InputUtil.isKeyPressed(window, CLOSE_KEY);
+            boolean closeKeyDown = InputConstants.isKeyDown(window, CLOSE_KEY);
             if (closeKeyDown && !wasClosePressed) {
                 hideInfo();
                 return;
@@ -74,9 +75,9 @@ public class ModInfo {
 
             wasClosePressed = closeKeyDown;
 
-            boolean copyKeyDown = InputUtil.isKeyPressed(window, COPY_LINK_KEY);
+            boolean copyKeyDown = InputConstants.isKeyDown(window, COPY_LINK_KEY);
             if (wasPressed && !copyKeyDown) {
-                mc.keyboard.setClipboard("https://modrinth.com/project/QOUIa2cU");
+                mc.keyboardHandler.setClipboard("https://modrinth.com/project/QOUIa2cU");
                 FishyNotis.ccNoti();
             }
             wasPressed = copyKeyDown;
@@ -109,7 +110,7 @@ public class ModInfo {
                 int infoNum = Integer.parseInt(infoId);
                 int lastNum = Integer.parseInt(lastId);
                 showInfo = infoNum > lastNum;
-            } catch (NumberFormatException e) {
+            } catch (NumberFormatException _) {
                 showInfo = !infoId.equals(lastId);
             }
         } else {

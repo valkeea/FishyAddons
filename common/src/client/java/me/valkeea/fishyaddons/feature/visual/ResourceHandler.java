@@ -10,17 +10,17 @@ import me.valkeea.fishyaddons.vconfig.api.Config;
 import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
 import net.fabricmc.fabric.api.resource.ResourcePackActivationType;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.resource.ResourcePackProfile;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.Minecraft;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.packs.repository.Pack;
 
 @VCModule
 public class ResourceHandler {
     private ResourceHandler() {}
     public static final String MOD_ID = "fishyaddons";
-    public static final Identifier HD_FONT = Identifier.of(MOD_ID, "hd_font");
-    public static final Identifier FISHY_GUI = Identifier.of(MOD_ID, "fishy_gui");
-    public static final Identifier FIRE_OVERLAY = Identifier.of(MOD_ID, "fire_overlay");
+    public static final Identifier HD_FONT = Identifier.fromNamespaceAndPath(MOD_ID, "hd_font");
+    public static final Identifier FISHY_GUI = Identifier.fromNamespaceAndPath(MOD_ID, "fishy_gui");
+    public static final Identifier FIRE_OVERLAY = Identifier.fromNamespaceAndPath(MOD_ID, "fire_overlay");
 
     @VCInit
     public static void init() {
@@ -57,7 +57,7 @@ public class ResourceHandler {
 
     private static void updateBuiltinPack(BooleanKey configKey, String packId) {
         boolean enabled = Config.get(configKey);
-        var mc = MinecraftClient.getInstance();
+        var mc = Minecraft.getInstance();
         var options = mc.options;
 
         options.resourcePacks.removeIf(id -> id.equals(packId));
@@ -69,13 +69,13 @@ public class ResourceHandler {
             options.incompatibleResourcePacks.removeIf(id -> id.equals(packId));
         }
 
-        options.write();
-        var packManager = mc.getResourcePackManager();
-        var packProfiles = packManager.getProfiles() == null ? List.<ResourcePackProfile>of() : packManager.getProfiles();
+        options.save();
+        var packManager = mc.getResourcePackRepository();
+        var packProfiles = packManager.getAvailablePacks();
 
         if (packProfiles.isEmpty()) return;
         
-        var enabledProfiles = new ArrayList<>(packManager.getEnabledProfiles());
+        var enabledProfiles = new ArrayList<>(packManager.getSelectedPacks());
         enabledProfiles.removeIf(profile -> profile.getId().equals(packId));
 
         if (enabled) {
@@ -86,10 +86,10 @@ public class ResourceHandler {
         }
 
         List<String> enabledIds = enabledProfiles.stream()
-            .map(ResourcePackProfile::getId)
+            .map(Pack::getId)
             .toList();
 
-        packManager.setEnabledProfiles(enabledIds);
-        mc.reloadResources();
+        packManager.setSelected(enabledIds);
+        mc.reloadResourcePacks();
     }
 }

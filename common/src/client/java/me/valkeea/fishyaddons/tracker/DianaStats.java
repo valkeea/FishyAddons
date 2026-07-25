@@ -4,7 +4,7 @@ import me.valkeea.fishyaddons.tracker.monitoring.ActivityMonitor;
 import me.valkeea.fishyaddons.tracker.monitoring.Currently;
 import me.valkeea.fishyaddons.util.FishyNotis;
 import me.valkeea.fishyaddons.vconfig.config.impl.StatConfig;
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.Component;
 
 @SuppressWarnings("squid:S6548")
 public class DianaStats {
@@ -357,18 +357,18 @@ public class DianaStats {
         double burrowsPerHour = getSessionBurrowsPerHour();
         if (sessionBurrows > 0) {
             FishyNotis.themed("α Diana Stats α");
-            FishyNotis.alert(Text.literal(String.format("§7Session playtime: §3%dh %dmin", getSessionDurationMinutes() / 60, getSessionDurationMinutes() % 60)));
-            FishyNotis.alert(Text.literal(String.format("§7Total playtime: §3%dh %dmin", getTotalPlaytimeMinutes() / 60, getTotalPlaytimeMinutes() % 60)));
-            FishyNotis.alert(Text.literal(String.format("§7Session Bph: §d%.1f", burrowsPerHour) + String.format(" §8 (§b%.1f§8)", sessionBurrows)));
-            FishyNotis.alert(Text.literal(String.format("§7Total Bph: §d%.1f", getTotalBurrowsPerHour()) + String.format(" §8 (§b%.1f§8)", totalBurrows)));
-            FishyNotis.alert(Text.literal(String.format("§7Burrows since Inq: §d%d", getSinceInq())));
-            FishyNotis.alert(Text.literal(String.format("§7Burrows/Inq: §d%.1f", getTotalBurrows() / Math.max(1, getTotalInqCount()))));
-            FishyNotis.alert(Text.literal(String.format("§7Mobs since Inq: §d%d", getMobSinceInq())));
-            FishyNotis.alert(Text.literal(String.format("§7Mobs/Inq: §d%.1f", getTotalMobs() / Math.max(1, getTotalInqCount()))));
-            FishyNotis.alert(Text.literal(String.format("§7Inq chance §8(§7burrows§8)§7: §d%.2f%%", getTotalInqCount() / Math.max(1, totalBurrows) * 100.0) + String.format(" §8 (§d%d", getTotalInqCount()) + "§8)"));
-            FishyNotis.alert(Text.literal(String.format("§7Inq chance §8(§7mobs§8)§7: §d%.2f%%", getMobInqChancePercent()) + String.format(" §8 (§b%d", getTotalInqCount()) + "§8)"));
-            FishyNotis.alert(Text.literal(String.format("§7Inq since Chim: §d%d", StatConfig.getDiana(INQ_SINCE_CHIM, 0))));
-            FishyNotis.alert(Text.literal("§7Chimera chance: §d" + String.format("%.2f%%", ((double) getOwnChimeraCount() / Math.max(1, getTotalInqCount())) * 100.0) + " §8 (" + String.format("§b%d", getOwnChimeraCount()) +
+            FishyNotis.alert(Component.literal(String.format("§7Session playtime: §3%dh %dmin", getSessionDurationMinutes() / 60, getSessionDurationMinutes() % 60)));
+            FishyNotis.alert(Component.literal(String.format("§7Total playtime: §3%dh %dmin", getTotalPlaytimeMinutes() / 60, getTotalPlaytimeMinutes() % 60)));
+            FishyNotis.alert(Component.literal(String.format("§7Session Bph: §d%.1f", burrowsPerHour) + String.format(" §8 (§b%.1f§8)", sessionBurrows)));
+            FishyNotis.alert(Component.literal(String.format("§7Total Bph: §d%.1f", getTotalBurrowsPerHour()) + String.format(" §8 (§b%.1f§8)", totalBurrows)));
+            FishyNotis.alert(Component.literal(String.format("§7Burrows since Inq: §d%d", getSinceInq())));
+            FishyNotis.alert(Component.literal(String.format("§7Burrows/Inq: §d%.1f", getTotalBurrows() / Math.max(1, getTotalInqCount()))));
+            FishyNotis.alert(Component.literal(String.format("§7Mobs since Inq: §d%d", getMobSinceInq())));
+            FishyNotis.alert(Component.literal(String.format("§7Mobs/Inq: §d%.1f", getTotalMobs() / Math.max(1, getTotalInqCount()))));
+            FishyNotis.alert(Component.literal(String.format("§7Inq chance §8(§7burrows§8)§7: §d%.2f%%", getTotalInqCount() / Math.max(1, totalBurrows) * 100.0) + String.format(" §8 (§d%d", getTotalInqCount()) + "§8)"));
+            FishyNotis.alert(Component.literal(String.format("§7Inq chance §8(§7mobs§8)§7: §d%.2f%%", getMobInqChancePercent()) + String.format(" §8 (§b%d", getTotalInqCount()) + "§8)"));
+            FishyNotis.alert(Component.literal(String.format("§7Inq since Chim: §d%d", StatConfig.getDiana(INQ_SINCE_CHIM, 0))));
+            FishyNotis.alert(Component.literal("§7Chimera chance: §d" + String.format("%.2f%%", ((double) getOwnChimeraCount() / Math.max(1, getTotalInqCount())) * 100.0) + " §8 (" + String.format("§b%d", getOwnChimeraCount()) +
             String.format("§b + %d", getLsChimeraCount()) + " §bls§8)"));
             me.valkeea.fishyaddons.command.handler.FpRoot.profitPerHour();
         } else {

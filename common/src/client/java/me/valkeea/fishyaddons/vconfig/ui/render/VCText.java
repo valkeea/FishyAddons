@@ -3,40 +3,40 @@ package me.valkeea.fishyaddons.vconfig.ui.render;
 import org.jetbrains.annotations.Nullable;
 
 import me.valkeea.fishyaddons.util.text.GradientRenderer;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.text.Style;
-import net.minecraft.text.Text;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.Style;
 
 public class VCText {
     
-    public static void flatText(DrawContext context, TextRenderer tr, String text, 
+    public static void flatText(GuiGraphicsExtractor context, Font tr, String text, 
                                     int x, int y, int color) {
-        context.drawText(tr, text, x, y, color, false);
+        context.text(tr, text, x, y, color, false);
     }
 
-    public static void flatText(DrawContext context, TextRenderer tr, Text text, 
+    public static void flatText(GuiGraphicsExtractor context, Font tr, Component text, 
                                     int x, int y, int color) {
-        context.drawText(tr, text, x, y, color, false);
+        context.text(tr, text, x, y, color, false);
     }
 
-    public static void flatCentered(DrawContext context, TextRenderer tr, String text, 
+    public static void flatCentered(GuiGraphicsExtractor context, Font tr, String text, 
                                             int centerX, int y, int color) {
-        int textWidth = tr.getWidth(text);
+        int textWidth = tr.width(text);
         int textX = centerX - textWidth / 2;
-        context.drawText(tr, text, textX, y, color, false);
+        context.text(tr, text, textX, y, color, false);
     }
 
-    public static void flatCentered(DrawContext context, TextRenderer tr, Text text, 
+    public static void flatCentered(GuiGraphicsExtractor context, Font tr, Component text, 
                                             int centerX, int y, int color) {
-        int textWidth = tr.getWidth(text.copyContentOnly());
+        int textWidth = tr.width(text.plainCopy());
         int textX = centerX - textWidth / 2;
-        context.drawText(tr, text, textX, y, color, false);
+        context.text(tr, text, textX, y, color, false);
     }
 
-    public static void drawCenteredTextWithShadow(DrawContext context, TextRenderer tr, Text text, 
+    public static void drawCenteredTextWithShadow(GuiGraphicsExtractor context, Font tr, Component text, 
                                             int centerX, int y, int color) {
-        context.drawCenteredTextWithShadow(tr, text, centerX, y, color);
+        context.centeredText(tr, text, centerX, y, color);
     }
 
     /**
@@ -45,7 +45,7 @@ public class VCText {
      * @param style Optional existing text style to apply
      * @return Text with gradient applied
      */
-    public static Text header(String input, @Nullable Style style) {
+    public static Component header(String input, @Nullable Style style) {
         String gradientDef = "7FFFD4>40E0D0>E0FFFF";
         Style appliedStyle = (style != null) ? style : Style.EMPTY;
 
@@ -56,8 +56,8 @@ public class VCText {
         );
     }
 
-    public static int getWidthWithPadding(TextRenderer tr, String text) {
-        return tr.getWidth(text) + tr.fontHeight;
+    public static int getWidthWithPadding(Font tr, String text) {
+        return tr.width(text) + tr.lineHeight;
     }
 
     private VCText() {

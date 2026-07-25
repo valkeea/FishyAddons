@@ -10,7 +10,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import org.jetbrains.annotations.Nullable;
 
 import me.valkeea.fishyaddons.api.hypixel.PriceServiceManager;
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.Component;
 
 public class TrackedItemData {
     private static final Map<String, Integer> itemCounts = new ConcurrentHashMap<>();
@@ -72,7 +72,7 @@ public class TrackedItemData {
     }
 
     /** Overload for book chat drops */
-    public static void addDrop(String itemName, int quantity, @Nullable Text originalMessage) {
+    public static void addDrop(String itemName, int quantity, @Nullable Component originalMessage) {
         addDrop(itemName, quantity, originalMessage, null);
     }
     
@@ -85,7 +85,7 @@ public class TrackedItemData {
      * @param uuid The UUID of the item from inventory (null for chat-only drops)
      * @return DropResult indicating if already counted and if notification should be sent
      */
-    public static DropResult addDrop(String itemName, int quantity, @Nullable Text originalMessage, @Nullable String uuid) {
+    public static DropResult addDrop(String itemName, int quantity, @Nullable Component originalMessage, @Nullable String uuid) {
         if (itemName == null || itemName.trim().isEmpty()) return new DropResult(false, false);
 
         long currentTime = System.currentTimeMillis();
@@ -229,8 +229,8 @@ public class TrackedItemData {
         }
     }
 
-    public static boolean extractBookRarity(String itemName, Text styled) {
-        for (Text sibling : styled.getSiblings()) {
+    public static boolean extractBookRarity(String itemName, Component styled) {
+        for (Component sibling : styled.getSiblings()) {
             String siblingText = sibling.getString().toLowerCase().trim();
             if (siblingText.contains(itemName.toLowerCase().trim())) {
                 String style = sibling.getStyle().toString();

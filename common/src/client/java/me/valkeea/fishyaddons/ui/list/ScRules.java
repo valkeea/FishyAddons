@@ -22,13 +22,13 @@ import me.valkeea.fishyaddons.vconfig.ui.widget.VCButton;
 import me.valkeea.fishyaddons.vconfig.ui.widget.VCLabelField;
 import me.valkeea.fishyaddons.vconfig.ui.widget.VCTextField;
 import me.valkeea.fishyaddons.vconfig.ui.widget.VCVisuals;
-import net.minecraft.client.gui.Click;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.input.KeyInput;
-import net.minecraft.text.Style;
-import net.minecraft.text.Text;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.Style;
 
 public class ScRules extends Screen {
     private static final String TITLE_TEXT = "Sea Creature Messages";
@@ -60,7 +60,7 @@ public class ScRules extends Screen {
     private static final long TOOLTIP_DELAY = 250;
 
     public ScRules() {
-        super(Text.literal(TITLE_TEXT));
+        super(Component.literal(TITLE_TEXT));
     }  
 
     @Override
@@ -70,7 +70,7 @@ public class ScRules extends Screen {
         }
         
         entries.clear();        
-        this.clearChildren();
+        this.clearWidgets();
         calcDimensions(UIScaleCalculator.calculateUIScaleLegacy(), this.width);
 
         var allCreatures = FilterConfig.getSeaCreatureData();
@@ -123,25 +123,25 @@ public class ScRules extends Screen {
 
         var backButton = new FaButton(
             this.width / 2 - entryW / 2 + btnW, this.height - 40, btnW, btnH,
-            Text.literal("Back").styled(style -> style.withColor(0xFF808080)),
+            Component.literal("Back").withStyle(style -> style.withColor(0xFF808080)),
             btn -> ScreenManager.openConfigScreen()
         );
         backButton.setUIScale(uiScale);
-        this.addDrawableChild(backButton);
+        this.addRenderableWidget(backButton);
 
         var closeButton = new FaButton(
             this.width / 2 - entryW / 2 + btnW * 2, this.height - 40, btnW, btnH,
-            Text.literal("Close").styled(style -> style.withColor(0xFF808080)),
-            btn -> this.close()
+            Component.literal("Close").withStyle(style -> style.withColor(0xFF808080)),
+            btn -> this.onClose()
         );
         closeButton.setUIScale(uiScale);
-        this.addDrawableChild(closeButton);
+        this.addRenderableWidget(closeButton);
         
         formatTip = new VCLabelField(
-            this.textRenderer, this.width / 2 - fieldW / 2, this.height - 40, nameW * 2, fieldH, Text.literal(F3_TEXT));
+            this.font, this.width / 2 - fieldW / 2, this.height - 40, nameW * 2, fieldH, Component.literal(F3_TEXT));
         formatTip.setUIScale(uiScale);
         formatTip.setBg(false);
-        this.addDrawableChild(formatTip);
+        this.addRenderableWidget(formatTip);
 
         formatMenu = new TextFormatMenu(
             Math.max(0, this.width / 2 - entryW / 2 - nameW - btnW), listTop, nameW,
@@ -205,7 +205,7 @@ public class ScRules extends Screen {
     }
     
     @Override
-    public boolean keyPressed(KeyInput input) {
+    public boolean keyPressed(KeyEvent input) {
         if (formatMenu != null && formatMenu.isVisible() && formatMenu.keyPressed(input)) {
             return true;
         }
@@ -219,11 +219,11 @@ public class ScRules extends Screen {
     }
 
     private void apply(VCTextField field, String format) {
-        String currentText = field.getText();
-        int caretPos = field.getCursor();    
+        String currentText = field.getValue();
+        int caretPos = field.getCursorPosition();    
         String newText = currentText.substring(0, caretPos) + format + currentText.substring(caretPos);
-        field.setText(newText);
-        field.setCursor(caretPos + format.length(), false);
+        field.setValue(newText);
+        field.moveCursorTo(caretPos + format.length(), false);
             
         for (Entry entry : entries) {
             if (entry.overrideField == field) {
@@ -292,13 +292,13 @@ public class ScRules extends Screen {
     }
 
     @Override
-    public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        super.render(context, mouseX, mouseY, delta);
+    public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+        super.extractRenderState(context, mouseX, mouseY, delta);
 
         var title = VCText.header(TITLE_TEXT, Style.EMPTY.withBold(true));
 
         GuiUtil.drawScaledCenteredText(
-        context, this.textRenderer, title, this.width / 2, 15, 0xFF55FFFF, uiScale - 0.1f);
+        context, this.font, title, this.width / 2, 15, 0xFF55FFFF, uiScale - 0.1f);
           
         addList(context);
 
@@ -309,16 +309,16 @@ public class ScRules extends Screen {
         tryTooltip(context, mouseX, mouseY);
     }
 
-    private void tryTooltip(DrawContext context, int mouseX, int mouseY) {
+    private void tryTooltip(GuiGraphicsExtractor context, int mouseX, int mouseY) {
         if (shouldShowTooltip()) {
             String previewText = buildPreview();
             if (!previewText.isEmpty()) {
                 try {
-                    Text formattedPreview = Enhancer.parseFormattedText(previewText);
+                    Component formattedPreview = Enhancer.parseFormattedText(previewText);
                     renderTooltip(context, mouseX, mouseY, formattedPreview, true);
                 } catch (Exception e) {
                     e.printStackTrace();
-                    renderTooltip(context, mouseX, mouseY, Text.literal("Error rendering preview"), false);
+                    renderTooltip(context, mouseX, mouseY, Component.literal("Error rendering preview"), false);
                 }
             }
         }
@@ -331,23 +331,23 @@ public class ScRules extends Screen {
 
     private String buildPreview() {
         String previewText = "";
-        if (hoveredEntry.overrideField != null && !hoveredEntry.overrideField.getText().isEmpty()) {
-            previewText = hoveredEntry.overrideField.getText();
+        if (hoveredEntry.overrideField != null && !hoveredEntry.overrideField.getValue().isEmpty()) {
+            previewText = hoveredEntry.overrideField.getValue();
         } else if (hoveredEntry.replacementText != null && !hoveredEntry.replacementText.isEmpty()) {
             previewText = hoveredEntry.replacementText;
         }
 
-        if (hoveredEntry.prefixField != null && !hoveredEntry.prefixField.getText().isEmpty()) {
-            previewText = hoveredEntry.prefixField.getText() + " " + previewText;
+        if (hoveredEntry.prefixField != null && !hoveredEntry.prefixField.getValue().isEmpty()) {
+            previewText = hoveredEntry.prefixField.getValue() + " " + previewText;
         } else if (hoveredEntry.prefixText != null && !hoveredEntry.prefixText.isEmpty()) {
             previewText = hoveredEntry.prefixText + previewText;
         }
         return previewText;
     }
 
-    private void renderTooltip(DrawContext context, int mouseX, int mouseY, Text text, boolean success) {
+    private void renderTooltip(GuiGraphicsExtractor context, int mouseX, int mouseY, Component text, boolean success) {
         if (hoveredEntry.overrideField == null || hoveredEntry.prefixField == null) { return; }
-        int tooltipWidth = Math.min(400, this.textRenderer.getWidth(text) + 20);
+        int tooltipWidth = Math.min(400, this.font.width(text) + 20);
         int tooltipHeight = fieldH;
         int tooltipX = hoveredEntry.prefixField.getX();
         int tooltipY = hoveredEntry.overrideField.getY() - fieldH - 5;
@@ -366,7 +366,7 @@ public class ScRules extends Screen {
                 tooltipX + tooltipWidth, tooltipY + tooltipHeight + gap,
                 0xFF171717);
 
-        context.drawText(this.textRenderer, text,
+        context.text(this.font, text,
                 tooltipX, tooltipY + tooltipHeight / 3, success ? 0xFFFFFFFF : 0xFFFF8080, true);
     }
 
@@ -399,7 +399,7 @@ public class ScRules extends Screen {
         }
     }
 
-    private void addList(DrawContext context) {
+    private void addList(GuiGraphicsExtractor context) {
         int listTop = 40;
         int listBottom = this.height - 60;
         int listHeight = listBottom - listTop;
@@ -426,7 +426,7 @@ public class ScRules extends Screen {
         }
     }
 
-    private void renderScrollIndicator(DrawContext context, int x, int y, int listHeight, int totalEntries) {
+    private void renderScrollIndicator(GuiGraphicsExtractor context, int x, int y, int listHeight, int totalEntries) {
         int scrollbarWidth = 4;
         context.fill(x, y, x + scrollbarWidth, y + listHeight, 0x44000000);
         if (totalEntries > maxVisibleEntries) {
@@ -463,8 +463,8 @@ public class ScRules extends Screen {
         private final VCTextField overrideField;
         private final VCTextField prefixField;
         private final VCLabelField nameField;
-        private ButtonWidget toggleBtn;
-        private final ButtonWidget saveBtn;
+        private Button toggleBtn;
+        private final Button saveBtn;
 
         String replacementText;
         String prefixText;
@@ -488,7 +488,7 @@ public class ScRules extends Screen {
             this.isEnabled = isEnabled;
             this.isHeader = isHeader;
             
-            this.nameField = new VCLabelField(ScRules.this.textRenderer, 0, offScreenY, nameW, fieldH, Text.literal("Mob"));
+            this.nameField = new VCLabelField(ScRules.this.font, 0, offScreenY, nameW, fieldH, Component.literal("Mob"));
             this.nameField.setText(creatureName);
             this.nameField.setUIScale(uiScale);
             
@@ -501,14 +501,14 @@ public class ScRules extends Screen {
                 this.nameField.setBg(false);
                 this.nameField.setWidth(entryW / 2);
             } else {
-                this.overrideField = new VCTextField(ScRules.this.textRenderer, 0, offScreenY, fieldW, fieldH, Text.literal("Override text"));   
-                this.overrideField.setText(currentReplacement);
+                this.overrideField = new VCTextField(ScRules.this.font, 0, offScreenY, fieldW, fieldH, Component.literal("Override text"));   
+                this.overrideField.setValue(currentReplacement);
                 this.overrideField.setEditable(true);
                 this.overrideField.setMaxLength(200);        
                 this.overrideField.setUIScale(uiScale);
                 this.overrideField.setFocused(false);
 
-                this.overrideField.setChangedListener(text -> {
+                this.overrideField.setResponder(text -> {
                     this.replacementText = text;
                     this.modified = true;
                 });
@@ -516,22 +516,22 @@ public class ScRules extends Screen {
                 String initialPrefixText = existingRule != null ? existingRule.getDhPrefix() : "";
                 if (initialPrefixText == null) initialPrefixText = "";
                 this.prefixText = initialPrefixText;
-                this.prefixField = new VCTextField(ScRules.this.textRenderer, 0, offScreenY, prefixW, fieldH, Text.literal("Prefix"));
-                this.prefixField.setText(initialPrefixText);
+                this.prefixField = new VCTextField(ScRules.this.font, 0, offScreenY, prefixW, fieldH, Component.literal("Prefix"));
+                this.prefixField.setValue(initialPrefixText);
                 this.prefixField.setEditable(true);
                 this.prefixField.setMaxLength(100);
-                this.prefixField.setCursor(0, false);
+                this.prefixField.moveCursorTo(0, false);
                 this.prefixField.setUIScale(uiScale);
                 this.prefixField.setFocused(false);
 
-                this.prefixField.setChangedListener(text -> {
+                this.prefixField.setResponder(text -> {
                     this.prefixText = text;
                     this.modified = true;
                 });
 
                 this.saveBtn = VCButton.createNavigationButton(
                     0, offScreenY, btnW, fieldH,
-                    Text.literal("Save"),
+                    Component.literal("Save"),
                     btn -> saveChanges(),
                     uiScale - 0.1f
                 );
@@ -578,17 +578,17 @@ public class ScRules extends Screen {
         }
 
         public void addToScreen() {
-            ScRules.this.addDrawableChild(this.nameField);
+            ScRules.this.addRenderableWidget(this.nameField);
             
             if (!isHeader) {
-                if (this.overrideField != null) ScRules.this.addDrawableChild(this.overrideField);
-                if (this.prefixField != null) ScRules.this.addDrawableChild(this.prefixField);
-                if (this.toggleBtn != null) ScRules.this.addDrawableChild(this.toggleBtn);
-                if (this.saveBtn != null) ScRules.this.addDrawableChild(this.saveBtn);
+                if (this.overrideField != null) ScRules.this.addRenderableWidget(this.overrideField);
+                if (this.prefixField != null) ScRules.this.addRenderableWidget(this.prefixField);
+                if (this.toggleBtn != null) ScRules.this.addRenderableWidget(this.toggleBtn);
+                if (this.saveBtn != null) ScRules.this.addRenderableWidget(this.saveBtn);
             }
         }
 
-        public boolean mouseClicked(Click click) {
+        public boolean mouseClicked(MouseButtonEvent click) {
             if (isHeader) {
                 return false;
             }
@@ -625,17 +625,17 @@ public class ScRules extends Screen {
                 String ruleName = "sc_" + this.creatureData.id();
                 
                 if (this.modified) {
-                    String currentOverrideText = this.overrideField != null ? this.overrideField.getText() : "";
-                    String currentPrefixText = this.prefixField != null ? this.prefixField.getText() : "";
+                    String currentOverrideText = this.overrideField != null ? this.overrideField.getValue() : "";
+                    String currentPrefixText = this.prefixField != null ? this.prefixField.getValue() : "";
                     
                     updateRule(ruleName);
                     
                     if (this.overrideField != null) {
-                        this.overrideField.setText(currentOverrideText);
+                        this.overrideField.setValue(currentOverrideText);
                         this.replacementText = currentOverrideText;
                     }
                     if (this.prefixField != null) {
-                        this.prefixField.setText(currentPrefixText);
+                        this.prefixField.setValue(currentPrefixText);
                         this.prefixText = currentPrefixText;
                     }
                 }
@@ -652,8 +652,8 @@ public class ScRules extends Screen {
         private void updateRule(String ruleName) {
             if (this.rule == null) return;
             
-            String currentReplacementText = this.overrideField != null ? this.overrideField.getText() : this.replacementText;
-            String currentPrefixText = this.prefixField != null ? this.prefixField.getText() : this.prefixText;
+            String currentReplacementText = this.overrideField != null ? this.overrideField.getValue() : this.replacementText;
+            String currentPrefixText = this.prefixField != null ? this.prefixField.getValue() : this.prefixText;
             
             if (FilterConfig.getDefaultRules().containsKey(ruleName)) {
                 var modifiedRule = new Rule(
@@ -670,7 +670,7 @@ public class ScRules extends Screen {
     }
 
     @Override
-    public boolean mouseClicked(Click click, boolean doubled) {
+    public boolean mouseClicked(MouseButtonEvent click, boolean doubled) {
         if (handleMenu(click)) {
             return true;
         }
@@ -708,7 +708,7 @@ public class ScRules extends Screen {
         }
     }
 
-    private boolean handleMenu(Click click) {
+    private boolean handleMenu(MouseButtonEvent click) {
         if (formatMenu != null && formatMenu.isVisible()) {
             if (formatMenu.mouseClicked(click)) {
                 return true;
@@ -750,13 +750,13 @@ public class ScRules extends Screen {
     }        
 
     @Override
-    public boolean mouseReleased(Click click) {
+    public boolean mouseReleased(MouseButtonEvent click) {
         isDraggingScrollbar = false;
         return super.mouseReleased(click);
     }
 
     @Override
-    public boolean mouseDragged(Click click, double offsetX, double offsetY) {
+    public boolean mouseDragged(MouseButtonEvent click, double offsetX, double offsetY) {
         if (formatMenu != null && formatMenu.isVisible() && formatMenu.mouseDragged(click)) {
             return true;
         }

@@ -3,6 +3,7 @@ package me.valkeea.fishyaddons.vconfig.api;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
+
 import me.valkeea.fishyaddons.vconfig.config.ConfigFile;
 
 public enum DoubleKey implements ConfigKey<Double> {

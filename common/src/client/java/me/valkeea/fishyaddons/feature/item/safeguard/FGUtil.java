@@ -6,11 +6,11 @@ import java.util.Set;
 import me.valkeea.fishyaddons.tool.ItemData;
 import me.valkeea.fishyaddons.tool.PlaySound;
 import me.valkeea.fishyaddons.util.FishyNotis;
+import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
 import me.valkeea.fishyaddons.vconfig.api.Config;
 import me.valkeea.fishyaddons.vconfig.api.StringKey;
-import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
 import me.valkeea.fishyaddons.vconfig.config.impl.ItemConfig;
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.item.ItemStack;
 
 public class FGUtil {
     private FGUtil() {}
@@ -49,7 +49,7 @@ public class FGUtil {
         GuiHandler.clearCache();
     }
 
-    public static void addToFg(String uuid, net.minecraft.text.Text name) {
+    public static void addToFg(String uuid, net.minecraft.network.chat.Component name) {
         ItemConfig.addUUID(uuid, name);
         GuiHandler.clearCache();
     }

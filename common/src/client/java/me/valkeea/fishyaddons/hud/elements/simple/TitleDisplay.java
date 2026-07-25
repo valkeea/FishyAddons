@@ -4,7 +4,7 @@ import me.valkeea.fishyaddons.hud.base.SimpleTextElement;
 import me.valkeea.fishyaddons.tool.FishyMode;
 import me.valkeea.fishyaddons.util.text.Enhancer;
 import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.Component;
 
 public class TitleDisplay extends SimpleTextElement {
     private static String title = null;
@@ -48,7 +48,7 @@ public class TitleDisplay extends SimpleTextElement {
     }
 
     @Override
-    protected Text getText() {
-        return title == null ? Text.empty() : Enhancer.parseFormattedText(title);
+    protected Component getText() {
+        return title == null ? Component.empty() : Enhancer.parseFormattedText(title);
     }
 }

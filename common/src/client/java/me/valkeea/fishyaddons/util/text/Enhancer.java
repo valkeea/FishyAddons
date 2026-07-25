@@ -6,11 +6,11 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Style;
-import net.minecraft.text.Text;
-import net.minecraft.text.TextColor;
-import net.minecraft.util.Formatting;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.Style;
+import net.minecraft.network.chat.TextColor;
 
 /**
  * Enhanced text parser supporting legacy codes, RGB colors, custom colors, and gradients
@@ -19,10 +19,10 @@ public class Enhancer {
     private Enhancer() {}
 
     private static class ParseResult {
-        final Text text;
+        final Component text;
         final Style finalStyle;
         
-        ParseResult(Text text, Style finalStyle) {
+        ParseResult(Component text, Style finalStyle) {
             this.text = text;
             this.finalStyle = finalStyle;
         }
@@ -60,7 +60,7 @@ public class Enhancer {
         COLORS.put("magenta", 0xE11584);
         COLORS.put("fuchsia", 0xFC46AA);
         COLORS.put("blush", 0xFEC5E5);
-        COLORS.put("lotus", 0xFFA1EB);
+        COLORS.put("lotus", 0xFFA1EB);        
         COLORS.put("heliotrope", 0xDF73FF);
         COLORS.put("dark_gray", 0x555555);
         COLORS.put("yes", 0xCCFFCC);
@@ -90,7 +90,7 @@ public class Enhancer {
      * @return The parsed text with formatting applied,
      * starting from the first identified code.
      */
-    public static Text parseExistingStyle(Text original) {
+    public static Component parseExistingStyle(Component original) {
         String raw = original.getString();
         if (!hasFormattingCodes(raw)) {
             return original;
@@ -100,9 +100,9 @@ public class Enhancer {
             return parseFormattedText(raw);
         }
 
-        MutableText result = Text.literal("");
+        MutableComponent result = Component.literal("");
 
-        for (Text sibling : original.getSiblings()) {
+        for (Component sibling : original.getSiblings()) {
             Style currentStyle = sibling.getStyle() != null ? sibling.getStyle() : Style.EMPTY;
             String siblingStr = sibling.getString();
 
@@ -111,10 +111,10 @@ public class Enhancer {
             }
 
             if (hasFormattingCodes(siblingStr)) {
-                Text parsed = parseFormattedText(siblingStr);
+                Component parsed = parseFormattedText(siblingStr);
                 result.append(parsed);
             } else {
-                result.append(Text.literal(siblingStr).setStyle(currentStyle));
+                result.append(Component.literal(siblingStr).setStyle(currentStyle));
             }
         }
 
@@ -127,20 +127,20 @@ public class Enhancer {
      * @param input The input text to parse
      * @return The parsed text with formatting applied
      */
-    public static Text parseFormattedText(String input) {
+    public static Component parseFormattedText(String input) {
         if (input == null || input.isEmpty()) {
-            return Text.literal("");
+            return Component.literal("");
         }
         
         if (!hasFormattingCodes(input)) {
-            return Text.literal(input);
+            return Component.literal(input);
         }
         
         Pattern gradientPattern = Pattern.compile("[§&]\\[([^\\]]+)\\]([^§&]+)(?=[§&]|$)", Pattern.CASE_INSENSITIVE);
         Matcher gradientMatcher = gradientPattern.matcher(input);
         
         if (gradientMatcher.find()) {
-            MutableText result = Text.literal("");
+            MutableComponent result = Component.literal("");
             int lastEnd = 0;
             Style currentStyle = Style.EMPTY;
             
@@ -156,7 +156,7 @@ public class Enhancer {
                 String gradientName = gradientMatcher.group(1);
                 String gradientText = gradientMatcher.group(2);
                 
-                Text renderedGradient;
+                Component renderedGradient;
                 
                 if (gradientName.contains(">")) {
                     renderedGradient = GradientRenderer.renderCustomGradient(gradientText, gradientName, currentStyle);
@@ -184,12 +184,12 @@ public class Enhancer {
     /**
      * Simple parsing without gradients
      */
-    public static Text parseFormattedTextSimple(String input) {
+    public static Component parseFormattedTextSimple(String input) {
         if (input == null || input.isEmpty()) {
-            return Text.literal("");
+            return Component.literal("");
         }
         
-        MutableText result = Text.literal("");
+        MutableComponent result = Component.literal("");
         Matcher matcher = ALL_FORMATTING_PATTERN.matcher(input);
         
         int lastEnd = 0;
@@ -199,7 +199,7 @@ public class Enhancer {
             if (matcher.start() > lastEnd) {
                 String textBefore = input.substring(lastEnd, matcher.start());
                 if (!textBefore.isEmpty()) {
-                    result.append(Text.literal(textBefore).setStyle(currentStyle));
+                    result.append(Component.literal(textBefore).setStyle(currentStyle));
                 }
             }
             
@@ -210,7 +210,7 @@ public class Enhancer {
         if (lastEnd < input.length()) {
             String remainingText = input.substring(lastEnd);
             if (!remainingText.isEmpty()) {
-                result.append(Text.literal(remainingText).setStyle(currentStyle));
+                result.append(Component.literal(remainingText).setStyle(currentStyle));
             }
         }
         
@@ -219,10 +219,10 @@ public class Enhancer {
 
     private static ParseResult parseAndTrackStyle(String input, Style initialStyle) {
         if (input == null || input.isEmpty()) {
-            return new ParseResult(Text.literal(""), initialStyle);
+            return new ParseResult(Component.literal(""), initialStyle);
         }
         
-        MutableText result = Text.literal("");
+        MutableComponent result = Component.literal("");
         Matcher matcher = ALL_FORMATTING_PATTERN.matcher(input);
         
         int lastEnd = 0;
@@ -232,7 +232,7 @@ public class Enhancer {
             if (matcher.start() > lastEnd) {
                 String textBefore = input.substring(lastEnd, matcher.start());
                 if (!textBefore.isEmpty()) {
-                    result.append(Text.literal(textBefore).setStyle(currentStyle));
+                    result.append(Component.literal(textBefore).setStyle(currentStyle));
                 }
             }
             
@@ -243,7 +243,7 @@ public class Enhancer {
         if (lastEnd < input.length()) {
             String remainingText = input.substring(lastEnd);
             if (!remainingText.isEmpty()) {
-                result.append(Text.literal(remainingText).setStyle(currentStyle));
+                result.append(Component.literal(remainingText).setStyle(currentStyle));
             }
         }
         
@@ -271,13 +271,13 @@ public class Enhancer {
     
     private static Style applyLegacyFormatting(Style currentStyle, char formatChar) {
         String formatChars = "0123456789abcdefklmnor";
-        Formatting[] formatMap = {
-            Formatting.BLACK, Formatting.DARK_BLUE, Formatting.DARK_GREEN, Formatting.DARK_AQUA,
-            Formatting.DARK_RED, Formatting.DARK_PURPLE, Formatting.GOLD, Formatting.GRAY,
-            Formatting.DARK_GRAY, Formatting.BLUE, Formatting.GREEN, Formatting.AQUA,
-            Formatting.RED, Formatting.LIGHT_PURPLE, Formatting.YELLOW, Formatting.WHITE,
-            Formatting.OBFUSCATED, Formatting.BOLD, Formatting.STRIKETHROUGH, Formatting.UNDERLINE,
-            Formatting.ITALIC, null
+        ChatFormatting[] formatMap = {
+            ChatFormatting.BLACK, ChatFormatting.DARK_BLUE, ChatFormatting.DARK_GREEN, ChatFormatting.DARK_AQUA,
+            ChatFormatting.DARK_RED, ChatFormatting.DARK_PURPLE, ChatFormatting.GOLD, ChatFormatting.GRAY,
+            ChatFormatting.DARK_GRAY, ChatFormatting.BLUE, ChatFormatting.GREEN, ChatFormatting.AQUA,
+            ChatFormatting.RED, ChatFormatting.LIGHT_PURPLE, ChatFormatting.YELLOW, ChatFormatting.WHITE,
+            ChatFormatting.OBFUSCATED, ChatFormatting.BOLD, ChatFormatting.STRIKETHROUGH, ChatFormatting.UNDERLINE,
+            ChatFormatting.ITALIC, null
         };
         
         int index = formatChars.indexOf(formatChar);
@@ -285,21 +285,21 @@ public class Enhancer {
         
         if (formatChar == 'r') return Style.EMPTY;
         
-        Formatting formatting = formatMap[index];
+        ChatFormatting formatting = formatMap[index];
         if (formatting == null) return currentStyle;
         
         if (formatting.isColor()) {
             return Style.EMPTY.withColor(formatting)
                 .withBold(currentStyle.isBold())
                 .withItalic(currentStyle.isItalic())
-                .withUnderline(currentStyle.isUnderlined())
+                .withUnderlined(currentStyle.isUnderlined())
                 .withStrikethrough(currentStyle.isStrikethrough())
                 .withObfuscated(currentStyle.isObfuscated());
         } else {
             switch (formatting) {
                 case BOLD: return currentStyle.withBold(true);
                 case ITALIC: return currentStyle.withItalic(true);
-                case UNDERLINE: return currentStyle.withUnderline(true);
+                case UNDERLINE: return currentStyle.withUnderlined(true);
                 case STRIKETHROUGH: return currentStyle.withStrikethrough(true);
                 case OBFUSCATED: return currentStyle.withObfuscated(true);
                 default: return currentStyle;
@@ -313,10 +313,10 @@ public class Enhancer {
             return Style.EMPTY.withColor(TextColor.fromRgb(color))
                 .withBold(currentStyle.isBold())
                 .withItalic(currentStyle.isItalic())
-                .withUnderline(currentStyle.isUnderlined())
+                .withUnderlined(currentStyle.isUnderlined())
                 .withStrikethrough(currentStyle.isStrikethrough())
                 .withObfuscated(currentStyle.isObfuscated());
-        } catch (NumberFormatException e) {
+        } catch (NumberFormatException _) {
             return currentStyle;
         }
     }
@@ -330,7 +330,7 @@ public class Enhancer {
             case "italic":
                 return currentStyle.withItalic(true);
             case "underline":
-                return currentStyle.withUnderline(true);
+                return currentStyle.withUnderlined(true);
             case "strikethrough":
                 return currentStyle.withStrikethrough(true);
             case "obfuscated":
@@ -347,7 +347,7 @@ public class Enhancer {
             return Style.EMPTY.withColor(TextColor.fromRgb(color))
                 .withBold(currentStyle.isBold())
                 .withItalic(currentStyle.isItalic())
-                .withUnderline(currentStyle.isUnderlined())
+                .withUnderlined(currentStyle.isUnderlined())
                 .withStrikethrough(currentStyle.isStrikethrough())
                 .withObfuscated(currentStyle.isObfuscated());
         }
@@ -357,10 +357,10 @@ public class Enhancer {
                     return Style.EMPTY.withColor(TextColor.fromRgb(hexColor))
                         .withBold(currentStyle.isBold())
                         .withItalic(currentStyle.isItalic())
-                        .withUnderline(currentStyle.isUnderlined())
+                        .withUnderlined(currentStyle.isUnderlined())
                         .withStrikethrough(currentStyle.isStrikethrough())
                         .withObfuscated(currentStyle.isObfuscated());
-                } catch (NumberFormatException e) {
+                } catch (NumberFormatException _) {
                     // ignore, fall through
                 }
             }

@@ -3,6 +3,7 @@ package me.valkeea.fishyaddons.hud.elements.interactive;
 import java.util.ArrayList;
 import java.util.List;
 
+import me.valkeea.fishyaddons.compat.McApi;
 import me.valkeea.fishyaddons.event.EventPhase;
 import me.valkeea.fishyaddons.event.EventPriority;
 import me.valkeea.fishyaddons.event.impl.FaEvents;
@@ -23,10 +24,10 @@ import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
 import me.valkeea.fishyaddons.vconfig.api.IntKey;
 import me.valkeea.fishyaddons.vconfig.ui.widget.dropdown.VCToggleMenu;
 import me.valkeea.fishyaddons.vconfig.ui.widget.dropdown.item.ToggleMenuItem;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.Click;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.text.Text;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.network.chat.Component;
 
 public class CollectionDisplay extends InteractiveHudElement {
     
@@ -237,11 +238,11 @@ public class CollectionDisplay extends InteractiveHudElement {
     }
 
     @Override
-    public List<Text> getDisplayLines(HudElementState state) {
-        List<Text> lines = new ArrayList<>();
+    public List<Component> getDisplayLines(HudElementState state) {
+        List<Component> lines = new ArrayList<>();
         
         if (isEditingMode() && displayCache.getVisibleCollections().isEmpty()) {
-            lines.add(Text.literal("§dCollection Tracker"));
+            lines.add(Component.literal("§dCollection Tracker"));
             return lines;
         }
         
@@ -252,7 +253,7 @@ public class CollectionDisplay extends InteractiveHudElement {
             }
         }
 
-        List<Text> formattedLines = displayCache.getFormattedCollectionLines(state.color);
+        List<Component> formattedLines = displayCache.getFormattedCollectionLines(state.color);
         int startIdx = visibleLineIdx - 1;
         int endIdx = Math.min(startIdx + maxVisibleLines, formattedLines.size());
         
@@ -262,7 +263,7 @@ public class CollectionDisplay extends InteractiveHudElement {
         
         lines.add(displayCache.getTimerLine(state.color));
 
-        List<Text> promptLines = displayCache.getFormattedRecipePromptLines();
+        List<Component> promptLines = displayCache.getFormattedRecipePromptLines();
         if (!promptLines.isEmpty()) {
             lines.addAll(promptLines);
         }
@@ -270,23 +271,23 @@ public class CollectionDisplay extends InteractiveHudElement {
         return lines;
     }
     
-    private Text getGoalProgressLine(double progress, int color) {
+    private Component getGoalProgressLine(double progress, int color) {
         var goalName = enhanceItemName(goalManager.getActiveGoal());
         var progressStr = String.format("%.3fx", progress);
         
-        return Text.literal("     " + goalName + " §8|§r ")
-            .styled(s -> s.withColor(Color.brighten(color, 0.5f)))
+        return Component.literal("     " + goalName + " §8|§r ")
+            .withStyle(s -> s.withColor(Color.brighten(color, 0.5f)))
             .append(style(progressStr, Color.mulRGB(color, 0.5f)));
     }
 
     // --- Rendering ---    
 
     @Override
-    protected void drawCustomContent(HudDrawer drawer, MinecraftClient mc, HudElementState state) {
+    protected void drawCustomContent(HudDrawer drawer, Minecraft mc, HudElementState state) {
         if (!isEditingMode() && goalManager.hasActiveGoal()) {
             double progress = goalManager.getProgress();
             if (progress > 0) {
-                drawGoalItemStack(drawer, mc.textRenderer.fontHeight);
+                drawGoalItemStack(drawer, mc.font.lineHeight);
             }
         }    
     }
@@ -306,11 +307,11 @@ public class CollectionDisplay extends InteractiveHudElement {
     }
 
     @Override
-    protected void postRenderCustom(DrawContext context, MinecraftClient mc, 
+    protected void postRenderCustom(GuiGraphicsExtractor context, Minecraft mc, 
                                     HudElementState state, int mouseX, int mouseY) {
 
         var window = mc.getWindow();                                
-        var screen = mc.currentScreen;
+        var screen = McApi.screen();
 
         if (!isEditingMode() && isInventoryOpen(mc)) {
         
@@ -318,7 +319,7 @@ public class CollectionDisplay extends InteractiveHudElement {
             int hudX = state.x;
             int hudY = state.y;
             int buttonWidth = (int)(45 * scale);
-            int h = window.getFramebufferHeight() / window.getScaleFactor();
+            int h = window.getHeight() / window.getGuiScale();
             
             if (toggleMenu.isVisible() && screen != null) {
                 int buttonSpacing = (int)(2 * scale);
@@ -354,7 +355,7 @@ public class CollectionDisplay extends InteractiveHudElement {
 
     private boolean handleMouseScroll(double mouseX, double mouseY, double scrollAmount) {
         if (handleMenuScroll(mouseX, mouseY, scrollAmount)) return true;
-        if (isInventoryOpen(MinecraftClient.getInstance()) && shouldRender()) {
+        if (isInventoryOpen(Minecraft.getInstance()) && shouldRender()) {
             return handleLineScroll(mouseX, mouseY, scrollAmount);
         }
         return false;
@@ -388,24 +389,24 @@ public class CollectionDisplay extends InteractiveHudElement {
     }
 
     @Override
-    protected boolean isLineClickable(int lineIndex, Text line) {
+    protected boolean isLineClickable(int lineIndex, Component line) {
         var s = line.getString();
         return goalLine(s) || itemLine(s) || recipeLine(s);
     }
 
     @Override
-    protected List<Text> getLineTooltip(int lineIndex, Text line) {
+    protected List<Component> getLineTooltip(int lineIndex, Component line) {
         var s = line.getString();
         if (isLineClickable(lineIndex, line)) {
             if (itemLine(s)) {
                 return List.of(
-                    Text.literal("[Click to hide from tracking]"),
-                    Text.literal("§7Open '§3Toggle§7' dropdown to re-enable.")
+                    Component.literal("[Click to hide from tracking]"),
+                    Component.literal("§7Open '§3Toggle§7' dropdown to re-enable.")
                 );
             } else if (recipeLine(s)) {
                 return List.of(
-                    Text.literal("[Click to open recipe]"),
-                    Text.literal("§7Calculations are based on known craft recipes.")
+                    Component.literal("[Click to open recipe]"),
+                    Component.literal("§7Calculations are based on known craft recipes.")
                 );
             } else if (goalLine(s)) {
                 return ActiveDisplay.getGoalBreakdown();
@@ -415,18 +416,18 @@ public class CollectionDisplay extends InteractiveHudElement {
     }
 
     @Override
-    protected List<Text> getTooltipForLine(int lineIndex, Text line) {
+    protected List<Component> getTooltipForLine(int lineIndex, Component line) {
         if (lineIndex >= maxVisibleLines) {
             int hiddenCount = getTotalLineCount() - maxVisibleLines;
             if (hiddenCount > 0) {
-                return List.of(Text.literal("§bScroll§7 to view hidden items (" + hiddenCount + " hidden)"));
+                return List.of(Component.literal("§bScroll§7 to view hidden items (" + hiddenCount + " hidden)"));
             }
         }
         return super.getTooltipForLine(lineIndex, line);
     }    
 
     @Override  
-    protected void handleLineClick(Text line) {
+    protected void handleLineClick(Component line) {
 
         var s = line.getString();
 
@@ -444,9 +445,9 @@ public class CollectionDisplay extends InteractiveHudElement {
         } else if (goalLine(s)) GoalManager.removeActive();
     }
 
-    public boolean mouseClicked(Click click) {
+    public boolean mouseClicked(MouseButtonEvent click) {
 
-        if (isInventoryOpen(MinecraftClient.getInstance()) && shouldRender()) {
+        if (isInventoryOpen(Minecraft.getInstance()) && shouldRender()) {
 
             float scale = getCachedState().size / 12.0F;
             if (handleMenuClick(click, scale)) return true;
@@ -502,7 +503,7 @@ public class CollectionDisplay extends InteractiveHudElement {
         return StringUtils.capitalize(itemName);
     }
 
-    private Text style(String s, int color) {
-        return Text.literal(s).styled(style -> style.withColor(color));
+    private Component style(String s, int color) {
+        return Component.literal(s).withStyle(style -> style.withColor(color));
     }
 }

@@ -10,3 +10,4 @@ rootProject.name = 'fishyaddons'
 
 include 'common'
 include 'fabric-26.1.2'
+include 'fabric-26.2'

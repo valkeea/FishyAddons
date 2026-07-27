@@ -8,12 +8,14 @@ import me.valkeea.fishyaddons.feature.skyblock.WeatherTracker;
 import me.valkeea.fishyaddons.listener.WorldEvent;
 import me.valkeea.fishyaddons.util.text.ScoreboardUtils;
 import me.valkeea.fishyaddons.util.text.TextUtils;
+import net.minecraft.client.Minecraft;
 
 public class ZoneUtils {
     private ZoneUtils() {}
     private static boolean isDungeons = false;
     private static boolean isLobby = false;
     private static boolean rainArea = false;
+    private static boolean locQuery = false;
 
     private static final List<String> ciIndicators = List.of(
         "The Wasteland",
@@ -27,7 +29,7 @@ public class ZoneUtils {
         "Smoldering Tomb"
     );
 
-    private static void setDungeon() {
+    public static void update() {
         isLobby = false;
 
         var areaBuilder = new StringBuilder();
@@ -57,8 +59,12 @@ public class ZoneUtils {
                 isLobby = true;
                 WorldEvent.getInstance().reCheck(60);
 
-            } else isDungeons = false;
+            } else {
+                isDungeons = false;
+            }
         }
+
+        verifyLocation();
     }
 
     public static boolean checkRainArea() {
@@ -92,6 +98,15 @@ public class ZoneUtils {
         };
     }
 
+    private static void verifyLocation() {
+        if (SkyblockAreas.getIsland() != Island.NA) return;
+        var conn = Minecraft.getInstance().player.connection;
+        if (conn != null) {
+            conn.sendCommand("locraw");
+            locQuery = true;
+        }
+    }
+
     public static boolean isInDungeon() {
         return isDungeons;
     }
@@ -106,11 +121,13 @@ public class ZoneUtils {
         }
     }
 
-    public static void update() {
-        setDungeon();
-    }
-
     public static void resetRain() {
         rainArea = false;
-    }    
+    }
+
+    public static boolean activeLocQuery() {
+        boolean wasActive = locQuery;
+        locQuery = false;
+        return wasActive;
+    }
 }

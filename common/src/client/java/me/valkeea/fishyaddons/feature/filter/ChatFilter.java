@@ -2,6 +2,7 @@ package me.valkeea.fishyaddons.feature.filter;
 
 import me.valkeea.fishyaddons.processor.ChatMessageContext;
 import me.valkeea.fishyaddons.processor.MessageAnalysis.FilterMatch;
+import me.valkeea.fishyaddons.util.ZoneUtils;
 import me.valkeea.fishyaddons.util.text.Enhancer;
 import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
 import me.valkeea.fishyaddons.vconfig.api.Config;
@@ -10,18 +11,16 @@ import net.minecraft.network.chat.Component;
 public class ChatFilter {
     private ChatFilter() {}
     
-    public static Component applyFilters(ChatMessageContext context) {
+    public static Component applyFilters(ChatMessageContext ctx) {
+        if (isLocQuery(ctx.getCleanString())) return Component.literal("");
 
-        var currentMsg = context.getCurrentMessage();
-        var replacement = findContextualReplacement(context);
-
+        var currentMsg = ctx.getCurrentMessage();
+        var replacement = findContextualReplacement(ctx);
         if (replacement != null && !replacement.equals(currentMsg.getString())) {
 
             if (replacement.isEmpty()) {
                 return Component.literal("");
-            }
-
-            return Enhancer.parseFormattedText(replacement);
+            } else return Enhancer.parseFormattedText(replacement);
         }
         
         return currentMsg;
@@ -70,5 +69,9 @@ public class ChatFilter {
         }
 
         return null;
-    }    
+    }
+
+    private static boolean isLocQuery(String msg) {
+        return msg.startsWith("{\"server\":\"") && ZoneUtils.activeLocQuery();
+    }
 }

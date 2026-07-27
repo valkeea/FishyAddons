@@ -70,12 +70,11 @@
 </details>
 
 <details>
-<summary><b> Timers & Alerts</b> (4)</summary>
+<summary><b> Timers & Alerts</b> (3)</summary>
 
 - Century Cake Display (shows next expiring)
 - Temporary Effects Display (Consumables)
 - Moonglade Beacon alarm and Display
-- Cocoon alert
 
 </details>
 

@@ -16,7 +16,7 @@ public class ChatDropParser {
     private static final String SHARD_PLURAL = " shards";
     private static final String COINS_KW = "coins";
     private static final String COIN_KW = "coin";
-    private static final String ANY_CATCH = Glyphs.TREASURE + "\\s+\\w+\\s+catch!\\s+you caught\\s+";
+    private static final String ANY_CATCH = Glyphs.TREASURE + "\\s+\\w+(?:\\s+\\w+)*\\s+catch!\\s+you caught\\s+";
     private static final String DROP_REGEX_SUFFIX = "!\\s*([^(\\r\\n]+?)(?:\\s*\\([^)]*\\).*)?$";
     
     private static final List<DropPattern> DROP_PATTERNS = new ArrayList<>();

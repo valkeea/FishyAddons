@@ -156,7 +156,7 @@ public abstract class GenericEntryList extends AbstractSelectionList<GenericEntr
             } else {
                 addButton.setMessage(Component.literal(entryList.getAddButtonText()).withStyle(style -> style.withColor(0xFFCCFFCC)));
             }
-            addButton.setX(this.getX());
+            addButton.setX(this.getX() + edgeOffset);
             addButton.setY(this.getY());
             addButton.extractRenderState(context, mouseX, mouseY, delta);
 

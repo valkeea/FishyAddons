@@ -4,6 +4,8 @@ import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.Items;
 
 public class McApi {
 
@@ -28,6 +30,13 @@ public class McApi {
 
     public static boolean screenIsActive() {
         return screen() != null;
+    }
+
+
+    // -- Misc --
+
+    public static Item getLimeDye() {
+        return Items.DYE.lime();
     }
 
     private McApi() {}

@@ -20,11 +20,11 @@ public class SlotHandler {
     private SlotHandler() {}
 
     public static void init() {
-        FaEvents.SCREEN_MOUSE_CLICK.register(event -> {
-            if (event.hoveredSlot != null &&
-                (isLockedClick(event.screen, event.hoveredSlot) ||
-                 isBoundClick(event.screen, event.hoveredSlot, event.hoveredSlot.index, remap(event.screen, event.hoveredSlot.index)))) {
-                event.setConsumed(true);
+        FaEvents.SCREEN_MOUSE_CLICK.register(e -> {
+            if (e.hoveredSlot != null &&
+                (isLockedClick(e.screen, e.hoveredSlot) ||
+                 isBoundClick(e.screen, e.hoveredSlot, e.hoveredSlot.index, remap(e.screen, e.hoveredSlot.index)))) {
+                e.setConsumed(true);
             }
         }, EventPriority.HIGHEST, EventPhase.PRE);
     }
@@ -34,7 +34,13 @@ public class SlotHandler {
         int index = hovered.index;
         int invIndex = remap(screen, index);
         if (invIndex == -1) return false;
-        return FGUtil.isSlotLocked(invIndex);
+        return FGUtil.isSlotLocked(invIndex) || lockedBoundClick(screen, invIndex);
+    }
+
+    private static boolean lockedBoundClick(AbstractContainerScreen<?> screen, int invIndex) {
+        if (!FGUtil.isSlotBound(invIndex)) return false;
+        boolean inInv = screen instanceof InventoryScreen;
+        return (!isShiftDown() && inInv) || !inInv;
     }
 
     private static boolean isBoundClick(AbstractContainerScreen<?> screen, Slot hovered, int index, int invIndex) {

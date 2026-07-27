@@ -188,24 +188,24 @@ public class FishingHotspot {
     /**
      * Checks if a label represents a hotspot type
      */
-    public static boolean isHotspotType(String labelText) {
-        if (labelText.contains("Fishing Speed") && labelText.contains("☂")) {
-            return true;
+    public static boolean isHotspotType(String label) {
+        if (!label.startsWith("+")) return false;
+
+        var hotspotTypes = new String[] {
+            "Fishing Speed",
+            "Sea Creature Chance",
+            "Double Hook Chance",
+            "Trophy Chance",
+            "Treasure Chance"
+        };
+
+        for (String type : hotspotTypes) {
+            if (label.contains(type)) {
+                return true;
+            }
         }
         
-        if (labelText.contains("⛃") && labelText.contains("Treasure Chance")) {
-            return true;
-        }
-
-        if (labelText.contains("♔") && labelText.contains("Trophy Chance")) {
-            return true;
-        }        
-
-        if (labelText.contains("Sea Creature Chance")) {
-            return true;
-        }
-        
-        return labelText.contains("Double Hook Chance") && labelText.contains("⚓");
+        return false;
     }
 
     /**

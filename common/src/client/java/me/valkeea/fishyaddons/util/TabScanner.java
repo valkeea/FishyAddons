@@ -8,6 +8,7 @@ import java.util.regex.Pattern;
 import me.valkeea.fishyaddons.api.skyblock.GameMode;
 import me.valkeea.fishyaddons.feature.skyblock.PetInfo;
 import me.valkeea.fishyaddons.util.text.FromText;
+import me.valkeea.fishyaddons.util.text.Glyphs;
 import me.valkeea.fishyaddons.util.text.TablistUtils;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundPlayerInfoUpdatePacket;
@@ -190,7 +191,7 @@ public class TabScanner {
             "Alchemy", "Carpentry", "Taming", "Hunting", "Runecrafting", "Catacombs"
         );
 
-        var skillPattern = Pattern.compile("\\b([A-Za-z]+) (\\d{1,2})(?: ✯)?[: ]");
+        var skillPattern = Pattern.compile("\\b([A-Za-z]+) (\\d{1,2})(?: " + Glyphs.MFIND + ")?[: ]");
         var matcher = skillPattern.matcher(lineStr);
 
         while (matcher.find()) {

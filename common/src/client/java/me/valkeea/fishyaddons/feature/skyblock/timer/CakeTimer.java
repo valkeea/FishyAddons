@@ -170,7 +170,7 @@ public class CakeTimer {
     }
 
     public String symbol(String cakeName) {
-        String symbol = cakeName.replaceAll("[^\\p{So}]", "");
+        String symbol = cakeName.replaceAll("[^\\p{Co}]", "");
         return symbol.isEmpty() ? "?" : symbol;
     }
 

@@ -9,12 +9,14 @@ import java.util.regex.Pattern;
 
 import org.jetbrains.annotations.Nullable;
 
+import me.valkeea.fishyaddons.util.text.Glyphs;
+
 public class ChatDropParser {
     private static final String SHARD_KW = "shard";
     private static final String SHARD_PLURAL = " shards";
     private static final String COINS_KW = "coins";
     private static final String COIN_KW = "coin";
-    private static final String ANY_CATCH = "⛃\\s+\\w+\\s+catch!\\s+you caught\\s+";
+    private static final String ANY_CATCH = Glyphs.TREASURE + "\\s+\\w+\\s+catch!\\s+you caught\\s+";
     private static final String DROP_REGEX_SUFFIX = "!\\s*([^(\\r\\n]+?)(?:\\s*\\([^)]*\\).*)?$";
     
     private static final List<DropPattern> DROP_PATTERNS = new ArrayList<>();
@@ -40,7 +42,7 @@ public class ChatDropParser {
         NAGA("naga", false),
         SALT_YOU_CHARMED("salt you charmed", false),
         LOOT_SHARE("loot share", false),
-        TROPHY("♔ trophy", false);
+        TROPHY(Glyphs.TFISH + " trophy", false);
         
         final String keyword;
         final boolean isDropTier;
@@ -222,7 +224,7 @@ public class ChatDropParser {
 
         // Pattern 10: "♔ TROPHY <FROG|FISH>! You caught a <name>!"
         DROP_PATTERNS.add(new DropPattern(
-            Pattern.compile("♔ trophy\\s+\\w+!\\s*you caught an?\\s+(.+?)!", Pattern.CASE_INSENSITIVE),
+            Pattern.compile(Glyphs.TFISH + " trophy\\s+\\w+!\\s*you caught an?\\s+(.+?)!", Pattern.CASE_INSENSITIVE),
             DropType.ITEM, -1, 1
         ));        
     }
@@ -298,7 +300,7 @@ public class ChatDropParser {
             .replaceAll("\\s+", " ")
             .replaceAll("[\"'`]", "")
             .replaceAll("\\([^)]*\\)", "")
-            .replace("✯", "")
+            .replace(Glyphs.MFIND.toString(), "")
             .trim()
             .toLowerCase();
         

@@ -215,8 +215,9 @@ public class InventoryTracker {
     
     private static BookInfo extractBookInfoFromLore(ItemLore lore) {
         for (Component line : lore.lines()) {
+            if (line.toString().contains("Combinable in Anvil")) continue;
+
             var firstText = FromText.firstLiteral(line);
-            
             if (firstText != null) {
                 var plainName = firstText.getString();
                 var numericName = toNumeric(plainName);

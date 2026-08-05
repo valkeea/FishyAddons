@@ -179,7 +179,18 @@ public class ScRegistry {
             Set.of(Island.GAL), List.of(always), true);
 
         registerCreature(Sc.NESSIE, "§dNessie", 
-            Set.of(Island.GAL), List.of(always), true);            
+            Set.of(Island.GAL), List.of(always), true);
+
+        // Torrhus Canyon
+
+        registerCreature(Sc.TORRID, "§5Torrid", 
+            Set.of(Island.TORRHUS), List.of(always), true);
+
+        registerCreature(Sc.SILKBREEZE, "§6Silkbreeze", 
+            Set.of(Island.TORRHUS), List.of(always), true);
+        
+        registerCreature(Sc.ISOPOD, "§dGiant Isopod", 
+            Set.of(Island.TORRHUS), List.of(always), true);
         
         // Bayou, Ch
         registerCreature(Sc.TITANOBOA, "§dTitanoboa", 

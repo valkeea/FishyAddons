@@ -23,7 +23,7 @@ public class ValuableMobs {
     private static final List<String> TRACKED_NAMES = List.of(
         "ragnarok", "minos inquisitor", "titanoboa",
         "wiki tiki", "sphinx", "king minos", "manticore", "sven alpha", "sven follower",
-        "yeti", "reindrake", "scuttler", "littlefoot", "nessie"
+        "yeti", "reindrake", "scuttler", "littlefoot", "nessie", "giant isopod"
     );
 
     // --- Recent Mob Deaths ---

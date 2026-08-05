@@ -17,8 +17,8 @@ public class GameMode {
     public static GameMode getInstance() { return INSTANCE; }
     private GameMode() {}
 
-    private boolean checkHypixel() {
-        var mc = Minecraft.getInstance();
+    public boolean checkHypixel(Minecraft mc) {
+
         var server = mc.getCurrentServer();
 
         if (server != null) {
@@ -48,7 +48,7 @@ public class GameMode {
      * Perform or re-schedule gamemode check.
      */
     public void updateSkyblockStatus() {
-        if (!isOnHypixel && !checkHypixel()) {
+        if (!isOnHypixel && !checkHypixel(Minecraft.getInstance())) {
             isInSkyblock = false;
             return;
         }

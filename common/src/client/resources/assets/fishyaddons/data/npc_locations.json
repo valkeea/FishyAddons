@@ -460,5 +460,33 @@
     "Dirk": { "x": 79, "y": 80, "z": 55},
     "St. Jerry": { "x": -22, "y": 76, "z": 92},
     "Maaike": { "x": 49, "y": 81, "z": 50}
+  },
+  "torrhus_canyon": {
+    "Miria": { "x": -654, "y": 98, "z": 220},
+    "Helia": { "x": -690, "y": 93, "z": 155},
+    "Honey": { "x": -627, "y": 99, "z": 226},
+    "Dory": { "x": -645, "y": 161, "z": 194},
+    "Forager Daniel": { "x": -639, "y": 95, "z": 246},
+    "Forager Rowan": { "x": -725, "y": 137, "z": 228},    
+    "Freddy": { "x": -694, "y": 94, "z": 200},
+    "Treehugger Timothy": { "x": -541, "y": 110, "z": 276},
+    "Hunter Jean": { "x": -665, "y": 145, "z": 170},
+    "Hunter McNeil": { "x": -652, "y": 103, "z": 167},    
+    "Archie": { "x": -706, "y": 108, "z": 165},
+    "Beekeeper Bartholomew": { "x": -666, "y": 95, "z": 166},
+    "Safari Manager": { "x": -732, "y": 99, "z": 185},
+    "Safari Receptionist": { "x": -719, "y": 99, "z": 178},
+    "Safari Shill": { "x": -697, "y": 94, "z": 178},    
+    "Andrea": { "x": -711, "y": 108, "z": 178},
+    "Ant": { "x": -615, "y": 75, "z": 208},
+    "Hooded Occultist": { "x": -689, "y": 17, "z": 232},
+    "Maxim": { "x": -574, "y": 153, "z": 248},            
+    "Sanger": { "x": -526, "y": 97, "z": 218}
+  },
+  "safari": {
+    "Hunter Tobias": { "x": -49, "y":66, "z":2},
+    "Archie": { "x": -36, "y": 65, "z": 2},
+    "Birdwatcher Tim": { "x": 7, "y": 88, "z": 46},
+    "Safari Manager": { "x": -51, "y": 68, "z": 21}
   }
 }

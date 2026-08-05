@@ -26,6 +26,7 @@ public class ChatDropParser {
     enum DropKeyword {
         
         // Tier keywords
+        FLOOR_DROP("floor drop", false),
         RARE_DROP("rare drop", true),
         VERY_RARE_DROP("very rare drop", true),
         CRAZY_RARE_DROP("crazy rare drop", true),
@@ -40,9 +41,11 @@ public class ChatDropParser {
         YOU_CAUGHT("you caught", false),
         CHARM("charm", false),
         NAGA("naga", false),
+        CAPTURE("capture!", false),
         SALT_YOU_CHARMED("salt you charmed", false),
         LOOT_SHARE("loot share", false),
-        TROPHY(Glyphs.TFISH + " trophy", false);
+        TROPHY(Glyphs.TFISH + " trophy", false),
+        GIVEN("you have been given", false);
         
         final String keyword;
         final boolean isDropTier;
@@ -105,6 +108,13 @@ public class ChatDropParser {
             "bitbug", "arachne", "abyssal lanternfish", "hideondra", "hideongeon", "piranha",
             "glacite walker", "hideoncave", "hideongift", "tempest", "aero", "bolt",
             "quake", "flash",
+
+            // Critter Safari
+            "areita", "billygoat", "bloodbat", "bluebird", "cavernfish", "chuckwalla", "doomspiral",
+            "driftling", "duplico", "flitter", "fluffling", "foxtrot", "gazer", "gemzie", "gimmiegold",
+            "hideonfloor", "hideonwall", "hideyho", "honeybug", "litterbug", "macaw", "mantis shrimp",
+            "nozzlenose", "parakeet", "polaris", "rockmite", "scrappy", "shuddersquid", "shyworm",
+            "snoozle", "solsnatcher", "strongarm", "tepid", "treefrog", "troodon", "woodchucker", "wumpa",
             
             // Mobs
             "apex dragon", "cinderbat", "kraken", "blizzard", "cyro", "cascade", "tide",
@@ -118,11 +128,14 @@ public class ChatDropParser {
             "ghost", "hellwisp", "mimc", "fungloom", "stalagmight", "thyst", "star sentry",
             "drowned", "stridersurfer", "ent", "seer", "azure", "chill", "salmon", "goldfin",
             "coralot", "verdant", "cod", "cretan bull", "minotaur", "king minos", "sphinx", "yog",
-            "tewtil", "flipflopper", "lotum", "seashine",
+            "tewtil", "flipflopper", "lotum", "seashine", "blue jay", "bunbun", "drybark",
+            "dustybit", "ember", "firefox", "goldolot", "groundhog", "hideonsun", "hivethief",
+            "mountain goat", "pangolin", "puck", "sepialot", "solar", "timil,", "water snake",
             
             // Bugs
             "wartybug", "dragonfly", "firefly", "lunar moth", "ladybug", "cropeetle",
-            "invisibug", "termite", "praying mantis", "pest", "mudworm"
+            "invisibug", "termite", "praying mantis", "pest", "mudworm", "beeheemoth",
+            "honeybuzz", "pollendart"
         };
         
         for (String shard : shardNames) {
@@ -146,26 +159,32 @@ public class ChatDropParser {
         
         // Pattern 1: "RARE DROP! You dug out ItemName!"
         DROP_PATTERNS.add(new DropPattern(
-            Pattern.compile(DropKeyword.RARE_DROP.keyword + "!\\s*You dug out an? ([^!]+)!", Pattern.CASE_INSENSITIVE),
-            DropType.ITEM, -1, 1
+            Pattern.compile(DropKeyword.RARE_DROP.keyword + "!\\s*You dug out an? ([^!]+)!",
+            Pattern.CASE_INSENSITIVE), DropType.ITEM, -1, 1
+        ));
+
+        // Pattern 1b: "FLOOR DROP! You found <creatureName shard> Shard on the ground!"
+        DROP_PATTERNS.add(new DropPattern(
+            Pattern.compile(DropKeyword.FLOOR_DROP.keyword + "!\\s*you found\\s+(.+?)\\s+shard on the ground!",
+            Pattern.CASE_INSENSITIVE), DropType.SHARD, -1, 1
         ));
 
         // Pattern 2: X DROP! Enchanted Book (itemName) (+X ✯ Magic Find)
         DROP_PATTERNS.add(new DropPattern(
-            Pattern.compile(rareDrops + "!\\s*Enchanted Book\\s*\\(([^)]+?)\\)(?:\\s*\\([^)]*\\))?.*?$", Pattern.CASE_INSENSITIVE),
-            DropType.BOOK, -1, 1
+            Pattern.compile(rareDrops + "!\\s*Enchanted Book\\s*\\(([^)]+?)\\)(?:\\s*\\([^)]*\\))?.*?$",
+            Pattern.CASE_INSENSITIVE), DropType.BOOK, -1, 1
         ));
 
         // Pattern 3a: "X DROP! (31x ItemName) (+Magic Find)"
         DROP_PATTERNS.add(new DropPattern(
-            Pattern.compile(rareDrops + "!\\s*\\((\\d+)x\\s+([^)]+?)\\)(?:\\s*\\([^)]*\\))?.*?$", Pattern.CASE_INSENSITIVE),
-            DropType.ITEM, 1, 2
+            Pattern.compile(rareDrops + "!\\s*\\((\\d+)x\\s+([^)]+?)\\)(?:\\s*\\([^)]*\\))?.*?$",
+            Pattern.CASE_INSENSITIVE), DropType.ITEM, 1, 2
         ));
 
         // Pattern 3b: "X DROP! (ItemName) (+Magic Find)"
         DROP_PATTERNS.add(new DropPattern(
-            Pattern.compile(rareDrops + "!\\s*\\((?!\\d+x\\s)([^)]+?)\\)(?:\\s*\\([^)]*\\))?.*?$", Pattern.CASE_INSENSITIVE),
-            DropType.ITEM, -1, 1
+            Pattern.compile(rareDrops + "!\\s*\\((?!\\d+x\\s)([^)]+?)\\)(?:\\s*\\([^)]*\\))?.*?$",
+            Pattern.CASE_INSENSITIVE), DropType.ITEM, -1, 1
         ));
 
         // Pattern 4: "X DROP! ItemName"
@@ -191,42 +210,54 @@ public class ChatDropParser {
             Pattern.compile(DropKeyword.WOW_DUG_OUT.keyword + " ([\\d,]+)\\s+coins!", Pattern.CASE_INSENSITIVE),
             DropType.COIN, 1, -1
         ));
+
+        // Pattern 7a: "CHARM/SALT/NAGA You charmed a <creatureName> and captured X Shards" (with or without "from it.")
+        DROP_PATTERNS.add(new DropPattern(
+            Pattern.compile("(?:salt|charm|naga)\\s+you charmed an?\\s+(.+?)\\s+and captured (\\d+)\\s+shards?",
+            Pattern.CASE_INSENSITIVE), DropType.SHARD, 2, 1
+        ));
         
-        // Pattern 7a: "You caught xX ItemName Shards!"
+        // Pattern 7b: "CHARM/SALT/NAGA You charmed a <creatureName> and captured its Shard."
+        DROP_PATTERNS.add(new DropPattern(
+            Pattern.compile("(?:salt|charm|naga)\\s+you charmed an?\\s+(.+?)\\s+and captured its shard.",
+            Pattern.CASE_INSENSITIVE), DropType.SHARD, -1, 1
+        ));
+
+        // Pattern 7c: "capture! you caught a name and gained <Amountx|a|an> <shardName Shard>!
+        DROP_PATTERNS.add(new DropPattern(
+            Pattern.compile("capture!\\s+you caught an?\\s+(.+?)\\s+and gained (?:(\\d+)x\\s+|an?\\s+)(.+?)!",
+            Pattern.CASE_INSENSITIVE), DropType.SHARD, 2, 3
+        ));        
+        
+        // Pattern 8a: "You caught xX ItemName Shards!"
         DROP_PATTERNS.add(new DropPattern(
             Pattern.compile("you caught x(\\d+)\\s+(.+?)\\s*shards?!", Pattern.CASE_INSENSITIVE),
             DropType.SHARD, 1, 2
         ));
         
-        // Pattern 7b: "You caught a/an ItemName Shard!"
+        // Pattern 8b: "You caught a/an ItemName Shard!"
         DROP_PATTERNS.add(new DropPattern(
             Pattern.compile("you caught an?\\s+(.+?)\\s*shard!", Pattern.CASE_INSENSITIVE),
             DropType.SHARD, -1, 1
         ));
         
-        // Pattern 8a: "CHARM/SALT/NAGA You charmed a CreatureName and captured X Shards" (with or without "from it.")
-        DROP_PATTERNS.add(new DropPattern(
-            Pattern.compile("(?:salt|charm|naga)\\s+you charmed an?\\s+(.+?)\\s+and captured (\\d+)\\s+shards?", Pattern.CASE_INSENSITIVE),
-            DropType.SHARD, 2, 1
-        ));
-        
-        // Pattern 8b: "CHARM/SALT/NAGA You charmed a CreatureName and captured its Shard."
-        DROP_PATTERNS.add(new DropPattern(
-            Pattern.compile("(?:salt|charm|naga)\\s+you charmed an?\\s+(.+?)\\s+and captured its shard.", Pattern.CASE_INSENSITIVE),
-            DropType.SHARD, -1, 1
-        ));
-        
         // Pattern 9: "LOOT SHARE You received a ItemName Shard for assisting <someone>!"
         DROP_PATTERNS.add(new DropPattern(
-            Pattern.compile("loot share\\s+you received an?\\s+(.+?)\\s*shard for assisting\\s+\\w+!", Pattern.CASE_INSENSITIVE),
-            DropType.SHARD, -1, 1
+            Pattern.compile("loot share\\s+you received an?\\s+(.+?)\\s*shard for assisting\\s+\\w+!",
+            Pattern.CASE_INSENSITIVE), DropType.SHARD, -1, 1
         ));
 
         // Pattern 10: "♔ TROPHY <FROG|FISH>! You caught a <name>!"
         DROP_PATTERNS.add(new DropPattern(
-            Pattern.compile(Glyphs.TFISH + " trophy\\s+\\w+!\\s*you caught an?\\s+(.+?)!", Pattern.CASE_INSENSITIVE),
-            DropType.ITEM, -1, 1
-        ));        
+            Pattern.compile(Glyphs.TFISH + " trophy\\s+\\w+!\\s*you caught an?\\s+(.+?)!",
+            Pattern.CASE_INSENSITIVE), DropType.ITEM, -1, 1
+        ));
+
+        // Pattern 11: "You have been given a <shardName>!
+        DROP_PATTERNS.add(new DropPattern(
+            Pattern.compile("you have been given an?\\s+(.+?)!", Pattern.CASE_INSENSITIVE),
+            DropType.SHARD, -1, 1
+        ));
     }
 
     /**
@@ -286,8 +317,9 @@ public class ChatDropParser {
 
     private static int extractQuantity(DropPattern pattern, Matcher m) {
         if (pattern.quantityGroup == -1) return 1;
-        String quantityStr = m.group(pattern.quantityGroup).replace(",", "");
-        return Integer.parseInt(quantityStr);
+        String quantityStr = m.group(pattern.quantityGroup);
+        if (quantityStr == null) return 1;
+        return Integer.parseInt(quantityStr.replace(",", ""));
     }
 
     /**

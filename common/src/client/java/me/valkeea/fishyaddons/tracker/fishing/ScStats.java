@@ -41,7 +41,8 @@ public class ScStats {
         Island.DEN,
         Island.HUB,
         Island.PARK,
-        Island.LOTUS
+        Island.LOTUS,
+        Island.TORRHUS
     );
 
     private final List<Island> hotspotAreas = List.of(
@@ -51,7 +52,8 @@ public class ScStats {
         Island.HUB,
         Island.JERRY,
         Island.PARK,
-        Island.LOTUS
+        Island.LOTUS,
+        Island.TORRHUS
     );
 
     private int jawbusSinceVial = 0;

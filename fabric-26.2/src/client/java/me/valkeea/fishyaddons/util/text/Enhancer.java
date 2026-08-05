@@ -69,6 +69,7 @@ public class Enhancer {
         COLORS.put("vista_blue", 0x8093F1);
         COLORS.put("sky_blue", 0x72DDF7);
         COLORS.put("yellow", 0xFFFF55);
+        COLORS.put("straw", 0xE8CD5F);        
         COLORS.put("orange", 0xFF8800);
         COLORS.put("taffy", 0xFF69B4);
         COLORS.put("jade", 0x00A86B);

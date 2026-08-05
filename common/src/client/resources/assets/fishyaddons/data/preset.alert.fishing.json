@@ -17,6 +17,33 @@
     "toggled": true,
     "startsWith": true
   },
+  "A Giant Isopod was dredged up from the depths!": {
+    "msg": "",
+    "onscreen": "§e§l§kA§r §l§3🐚 §{bold}§[ancient]Giant Isopod §l§3🐚 §e§l§kA§",
+    "color": 1.5649516E7,
+    "soundId": "",
+    "volume": 1.0,
+    "toggled": true,
+    "startsWith": true
+  },
+  "Something zips through the air - it's a Silkbreeze!": {
+    "msg": "",
+    "onscreen": "§b꒰ §{heliotrope}಄ §[sun]Silkbreeze §{heliotrope}಄ §b꒱",
+    "color": 1.5649516E7,
+    "soundId": "",
+    "volume": 1.0,
+    "toggled": true,
+    "startsWith": true
+  },
+  "The laughter of a Torrid echoes through the air.": {
+    "msg": "",
+    "onscreen": "§bʚ §{purple}Torrid §bɞ",
+    "color": 1.5649516E7,
+    "soundId": "",
+    "volume": 1.0,
+    "toggled": true,
+    "startsWith": true
+  },
   "You've caused a disturbance in the loch. Could it be... Nessie?": {
     "msg": "",
     "onscreen": "§b§l§kA§r §{bold}§[caladium] 🦕 Nessie 🦕 §b§l§kA§",
@@ -25,7 +52,7 @@
     "volume": 1.0,
     "toggled": true,
     "startsWith": true
-  },  
+  },
   "This can't be! The manifestation of death himself!": {
     "msg": "",
     "onscreen": "§b§l§kA§r §0☠ §{bold}§[abyss]Grim Reaper §r§0☠ §b§l§kA§",

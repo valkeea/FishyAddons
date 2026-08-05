@@ -28,6 +28,7 @@ public class GradientRenderer {
         PRESETS.put("fishy", "F85AE5>A1F6CF>5AEFE9>C3BAD7");
         PRESETS.put("mint", "C4FA9A>F1F1B3>94E5E9");
         PRESETS.put("sakura", "fc95d1>cf4dff");
+        PRESETS.put("ancient", "473400>470008");
         PRESETS.put("bright", "eeb3ff>f7d0ef>c9ffff>00ffff");
         PRESETS.put("holo", "75f4ff>ffabfc>a3fffd>ffabfc>a3fffd");        
         PRESETS.put("moonlit", "13F5FA>BC86FE>13F5FA");

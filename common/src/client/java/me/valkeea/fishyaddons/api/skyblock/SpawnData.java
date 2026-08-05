@@ -36,9 +36,9 @@ public class SpawnData {
         new SpawnZone(Island.DM, -1, 2, 147, 149, -70, -67),
         new SpawnZone(Island.DM, -86, -84, 199, 201, -124, -122),
         // The End
-        new SpawnZone(Island.END, -504, -502, 7, 12, -277, -273),
-        new SpawnZone(Island.END, -572, -567, 6, 9, -320, -316),
-        new SpawnZone(Island.END, -608, -605, 20, 24, -277, -273),
+        new SpawnZone(Island.END, -504, -502, 100, 102, -276, -274),
+        new SpawnZone(Island.END, -571, -569, 6, 8, -319, -317),
+        new SpawnZone(Island.END, -607, -605, 21, 23, -276, -274),
         // Farming Islands
         new SpawnZone(Island.FI, 111, 115, 69, 73, -210, -205),
         new SpawnZone(Island.FI, 158, 162, 75, 78, -372, -368),
@@ -69,7 +69,13 @@ public class SpawnData {
         new SpawnZone(Island.GOLD_MINE, -9, -7, 67, 69, -394, -392),
         new SpawnZone(Island.GOLD_MINE, -5, -3, 73, 75, -279, -276),
         // Lotus Atoll
-        new SpawnZone(Island.LOTUS, -17, -14, 70, 72, -1, 3)      
+        new SpawnZone(Island.LOTUS, -17, -14, 70, 72, -1, 3),
+        // Torrhus Canyon
+        new SpawnZone(Island.TORRHUS, -721, -719, 93, 95, 140, 142),
+        new SpawnZone(Island.TORRHUS, -635, -633, 160, 162, 161, 163),
+        new SpawnZone(Island.TORRHUS, -724, -722, 98, 100, 178, 180),
+        // Safari Zone
+        new SpawnZone(Island.SAFARI, -50, 48, 67, 69, 23, 25)
     );
 
     public static void updateIsland() {

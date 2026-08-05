@@ -48,6 +48,12 @@
       "doubleHookPrefix": "§[sakura]DOUBLE HOOK 🎣 ",
       "enabled": true
     },
+    "torrhus": {
+      "priority": 95,
+      "prefix": "§{straw}",
+      "doubleHookPrefix": "§[sunset]DOUBLE HOOK 🎣 ",
+      "enabled": true
+    },    
     "spooky": {
       "priority": 80,
       "prefix": "§{violet}",
@@ -148,6 +154,24 @@
       "category": "mythic",
       "emoji": "🏵",
       "customMessage": "§b§l§kA§r &{taffy}{emoji} §{bold}§[bright]{name} §r&{taffy}{emoji} §b§l§kA§"
+    },
+    {
+      "id": "giant_isopod",
+      "triggerText": "A Giant Isopod was dredged up from the depths!",
+      "displayName": "Giant Isopod",
+      "displayNamePlural": "two Giant Isopods",
+      "category": "mythic",
+      "emoji": "🐚",
+      "customMessage": "§e§l§kA§r §l§3{emoji} §{bold}§[ancient]{name} §l§3{emoji} §e§l§kA§"
+    },
+    {
+      "id": "silkbreeze",
+      "triggerText": "Something zips through the air - it's a Silkbreeze!",
+      "displayName": "Silkbreeze",
+      "displayNamePlural": "two Silkbreezes",
+      "category": "legendary",
+      "emoji": "🐚",
+      "customMessage": "§b꒰ §{heliotrope}಄ §[sun]{name} §{heliotrope}಄ §b꒱"
     },
     {
       "id": "puddle_jumper",
@@ -310,6 +334,15 @@
       "category": "epic",
       "emoji": "🛡️",
       "customMessage": "A {name}!"
+    },
+    {
+      "id": "torrid",
+      "triggerText": "The laughter of a Torrid echoes through the air.",
+      "displayName": "Torrid",
+      "displayNamePlural": "two Torrids",
+      "category": "epic",
+      "emoji": "🛡️",
+      "customMessage": "§bʚ §{purple}{name} §bɞ"
     },
     {
       "id": "frozen_steve",
@@ -769,6 +802,33 @@
       "category": "lotus",
       "emoji": "🛡️",
       "customMessage": "An {name}!"
-    }        
+    },
+    {
+      "id": "haggard",
+      "triggerText": "A Haggard stumbles to the shore, ready for a fight!",
+      "displayName": "Haggard",
+      "displayNamePlural": "two Haggards",
+      "category": "torrhus",
+      "emoji": "🛡️",
+      "customMessage": "A {name}!"
+    },
+    {
+      "id": "brineling",
+      "triggerText": "A Brineling interrupts you with a stream of bubbles!",
+      "displayName": "Brineling",
+      "displayNamePlural": "two Brinelings",
+      "category": "torrhus",
+      "emoji": "🛡️",
+      "customMessage": "A {name}!"
+    },
+    {
+      "id": "sprawl",
+      "triggerText": "A Sprawl emerges from the blue, and it's looking for you!",
+      "displayName": "Sprawl",
+      "displayNamePlural": "two Sprawls",
+      "category": "torrhus",
+      "emoji": "🛡️",
+      "customMessage": "A {name}!"
+    }
   ]
 }

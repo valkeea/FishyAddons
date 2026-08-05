@@ -29,7 +29,10 @@ public class Sc {
     public static final String POOL_JAWBUS = "lord_jawbus_pool";
     public static final String PRINCE = "frog_prince";
     public static final String JUMPER = "puddle_jumper";
-    public static final String CAPTAIN = "drowned_captain";    
+    public static final String CAPTAIN = "drowned_captain";
+    public static final String ISOPOD = "giant_isopod";
+    public static final String SILKBREEZE = "silkbreeze";
+    public static final String TORRID = "torrid";
 
     public static String genAreaKey(String creature) {
         String baseKey = creature.toLowerCase().replaceAll("§[0-9a-fk-or]", "").replaceAll("[^a-z0-9_]", "_");

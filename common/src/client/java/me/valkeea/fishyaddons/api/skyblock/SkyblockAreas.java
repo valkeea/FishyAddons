@@ -22,6 +22,8 @@ public class SkyblockAreas {
         DEN("spiders_den"),
         DEF("default"),
         GAL("galatea", false),
+        TORRHUS("torrhus_canyon", false),
+        SAFARI("safari", false),
         BAYOU("backwater_bayou", false),
         JERRY("jerrys_workshop", false),
         DUNGEON("dungeon"),

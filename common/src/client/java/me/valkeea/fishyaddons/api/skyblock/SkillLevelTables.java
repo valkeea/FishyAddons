@@ -54,7 +54,7 @@ public class SkillLevelTables {
         SKILL_MAX_LEVELS.put("Farming", 60);
         SKILL_MAX_LEVELS.put("Mining", 60);
         SKILL_MAX_LEVELS.put("Combat", 60);
-        SKILL_MAX_LEVELS.put("Foraging", 54);
+        SKILL_MAX_LEVELS.put("Foraging", 57);
         SKILL_MAX_LEVELS.put("Fishing", 50);
         SKILL_MAX_LEVELS.put("Enchanting", 60);
         SKILL_MAX_LEVELS.put("Alchemy", 50);

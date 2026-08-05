@@ -38,5 +38,9 @@ public class McApi {
         return Items.LIME_DYE;
     }
 
+    public static Item getGrayDye() {
+        return Items.GRAY_DYE;
+    }
+
     private McApi() {}
 }

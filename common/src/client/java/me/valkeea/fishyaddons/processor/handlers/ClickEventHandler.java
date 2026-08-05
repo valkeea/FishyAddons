@@ -25,11 +25,8 @@ public class ClickEventHandler implements ChatHandler {
     
     @Override
     public ChatHandlerResult handle(ChatMessageContext context) {
-        String clean = context.getLowerCleanString();
-        
         try {
-            if ((clean.startsWith("select an option:") || clean.startsWith("accept the trapper's task to hunt the animal?") ||
-                clean.contains("§a[")) && NcpDialogue.checkForCommands(context.getOriginalText())) {
+            if (NcpDialogue.checkForCommands(context.getOriginalText(), context.getLowerCleanString())) {
                 return ChatHandlerResult.STOP;
             }
             return ChatHandlerResult.CONTINUE;

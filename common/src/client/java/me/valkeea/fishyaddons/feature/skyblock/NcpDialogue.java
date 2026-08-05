@@ -12,12 +12,16 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 
 public class NcpDialogue {
+    private static final String TRAPPER = "\naccept the trapper's task to hunt the animal?";
+    private static final String SELECT = "select an option: [";
+
     private static final long BASE_DELAY = 650;
     private static final int RANDOM_DELAY_RANGE = 151;
     private static final Random RANDOM = new Random();
     private NcpDialogue() {}
     
-    public static boolean checkForCommands(Component message) {
+    public static boolean checkForCommands(Component message, String clean) {
+        if (!(clean.startsWith(SELECT) || clean.startsWith(TRAPPER))) return false;
 
         var option = findAcceptButton(message);
         if (option != null) {
@@ -44,8 +48,8 @@ public class NcpDialogue {
             return text;
         }
 
-        for (Component sibling : text.getSiblings()) {
-            Component found = findAcceptButton(sibling);
+        for (var sibling : text.getSiblings()) {
+            var found = findAcceptButton(sibling);
             if (found != null) {
                 return found;
             }

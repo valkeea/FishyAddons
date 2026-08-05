@@ -3,6 +3,7 @@ package me.valkeea.fishyaddons.vconfig.core;
 public enum UICategory {
     
     INTERFACE("Interface"),
+    RESOURCES("Resources"),
     RENDERING("Rendering Tweaks", "Rendering"),
     QOL("General QoL", "QoL"),
     WAYPOINTS("Waypoints"),

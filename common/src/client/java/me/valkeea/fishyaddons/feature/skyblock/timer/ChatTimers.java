@@ -45,7 +45,7 @@ public class ChatTimers {
         
         if (timer == 0 && !timerAlerted && timerStart != 0L) {
             timerAlerted = true;
-            FishyToast.show("§b§lMoonglade Beacon Alarm", "Cooldown has been reset!");
+            FishyToast.show("§b§lForaging Beacon Alarm", "Cooldown has been reset!");
             PlaySound.beaconAlarm();
             timerStart = 0L;
 

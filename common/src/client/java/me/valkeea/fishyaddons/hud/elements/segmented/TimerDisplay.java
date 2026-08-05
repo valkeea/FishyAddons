@@ -9,7 +9,7 @@ public class TimerDisplay extends SegmentedTextElement {
     public TimerDisplay() {
         super(
             BooleanKey.HUD_TIMER_ENABLED,
-            "Moonglade: ",
+            "Beacon: ",
             5, 5,
             12,
             0xC8D9C0,
@@ -29,10 +29,10 @@ public class TimerDisplay extends SegmentedTextElement {
         long secondsLeft = ChatTimers.getInstance().getBeaconTimer();
         if (secondsLeft < 0) return new Component[0];
         
-        net.minecraft.network.chat.Component label = net.minecraft.network.chat.Component.literal("Moonglade:");
-        net.minecraft.network.chat.Component value = net.minecraft.network.chat.Component.literal(" " + formatTime(secondsLeft));
+        var label = net.minecraft.network.chat.Component.literal("Beacon:");
+        var value = net.minecraft.network.chat.Component.literal(" " + formatTime(secondsLeft));
         int labelColor = getCachedState().color;
-        int valueColor = 0xFFFFFF;
+        int valueColor = 0xFFFFFFFF;
         
         return new Component[] {
             new Component(label, value, labelColor, valueColor, 0)

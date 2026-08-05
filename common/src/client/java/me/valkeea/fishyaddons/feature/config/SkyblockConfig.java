@@ -281,27 +281,25 @@ public class SkyblockConfig {
 
     @UIContainer(
         name = ALARMS,
-        description = "Moonglade minigame alarm."
+        description = "Foraging *beacon* minigame alarm."
     )
     private static final boolean ALARM_SETTINGS = false;
 
     @UIToggle(
         key = BooleanKey.BEACON_ALARM,
         name = "Alarm",
-        description = {
-            "Alerts you when the *Moonglade* minigame is ready."
-        },
+        description = "Alerts you when the minigame minigame is ready.",
         parent = ALARMS,
-        subcategory = "moonglade minigame alarm"
+        subcategory = "foraging beacon alarm"
     )
-    private static boolean moongladeAlarm;
+    private static boolean beaconAlarm;
 
     @UIToggle(
         key = BooleanKey.HUD_TIMER_ENABLED,
         name = "Timer Display",
-        description = "Adds a HUD timer for the *Moonglade* minigame cooldown.",
+        description = "Adds a HUD timer for the cooldown.",
         parent = ALARMS,
-        subcategory = "moonglade minigame alarm"
+        subcategory = "foraging beacon alarm"
     )
     @UIHudRedirect
     private static boolean hudTimerEnabled;

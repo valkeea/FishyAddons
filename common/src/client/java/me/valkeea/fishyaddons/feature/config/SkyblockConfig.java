@@ -25,19 +25,61 @@ public class SkyblockConfig {
         EffectTimers.getInstance().init();
     }
 
-    @UIToggle(
-        key = BooleanKey.EQ_DISPLAY,
-        name = "*Equipment* Display",
+    private static final String EQ = "*Equipment* Display";
+
+    @UIContainer(
+        key = BooleanKey.EQ_DISPLAY, name = EQ,
         description = {
-            "Renders a secondary armor display with your current equipment.",
-            "Data updates when /eq is opened."
+            "Renders a secondary armor display with your current active set.",
+            "Data updates when any equipment menu is opened."
         }
     )
     private static boolean eqDisplay;
 
+    @UIToggle(
+        key = BooleanKey.EQ_DISPLAY_TOOLTIP,
+        name = "Show Equipment Tooltips",
+        description = "Render tooltips for the saved equipment.",
+        parent = EQ
+    )
+    private static boolean eqDisplayTooltip;
+
+    @UIToggle(
+        key = BooleanKey.EQ_DISPLAY_ALWAYS,
+        name = "Always Show Equipment Display",
+        description = "Show the display even when your inventory is closed.",
+        parent = EQ
+    )
+    @UIHudRedirect
+    private static boolean eqDisplayAlways;
+
+    @UIToggle(
+        key = BooleanKey.EQ_DISPLAY_ANCHOR,
+        name = "Anchor Equipment Display",
+        description = "Anchor the display to the left of armor slots.",
+        parent = EQ
+    )
+    private static boolean eqDisplayAnchor;
+
+    @UISlider(
+        altKey = IntKey.EQ_DISPLAY_CMD,
+        name = "Equipment Command",
+        description = {
+            "Change the command linked to the equipment display (/eq|/ld|/stats)."
+        },
+        min = 0, max = 2, parent = EQ,
+        labels = {"/equipment", "/loadouts", "/stats"}
+    )
+    private static int eqDisplayCmd;
+
     @VCListener(BooleanKey.EQ_DISPLAY)
     private static void onEqDisplayChange() {
         EqDisplay.reset();
+    }
+
+    @VCListener(BooleanKey.EQ_DISPLAY_ANCHOR)
+    private static void onEqDisplayAnchorChange(boolean newValue) {
+        EqDisplay.initPositions(newValue);
     }
 
     @UIToggle(

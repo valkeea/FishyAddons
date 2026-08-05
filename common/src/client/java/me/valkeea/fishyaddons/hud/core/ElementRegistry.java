@@ -18,6 +18,7 @@ import me.valkeea.fishyaddons.hud.elements.segmented.TimerDisplay;
 import me.valkeea.fishyaddons.hud.elements.simple.CakeDisplay;
 import me.valkeea.fishyaddons.hud.elements.simple.PetDisplay;
 import me.valkeea.fishyaddons.hud.elements.simple.TitleDisplay;
+import me.valkeea.fishyaddons.hud.ui.EqDisplay;
 import me.valkeea.fishyaddons.hud.ui.SearchHudElement;
 import me.valkeea.fishyaddons.hud.ui.UIFeedback;
 
@@ -73,6 +74,7 @@ public class ElementRegistry {
         register(ScDisplay.getInstance());
         register(InfoDisplay.getInstance());
         register(UIFeedback.getInstance());        
+        register(EqDisplay.getInstance());
 
         FaEvents.HUD_RENDER.register(event -> {
 

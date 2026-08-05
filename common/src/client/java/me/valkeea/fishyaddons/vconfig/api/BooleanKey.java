@@ -50,6 +50,10 @@ public enum BooleanKey implements ConfigKey<Boolean> {
     HUD_EFFECTS_ENABLED("tempEffectsHud"),
     HUD_COLLECTION_ENABLED("collectionHud"),
     HUD_TITLE_ENABLED("titleHud", true),
+    EQ_DISPLAY("equipmentDisplay"),
+    EQ_DISPLAY_TOOLTIP("equipmentDisplayTooltip"),
+    EQ_DISPLAY_ALWAYS("equipmentDisplayAlways"),
+    EQ_DISPLAY_ANCHOR("equipmentDisplayAnchor"),    
     
     // Waypoints
     FWP_RELICS("waypointChainsShowRelics"),
@@ -100,7 +104,6 @@ public enum BooleanKey implements ConfigKey<Boolean> {
     HUD_TEXT_SHADOW("hudTextShadow", true),
     RAIN_NOTI("rainNoti"),
     KEY_SHORTCUTS("keyShortcutsOn"),
-    EQ_DISPLAY("equipmentDisplay"),
     
     // Items
     SLOT_LOCK_AUDIO("lockTriggerEnabled", true),

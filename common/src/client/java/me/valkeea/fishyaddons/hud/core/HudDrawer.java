@@ -65,6 +65,15 @@ public class HudDrawer {
         );
     }
 
+    public void drawIcon(Identifier iconId, int x, int y, int u, int v, int width, int height, int textureWidth, int textureHeight) {
+        context.blit(
+            RenderPipelines.GUI_TEXTURED,
+            iconId, x, y,
+            u, v, width, height,
+            textureWidth, textureHeight
+        );
+    }
+
     public void drawItem(net.minecraft.world.item.ItemStack stack, int x, int y) {
         context.item(stack, x, y);
     }

@@ -24,6 +24,7 @@ public enum IntKey implements ConfigKey<Integer> {
     FWP_DISTANCE("waypointChainsDistance", 3),
     RENDER_COORD_MS("renderCoordsMs", 30000),
     NPC_MIN("npcWaypointMs", 5),
+    EQ_DISPLAY_CMD("equipmentCommand", 0),
 
     NONE("NaN")
     ;

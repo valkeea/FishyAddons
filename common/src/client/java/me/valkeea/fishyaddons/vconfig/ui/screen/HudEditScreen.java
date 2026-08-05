@@ -128,7 +128,7 @@ public class HudEditScreen extends Screen {
             GuiUtil.onOffLabel(OUTLINE, selectedElement != null && selectedElement.getHudOutline()),
             btn -> {
                 HudElement e = selectedElement;
-                if (e != null) {
+                if (e != null && e.hasCosmetics()) {
                     boolean outlined = e.getHudOutline();
                     e.setHudOutline(!outlined);
                     e.invalidateCache();
@@ -144,7 +144,7 @@ public class HudEditScreen extends Screen {
             GuiUtil.onOffLabel("BG", selectedElement != null && selectedElement.getHudBg()),
             btn -> {
                 HudElement e = selectedElement;
-                if (e != null) {
+                if (e != null && e.hasCosmetics()) {
                     boolean bg = e.getHudBg();
                     e.setHudBg(!bg);
                     e.invalidateCache();
@@ -179,6 +179,7 @@ public class HudEditScreen extends Screen {
                     if (elements.isEmpty()) return;
                     e = elements.get(0);
                 }
+                if (!e.hasCosmetics()) return;
                 if (e instanceof TitleDisplay) {
                     this.popup = new VCPopup(
                         Component.literal("Alert color is set in the alert editor!"),
@@ -324,19 +325,22 @@ public class HudEditScreen extends Screen {
     }
 
     private void updateButtons() {
+        boolean active = selectedElement != null;
+        boolean valid = active && selectedElement.hasCosmetics();
+
         if (outlineBtn != null) {
-            outlineBtn.setMessage(GuiUtil.onOffLabel(OUTLINE, selectedElement != null && selectedElement.getHudOutline()));
+            outlineBtn.setMessage(GuiUtil.onOffLabel(valid ? OUTLINE : "-", active && selectedElement.getHudOutline()));
         }
 
-        if (colorBtn != null && (selectedElement instanceof PetDisplay)) {
+        if (colorBtn != null && (selectedElement instanceof PetDisplay || !valid)) {
             colorBtn.setMessage(Component.literal("-").withStyle(s -> s.withColor(0x84848484)));
         } else if (colorBtn != null) {
-            int color = selectedElement != null ? selectedElement.getHudColor() : 0xFFFFFFFF;
+            int color = active ? selectedElement.getHudColor() : 0xFFFFFFFF;
             colorBtn.setMessage(Component.literal("Color").withStyle(s -> s.withColor(color)));
         }
 
         if (bgBtn != null) {
-            bgBtn.setMessage(GuiUtil.onOffLabel("BG", selectedElement != null && selectedElement.getHudBg()));
+            bgBtn.setMessage(GuiUtil.onOffLabel(valid ? "BG" : "-", active && selectedElement.getHudBg()));
         }
     }
 

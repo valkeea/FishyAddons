@@ -28,6 +28,10 @@ public interface HudElement {
         return true;
     }
 
+    default boolean hasCosmetics() {
+        return true;
+    }
+
     default void resetAll() {
         if (isConfigurable()) {
             setHudPosition(5, 5);

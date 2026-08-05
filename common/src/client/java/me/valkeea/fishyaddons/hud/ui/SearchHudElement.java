@@ -263,4 +263,9 @@ public class SearchHudElement extends InteractiveHudElement {
     protected List<Component> getDisplayLines(HudElementState state) {
         return List.of();
     }
+
+    @Override
+    public boolean hasCosmetics() {
+        return false;
+    }    
 }

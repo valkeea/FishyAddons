@@ -49,10 +49,17 @@ public class TransLava {
     }
 
     private static void refreshChunks() {
-        var renderer = Minecraft.getInstance().levelRenderer;
-        if (renderer != null) {
-            renderer.allChanged();
-        }
+        var mc = Minecraft.getInstance();
+        if (mc.level == null || mc.player == null || mc.getConnection() == null) return;
+
+        int viewDist = mc.options.getEffectiveRenderDistance();
+        int cx = mc.player.blockPosition().getX() >> 4;
+        int cz = mc.player.blockPosition().getZ() >> 4;
+
+        mc.level.setSectionRangeDirty(
+            cx - viewDist, mc.level.getMinSectionY(), cz - viewDist,
+            cx + viewDist, mc.level.getMaxSectionY(), cz + viewDist
+        );
     }
 
     private TransLava() {}

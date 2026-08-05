@@ -7,10 +7,11 @@ import me.valkeea.fishyaddons.vconfig.annotation.VCInit;
 import me.valkeea.fishyaddons.vconfig.annotation.VCModule;
 import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
 import me.valkeea.fishyaddons.vconfig.api.Config;
-import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
-import net.fabricmc.fabric.api.resource.ResourcePackActivationType;
+import net.fabricmc.fabric.api.resource.v1.ResourceLoader;
+import net.fabricmc.fabric.api.resource.v1.pack.PackActivationType;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.repository.Pack;
 
@@ -20,25 +21,21 @@ public class ResourceHandler {
     public static final String MOD_ID = "fishyaddons";
     public static final Identifier HD_FONT = Identifier.fromNamespaceAndPath(MOD_ID, "hd_font");
     public static final Identifier FISHY_GUI = Identifier.fromNamespaceAndPath(MOD_ID, "fishy_gui");
-    public static final Identifier FIRE_OVERLAY = Identifier.fromNamespaceAndPath(MOD_ID, "fire_overlay");
 
     @VCInit
     public static void init() {
         FabricLoader.getInstance().getModContainer(MOD_ID).ifPresent(modContainer -> {
-            ResourceManagerHelper.registerBuiltinResourcePack(
+            ResourceLoader.registerBuiltinPack(
                 HD_FONT,
                 modContainer,
-                ResourcePackActivationType.NORMAL
+                Component.literal("§8HD Font"),
+                PackActivationType.NORMAL
             );
-            ResourceManagerHelper.registerBuiltinResourcePack(
+            ResourceLoader.registerBuiltinPack(
                 FISHY_GUI,
                 modContainer,
-                ResourcePackActivationType.NORMAL
-            );
-            ResourceManagerHelper.registerBuiltinResourcePack(
-                FIRE_OVERLAY,
-                modContainer,
-                ResourcePackActivationType.NORMAL
+                Component.literal("§8Transparent GUI"),
+                PackActivationType.NORMAL
             );
         });
     }
@@ -49,10 +46,6 @@ public class ResourceHandler {
 
     public static void updateGuiPack() {
         updateBuiltinPack(BooleanKey.FISHY_GUI, "fishyaddons:fishy_gui");
-    }
-
-    public static void updateFirePack() {
-        updateBuiltinPack(BooleanKey.FIRE_OVERLAY, "fishyaddons:fire_overlay");
     }
 
     private static void updateBuiltinPack(BooleanKey configKey, String packId) {
@@ -90,6 +83,5 @@ public class ResourceHandler {
             .toList();
 
         packManager.setSelected(enabledIds);
-        mc.reloadResourcePacks();
     }
 }

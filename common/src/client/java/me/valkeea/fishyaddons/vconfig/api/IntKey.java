@@ -15,6 +15,7 @@ public enum IntKey implements ConfigKey<Integer> {
     REDSTONE_COLOR("customParticleColor"),
     RENDER_COORD_COLOR("renderCoordsColor", -5653771),
     INV_SEARCH_COLOR("searchOverlayColor", 0xFF000000),
+    SKY_COLOR("skyColor", 0x00000000),
     
     // Settings
     THEME_MODE("themeMode"),

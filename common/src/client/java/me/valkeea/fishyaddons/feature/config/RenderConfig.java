@@ -63,6 +63,13 @@ public class RenderConfig {
     )
     public boolean clearWater = false;
 
+    @UIColorPicker(
+        key = IntKey.SKY_COLOR,
+        name = "*Nether Sky* Color",
+        description = "Changes the sky color in Crimson Isles."
+    )
+    private static int skyColor = 0x00000000;
+
     @UIContainer(
         key = BooleanKey.XP_COLOR_ON,
         name = "*XP* Text Color",

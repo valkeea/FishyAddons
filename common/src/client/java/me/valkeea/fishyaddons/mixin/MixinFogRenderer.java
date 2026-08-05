@@ -25,9 +25,9 @@ public abstract class MixinFogRenderer {
     )
     private FogType redirectGetCameraSubmersionType(FogRenderer instance, Camera cam) {
         var originalType = this.getCameraSubmersionTypeOriginal(cam);
-        var tint = RenderTweaks.shouldRemoveLavaFog(cam);
+        var modifier = RenderTweaks.getFogModifier(cam);
         
-        if (tint != 0 && tint != 1 && originalType.equals(FogType.LAVA)) {
+        if (modifier.isTint() && originalType.equals(FogType.LAVA)) {
             return FogType.WATER;
         }
         
@@ -40,12 +40,16 @@ public abstract class MixinFogRenderer {
         target = "Lnet/minecraft/client/renderer/fog/environment/FogEnvironment;getBaseColor(Lnet/minecraft/client/multiplayer/ClientLevel;Lnet/minecraft/client/Camera;IF)I")
     )
     private int redirectFogModifierColor(FogEnvironment env, ClientLevel level, Camera cam, int viewDistance, float skyDarkness) {
+
         var entity = cam.entity();
         int originalColor = env.getBaseColor(level, cam, viewDistance, skyDarkness); 
         if (entity == null) return originalColor;
 
-        var tint = RenderTweaks.shouldRemoveLavaFog(cam);
-        return tint != 0 && tint != 1 && env.isApplicable(FogType.WATER, entity) ? tint : originalColor;
+        var modifier = RenderTweaks.getFogModifier(cam);
+        boolean applicable = env.isApplicable(FogType.ATMOSPHERIC, entity) && modifier.isSky()
+            || env.isApplicable(FogType.WATER, entity) && modifier.isTint();
+
+        return applicable ? modifier.color() : originalColor;
     }
 
     @Inject(
@@ -62,19 +66,20 @@ public abstract class MixinFogRenderer {
 
         var data = cir.getReturnValue();
         var viewDistance = renderDistanceInChunks * 16.0f;
-        var tint = RenderTweaks.shouldRemoveLavaFog(cam);
+        var modifier = RenderTweaks.getFogModifier(cam);
         var fluid = cam.getFluidInCamera();
 
-        // 1 = remove lava fog
-        if (tint == 1 && fluid == FogType.LAVA) {
-            data.environmentalStart = viewDistance * 2.0f;
+        if (modifier.isRemove() && fluid == FogType.LAVA) {
+            data.environmentalStart = viewDistance;
+            data.environmentalEnd = viewDistance;
 
         } else if (fluid == FogType.WATER) {
             if (RenderTweaks.shouldRemoveWaterFog(cam)) {
-                data.environmentalStart = viewDistance * 2.0f;
+                data.environmentalStart = viewDistance;
+                data.environmentalEnd = viewDistance;
             }
 
-        } else if (tint != 0 && tint != 1 && fluid == FogType.LAVA) {
+        } else if (modifier.isTint() && fluid == FogType.LAVA) {
             data.environmentalStart = 6.0f;
             data.environmentalEnd = data.environmentalEnd * 1.5f;
         }

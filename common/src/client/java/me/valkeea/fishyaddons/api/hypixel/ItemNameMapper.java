@@ -4,13 +4,22 @@ public class ItemNameMapper {
     
     private static final String[] RARITIES = {"mythic", "legendary", "epic", "rare", "uncommon", "common"};
     
-    private static final String[] REFORGE_PREFIXES = {
-        "Sharp", "Heroic", "Spicy", "Legendary", "Fabled", "Withered", "Ancient",
-        "Necrotic", "Pleasant", "Precise", "Spiritual", "Headstrong", "Clean",
-        "Fierce", "Heavy", "Light", "Mythic", "Pure", "Smart", "Titanic",
-        "Wise", "Perfect", "Refined", "Blessed", "Fruitful", "Magnetic",
-        "Fleet", "Stellar", "Heated", "Ambered", "Keen", "Strong", "Festive", 
-        "Submerged", "Mossy"
+    private static final String[] REFORGES = {
+        "dirty", "fabled", "suspicious", "gilded", "warped", "withered", "bulky", "fanged",
+        "gentle", "odd", "fast", "fair", "epic", "sharp", "heroic", "spicy", "legendary",
+        "salty", "treacherous", "stiff", "lucky", "pitchin", "chomp", "very", "highly", "extremely",
+        "not so", "thicc", "absolutely", "even more", "deadly", "fine", "grand", "hasty", "neat",
+        "unreal", "awkward", "rich", "precise", "spiritual", "headstrong", "clean", "fierce", "heavy",
+        "light", "mythic", "pure", "smart", "titanic", "wise", "perfect", "necrotic", "ancient",
+        "renowned", "cubic", "hyper", "loving", "ridiculous", "empowered", "giant", "undead", "submerged",
+        "jaded", "bustling", "mossy", "mantid", "festive", "groovy", "double-bit", "lumberjack's",
+        "rugged", "lush", "green thumb", "peasant's", "robust", "zooming", "unyielding", "prospector's",
+        "excellent", "sturdy", "fortunate", "moil", "toil", "deep fried", "blessed", "bountiful",
+        "fruitful", "refined", "stellar", "mithraic", "auspicious", "fleet", "heated", "ambered", "great",
+        "glacial", "stained", "menacing", "hefty", "soft", "honored", "blended", "astute", "colossal",
+        "brilliant", "waxed", "fortified", "blooming", "strengthened", "glistening", "rooted", "snowy",
+        "royal", "blood-soaked", "blazing", "coldfused", "rapid", "spiked", "magnetic", "scraped",
+        "lunar", "sunny", "sticky"
     };
     
     private ItemNameMapper() {
@@ -123,24 +132,27 @@ public class ItemNameMapper {
     public static String cleanDisplayName(String displayName) {
         if (displayName == null || displayName.trim().isEmpty()) return "";
         
-        var cleaned = displayName.replaceAll("§[0-9a-fk-or]", "");
+        var cleaned = displayName.replaceAll("§[0-9a-fk-or]", "").toLowerCase();
         
         if (cleaned.matches("\\[Lvl \\d+\\].*")) { // Remove level prefix if present
             cleaned = cleaned.replaceAll("\\[Lvl \\d+\\]\\s*", "");
         }
-        
-        for (String prefix : REFORGE_PREFIXES) {
-            if (cleaned.startsWith(prefix + " ")) {
-                cleaned = cleaned.substring(prefix.length() + 1);
-                break; // Remove reforge prefixes if present
+
+        return stripReforge(cleaned).replaceAll("§[0-9A-FK-ORa-fk-or]", "")
+                .replaceAll("[^\\p{L}\\p{Nd}\\s]", "")
+                .trim();
+    }
+
+    private static String stripReforge(String name) {
+        for (var prefix : REFORGES) {
+            if (name.startsWith(prefix + " ")) {
+                name = name.replaceFirst(prefix + " ", "");
+                break;
             }
         }
-        
-        cleaned = cleaned.replaceAll("[✪➤◆⚚]+", "").trim();
-        cleaned = cleaned.replaceAll("\\s*\\+\\d+\\s*$", "").trim();
-        return cleaned.replaceAll("\\s*\\([^)]+\\)\\s*$", "").trim();
+        return name;
     }
-    
+
     // --- Unconventional Items ---
     
     /**
@@ -149,7 +161,6 @@ public class ItemNameMapper {
      */
     private static String getDirectMapping(String itemName) {
         return switch (itemName) {
-            case "agathas coupon" -> "AGATHA_COUPON";
             case "experience bottle" -> "EXPERIENCE_BOTTLE";
             case "grand experience bottle" -> "GRAND_EXP_BOTTLE";
             case "titanic experience bottle" -> "TITANIC_EXP_BOTTLE";
@@ -187,6 +198,7 @@ public class ItemNameMapper {
         if (n.contains("GEMSTONE")) return n.replace("GEMSTONE", "GEM");
         if (n.contains("INGOT")) return n.replace("_INGOT", "");
         if (n.equals("POTATO") || n.equals("CARROT")) return n + "_ITEM";
+        if (n.contains("MIRIA") || n.contains("AGATHA")) return n.replaceFirst("S_", "_");
         return null;
     }
 }

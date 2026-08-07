@@ -12,14 +12,17 @@ public class ProfitTracker {
     private static boolean enabled = false;
     private static boolean trackSackProfit = false;
     private static boolean pricePerItem = false;
+    private static boolean priceTt = false;
 
     public static boolean pricePerItem() {  return pricePerItem; }
     public static boolean isEnabled() { return enabled; }
+    public static boolean priceTt() { return priceTt; }
 
-    public static void setConfig(boolean generalTracking, boolean sackTracking, boolean perItem) {
+    public static void setConfig(boolean generalTracking, boolean sackTracking, boolean perItem, boolean priceTt) {
         enabled = generalTracking;
         trackSackProfit = sackTracking;
         pricePerItem = perItem;
+        ProfitTracker.priceTt = priceTt;
     }
 
     public static boolean handleChat(String s, Component t) { 

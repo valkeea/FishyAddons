@@ -104,6 +104,7 @@ public enum BooleanKey implements ConfigKey<Boolean> {
     HUD_TEXT_SHADOW("hudTextShadow", true),
     RAIN_NOTI("rainNoti"),
     KEY_SHORTCUTS("keyShortcutsOn"),
+    ITEM_PRICE_TT("itemPriceTooltip"),
     
     // Items
     SLOT_LOCK_AUDIO("lockTriggerEnabled", true),

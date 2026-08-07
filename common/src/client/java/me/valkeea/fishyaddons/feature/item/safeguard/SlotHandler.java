@@ -1,12 +1,11 @@
 package me.valkeea.fishyaddons.feature.item.safeguard;
 
-import com.mojang.blaze3d.platform.InputConstants;
-
 import me.valkeea.fishyaddons.event.EventPhase;
 import me.valkeea.fishyaddons.event.EventPriority;
 import me.valkeea.fishyaddons.event.impl.FaEvents;
 import me.valkeea.fishyaddons.tool.PlaySound;
 import me.valkeea.fishyaddons.util.ContainerScanner;
+import me.valkeea.fishyaddons.util.Keyboard;
 import me.valkeea.fishyaddons.vconfig.config.impl.ItemConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -40,12 +39,12 @@ public class SlotHandler {
     private static boolean lockedBoundClick(AbstractContainerScreen<?> screen, int invIndex) {
         if (!FGUtil.isSlotBound(invIndex)) return false;
         boolean inInv = screen instanceof InventoryScreen;
-        return (!isShiftDown() && inInv) || !inInv;
+        return (!Keyboard.isShiftDown() && inInv) || !inInv;
     }
 
     private static boolean isBoundClick(AbstractContainerScreen<?> screen, Slot hovered, int index, int invIndex) {
         if (isInvalidContext(screen, invIndex)) return false;
-        if (!isShiftDown()) return true;
+        if (!Keyboard.isShiftDown()) return true;
 
         int boundSlotId = ItemConfig.getBoundSlot(invIndex);
         var handler = screen.getMenu();
@@ -71,13 +70,6 @@ public class SlotHandler {
         return !FGUtil.isKeyBound() || !FGUtil.isSlotBound(invIndex) || !ContainerScanner.isGuiOrInv() ||
         !(screen instanceof InventoryScreen);
     }
-
-    private static boolean isShiftDown() {
-        var mc = Minecraft.getInstance();
-        if (mc.options == null) return false;
-        int keyCode = mc.options.keyShift.getDefaultKey().getValue();
-        return InputConstants.isKeyDown(mc.getWindow(), keyCode);
-    } 
 
     private static boolean canInsertItems(Slot hovered, Slot boundSlot, ItemStack hoveredStack, ItemStack boundStack) {
         return (hoveredStack.isEmpty() || boundSlot.mayPlace(hoveredStack))

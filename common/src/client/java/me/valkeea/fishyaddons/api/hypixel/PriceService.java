@@ -128,12 +128,16 @@ public class PriceService {
 
         var apiId = getApiId(itemName);
         var bazaarData = bazaarCache.get(apiId);
-        if (bazaarData != null) return bazaarData.getPrice(priceType);
+
+        if (bazaarData != null) {
+            var price = bazaarData.getPrice(priceType);
+            if (price > 0.0) return price;
+        }
 
         if (ItemNameMapper.isTieredDrop(itemName)) return getTieredPrice(itemName);
         
         var cleanedName = ItemNameMapper.cleanDisplayName(itemName);
-        var auctionData = auctionCache.get(cleanedName.toLowerCase());
+        var auctionData = auctionCache.get(cleanedName);
         if (auctionData != null) return auctionData.getLowestPrice();
         
         negativeLookupCache.put(apiId);
@@ -196,8 +200,8 @@ public class PriceService {
     }
     
     public boolean hasAuctionData(String itemName) {
-        String cleanedItemName = ItemNameMapper.cleanDisplayName(itemName);
-        return auctionCache.containsKey(cleanedItemName.toLowerCase());
+        String cleanedName = ItemNameMapper.cleanDisplayName(itemName);
+        return auctionCache.containsKey(cleanedName);
     }
     
     public PriceSource getPriceSource(String itemName) {

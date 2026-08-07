@@ -16,6 +16,7 @@ import me.valkeea.fishyaddons.event.EventPriority;
 import me.valkeea.fishyaddons.event.impl.FaEvents;
 import me.valkeea.fishyaddons.mixin.HandledScreenAccessor;
 import me.valkeea.fishyaddons.util.ContainerScanner;
+import me.valkeea.fishyaddons.util.Keyboard;
 import me.valkeea.fishyaddons.vconfig.annotation.VCInit;
 import me.valkeea.fishyaddons.vconfig.annotation.VCListener;
 import me.valkeea.fishyaddons.vconfig.annotation.VCModule;
@@ -117,18 +118,12 @@ public class GuiIcons {
     public static boolean isBlocked(int slotIndex) {
         if (!enabled) return false;
         return getSlotsFor(ContainerScanner.current()).contains(slotIndex)
-               && !isShiftDown(Minecraft.getInstance());
+               && !Keyboard.isShiftDown();
     }
 
     public static boolean handleShift(int slotIndex) {
         return getSlotsFor(ContainerScanner.current()).contains(slotIndex);
-    }    
-
-    private static boolean isShiftDown(Minecraft cl) {
-        if (cl.options == null) return false;
-        int keyCode = cl.options.keyShift.getDefaultKey().getValue();
-        return InputConstants.isKeyDown(cl.getWindow(), keyCode);
-    }   
+    } 
 
     /**
      * Add a slot to the map for the given screen name.

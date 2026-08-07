@@ -210,11 +210,12 @@ public class TrackedItemData {
     }
 
     public static String normalizeItemName(String itemName) {
-        return itemName.trim()
-                .replaceAll("§[0-9a-fk-or]", "")
-                .replaceAll("\\s+", " ")
-                .toLowerCase();
-    }      
+        return itemName = itemName
+            .replaceAll("§[0-9A-FK-ORa-fk-or]", "")
+            .replaceAll("[^\\p{L}\\p{Nd}\\s]", "")
+            .trim()
+            .toLowerCase();
+    }
     
     /**
      * Result of adding a drop

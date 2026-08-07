@@ -7,6 +7,7 @@ import org.lwjgl.glfw.GLFW;
 
 import com.mojang.blaze3d.platform.InputConstants;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.util.Util;
 import net.minecraft.util.Util.OS;
@@ -114,5 +115,12 @@ public class Keyboard {
             case "GLFW_KEY_RIGHT": return "→";
             default: return null;
         }
+    }
+
+    public static boolean isShiftDown() {
+        var mc = Minecraft.getInstance();
+        if (mc.options == null) return false;
+        int keyCode = mc.options.keyShift.getDefaultKey().getValue();
+        return InputConstants.isKeyDown(mc.getWindow(), keyCode);
     }
 }

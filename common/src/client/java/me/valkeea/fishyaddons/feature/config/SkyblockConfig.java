@@ -119,6 +119,13 @@ public class SkyblockConfig {
     )
     @UIColorPicker(key = IntKey.HUD_PETXP_COLOR)
     private static boolean petIncludeXp;
+
+    @UIToggle(
+        key = BooleanKey.ITEM_PRICE_TT,
+        name = "*Item Price* Tooltip",
+        description = "Add the lowest auction/bazaar (cached) price of an item to its tooltip if available."
+    )
+    private static boolean priceTooltip;
     
     private static final String PROFIT = "*Profit* Tracker §7(WIP)";
     @UIContainer(
@@ -136,7 +143,7 @@ public class SkyblockConfig {
     private static final boolean PROFIT_SETTINGS = false;
 
     @VCListener({
-        BooleanKey.HUD_PROFIT_ENABLED, BooleanKey.PER_ITEM,
+        BooleanKey.HUD_PROFIT_ENABLED, BooleanKey.PER_ITEM, BooleanKey.ITEM_PRICE_TT,
         BooleanKey.TRACK_SACK, BooleanKey.HUD_COLLECTION_ENABLED}
     )
     private static void onProfitTrackerChange() {
@@ -281,7 +288,7 @@ public class SkyblockConfig {
 
     @UIContainer(
         name = ALARMS,
-        description = "Foraging *beacon* minigame alarm."
+        description = "Foraging *Beacon* minigame alarm."
     )
     private static final boolean ALARM_SETTINGS = false;
 

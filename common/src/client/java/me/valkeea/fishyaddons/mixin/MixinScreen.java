@@ -10,6 +10,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import me.valkeea.fishyaddons.feature.item.safeguard.FGUtil;
 import me.valkeea.fishyaddons.feature.item.safeguard.GuiHandler;
+import me.valkeea.fishyaddons.feature.skyblock.ItemPrice;
 import me.valkeea.fishyaddons.feature.visual.FaColors;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
@@ -26,7 +27,7 @@ public abstract class MixinScreen {
         cancellable = true
     )
     private static void onGetTooltipFromItem(
-            Minecraft cl,
+            Minecraft mc,
             ItemStack stack,
             CallbackInfoReturnable<List<Component>> cir
     ) {
@@ -52,5 +53,8 @@ public abstract class MixinScreen {
                 if (recolored != original) originalTooltip.set(i, recolored);
             }
         }
+
+        var valueTt = ItemPrice.getTooltipLine(stack);
+        if (valueTt != null) originalTooltip.add(valueTt);        
     }
 }

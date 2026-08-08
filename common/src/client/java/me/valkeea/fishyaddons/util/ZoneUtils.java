@@ -2,6 +2,7 @@ package me.valkeea.fishyaddons.util;
 
 import java.util.List;
 
+import me.valkeea.fishyaddons.api.skyblock.GameMode;
 import me.valkeea.fishyaddons.api.skyblock.SkyblockAreas;
 import me.valkeea.fishyaddons.api.skyblock.SkyblockAreas.Island;
 import me.valkeea.fishyaddons.feature.skyblock.WeatherTracker;
@@ -99,7 +100,7 @@ public class ZoneUtils {
     }
 
     private static void verifyLocation() {
-        if (SkyblockAreas.getIsland() != Island.NA) return;
+        if (!(GameMode.onHypixel() && SkyblockAreas.getIsland() == Island.NA)) return;
         var conn = Minecraft.getInstance().player.connection;
         if (conn != null) {
             conn.sendCommand("locraw");

@@ -12,29 +12,33 @@ public class GameMode {
     private boolean isInSkyblock = false;
     private boolean isOnHypixel = false;
     private boolean bypass = false;
+    private boolean verified = false;
 
     private static final GameMode INSTANCE = new GameMode();
     public static GameMode getInstance() { return INSTANCE; }
     private GameMode() {}
 
-    public boolean checkHypixel(Minecraft mc) {
+    public static boolean checkHypixel(String ip) {
+        if (INSTANCE.verified) return onHypixel();
 
-        var server = mc.getCurrentServer();
+        boolean newStatus = ip.toLowerCase().contains("hypixel.net");
+        if (!newStatus) return false;
 
-        if (server != null) {
-            String ip = server.ip.toLowerCase();
-            setOnHypixel(ip.contains("hypixel.net"));
-            return isOnHypixel;
+        INSTANCE.isOnHypixel = newStatus;
+        INSTANCE.verified = true;
 
-        } else {
-            setOnHypixel(false);
-            return false;
-        }
+        return newStatus;
     }
 
-    private void setOnHypixel(boolean value) {
-        isOnHypixel = value;
-    }    
+    private static boolean checkHypixel() {
+        if (INSTANCE.verified) return onHypixel();
+
+        var mc = Minecraft.getInstance();
+        var server = mc.getCurrentServer();
+        if (server == null) return false;
+        
+        return checkHypixel(server.ip);
+    }
 
     private boolean checkSkyblock() {
         String title = ScoreboardUtils.getSidebarObjectiveName();
@@ -48,7 +52,7 @@ public class GameMode {
      * Perform or re-schedule gamemode check.
      */
     public void updateSkyblockStatus() {
-        if (!isOnHypixel && !checkHypixel(Minecraft.getInstance())) {
+        if (!isOnHypixel && !checkHypixel()) {
             isInSkyblock = false;
             return;
         }
@@ -78,6 +82,11 @@ public class GameMode {
         sbEvent(false);        
         INSTANCE.isInSkyblock = false;
         INSTANCE.bypass = false;
+    }
+
+    public static void leftServer() {
+        INSTANCE.isOnHypixel = false;
+        INSTANCE.verified = false;            
     }
 
     /**

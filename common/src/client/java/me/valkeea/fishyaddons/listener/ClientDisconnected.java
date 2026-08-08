@@ -18,6 +18,7 @@ public class ClientDisconnected {
     private static void onClientDisconnected() {
 
         GameMode.leftSkyblock();
+        GameMode.leftServer();
         
         Config.saveBackup();
         FilterConfig.saveBackup();

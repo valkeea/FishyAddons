@@ -12,6 +12,7 @@ import me.valkeea.fishyaddons.ui.element.DropdownMenu;
 import me.valkeea.fishyaddons.ui.screen.AlertEditScreen;
 import me.valkeea.fishyaddons.vconfig.config.impl.AlertConfig;
 import me.valkeea.fishyaddons.vconfig.config.impl.AlertConfig.AlertData;
+import me.valkeea.fishyaddons.vconfig.ui.layout.Colors;
 import me.valkeea.fishyaddons.vconfig.ui.layout.UIScaleCalculator;
 import me.valkeea.fishyaddons.vconfig.ui.manager.ScreenManager;
 import me.valkeea.fishyaddons.vconfig.ui.render.VCText;
@@ -59,6 +60,8 @@ public class ChatAlerts extends Screen {
     private DropdownMenu presetDropdown;
     private VCPopup popup = null;
     private VCTextField presetNameField = null;
+    private VCTextField searchField = null;
+    private String searchQuery = "";
     private VCTooltip downloadTooltip = null;
     private VCTooltip uploadTooltip = null;  
 
@@ -80,12 +83,31 @@ public class ChatAlerts extends Screen {
             e.addToScreen();
         }
 
-        int totalEntries = entries.size() + (addMode ? 1 : 0);
-        int listTop = 40;
+        int searchY = 40 + (entryH - fieldH) / 2;
+
+        searchField = new VCTextField(
+            this.font, this.width / 2 - entryW / 2,
+            searchY, fieldW + delBtnW + btnW * 2, (int) (fieldH / 1.5),
+            Component.literal("Search")
+        );
+
+        searchField.setValue(searchQuery);
+        searchField.setMaxLength(100);
+        searchField.setUIScale(uiScale * 0.7f);
+        searchField.setCustomBgColor(Colors.TRANSPARENT);
+        searchField.setHint(Component.literal("§8§oSearch entries...").withStyle(style -> style.withColor(0xFF808080)));
+        searchField.setResponder(text -> {
+            searchQuery = text;
+            scrollOffset = 0;
+        });
+        this.addRenderableWidget(searchField);
+
+        int listTop = 40 + entryH;
         int listBottom = this.height - 60;
         int listHeight = listBottom - listTop;
 
         maxVisibleEntries = Math.max(1, listHeight / entryH);
+        int totalEntries = getFilteredEntries().size() + (addMode ? 1 : 0);
         int maxScroll = Math.max(0, totalEntries - maxVisibleEntries);
         scrollOffset = Math.clamp(scrollOffset, 0, maxScroll);
 
@@ -114,7 +136,7 @@ public class ChatAlerts extends Screen {
 
         var backButton = new FaButton(
             this.width / 2 - entryW / 2 + btnW, this.height - 40, btnW, btnH,
-            Component.literal("Back").withStyle(style -> style.withColor(0xFF808080)),
+            Component.literal("Back").withStyle(style -> style.withColor(Colors.CLOSE_BUTTON_TEXT)),
             btn -> ScreenManager.openConfigScreen() 
         );
         backButton.setUIScale(uiScale);
@@ -122,7 +144,7 @@ public class ChatAlerts extends Screen {
 
         var closeButton = new FaButton(
             this.width / 2 - entryW / 2 + btnW * 2, this.height - 40, btnW, btnH,
-            Component.literal("Close").withStyle(style -> style.withColor(0xFF808080)),
+            Component.literal("Close").withStyle(style -> style.withColor(Colors.CLOSE_BUTTON_TEXT)),
             btn -> this.onClose()
         );
         closeButton.setUIScale(uiScale);
@@ -230,23 +252,26 @@ public class ChatAlerts extends Screen {
     }
 
     private void addList(GuiGraphicsExtractor context) {
-        int listTop = 40;
+        int listTop = 40 + entryH;
         int listBottom = this.height - 60;
         int listHeight = listBottom - listTop;
         maxVisibleEntries = Math.max(1, listHeight / entryH);
-        int totalEntries = entries.size() + (addMode ? 1 : 0);
+
+        List<Entry> filtered = getFilteredEntries();
+        int totalEntries = filtered.size() + (addMode ? 1 : 0);
         int y = listTop;
         int startIdx = scrollOffset;
-        int endIdx = Math.min(startIdx + maxVisibleEntries, entries.size());
+        int endIdx = Math.min(startIdx + maxVisibleEntries, filtered.size());
 
-        for (int i = 0; i < entries.size(); i++) {
-            if (i >= startIdx && i < endIdx) {
-                entries.get(i).setPosition(this.width / 2 - entryW / 2, y);
-                entries.get(i).setVisible(true);
-                y += entryH;
-            } else {
-                entries.get(i).setVisible(false);
-            }
+        for (Entry e : entries) {
+            e.setVisible(false);
+        }
+
+        for (int i = startIdx; i < endIdx; i++) {
+            Entry e = filtered.get(i);
+            e.setPosition(this.width / 2 - entryW / 2, y);
+            e.setVisible(true);
+            y += entryH;
         }
 
         if (totalEntries > maxVisibleEntries) {
@@ -255,7 +280,7 @@ public class ChatAlerts extends Screen {
 
         if (addMode && addEntry != null) {
             addEntry.updateVisibility();
-            if (endIdx == entries.size()) {
+            if (endIdx == filtered.size()) {
                 addEntry.setPosition(this.width / 2 - entryW / 2, y);
             }
         }
@@ -264,6 +289,20 @@ public class ChatAlerts extends Screen {
             addBtn.setX(this.width / 2 - entryW / 2);
             addBtn.setY(addBtnY);
         }
+    }
+
+    private List<Entry> getFilteredEntries() {
+        String query = searchQuery == null ? "" : searchQuery.trim().toLowerCase();
+        if (query.isEmpty()) {
+            return entries;
+        }
+        List<Entry> filtered = new ArrayList<>();
+        for (Entry e : entries) {
+            if (e.keyField.getText().toLowerCase().contains(query)) {
+                filtered.add(e);
+            }
+        }
+        return filtered;
     }
 
     private void renderScrollIndicator(GuiGraphicsExtractor context, int x, int y, int listHeight, int totalEntries) {
@@ -469,6 +508,7 @@ public class ChatAlerts extends Screen {
             this.setFocused(presetNameField);
             return true;
         }
+
         if (presetDropdown != null && presetDropdown.isVisible()) {
             if (presetDropdown.mouseClicked(click)) return true;
             int x = presetDropdown.getX(); 
@@ -489,24 +529,30 @@ public class ChatAlerts extends Screen {
             return true;
         }
 
+        if (searchField != null && !searchField.mouseClicked(click, doubled)) {
+            searchField.setFocused(false);
+        }
+
+        List<Entry> filtered = getFilteredEntries();
         int startIdx = scrollOffset;
-        int endIdx = Math.min(startIdx + maxVisibleEntries, entries.size());
+        int endIdx = Math.min(startIdx + maxVisibleEntries, filtered.size());
         for (int i = startIdx; i < endIdx; i++) {
-            if (entries.get(i).mouseClicked(click)) {
+            if (filtered.get(i).mouseClicked(click)) {
                 return false;
             }
         }
+
         return super.mouseClicked(click, doubled);
     }
 
     private boolean handleScrollbar(double mouseX, double mouseY) {
 
-        int listTop = 40;
+        int listTop = 40 + entryH;
         int listBottom = this.height - 60;
         int listHeight = listBottom - listTop;
         int scrollbarX = this.width / 2 + entryW / 2 + 20;
         int scrollbarWidth = Math.max(4, (int)(8 * uiScale));
-        int totalEntries = entries.size() + (addMode ? 1 : 0);
+        int totalEntries = getFilteredEntries().size() + (addMode ? 1 : 0);
 
         if (totalEntries > maxVisibleEntries && mouseX >= scrollbarX && mouseX <= scrollbarX + scrollbarWidth
             && mouseY >= listTop && mouseY <= listTop + listHeight) {
@@ -542,10 +588,10 @@ public class ChatAlerts extends Screen {
     @Override
     public boolean mouseDragged(MouseButtonEvent click, double offsetX, double offsetY) {
         if (isDraggingScrollbar) {
-            int listTop = 40;
+            int listTop = 40 + entryH;
             int listBottom = this.height - 60;
             int listHeight = listBottom - listTop;
-            int totalEntries = entries.size() + (addMode ? 1 : 0);
+            int totalEntries = getFilteredEntries().size() + (addMode ? 1 : 0);
             int thumbHeight = Math.max((int)(10 * uiScale), (maxVisibleEntries * listHeight) / totalEntries);
             int mouseThumbY = (int)click.y() - listTop - scrollKnobOffset;
             double scrollPercent = mouseThumbY / (double)(listHeight - thumbHeight);
@@ -558,7 +604,7 @@ public class ChatAlerts extends Screen {
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
-        int totalEntries = entries.size() + (addMode ? 1 : 0);
+        int totalEntries = getFilteredEntries().size() + (addMode ? 1 : 0);
         if (totalEntries > maxVisibleEntries) {
             scrollOffset -= (int)Math.signum(verticalAmount);
             scrollOffset = Math.clamp(scrollOffset, 0, totalEntries - maxVisibleEntries);

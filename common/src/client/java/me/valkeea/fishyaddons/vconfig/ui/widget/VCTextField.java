@@ -21,6 +21,7 @@ public class VCTextField extends EditBox {
     private boolean drawsBg = true;
     private boolean allowSection = true;
     private float uiScale = 1.0f;
+    private int customBgColor = 0x00000000;
     private int maxLength = 256;
     private int selectionStart = 0;
 
@@ -45,14 +46,25 @@ public class VCTextField extends EditBox {
         this.interceptInventory = intercept;
     }
 
+    public void setCustomBgColor(int color) {
+        this.customBgColor = color;
+    }
+
     @Override
-    public void extractWidgetRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+    public void extractWidgetRenderState(GuiGraphicsExtractor gge, int mouseX, int mouseY, float delta) {
         
         var focusedBg = SpriteUtil.createModSprite("gui/" + FishyMode.themeName() + "/textbg_highlighted");
         var texture = this.isFocused() ? focusedBg : BG_TEXTURE;
 
-        if (drawsBg) {
-            context.blit(
+        if (customBgColor != 0x00000000) {
+            gge.fill(
+                this.getX(), this.getY(),
+                this.getX() + this.width, this.getY() + this.height,
+                customBgColor
+            );
+            
+        } else if (drawsBg) {
+            gge.blit(
                 RenderPipelines.GUI_TEXTURED,
                 texture,
                 this.getX(), this.getY(),
@@ -78,22 +90,22 @@ public class VCTextField extends EditBox {
         this.setX(adjustedX);
         
         this.setX(adjustedX + Minecraft.getInstance().font.lineHeight / 4);           
-        renderScaledText(context, mouseX, mouseY, delta);
+        renderScaledText(gge, mouseX, mouseY, delta);
         
         this.setBordered(oldDrawsBackground);        
         this.setY(originalY);
         this.setX(originalX);
     }
     
-    private void renderScaledText(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+    private void renderScaledText(GuiGraphicsExtractor gge, int mouseX, int mouseY, float delta) {
         int scissorX = this.getX() - 1;
         int scissorY = this.getY() - 1;
         int scissorWidth = this.width - (int)(4 * uiScale) + 2;
         int scissorHeight = this.height + 2;
         
-        context.enableScissor(scissorX, scissorY, scissorX + scissorWidth, scissorY + scissorHeight);
-        context.pose().pushMatrix();
-        context.pose().scale(uiScale, uiScale);
+        gge.enableScissor(scissorX, scissorY, scissorX + scissorWidth, scissorY + scissorHeight);
+        gge.pose().pushMatrix();
+        gge.pose().scale(uiScale, uiScale);
         
         float scaledX = this.getX() / uiScale;
         float scaledY = this.getY() / uiScale;
@@ -110,15 +122,15 @@ public class VCTextField extends EditBox {
         this.width = (int)(this.width / uiScale);
         this.height = (int)(this.height / uiScale);
         
-        super.extractWidgetRenderState(context, (int)scaledMouseX, (int)scaledMouseY, delta);
+        super.extractWidgetRenderState(gge, (int)scaledMouseX, (int)scaledMouseY, delta);
         
         this.setX(origX);
         this.setY(origY);
         this.width = origWidth;
         this.height = origHeight;
         
-        context.pose().popMatrix();
-        context.disableScissor();
+        gge.pose().popMatrix();
+        gge.disableScissor();
     }
 
     @Override

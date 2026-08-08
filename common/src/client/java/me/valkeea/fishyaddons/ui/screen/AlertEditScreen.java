@@ -46,7 +46,7 @@ public class AlertEditScreen extends Screen {
     private VCSlider volumeSlider;
     private VCTextField keyField;
     private int alertColor = 0xFF6DE6B5;
-    private boolean alertStartsWith = false;
+    private boolean alertStartsWith;
     private VCTextField lastFocusedField = null; 
 
     private String stateKey = null;
@@ -76,6 +76,7 @@ public class AlertEditScreen extends Screen {
         this.alertKey = key;
         this.initialData = data != null ? data : new AlertData("", "", 0xFFFFFFFF, "", 1.0F, true, false);
         this.alertColor = this.initialData.getColor();
+        this.alertStartsWith = this.initialData.isStartsWith();
     }
 
     @Override

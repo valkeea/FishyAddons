@@ -20,6 +20,7 @@ public enum BooleanKey implements ConfigKey<Boolean> {
     XP_OUTLINE("xpOutline"),
     HD_FONT("hdFont"),
     FISHY_GUI("fishyGui"),
+    REORDER_PACKS("reorderPacks"),
     SKIP_F5("skipPerspective"),
     CLEAN_HYPE("cleanHype"),
     HELD_ITEM_TRANSFORMS("heldItemTransforms"),

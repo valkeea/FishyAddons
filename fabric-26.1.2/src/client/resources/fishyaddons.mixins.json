@@ -36,6 +36,7 @@
 		"MixinLivingEntityRenderer",
 		"MixinMinecraftClientScreenChange",
 		"MixinMouse",
+		"MixinPackRepository",
 		"MixinParentElementInput",
 		"MixinParticleManager",
 		"MixinPerspective",		

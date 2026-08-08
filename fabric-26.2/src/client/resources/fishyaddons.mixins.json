@@ -37,6 +37,7 @@
 		"MixinLivingEntityRenderer",
 		"MixinMinecraftClient",
 		"MixinMouse",
+		"MixinPackRepository",
 		"MixinParentElementInput",
 		"MixinParticleManager",
 		"MixinPerspective",		
@@ -47,7 +48,7 @@
 		"MixinSoundSystemVolume",
 		"MixinTextHandler",
 		"MouseAccessor",
-		"PlayerInventoryAccessor"		
+		"PlayerInventoryAccessor"
 	],
 	"injectors": {
 		"defaultRequire": 1

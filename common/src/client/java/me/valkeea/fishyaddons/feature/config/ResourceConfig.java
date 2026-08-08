@@ -13,6 +13,13 @@ import net.minecraft.client.Minecraft;
 public class ResourceConfig {
 
     @UIToggle(
+        key = BooleanKey.REORDER_PACKS,
+        name = "Reorder *Resource Pack*s",
+        description = "Deprioritizes all server resource packs on Hypixel."
+    )
+    private static boolean reorderPacks;
+
+    @UIToggle(
         key = BooleanKey.FISHY_GUI,
         name = "Transparent Minecraft *GUI*",
         description = "Uses textures from ValksfullSbPack."
@@ -31,7 +38,6 @@ public class ResourceConfig {
         phase = VCListener.Phase.CHANGE
     )
     private static void onGuiPackChanged() {
-        ScreenManager.preserveCurrentState();
         ResourceHandler.updateGuiPack();
     }    
     
@@ -40,18 +46,19 @@ public class ResourceConfig {
         phase = VCListener.Phase.CHANGE
     )
     private static void onFontPackChanged() {
-        ScreenManager.preserveCurrentState();
         ResourceHandler.updateFontPack();
     }
 
     @VCListener(
         value = {
+            BooleanKey.REORDER_PACKS,
             BooleanKey.FISHY_GUI,
             BooleanKey.HD_FONT
         },
         phase = VCListener.Phase.POST_CHANGE
     )
     private static void onResourceChange() {
+        ScreenManager.preserveCurrentState();        
         Minecraft.getInstance().reloadResourcePacks();
     }
 

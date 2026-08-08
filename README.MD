@@ -8,7 +8,7 @@
 <img alt="Modrinth Version" src="https://img.shields.io/modrinth/v/QOUIa2cU?label=Modrinth&labelColor=%232a292b&color=%230affeb">
 </a>
 
- > _Use /fa or /fishyaddons to open config.  Features with commands have help message for the command root._
+ > _Use /fa or /fishyaddons to open config. Features with commands have help message for the command root._
 
 </div>
 
@@ -74,7 +74,7 @@
 
 - Century Cake Display (shows next expiring)
 - Temporary Effects Display (Consumables)
-- Moonglade Beacon alarm and Display
+- Foraging Beacon alarm and Display
 
 </details>
 
@@ -121,6 +121,7 @@
 
 - UUID based item protection _/fg_ (Drop and GUI protection, configurable)
 - Slot locking and binding
+- Item AH/BZ price tooltip
 
 </details>
 
@@ -154,6 +155,7 @@
 - Translucent water-like lava with a tint (Crimson Isles only)
 - Non-intrusive fire overlay
 - Lava and Water visibility (Hypixel Skyblock only)
+- Custom nether sky color
 - Hide Hotspot Holograms
 
 </details>
@@ -165,8 +167,8 @@
 <details>
 <summary><b>Chat & Text</b> (2)</summary>
 
-- Globat chat formatting (preset or use &[]|{}, example &[F58CCE>FFFFFF])
-- Custom name / word colors (separate global and user-only lists)
+- Globat chat formatting for users(preset or use &[]|{}, example &[F58CCE>FFFFFF])
+- Custom name / word colors (separate modwide and user-only lists)
 
 </details>
 
@@ -179,9 +181,10 @@
 </details>
 
 <details>
-<summary><b>Builtin Resources</b> (2)</summary>
+<summary><b>Resources</b> (2)</summary>
 
 - Transparent UI
 - HD font
+- Reorder (deprioritize) server resource packs on Hypixel
 
 </details>

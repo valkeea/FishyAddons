@@ -56,6 +56,7 @@ public class HudDrawer {
         RenderUtils.border(context, x, y, width, height, color);
     }
 
+    /** Draw a full texture */
     public void drawIcon(Identifier iconId, int x, int y, int width, int height) {
         context.blit(
             RenderPipelines.GUI_TEXTURED,
@@ -65,6 +66,8 @@ public class HudDrawer {
         );
     }
 
+    /** Draw a region of a texture */
+    @SuppressWarnings("squid:S107")
     public void drawIcon(Identifier iconId, int x, int y, int u, int v, int width, int height, int textureWidth, int textureHeight) {
         context.blit(
             RenderPipelines.GUI_TEXTURED,
@@ -101,8 +104,8 @@ public class HudDrawer {
         int w = tr.width(tooltip.get(0)) + 10;
         int h = tooltip.size() * (tr.lineHeight + 2) + 4;
 
-        if (mouseX + w > screen.getWidth() / screen.getGuiScale()) mouseX = screen.getWidth() / screen.getGuiScale() - w - 5;
-        if (mouseY + h > screen.getHeight() / screen.getGuiScale()) mouseY = screen.getHeight() / screen.getGuiScale() - h - 5;
+        if (mouseX + w > screen.getGuiScaledWidth()) mouseX = screen.getGuiScaledWidth() - w - 5;
+        if (mouseY + h > screen.getGuiScaledHeight()) mouseY = screen.getGuiScaledHeight() - h - 5;
 
         RenderUtils.preview(context, mc.font, tooltip, mouseX, mouseY, themeColor, 1.0F);
     }

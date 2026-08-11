@@ -154,7 +154,7 @@ public class ScDisplay implements HudElement {
         if (creatures.isEmpty()) return;
 
         var window = mc.getWindow();
-        int screenWidth = window.getWidth() / window.getGuiScale();
+        int screenWidth = window.getGuiScaledWidth();
         int leftThreshold = screenWidth / 3;
         int rightThreshold = (2 * screenWidth) / 3;
 
@@ -435,7 +435,7 @@ public class ScDisplay implements HudElement {
         int y = getHudY();
 
         var window = mc.getWindow();
-        int screenW = window.getWidth() / window.getGuiScale();
+        int screenW = window.getGuiScaledWidth();
         int leftThreshold = screenW / 3;
         int rightThreshold = (2 * screenW) / 3;
 

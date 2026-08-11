@@ -55,7 +55,7 @@ public class MixinMinecraftClientScreenChange {
         }        
     }
 
-    @Inject(method = "resizeGui", at = @At("HEAD"))
+    @Inject(method = "resizeGui", at = @At("RETURN"))
     private void onResolutionChanged(CallbackInfo ci) {
         ElementRegistry.clearAllCaches();
         ScreenManager.refreshCurrentScreen();

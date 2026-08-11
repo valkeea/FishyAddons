@@ -53,7 +53,7 @@ public class FishyToast implements Toast {
 
                 var mc = event.getClient();
                 var window = mc.getWindow();
-                int screenWidth = window.getWidth() / window.getGuiScale();
+                int screenWidth = window.getGuiScaledWidth();
                 int toastWidth = 160;
                 int toastHeight = 32;
                 int x = (screenWidth - toastWidth) / 2;

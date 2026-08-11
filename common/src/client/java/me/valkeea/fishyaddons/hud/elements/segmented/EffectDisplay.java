@@ -111,7 +111,7 @@ public class EffectDisplay implements HudElement {
         var mc = Minecraft.getInstance();
         int totalH = (int)(Math.max(1, EffectTimers.getInstance().listActive().size()) * 20 * Math.max(0.5f, getHudSize() / 12.0F));
         var window = mc.getWindow();
-        int screenHeight = window.getHeight() / window.getGuiScale();
+        int screenHeight = window.getGuiScaledHeight();
         
         if (getHudY() + totalH > screenHeight) {
             intersects = true;

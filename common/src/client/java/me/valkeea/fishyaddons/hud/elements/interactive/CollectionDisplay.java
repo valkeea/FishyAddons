@@ -319,7 +319,7 @@ public class CollectionDisplay extends InteractiveHudElement {
             int hudX = state.x;
             int hudY = state.y;
             int buttonWidth = (int)(45 * scale);
-            int h = window.getHeight() / window.getGuiScale();
+            int h = window.getGuiScaledHeight();
             
             if (toggleMenu.isVisible() && screen != null) {
                 int buttonSpacing = (int)(2 * scale);

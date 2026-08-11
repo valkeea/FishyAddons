@@ -12,7 +12,7 @@ import net.minecraft.client.Minecraft;
 @Mixin(Minecraft.class)
 public class MixinMinecraftClient {
 
-    @Inject(method = "resizeGui", at = @At("HEAD"))
+    @Inject(method = "resizeGui", at = @At("RETURN"))
     private void onResolutionChanged(CallbackInfo ci) {
         ElementRegistry.clearAllCaches();
         ScreenManager.refreshCurrentScreen();

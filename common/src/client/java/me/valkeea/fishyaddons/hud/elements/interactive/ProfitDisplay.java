@@ -278,7 +278,7 @@ public class ProfitDisplay extends InteractiveHudElement {
                 int profileButtonX = hudX + 4 * (buttonWidth + buttonSpacing);
                 int menuX = profileButtonX;
                 int menuY = hudY;
-                profileMenu.setPosition(menuX, menuY, window.getHeight() / window.getGuiScale());
+                profileMenu.setPosition(menuX, menuY, window.getGuiScaledHeight());
                 profileMenu.render(context, screen, mouseX, mouseY, scale);
             }
 

@@ -27,28 +27,58 @@ public class HudConfig extends BaseConfig {
     }    
     
     // --- HUD Getters/Setters ---
-    
+
     public static int getHudX(String hudKey, int defaultX) {
-        Object value = INSTANCE.hud.getValues().getOrDefault(hudKey + "X", defaultX);
-        int intValue = value instanceof Number n ? n.intValue() : defaultX;
-        var window = Minecraft.getInstance().getWindow();
-        int maxX = window.getWidth() / window.getGuiScale() - getHudSize(hudKey, 12);
+        double screenW = getScreenWidth();
+        int intValue = resolveCoord(hudKey, "X", defaultX, screenW);
+        int maxX = (int) screenW - getHudSize(hudKey, 12);
         return Math.clamp(intValue, 0, maxX);
     }
 
     public static int getHudY(String hudKey, int defaultY) {
-        Object value = INSTANCE.hud.getValues().getOrDefault(hudKey + "Y", defaultY);
-        int intValue = value instanceof Number n ? n.intValue() : defaultY;
-        var window = Minecraft.getInstance().getWindow();
-        int maxY = window.getHeight() / window.getGuiScale() - getHudSize(hudKey, 12);
+        double screenH = getScreenHeight();
+        int intValue = resolveCoord(hudKey, "Y", defaultY, screenH);
+        int maxY = (int) screenH - getHudSize(hudKey, 12);
         return Math.clamp(intValue, 0, maxY);
+    }
+    
+    // Positions are stored as fractions (0.0-1.0) of the current GUI-scaled screen size
+    private static int resolveCoord(String hudKey, String axis, int defaultValue, double screenDim) {
+        var pctValue = INSTANCE.hud.getValues().get(hudKey + axis + "Pct");
+        if (pctValue instanceof Number pct) {
+            return (int) Math.round(pct.doubleValue() * screenDim);
+        }
+
+        var legacy = INSTANCE.hud.getValues().get(hudKey + axis);
+        if (legacy instanceof Number n) {
+            int legacyPixels = n.intValue();
+            setPct(hudKey, axis, legacyPixels, screenDim);
+            return legacyPixels;
+        }
+
+        return defaultValue;
+    }
+
+    private static void setPct(String hudKey, String axis, int pixels, double screenDim) {
+        double pct = screenDim > 0 ? pixels / screenDim : 0.0;
+        INSTANCE.hud.set(hudKey + axis + "Pct", pct);
+        INSTANCE.hud.remove(hudKey + axis);
     }
 
     public static void setHudX(String hudKey, int x) {
-        if (!INSTANCE.hud.getValues().containsKey(hudKey + "X")) {
-            INSTANCE.hud.set(hudKey + "X", 5);
-        }
-        INSTANCE.hud.set(hudKey + "X", x);
+        setPct(hudKey, "X", x, getScreenWidth());
+    }
+
+    public static void setHudY(String hudKey, int y) {
+        setPct(hudKey, "Y", y, getScreenHeight());
+    }
+
+    private static double getScreenWidth() {
+        return Minecraft.getInstance().getWindow().getGuiScaledWidth();
+    }
+
+    private static double getScreenHeight() {
+        return Minecraft.getInstance().getWindow().getGuiScaledHeight();
     }
 
     @Override
@@ -59,13 +89,6 @@ public class HudConfig extends BaseConfig {
     @Override
     protected void saveToJson(JsonObject json) {
         hud.saveToJson(json);
-    }
-
-    public static void setHudY(String hudKey, int y) {
-        if (!INSTANCE.hud.getValues().containsKey(hudKey + "Y")) {
-            INSTANCE.hud.set(hudKey + "Y", 5);
-        }
-        INSTANCE.hud.set(hudKey + "Y", y);
     }
 
     public static int getHudSize(String hudKey, int defaultSize) {

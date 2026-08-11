@@ -115,7 +115,7 @@ public abstract class InteractiveHudElement extends BaseHudElement {
      */
     protected void updateMenuPositions() {
         var window = Minecraft.getInstance().getWindow();
-        int height = window.getHeight() / window.getGuiScale();
+        int height = window.getGuiScaledHeight();
         float scale = getHudSize() / 12.0F;
         int verticalSpace = height - getHudY() - MENU_PADDING;
         

@@ -10,6 +10,7 @@ import me.valkeea.fishyaddons.tracker.monitoring.ActivityMonitor;
 import me.valkeea.fishyaddons.tracker.profit.ValuableMobs;
 import me.valkeea.fishyaddons.vconfig.annotation.*;
 import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
+import me.valkeea.fishyaddons.vconfig.api.Config;
 import me.valkeea.fishyaddons.vconfig.api.DoubleKey;
 import me.valkeea.fishyaddons.vconfig.api.IntKey;
 import me.valkeea.fishyaddons.vconfig.api.StringKey;
@@ -55,8 +56,13 @@ public class SkyblockConfig {
 
     @UIToggle(
         key = BooleanKey.EQ_DISPLAY_ANCHOR,
-        name = "Anchor Equipment Display",
-        description = "Anchor the display to the left of armor slots.",
+        name = "Anchor Equipment Display to armor Y-level",
+        description = "Slider adjusts the positive X-offset (max = align with shield slot).",
+        parent = EQ
+    )
+    @UISlider(
+        key = DoubleKey.EQ_DISPLAY_ANCHOR_PCT,
+        min = 0.0, max = 5.25, format = "+%.2f slots",
         parent = EQ
     )
     private static boolean eqDisplayAnchor;
@@ -79,7 +85,12 @@ public class SkyblockConfig {
 
     @VCListener(BooleanKey.EQ_DISPLAY_ANCHOR)
     private static void onEqDisplayAnchorChange(boolean newValue) {
-        EqDisplay.initPositions(newValue);
+        EqDisplay.initPositions(newValue, Config.get(DoubleKey.EQ_DISPLAY_ANCHOR_PCT));
+    }
+
+    @VCListener(doubles = DoubleKey.EQ_DISPLAY_ANCHOR_PCT)
+    private static void onEqDisplayAnchorPctChange(double newValue) {
+        EqDisplay.initPositions(Config.get(BooleanKey.EQ_DISPLAY_ANCHOR), newValue);
     }
 
     @UIToggle(

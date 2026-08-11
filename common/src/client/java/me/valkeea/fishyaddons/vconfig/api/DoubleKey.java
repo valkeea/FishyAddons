@@ -15,6 +15,7 @@ public enum DoubleKey implements ConfigKey<Double> {
     REEL_OVERRIDE("customReel"),
     FERO_OVERRIDE("customFero"),
     HOTSPOT_DISTANCE("hotspotDistance", 7.0),
+    EQ_DISPLAY_ANCHOR_PCT("equipmentDisplayAnchorPct"),
 
     NONE("NaN")
     ;

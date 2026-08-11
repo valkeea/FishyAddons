@@ -35,6 +35,7 @@ public class EqDisplay extends InteractiveHudElement {
     private static EqDisplay instance = null;
     private static Pair<Integer, Integer> anchoredPos = null;    
     private static boolean useAnchoredPos = false;
+    private static double anchoredPct = 0.0;
 
     private EqDisplay() {
         super(
@@ -72,8 +73,9 @@ public class EqDisplay extends InteractiveHudElement {
 
     @Override
     protected boolean shouldRender() {
-        return Config.get(BooleanKey.EQ_DISPLAY) && (EqTextures.hasAnyData() || isEditingMode())
-            && (HudUtils.isInventoryOpen() || Config.get(BooleanKey.EQ_DISPLAY_ALWAYS));
+        return Config.get(BooleanKey.EQ_DISPLAY) && GameMode.skyblock() &&
+        (EqTextures.hasAnyData() || isEditingMode()) &&
+        (HudUtils.isInventoryOpen() || Config.get(BooleanKey.EQ_DISPLAY_ALWAYS));
     }
 
     @Override
@@ -110,7 +112,8 @@ public class EqDisplay extends InteractiveHudElement {
 
         for (int i = 0; i < SLOTS; i++) {
             int y = i * SLOT_SIZE;
-            drawer.drawIcon(SLOT_TEXTURE, 0, y, 7, 83, SLOT_SIZE, SLOT_SIZE, 256, 256);
+            int texSize = 256;
+            drawer.drawIcon(SLOT_TEXTURE, 0, y, 7, 83, SLOT_SIZE, SLOT_SIZE, texSize, texSize);
 
             if (EqTextures.hasSlotData(i) && !EqTextures.isEmptySlot(i)) {
                 var stack = EqTextures.getSlotItemStack(i);
@@ -143,7 +146,7 @@ public class EqDisplay extends InteractiveHudElement {
 
     @Override
     public void onCacheRefresh() {
-        initPositions(useAnchoredPos);
+        initPositions(useAnchoredPos, anchoredPct);
     }
 
     private void openEquipment() {
@@ -157,20 +160,20 @@ public class EqDisplay extends InteractiveHudElement {
 
     private String getCmd() {
         int cmdIndex = Config.get(IntKey.EQ_DISPLAY_CMD);
-        String cmd = switch (cmdIndex) {
+        return switch (cmdIndex) {
             case 1 -> "/loadouts";
             case 2 -> "/stats";
             default -> "/equipment";
         };
-        return cmd;
     }
 
-    public static void initPositions(boolean anchored) {
+    public static void initPositions(boolean anchored, double anchorPct) {
         useAnchoredPos = anchored;
+        anchoredPct = anchorPct;
         anchoredPos = null;
     }
 
-    private void findAnchoredPos() {
+    private static void findAnchoredPos() {
         var mc = Minecraft.getInstance();
         if (mc.player == null) return;
 
@@ -178,19 +181,23 @@ public class EqDisplay extends InteractiveHudElement {
         if (screen instanceof InventoryScreen inv) {
 
             var handler = inv.getMenu();
-            var hsa = (HandledScreenAccessor) screen;
+            var hsa = (HandledScreenAccessor) inv;
             int guiX = hsa.getX();
             int guiY = hsa.getY();
 
-            int slot5Y = handler.getSlot(5).y;
-            int x = guiX - SLOT_SIZE;
-            int y = guiY + slot5Y;
+            int x = guiX - SLOT_SIZE + getAnchoredOffset();
+            int y = guiY + handler.getSlot(5).y -1;
             
             anchoredPos = Pair.of(x, y);
 
             if (anchoredPos != null) {
-                setHudPosition(anchoredPos.left(), anchoredPos.right());
+                instance.setHudPosition(anchoredPos.left(), anchoredPos.right());
+                instance.invalidateCache();
             }
         }
+    }
+
+    private static int getAnchoredOffset() {
+        return (int) (anchoredPct * SLOT_SIZE);
     }
 }

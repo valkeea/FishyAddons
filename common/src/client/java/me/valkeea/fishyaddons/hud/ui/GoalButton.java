@@ -10,7 +10,6 @@ import me.valkeea.fishyaddons.event.impl.MouseClickEvent;
 import me.valkeea.fishyaddons.tool.FishyMode;
 import me.valkeea.fishyaddons.tracker.collection.CollectionTracker;
 import me.valkeea.fishyaddons.tracker.collection.RecipeScanner;
-import me.valkeea.fishyaddons.util.ContainerScanner;
 import me.valkeea.fishyaddons.vconfig.ui.render.RenderUtils;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.inventory.ContainerScreen;
@@ -21,7 +20,6 @@ public class GoalButton  {
     private static IndexedButton btn = null;
     private GoalButton() {}
     
-    private static final String TITLE = "Recipe";
     private static final List<Component> tooltip = List.of(
         Component.literal("[Add as a collection goal]").withStyle(s -> s.withColor(FishyMode.getThemeColor())),
         Component.literal("Please open any nested crafts").withStyle(s -> s.withColor(0xFFAAAAAA)),
@@ -36,7 +34,7 @@ public class GoalButton  {
         init();
         btn = new IndexedButton(
             gcs, (short) 35, RecipeScanner::addAsGoal,
-            Identifier.fromNamespaceAndPath("fishyaddons", "icon.png"), TITLE
+            Identifier.fromNamespaceAndPath("fishyaddons", "icon.png"), null
         );
     }
 
@@ -59,8 +57,7 @@ public class GoalButton  {
 
     public static void render(GuiGraphicsExtractor context, ContainerScreen gcs, int mouseX, int mouseY) {
 
-        if (!ContainerScanner.current().endsWith(TITLE) ||
-            !CollectionTracker.isEnabled()) {
+        if (!(CollectionTracker.isEnabled() && CollectionTracker.isInSupercraft())) {
             if (btn != null) btn = null;
             return;
         }

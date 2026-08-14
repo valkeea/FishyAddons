@@ -1,5 +1,7 @@
 package me.valkeea.fishyaddons.hud.ui;
 
+import org.jetbrains.annotations.Nullable;
+
 import me.valkeea.fishyaddons.compat.McApi;
 import me.valkeea.fishyaddons.hud.core.HudUtils;
 import me.valkeea.fishyaddons.mixin.HandledScreenAccessor;
@@ -15,7 +17,7 @@ public class IndexedButton {
     private final short index;
     private final Runnable onClick;
     private final Identifier icon;
-    private final String requiredGuiName;
+    private final @Nullable String requiredGuiName;
     private int x;
     private int y;
     private int size = 16;   
@@ -25,7 +27,7 @@ public class IndexedButton {
     }
 
     public IndexedButton(AbstractContainerScreen<?> screen, short index, Runnable onClick,
-        Identifier icon, String requiredGuiName) {
+        Identifier icon, @Nullable String requiredGuiName) {
         
         if (!(screen instanceof ContainerScreen) || index < 1 || index > 46) {
             throw new IllegalArgumentException("Invalid screen or index out of bounds for IndexedButton");
@@ -92,7 +94,7 @@ public class IndexedButton {
     }
 
     public boolean isVisible(String currentGuiName) {
-        return !(requiredGuiName != null && !currentGuiName.contains(requiredGuiName));
+        return requiredGuiName == null || currentGuiName.contains(requiredGuiName);
     }
 
     public boolean isMouseOver(double mouseX, double mouseY) {

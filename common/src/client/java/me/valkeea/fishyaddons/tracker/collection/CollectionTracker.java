@@ -2,8 +2,6 @@ package me.valkeea.fishyaddons.tracker.collection;
 
 import java.util.concurrent.atomic.AtomicLong;
 
-import me.valkeea.fishyaddons.event.EventPhase;
-import me.valkeea.fishyaddons.event.EventPriority;
 import me.valkeea.fishyaddons.event.impl.FaEvents;
 import me.valkeea.fishyaddons.event.impl.ScreenOpenEvent;
 import me.valkeea.fishyaddons.tool.RunDelayed;
@@ -22,6 +20,7 @@ public class CollectionTracker {
     private static boolean initialized = false;
     private static boolean enabled = false;
     private static boolean downTiming = false;
+    private static boolean inSupercraft = false;       
     
     private static final AtomicLong startTime = new AtomicLong(-1);
     private static final AtomicLong pausedTime = new AtomicLong(0);
@@ -38,9 +37,8 @@ public class CollectionTracker {
         CollectionData.init();
         CraftingRecipes.load();
         
-        FaEvents.SCREEN_OPEN.register(
-            event -> onScreenOpen(event), EventPriority.NORMAL, EventPhase.NORMAL
-        );
+        FaEvents.SCREEN_OPEN.register(e -> onScreenOpen(e));
+        FaEvents.SCREEN_CLOSE.register(e -> inSupercraft = false);
         
         initialized = true;
     }
@@ -51,6 +49,8 @@ public class CollectionTracker {
     private static void onScreenOpen(ScreenOpenEvent event) {
         if (!enabled) return;
 
+        inSupercraft = false;
+        
         var title = event.titleString;
         if (title == null || title.isEmpty()) return;
         
@@ -75,8 +75,12 @@ public class CollectionTracker {
 
         provider = createSlotProvider(handler);
         
-        if (recipe) RecipeScanner.scanRecipeGui(provider);
-        else ProgressScanner.scanCollectionGui(title, provider);
+        if (recipe) {
+            RecipeScanner.scanRecipeGui(provider);
+            inSupercraft = true;
+        } else {
+            ProgressScanner.scanCollectionGui(title, provider);
+        }
     }
 
     private static SlotStackProvider createSlotProvider(net.minecraft.world.inventory.AbstractContainerMenu handler) {
@@ -237,7 +241,11 @@ public class CollectionTracker {
 
     public static boolean isEnabled() {
         return enabled;
-    }    
+    }
+
+    public static boolean isInSupercraft() {
+        return inSupercraft;
+    }
 
     public static long getTimeElapsedMs() {
         long start = startTime.get();

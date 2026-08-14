@@ -211,7 +211,7 @@ public class ChatDropParser {
             DropType.COIN, 1, -1
         ));
 
-        // Pattern 7a: "CHARM/SALT/NAGA You charmed a <creatureName> and captured X Shards" (with or without "from it.")
+        // Pattern 7a: "CHARM/SALT/NAGA You charmed a <creatureName> and captured X Shards"
         DROP_PATTERNS.add(new DropPattern(
             Pattern.compile("(?:salt|charm|naga)\\s+you charmed an?\\s+(.+?)\\s+and captured (\\d+)\\s+shards?",
             Pattern.CASE_INSENSITIVE), DropType.SHARD, 2, 1
@@ -223,11 +223,17 @@ public class ChatDropParser {
             Pattern.CASE_INSENSITIVE), DropType.SHARD, -1, 1
         ));
 
-        // Pattern 7c: "capture! you caught a name and gained <Amountx|a|an> <shardName Shard>!
+        // Pattern 7c: "CHARM! You charmed the <creatureName> and received <amount as number OR a/an> <shardName Shard>(s)!"
         DROP_PATTERNS.add(new DropPattern(
-            Pattern.compile("capture!\\s+you caught an?\\s+(.+?)\\s+and gained (?:(\\d+)x\\s+|an?\\s+)(.+?)!",
+            Pattern.compile("(?:salt|charm|naga)!\\s+you charmed the\\s+(.+?)\\s+and received\\s+(?:(\\d+)\\s+|an?\\s+)(.+?)\\s*shard(?:s)?!",
             Pattern.CASE_INSENSITIVE), DropType.SHARD, 2, 3
-        ));        
+        ));
+
+        // Pattern 7d: "capture! .. gained|gave you.. <dx|a|an> <shardName Shard>!
+        DROP_PATTERNS.add(new DropPattern(
+            Pattern.compile("capture!.*?\\s+(?:gained|gave you)\\s+(?:(\\d+)x\\s+|an?\\s+)(.+?)\\s*shard(?:s)?!", Pattern.CASE_INSENSITIVE),
+            DropType.SHARD, 1, 2
+        ));
         
         // Pattern 8a: "You caught xX ItemName Shards!"
         DROP_PATTERNS.add(new DropPattern(
@@ -241,10 +247,16 @@ public class ChatDropParser {
             DropType.SHARD, -1, 1
         ));
         
-        // Pattern 9: "LOOT SHARE You received a ItemName Shard for assisting <someone>!"
+        // Pattern 9: "LOOT SHARE You received <Amountx|a|an> <shardName Shard(s)> for assisting <someone>!"
         DROP_PATTERNS.add(new DropPattern(
-            Pattern.compile("loot share\\s+you received an?\\s+(.+?)\\s*shard for assisting\\s+\\w+!",
-            Pattern.CASE_INSENSITIVE), DropType.SHARD, -1, 1
+            Pattern.compile("loot share\\s+you received (?:(\\d+)x?\\s+|an?\\s+)(.+?)\\s*shards? for assisting\\s+\\w+!", Pattern.CASE_INSENSITIVE),
+            DropType.SHARD, 1, 2
+        ));
+
+        // Pattern 9b: "LOOT SHARE! You received <Amountx|a|an> <shardName Shard> from someone catching a|an shardName!"
+        DROP_PATTERNS.add(new DropPattern(
+            Pattern.compile("loot share!\\s+you received (?:(\\d+)x\\s+|an?\\s+)(.+?)\\s*shard from\\s+\\w+ catching an?\\s+.+?!",
+            Pattern.CASE_INSENSITIVE), DropType.SHARD, 1, 2
         ));
 
         // Pattern 10: "♔ TROPHY <FROG|FISH>! You caught a <name>!"

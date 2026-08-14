@@ -26,14 +26,10 @@ public class ClickEventHandler implements ChatHandler {
     @Override
     public ChatHandlerResult handle(ChatMessageContext context) {
         try {
-            if (NcpDialogue.checkForCommands(context.getOriginalText(), context.getLowerCleanString())) {
-                return ChatHandlerResult.STOP;
-            }
+            NcpDialogue.checkForCommands(context.getOriginalText(), context.getLowerCleanString());
             return ChatHandlerResult.CONTINUE;
-            
         } catch (Exception e) {
-            System.err.println("[FishyAddons] Error in HoverEvents handler: " + e.getMessage());
-            e.printStackTrace();
+            System.err.println("[FishyAddons] Error in ClickEvents handler: " + e.getMessage());
             return ChatHandlerResult.SKIP;
         }
     }

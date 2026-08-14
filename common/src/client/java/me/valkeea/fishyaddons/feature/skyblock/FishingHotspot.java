@@ -189,6 +189,7 @@ public class FishingHotspot {
      * Checks if a label represents a hotspot type
      */
     public static boolean isHotspotType(String label) {
+        if (label.equals("Chance of Giant Water Bug Shard")) return true;
         if (!label.startsWith("+")) return false;
 
         var hotspotTypes = new String[] {

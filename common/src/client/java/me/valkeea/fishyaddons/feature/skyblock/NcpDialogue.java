@@ -20,8 +20,8 @@ public class NcpDialogue {
     private static final Random RANDOM = new Random();
     private NcpDialogue() {}
     
-    public static boolean checkForCommands(Component message, String clean) {
-        if (!(clean.startsWith(SELECT) || clean.startsWith(TRAPPER))) return false;
+    public static void checkForCommands(Component message, String clean) {
+        if (!(clean.startsWith(SELECT) || clean.startsWith(TRAPPER))) return;
 
         var option = findAcceptButton(message);
         if (option != null) {
@@ -37,8 +37,6 @@ public class NcpDialogue {
                 );
             }
         }
-
-        return false;
     }
 
     private static Component findAcceptButton(Component text) {

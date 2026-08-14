@@ -48,7 +48,7 @@ public class RenderTweaks {
 
     public static FogModifier getFogModifier(Camera camera) {
         if (!validEnv()) return FogModifier.NONE;
-        return camera.getFluidInCamera() == FogType.LAVA ? getLavaFogModifier(camera) : getSkyFogModifier(camera);
+        return camera.getFluidInCamera() == FogType.LAVA ? getLavaFogModifier(camera) : getSkyFogModifier();
     }
 
     /**
@@ -67,7 +67,7 @@ public class RenderTweaks {
         return clearLava ? FogModifier.REMOVE : FogModifier.tint(TransLava.getColor());
     }
 
-    private static FogModifier getSkyFogModifier(Camera camera) {
+    private static FogModifier getSkyFogModifier() {
         if (!SkyblockAreas.isCrimson()) return FogModifier.NONE;
         return skyColor != 0x00000000 ? FogModifier.sky(skyColor) : FogModifier.NONE;
     }

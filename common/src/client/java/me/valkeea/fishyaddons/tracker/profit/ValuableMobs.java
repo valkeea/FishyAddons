@@ -22,8 +22,8 @@ public class ValuableMobs {
 
     private static final List<String> TRACKED_NAMES = List.of(
         "ragnarok", "minos inquisitor", "titanoboa",
-        "wiki tiki", "sphinx", "king minos", "manticore", "sven alpha", "sven follower",
-        "yeti", "reindrake", "scuttler", "littlefoot", "nessie", "giant isopod"
+        "wiki tiki", "sphinx", "king minos", "manticore", "yeti",
+        "reindrake", "scuttler", "littlefoot", "nessie"
     );
 
     // --- Recent Mob Deaths ---
@@ -42,7 +42,7 @@ public class ValuableMobs {
     // Trigger inventory tracking
     private static final List<String> MOB_NAMES = List.of(
         "lord jawbus", "thunder", "minotaur", 
-        "minos champion", "night squid"
+        "minos champion", "night squid", "giant isopod"
     );
 
     private static final List<String> PLAYER_NAMES = List.of(

@@ -29,7 +29,6 @@ public class ProfitTracker {
 
         if (s.startsWith("loot share")) {
             InventoryTracker.onLsDetected();
-            return true;
         }
         
         var result = ChatDropParser.parseMessage(s);

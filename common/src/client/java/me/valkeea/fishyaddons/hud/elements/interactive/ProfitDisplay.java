@@ -452,8 +452,11 @@ public class ProfitDisplay extends InteractiveHudElement {
     private String enhance(String itemName) {
         if (itemName == null || itemName.isEmpty()) return itemName;
 
-        if (itemName.startsWith("ultimate_")) {
-            itemName = itemName.replaceFirst("ultimate_", "");
+        if (itemName.startsWith("enchantment ")) {
+            itemName = itemName.replaceFirst("enchantment ", "");
+            if (itemName.startsWith("ultimate ")) {
+                itemName = itemName.replaceFirst("ultimate ", "");
+            }
         }
         
         String[] words = itemName.split(" ");

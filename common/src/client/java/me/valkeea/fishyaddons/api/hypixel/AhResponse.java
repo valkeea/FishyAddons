@@ -65,16 +65,10 @@ public class AhResponse {
             String rarity = auction.has("tier") 
                 ? auction.get("tier").getAsString().toUpperCase() 
                 : "COMMON";
+
+            result.itemPrices.putIfAbsent(cleanedName, new HashMap<>());
+            Map<String, Double> rarityPrices = result.itemPrices.get(cleanedName);
             
-            String baseName = cleanedName // Strip level, not needed for drop tracking
-                .replaceAll("\\[Lvl \\d+\\]\\s*", "")
-                .trim()
-                .toLowerCase();
-            
-            result.itemPrices.putIfAbsent(baseName, new HashMap<>());
-            Map<String, Double> rarityPrices = result.itemPrices.get(baseName);
-            
-            // Keep lowest price for each rarity
             rarityPrices.compute(rarity, (k, v) -> v == null || price < v ? price : v);
             result.itemsProcessed++;
 

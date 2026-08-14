@@ -1,22 +1,20 @@
 package me.valkeea.fishyaddons.tracker.profit;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import me.valkeea.fishyaddons.tool.ItemData;
 import me.valkeea.fishyaddons.tool.RunDelayed;
+import me.valkeea.fishyaddons.tracker.PriceUtil;
 import me.valkeea.fishyaddons.util.FishyNotis;
 import me.valkeea.fishyaddons.util.text.FromText;
-import net.minecraft.ChatFormatting;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.Style;
+import net.minecraft.network.chat.TextColor;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.item.component.ItemLore;
 
 public class InventoryTracker {
 
@@ -25,7 +23,6 @@ public class InventoryTracker {
     private static final long MONITORING_WINDOW = 180000;
     private static final long LS_WINDOW = 1000;
 
-    private static final String ULTIMATE_PREFIX = "ultimate_";
     private static final String CLEAN_REGEX = "§[0-9a-fk-or]";
 
     private static final List<String> TRACKED_PLAYER_HEADS = new ArrayList<>();
@@ -36,21 +33,33 @@ public class InventoryTracker {
     private static boolean lsEnabled = false;
 
     private static long monitoringStartTime = 0;
-    private static long lsStartTime = 0;    
+    private static long lsStartTime = 0;
+
+    private static final Map<String, String> rarityColorMap = Map.of(
+        "common", "white",
+        "uncommon", "green",
+        "rare", "blue",
+        "epic", "dark_purple",
+        "legendary", "gold",
+        "mythic", "light_purple",
+        "divine", "aqua",
+        "special", "red",
+        "ultimate", "dark_red"
+    );
     
     static {
         TRACKED_PLAYER_HEADS.add("emperor's skull");
         TRACKED_PLAYER_HEADS.add("magma lord fragment");
         TRACKED_PLAYER_HEADS.add("soul fragment");
+        TRACKED_PLAYER_HEADS.add("isopod husk");        
         TRACKED_PLAYER_HEADS.add("foraging exp boost");
         TRACKED_PLAYER_HEADS.add("minos relic");
         TRACKED_PLAYER_HEADS.add("dwarf turtle shelmet");
-        TRACKED_PLAYER_HEADS.add("antique remedies");
-        TRACKED_PLAYER_HEADS.add("crown of greed");
         TRACKED_PLAYER_HEADS.add("water hydra head");
         TRACKED_GHAST_TEARS.add("great white shark tooth");
         TRACKED_TOOLS.add("fishing exp boost");
-        TRACKED_TOOLS.add("foraging exp boost");        
+        TRACKED_TOOLS.add("foraging exp boost");
+        TRACKED_TOOLS.add("combat exp boost");         
     }
     
     private static final Map<Long, String> recentTrackedItemDrops = new ConcurrentHashMap<>();
@@ -62,7 +71,7 @@ public class InventoryTracker {
         if (stack.isEmpty() || !isMonitoringActive()) return;
 
         var newItem = stack.getItem();
-        if (newItem == Items.PLAYER_HEAD) {
+        if (newItem == Items.PLAYER_HEAD || newItem == Items.PAPER) {
             handlePlayerHeadAdded(stack);
             return;
         }
@@ -123,7 +132,7 @@ public class InventoryTracker {
             lastKnownStackSizes.put(cleanName, currentStackSize);
             
             String uuid = extractUUID(stack);
-            var dropResult = TrackedItemData.addDrop(cleanName, newItems, null, uuid);
+            var dropResult = TrackedItemData.addDrop(cleanName, newItems, uuid);
             
             if (dropResult.shouldNotify) {
                 FishyNotis.trackerNoti(displayName, newItems);
@@ -140,7 +149,7 @@ public class InventoryTracker {
 
         if (TRACKED_GHAST_TEARS.contains(cleanName)) {
             String uuid = extractUUID(stack);
-            var dropResult = TrackedItemData.addDrop(cleanName, 1, null, uuid);
+            var dropResult = TrackedItemData.addDrop(cleanName, 1, uuid);
             
             if (dropResult.shouldNotify) {
                 FishyNotis.trackerNoti(displayName, 1);
@@ -153,11 +162,11 @@ public class InventoryTracker {
         var cleanName = displayName.getString().toLowerCase().replaceAll(CLEAN_REGEX, "").trim();      
 
         if (TRACKED_TOOLS.contains(cleanName)) {
-            var rarity = getRarityTier(displayName.getSiblings().get(0).getStyle());
+            var rarity = getRarityTier(displayName);
             var tieredName = rarity + cleanName;
             
             String uuid = extractUUID(stack);
-            var dropResult = TrackedItemData.addDrop(tieredName, 1, null, uuid);
+            var dropResult = TrackedItemData.addDrop(tieredName, 1, uuid);
             
             if (dropResult.shouldNotify) {
                 FishyNotis.trackerNoti(displayName, 1);
@@ -165,22 +174,21 @@ public class InventoryTracker {
         }
     }
 
-    private static String getRarityTier(Style style) {
-        
-        String def = "common ";
-        if (style == null) return def;
+    public static String getRarityTier(Component text) {
 
-        var color = style.getColor();
+        var color = FromText.findFirstTextColor(text, InventoryTracker::isRarityColor);
+        var def = "common ";
         if (color == null) return def;
 
-        switch (color.toString()) {
-            case "white": return def;
-            case "blue": return "rare ";
-            case "dark_purple": return "epic ";
-            case "gold": return "legendary ";
-            case "light_purple": return "mythic ";
-            default: return def;
-        }
+        return rarityColorMap.entrySet().stream()
+            .filter(entry -> entry.getValue().equals(color.toString()))
+            .map(Map.Entry::getKey)
+            .findFirst()
+            .orElse(def) + " ";
+    }
+
+    public static boolean isRarityColor(TextColor color) {
+        return rarityColorMap.containsValue(color.toString());
     }
 
     public static void handleBookAdded(ItemStack stack) {
@@ -188,81 +196,19 @@ public class InventoryTracker {
         var lore = stack.get(DataComponents.LORE);
         if (lore == null) return;
 
-        var bookInfo = extractBookInfoFromLore(lore);
+        var bookInfo = PriceUtil.getBookInfo(lore);
         if (bookInfo == null) return;
         
         String uuid = extractUUID(stack);
-        var dropResult = TrackedItemData.addDrop(bookInfo.name, 1, null, uuid);
+        var dropResult = TrackedItemData.addDrop(bookInfo.name(), 1, uuid);
 
         if (!dropResult.alreadyCounted && dropResult.shouldNotify) {
-            FishyNotis.bookNoti(bookInfo.styledText);
+            FishyNotis.bookNoti(bookInfo.styledName());
         }
     }
 
     private static String extractUUID(ItemStack stack) {
         return ItemData.extractUUID(stack);
-    }
-
-    private static class BookInfo {
-        final String name;
-        final Component styledText;
-        
-        BookInfo(String name, Component styledText) {
-            this.name = name;
-            this.styledText = styledText;
-        }
-    }
-    
-    private static BookInfo extractBookInfoFromLore(ItemLore lore) {
-        for (Component line : lore.lines()) {
-            if (line.toString().contains("Combinable in Anvil")) continue;
-
-            var firstText = FromText.firstLiteral(line);
-            if (firstText != null) {
-                var plainName = firstText.getString();
-                var numericName = toNumeric(plainName);
-                var ultimateText = FromText.findNodeWithColor(line, ChatFormatting.LIGHT_PURPLE);
-
-                if (ultimateText != null) {
-                    var styledUltimate = Component.literal(plainName)
-                        .withStyle(style -> style.withColor(ChatFormatting.LIGHT_PURPLE).withBold(true));
-                    return new BookInfo(ULTIMATE_PREFIX + numericName, styledUltimate);
-
-                } else {
-                    return new BookInfo(numericName, firstText.copy());
-                }
-            }
-        }
-
-        return null;
-    }
-
-    private static String toNumeric(String plainName) {
-        String[] parts = plainName.split(" ");
-        if (parts.length < 2) {
-            return plainName;
-        }
-
-        String tier = parts[parts.length - 1];
-        String baseName = String.join(" ", Arrays.copyOf(parts, parts.length - 1));
-
-        return baseName + " " + romanToNumeric(tier);
-    }
-
-    private static String romanToNumeric(String roman) {
-        switch (roman.toLowerCase()) {
-            case "i": return "1";
-            case "ii": return "2";
-            case "iii": return "3";
-            case "iv": return "4";
-            case "v": return "5";
-            case "vi": return "6";
-            case "vii": return "7";
-            case "viii": return "8";
-            case "ix": return "9";
-            case "x": return "10";
-            default: return roman;
-        }
     }
 
     /**

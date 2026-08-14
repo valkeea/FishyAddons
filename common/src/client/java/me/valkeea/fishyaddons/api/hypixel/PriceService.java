@@ -295,7 +295,6 @@ public class PriceService {
             System.err.println("Bazaar data fetch interrupted: " + e.getMessage());
         } catch (Exception e) {
             System.err.println("Error fetching bazaar data: " + e.getMessage());
-            e.printStackTrace();
         }
     }
     
@@ -348,7 +347,6 @@ public class PriceService {
             System.err.println("Auction refresh interrupted: " + e.getMessage());
         } catch (Exception e) {
             System.err.println("Error refreshing auctions: " + e.getMessage());
-            e.printStackTrace();
         }
     }
     

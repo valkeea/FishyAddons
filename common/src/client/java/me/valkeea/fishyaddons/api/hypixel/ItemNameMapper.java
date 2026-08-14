@@ -19,7 +19,7 @@ public class ItemNameMapper {
         "glacial", "stained", "menacing", "hefty", "soft", "honored", "blended", "astute", "colossal",
         "brilliant", "waxed", "fortified", "blooming", "strengthened", "glistening", "rooted", "snowy",
         "royal", "blood-soaked", "blazing", "coldfused", "rapid", "spiked", "magnetic", "scraped",
-        "lunar", "sunny", "sticky"
+        "lunar", "sunny", "sticky", "buzzing", "moonglade"
     };
     
     private ItemNameMapper() {
@@ -112,7 +112,7 @@ public class ItemNameMapper {
      */
     private static boolean isEnchantment(String upper) {
         var hasValidLevel = upper.matches(".*\\b([1-9]|10)\\b.*");
-        var hasEnchantWords = upper.contains("BOOK") || upper.contains("ULTIMATE");
+        var hasEnchantWords = upper.contains("ENCHANTMENT");
         return hasValidLevel && hasEnchantWords;
     }
     
@@ -120,7 +120,7 @@ public class ItemNameMapper {
      * Convert enchantment name to API ID format: ENCHANTMENT_<NAME>
      */
     private static String convertEnchantmentToApiId(String enchantName) {
-        return "ENCHANTMENT_" + enchantName.replaceAll("[-\\s]+", "_").toUpperCase();
+        return enchantName.replaceAll("[-\\s]+", "_").toUpperCase();
     }
     
     // Display name cleanup (AH normalization)

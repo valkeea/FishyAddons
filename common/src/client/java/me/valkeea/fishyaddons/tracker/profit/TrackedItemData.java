@@ -72,9 +72,14 @@ public class TrackedItemData {
     }
 
     /** Overload for book chat drops */
-    public static void addDrop(String itemName, int quantity, @Nullable Component originalMessage) {
+    public static void addDrop(String itemName, int quantity, Component originalMessage) {
         addDrop(itemName, quantity, originalMessage, null);
     }
+
+    /** Overload for item drops */
+    public static DropResult addDrop(String itemName, int quantity, String uuid) {
+        return addDrop(itemName, quantity, null, uuid);
+    }    
     
     /**
      * Add a drop to tracking.
@@ -85,11 +90,12 @@ public class TrackedItemData {
      * @param uuid The UUID of the item from inventory (null for chat-only drops)
      * @return DropResult indicating if already counted and if notification should be sent
      */
-    public static DropResult addDrop(String itemName, int quantity, @Nullable Component originalMessage, @Nullable String uuid) {
+    public static DropResult addDrop(String itemName, int quantity, @Nullable Component dropMsg, @Nullable String uuid) {
         if (itemName == null || itemName.trim().isEmpty()) return new DropResult(false, false);
 
         long currentTime = System.currentTimeMillis();
         long timeSinceLastActivity = currentTime - lastActivityTime;
+        
         if (timeSinceLastActivity > INACTIVITY_THRESHOLD) {
             totalPausedTime += timeSinceLastActivity;
         }
@@ -98,9 +104,10 @@ public class TrackedItemData {
 
         String normalizedName;
 
-        if (originalMessage != null) {
-            boolean isUltimate = extractBookRarity(itemName, originalMessage);
-            normalizedName = isUltimate ? "ultimate_" + itemName : itemName;
+        if (dropMsg != null && dropMsg.getString().toLowerCase().contains("enchanted book")) {
+            itemName = "enchantment " + itemName;
+            boolean isUltimate = extractBookRarity(itemName, dropMsg);
+            normalizedName = isUltimate && !itemName.contains("ultimate") ? "ultimate " + itemName : itemName;
         } else {
             normalizedName = normalizeItemName(itemName);
         }
@@ -210,7 +217,7 @@ public class TrackedItemData {
     }
 
     public static String normalizeItemName(String itemName) {
-        return itemName = itemName
+        return itemName
             .replaceAll("§[0-9A-FK-ORa-fk-or]", "")
             .replaceAll("[^\\p{L}\\p{Nd}\\s]", "")
             .trim()

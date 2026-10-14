@@ -1,12 +1,18 @@
 package me.valkeea.fishyaddons.feature.config;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import me.valkeea.fishyaddons.feature.visual.ResourceHandler;
+import me.valkeea.fishyaddons.vconfig.annotation.UIDropdown;
 import me.valkeea.fishyaddons.vconfig.annotation.UIToggle;
 import me.valkeea.fishyaddons.vconfig.annotation.VCListener;
 import me.valkeea.fishyaddons.vconfig.annotation.VCModule;
 import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
 import me.valkeea.fishyaddons.vconfig.core.UICategory;
 import me.valkeea.fishyaddons.vconfig.ui.manager.ScreenManager;
+import me.valkeea.fishyaddons.vconfig.ui.widget.dropdown.item.ToggleItem;
+import me.valkeea.fishyaddons.vconfig.ui.widget.dropdown.item.ToggleMenuItem;
 import net.minecraft.client.Minecraft;
 
 @VCModule(UICategory.RESOURCES)
@@ -49,9 +55,26 @@ public class ResourceConfig {
         ResourceHandler.updateFontPack();
     }
 
+    @UIDropdown(
+        name = "*Retexture* Skyblock Islands",
+        description = "Toggle custom textures for Skyblock areas.",
+        provider = "getAreas",
+        buttonText = "Areas"
+    )
+    private static String muteList;
+
+    public static List<ToggleMenuItem> getAreas() {
+        List<ToggleMenuItem> items = new ArrayList<>();
+        items.add(new ToggleItem(BooleanKey.DARK_END, "Dark End"));
+        items.add(new ToggleItem(BooleanKey.DARK_CRIMSON, "Cold Nether"));
+        return items;
+    }
+
     @VCListener(
         value = {
             BooleanKey.REORDER_PACKS,
+            BooleanKey.DARK_END,
+            BooleanKey.DARK_CRIMSON,
             BooleanKey.FISHY_GUI,
             BooleanKey.HD_FONT
         },

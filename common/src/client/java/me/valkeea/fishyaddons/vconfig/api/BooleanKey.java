@@ -24,6 +24,8 @@ public enum BooleanKey implements ConfigKey<Boolean> {
     SKIP_F5("skipPerspective"),
     CLEAN_HYPE("cleanHype"),
     HELD_ITEM_TRANSFORMS("heldItemTransforms"),
+    DARK_END("retex_the_end"),
+    DARK_CRIMSON("retex_crimson_isle"),    
     
     // Audio
     MUTE_PHANTOM("mutePhantom"),
@@ -72,6 +74,8 @@ public enum BooleanKey implements ConfigKey<Boolean> {
     SC_SINCE("scSince"),
     TRACK_DIANA("trackDiana"),
     TRACK_SLAYER("trackSlayer"),
+    TRACK_CRITTERS("trackCritters"),
+    SAFARI_OWN_ZONE_ONLY("safariOwnZoneOnly", true),
     
     // Hotspots
     HOTSPOT_TRACK("trackHotspot"),
@@ -163,4 +167,11 @@ public enum BooleanKey implements ConfigKey<Boolean> {
             listener.accept(newValue);
         }
     }
+
+    public static BooleanKey fromString(String key) {
+        for (BooleanKey k : values()) {
+            if (k.getString().equals(key)) return k;
+        }
+        return NONE;
+    }    
 }

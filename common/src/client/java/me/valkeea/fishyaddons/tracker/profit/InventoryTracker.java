@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import me.valkeea.fishyaddons.api.skyblock.Rarity;
 import me.valkeea.fishyaddons.tool.ItemData;
 import me.valkeea.fishyaddons.tool.RunDelayed;
 import me.valkeea.fishyaddons.tracker.PriceUtil;
@@ -34,18 +35,6 @@ public class InventoryTracker {
 
     private static long monitoringStartTime = 0;
     private static long lsStartTime = 0;
-
-    private static final Map<String, String> rarityColorMap = Map.of(
-        "common", "white",
-        "uncommon", "green",
-        "rare", "blue",
-        "epic", "dark_purple",
-        "legendary", "gold",
-        "mythic", "light_purple",
-        "divine", "aqua",
-        "special", "red",
-        "ultimate", "dark_red"
-    );
     
     static {
         TRACKED_PLAYER_HEADS.add("emperor's skull");
@@ -164,7 +153,7 @@ public class InventoryTracker {
         if (TRACKED_TOOLS.contains(cleanName)) {
             var rarity = getRarityTier(displayName);
             var tieredName = rarity + cleanName;
-            
+
             String uuid = extractUUID(stack);
             var dropResult = TrackedItemData.addDrop(tieredName, 1, uuid);
             
@@ -175,20 +164,16 @@ public class InventoryTracker {
     }
 
     public static String getRarityTier(Component text) {
-
         var color = FromText.findFirstTextColor(text, InventoryTracker::isRarityColor);
         var def = "common ";
         if (color == null) return def;
 
-        return rarityColorMap.entrySet().stream()
-            .filter(entry -> entry.getValue().equals(color.toString()))
-            .map(Map.Entry::getKey)
-            .findFirst()
-            .orElse(def) + " ";
+        var rarity = Rarity.fromTextColor(color.toString());
+        return rarity == null ? def : rarity + " ";
     }
 
     public static boolean isRarityColor(TextColor color) {
-        return rarityColorMap.containsValue(color.toString());
+        return Rarity.fromTextColor(color.toString()) != null;
     }
 
     public static void handleBookAdded(ItemStack stack) {

@@ -110,6 +110,7 @@ public class GameChat {
 
     public static void partyStatus(boolean inParty) {
         isInParty = inParty;
+        currentMode = inParty ? Channel.PARTY : Channel.ALL;
     }
     
     /**

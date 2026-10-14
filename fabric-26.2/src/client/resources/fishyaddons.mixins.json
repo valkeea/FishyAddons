@@ -5,6 +5,7 @@
 	"mixins": [
 		"ChatHudAccessor",
 		"HandledScreenAccessor",
+		"MixinAreaParticleColor",
 		"MixinArmorStandEntityRenderer",
 		"MixinBar",
 		"MixinBillboardParticle",
@@ -40,6 +41,7 @@
 		"MixinPackRepository",
 		"MixinParentElementInput",
 		"MixinParticleManager",
+		"MixinParticleSpriteSet",
 		"MixinPerspective",		
 		"MixinPlayerListHud",
 		"MixinRedDustParticle",

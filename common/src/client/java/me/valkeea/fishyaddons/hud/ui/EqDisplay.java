@@ -79,6 +79,16 @@ public class EqDisplay extends InteractiveHudElement {
     }
 
     @Override
+    protected boolean shouldHandleLineClicks(Minecraft mc) {
+        return isInventoryOpen(mc);
+    }
+
+    @Override
+    protected boolean isLineClickable(int lineIndex, Component line) {
+        return true;
+    }
+
+    @Override
     protected IntKey getMaxLinesConfigKey() {
         return IntKey.NONE;
     }
@@ -122,6 +132,17 @@ public class EqDisplay extends InteractiveHudElement {
                 }
             }
         }
+    }
+
+    @Override
+    protected boolean renderContent(HudDrawer drawer, Minecraft mc, HudElementState state) {
+        var manager = getRegionManager();
+        if (!manager.hasRegions()) {
+            setupClickableRegions(manager, state);
+        }
+
+        drawCustomContent(drawer, mc, state);
+        return true;
     }
 
     @Override

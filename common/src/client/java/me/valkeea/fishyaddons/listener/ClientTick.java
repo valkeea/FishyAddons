@@ -3,6 +3,7 @@ package me.valkeea.fishyaddons.listener;
 import me.valkeea.fishyaddons.feature.qol.NetworkMetrics;
 import me.valkeea.fishyaddons.feature.skyblock.CatchAlert;
 import me.valkeea.fishyaddons.feature.skyblock.timer.ChatTimers;
+import me.valkeea.fishyaddons.tracker.SafariStats;
 import me.valkeea.fishyaddons.tracker.SkillTracker;
 import me.valkeea.fishyaddons.tracker.collection.CollectionTracker;
 import me.valkeea.fishyaddons.tracker.monitoring.ActivityMonitor;
@@ -36,6 +37,7 @@ public class ClientTick {
             NearbyEntities.tick();
             SkillTracker.getInstance().tick();
             CatchAlert.tick();
+            SafariStats.tick();
             ModInfo.tick();
 
             if (CollectionTracker.isEnabled()) CollectionTracker.tick();

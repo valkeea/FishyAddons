@@ -26,13 +26,13 @@ public abstract class SimpleTextElement extends BaseHudElement {
     }
 
     @Override
-    protected final void renderContent(HudDrawer drawer, Minecraft mc, HudElementState state) {
+    protected final boolean renderContent(HudDrawer drawer, Minecraft mc, HudElementState state) {
 
         Component text = getText();
         if (text == null || text.getString().isEmpty()) {
             if (isEditingMode()) {
                 text = Component.literal(placeholderText);
-            } else return;
+            } else return false;
         }
         
         int alignment = getTextAlignment();
@@ -44,6 +44,7 @@ public abstract class SimpleTextElement extends BaseHudElement {
         };
 
         drawer.drawFormattedText(text, x, 0, getTextColor());
+        return true;
     }
 
     @Override

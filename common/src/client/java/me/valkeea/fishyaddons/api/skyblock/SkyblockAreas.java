@@ -124,6 +124,10 @@ public class SkyblockAreas {
         return currentIsland == Island.GAL;
     }
 
+    public static boolean isSafari() {
+        return currentIsland == Island.SAFARI;
+    }
+
     public static boolean isRainArea() {
         return currentIsland == Island.BAYOU || currentIsland == Island.PARK
             || currentIsland == Island.LOTUS || currentIsland == Island.DEN;

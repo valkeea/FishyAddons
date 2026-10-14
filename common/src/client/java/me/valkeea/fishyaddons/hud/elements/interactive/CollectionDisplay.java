@@ -497,6 +497,7 @@ public class CollectionDisplay extends InteractiveHudElement {
         displayCache.reset();
         goalManager.invalidateProgressCache();
         invalidateCache();
+        this.visibleLineIdx = 1;
     }
 
     private String enhanceItemName(String itemName) {

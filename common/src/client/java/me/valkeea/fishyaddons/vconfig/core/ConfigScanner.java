@@ -132,7 +132,8 @@ public class ConfigScanner {
     
     public static void scanDefaultPackages() {
         scanPackages(
-            "me.valkeea.fishyaddons.feature"
+            "me.valkeea.fishyaddons.feature",
+            "me.valkeea.fishyaddons.tracker"
         );
     }
 }

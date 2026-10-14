@@ -25,6 +25,7 @@ public enum IntKey implements ConfigKey<Integer> {
     RENDER_COORD_MS("renderCoordsMs", 30000),
     NPC_MIN("npcWaypointMs", 5),
     EQ_DISPLAY_CMD("equipmentCommand", 0),
+    CRITTER_MODE("critterMode", 0),
 
     NONE("NaN")
     ;

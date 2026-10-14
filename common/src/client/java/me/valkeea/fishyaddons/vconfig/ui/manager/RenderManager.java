@@ -86,7 +86,7 @@ public class RenderManager {
             } else {
                 int lineSpacing = Dimensions.DESC_LINE_SPACING;
                 for (int i = 0; i < Math.min(e.description.length, 2); i++) {
-                    VCText.flatText(renderCtx.context, screen.getFont(), e.description[i], contentX, descStartY + i * lineSpacing, Colors.DESCRIPTION_TEXT);
+                    VCText.flatText(renderCtx.context, screen.getFont(), e.description[i], contentX, descStartY + i * lineSpacing, Colors.BRIGHT_GRAY);
                 }
             }
         }
@@ -254,7 +254,7 @@ public class RenderManager {
                                renderCtx.mouseX <= x + width - padding &&
                                renderCtx.mouseY >= listY && renderCtx.mouseY <= listY + itemHeight;
             
-            int textColor = isHovered ? theme : Colors.DESCRIPTION_TEXT;
+            int textColor = isHovered ? theme : Colors.BRIGHT_GRAY;
             if (isHovered) {
                 renderCtx.context.fill(x + padding, listY, x + width - padding, 
                                      listY + itemHeight, 0x30FFFFFF);

@@ -6,6 +6,7 @@ import java.util.List;
 import me.valkeea.fishyaddons.compat.McApi;
 import me.valkeea.fishyaddons.feature.qol.ItemSearchOverlay;
 import me.valkeea.fishyaddons.hud.base.InteractiveHudElement;
+import me.valkeea.fishyaddons.hud.core.HudDrawer;
 import me.valkeea.fishyaddons.hud.core.HudElementState;
 import me.valkeea.fishyaddons.tool.FishyMode;
 import me.valkeea.fishyaddons.ui.GuiUtil;
@@ -53,6 +54,11 @@ public class SearchHudElement extends InteractiveHudElement {
 
     private boolean isSearching() {
         return isOverlayActive() && !getSearchTerm().isEmpty();
+    }
+
+    @Override
+    protected boolean drawTextLines(HudDrawer drawer, Minecraft mc, HudElementState state) {
+        return true;
     }
 
     @Override

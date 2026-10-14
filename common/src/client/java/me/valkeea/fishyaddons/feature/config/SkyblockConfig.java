@@ -258,6 +258,33 @@ public class SkyblockConfig {
     )
     private static boolean skillXp;
 
+    private static final String SAFARI = "Track *Safari* critters";
+
+    @UIContainer(
+        key = BooleanKey.TRACK_CRITTERS,
+        name = SAFARI,
+        description = "Track captured critters and shards."
+    )
+    private static boolean trackSafari;
+
+    @UISlider(
+        altKey = IntKey.CRITTER_MODE,
+        name = "Display Mode",
+        min = 0, max = 2,
+        labels = {"Completion", "Raw Counts", "Shard Amounts"},
+        description = "Display either unique critter completion, raw capture counts, or shard gains.",
+        parent = SAFARI
+    )
+    private static int critterMode;
+
+    @UIToggle(
+        key = BooleanKey.SAFARI_OWN_ZONE_ONLY,
+        name = "Own Zone Only",
+        description = "Only display stats in your active safari zone.",
+        parent = SAFARI
+    )
+    private static boolean safariOwnZoneOnly;
+
     private static final String TIMERS = "Timers";
 
     @UIContainer(

@@ -62,10 +62,12 @@ public abstract class InteractiveHudElement extends BaseHudElement {
     
     /**
      * Get config key for max visible lines setting.
-     * Return null to disable line count control.
+     * By default, returns IntKey.NONE (no line count control).
      */
-    protected abstract IntKey getMaxLinesConfigKey();
-    
+    protected IntKey getMaxLinesConfigKey() {
+        return IntKey.NONE;
+    }
+
     /**
      * Get total number of lines available for display.
      * Default implementation returns the display lines count.
@@ -188,7 +190,6 @@ public abstract class InteractiveHudElement extends BaseHudElement {
      * Default implementation returns line tooltip if line is clickable, otherwise empty.
      */
     protected List<Component> getTooltipForLine(int lineIndex, Component line) {
-        // Default: use clickable line tooltips
         if (isLineClickable(lineIndex, line)) {
             return getLineTooltip(lineIndex, line);
         }
@@ -214,9 +215,9 @@ public abstract class InteractiveHudElement extends BaseHudElement {
         buttonManager.render(drawer, actualMouseX, actualMouseY);
     }
     
-    protected void drawTextLines(HudDrawer drawer, Minecraft mc, HudElementState state) {
+    protected boolean drawTextLines(HudDrawer drawer, Minecraft mc, HudElementState state) {
         List<Component> lines = getDisplayLines(state);
-        if (lines == null) return;
+        if (lines == null || lines.isEmpty()) return false;
         
         int size = state.size;
         float scale = size / 12.0F;
@@ -253,6 +254,7 @@ public abstract class InteractiveHudElement extends BaseHudElement {
         }
         
         setupClickableRegions(regionManager, state);
+        return true;
     }
     
     /**
@@ -264,13 +266,13 @@ public abstract class InteractiveHudElement extends BaseHudElement {
     
     public boolean handleMouseClick(MouseButtonEvent click) {
         if (isEditingMode() || !shouldRender()) return false;
-        
+
         var mc = Minecraft.getInstance();
         var state = getCachedState();
         float scale = state.size / 12.0F;
 
-        if (shouldShowButtons(mc) && getMaxLinesConfigKey() != null
-            && lineCountRegionManager.handleClick(click.x(), click.y(), click.button())) {
+        if (shouldHandleLineClicks(mc) &&
+            lineCountRegionManager.handleClick(click.x(), click.y(), click.button())) {
             return true;
         }
         
@@ -288,7 +290,7 @@ public abstract class InteractiveHudElement extends BaseHudElement {
      * Render line count control
      */
     protected void renderLineCountControl(GuiGraphicsExtractor context, Minecraft mc, HudElementState state, int mouseX, int mouseY) {
-        if (maxVisibleLines < 0 || getMaxLinesConfigKey() == null || buttonManager == null) return;
+        if (maxVisibleLines < 0 || getMaxLinesConfigKey() == IntKey.NONE || buttonManager == null) return;
         
         var drawer = new HudDrawer(mc, context, state);
         var regions = buttonManager.renderLineCountControl(
@@ -329,6 +331,11 @@ public abstract class InteractiveHudElement extends BaseHudElement {
     /** Whether to show buttons (default: when inventory is open) */
     protected boolean shouldShowButtons(Minecraft mc) {
         return isInventoryOpen(mc);
+    }
+
+    /** Whether to handle line clicks */
+    protected boolean shouldHandleLineClicks(Minecraft mc) {
+        return isInventoryOpen(mc) && getMaxLinesConfigKey() != IntKey.NONE;
     }
     
     /** Whether a specific line should be clickable, default: false */
@@ -384,7 +391,7 @@ public abstract class InteractiveHudElement extends BaseHudElement {
             minY = Math.min(minY, buttonAreaY - padding);
             maxX = Math.max(maxX, state.x + buttonAreaWidth + padding);
             
-            if (getMaxLinesConfigKey() != null) {
+            if (getMaxLinesConfigKey() != IntKey.NONE) {
                 int buttonSpacing = (int)(2 * scale);
                 int extraWidth = (int)(80 * scale); // Extra width
                 maxX = Math.max(maxX, state.x + buttonAreaWidth + buttonSpacing * 2 + extraWidth);
@@ -425,9 +432,10 @@ public abstract class InteractiveHudElement extends BaseHudElement {
     protected void postRenderCustom(GuiGraphicsExtractor context, Minecraft mc, HudElementState state, int mouseX, int mouseY) {}
 
     @Override
-    protected void renderContent(HudDrawer drawer, Minecraft mc, HudElementState state) {
-        drawTextLines(drawer, mc, state);
+    protected boolean renderContent(HudDrawer drawer, Minecraft mc, HudElementState state) {
+        if (!drawTextLines(drawer, mc, state)) return false;
         drawCustomContent(drawer, mc, state);
+        return true;
     }
     
     @Override

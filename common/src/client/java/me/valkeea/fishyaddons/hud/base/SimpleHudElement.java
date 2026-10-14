@@ -28,7 +28,7 @@ public abstract class SimpleHudElement extends BaseHudElement {
     }
 
     @Override
-    protected void renderContent(HudDrawer drawer, Minecraft mc, HudElementState state) {
+    protected boolean renderContent(HudDrawer drawer, Minecraft mc, HudElementState state) {
 
         var text = getText();
         var iconId = getIcon();
@@ -50,6 +50,7 @@ public abstract class SimpleHudElement extends BaseHudElement {
         }
 
         renderCustom(drawer, mc, state);
+        return true;
     }
 
     @Override

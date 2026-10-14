@@ -18,9 +18,9 @@ public abstract class SegmentedTextElement extends BaseHudElement {
     }
 
     @Override
-    protected final void renderContent(HudDrawer drawer, Minecraft mc, HudElementState state) {
+    protected final boolean renderContent(HudDrawer drawer, Minecraft mc, HudElementState state) {
         Component[] components = getComponents();
-        if (components == null || components.length == 0) return;
+        if (components == null || components.length == 0) return false;
 
         int xOffset = 0;
         for (int i = 0; i < components.length; i++) {
@@ -41,6 +41,7 @@ public abstract class SegmentedTextElement extends BaseHudElement {
                 xOffset += comp.spacing;
             }
         }
+        return true;
     }
 
     @Override

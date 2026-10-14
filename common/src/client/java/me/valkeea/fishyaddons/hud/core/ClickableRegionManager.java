@@ -76,6 +76,10 @@ public class ClickableRegionManager {
             }
         }
     }
+
+    public boolean hasRegions() {
+        return !regions.isEmpty();
+    }
     
     /**
      * Individual clickable region

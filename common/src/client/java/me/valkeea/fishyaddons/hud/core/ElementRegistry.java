@@ -11,6 +11,7 @@ import me.valkeea.fishyaddons.hud.elements.custom.InfoDisplay;
 import me.valkeea.fishyaddons.hud.elements.custom.ScDisplay;
 import me.valkeea.fishyaddons.hud.elements.custom.SkillXpDisplay;
 import me.valkeea.fishyaddons.hud.elements.interactive.CollectionDisplay;
+import me.valkeea.fishyaddons.hud.elements.interactive.CritterDisplay;
 import me.valkeea.fishyaddons.hud.elements.interactive.ProfitDisplay;
 import me.valkeea.fishyaddons.hud.elements.segmented.EffectDisplay;
 import me.valkeea.fishyaddons.hud.elements.segmented.NetworkDisplay;
@@ -27,10 +28,10 @@ public class ElementRegistry {
     private static final List<HudElement> ELEMENTS = new ArrayList<>();
     private static final List<InteractiveHudElement> INTERACTIVE_ELEMENTS = new ArrayList<>();
 
-    public static void register(HudElement element) {
-        if (element != null) {
-            ELEMENTS.add(element);
-            if (element instanceof InteractiveHudElement interactive) {
+    public static void register(HudElement e) {
+        if (e != null) {
+            ELEMENTS.add(e);
+            if (e instanceof InteractiveHudElement interactive) {
                 INTERACTIVE_ELEMENTS.add(interactive);
             }
         }
@@ -73,20 +74,21 @@ public class ElementRegistry {
         register(ProfitDisplay.getInstance());
         register(ScDisplay.getInstance());
         register(InfoDisplay.getInstance());
-        register(UIFeedback.getInstance());        
+        register(UIFeedback.getInstance());
         register(EqDisplay.getInstance());
+        register(CritterDisplay.getInstance());
 
         FaEvents.HUD_RENDER.register(event -> {
 
             if (ScreenRenderContext.isInEditMode()) return;
             
-            for (HudElement element : ELEMENTS) {
-                if (element != null) {
-                    if (element instanceof InteractiveHudElement interactive 
+            for (HudElement e : ELEMENTS) {
+                if (e != null) {
+                    if (e instanceof InteractiveHudElement interactive 
                         && ScreenRenderContext.shouldSkipInHudRender(interactive)) {
                         continue;
                     }
-                    element.render(event.getContext(), event.getClient(), 0, 0);
+                    e.render(event.getContext(), event.getClient(), 0, 0);
                 }
             }
         });

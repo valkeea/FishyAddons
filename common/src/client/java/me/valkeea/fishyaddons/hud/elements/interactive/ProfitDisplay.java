@@ -174,6 +174,8 @@ public class ProfitDisplay extends InteractiveHudElement {
 
         var allItems = getSortedItemValues(displayData);
 
+        if (allItems.isEmpty()) return List.of();
+
         IntStream.range(visibleLineIdx - 1, Math.min(visibleLineIdx - 1 + maxVisibleLines, allItems.size()))
             .forEach(i -> lines.add(getItemLine(allItems.get(i), color)));
 
@@ -394,6 +396,7 @@ public class ProfitDisplay extends InteractiveHudElement {
                 } else {
                     FishyNotis.notice("§7No file to delete");
                 }
+                if (changed) this.visibleLineIdx = 1;
                 break;
             case 3:
                 boolean state = Config.get(BooleanKey.TRACK_SACK);

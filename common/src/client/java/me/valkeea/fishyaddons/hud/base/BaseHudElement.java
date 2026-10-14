@@ -52,9 +52,10 @@ public abstract class BaseHudElement implements HudElement {
         context.pose().scale(scale, scale);
 
         var drawer = new HudDrawer(mc, context, state);
-        renderContent(drawer, mc, state);
+        var rendered = renderContent(drawer, mc, state);
 
         context.pose().popMatrix();
+        if (!rendered) return;
 
         postRender(context, mc, state, mouseX, mouseY);
         
@@ -70,7 +71,7 @@ public abstract class BaseHudElement implements HudElement {
     }
 
     protected abstract boolean shouldRender();
-    protected abstract void renderContent(HudDrawer drawer, Minecraft mc, HudElementState state);
+    protected abstract boolean renderContent(HudDrawer drawer, Minecraft mc, HudElementState state);
     protected abstract int calculateContentWidth(Minecraft mc);
     protected abstract int calculateContentHeight(Minecraft mc);
 

@@ -60,7 +60,7 @@ public class SkillLevelTables {
         SKILL_MAX_LEVELS.put("Alchemy", 50);
         SKILL_MAX_LEVELS.put("Carpentry", 60);
         SKILL_MAX_LEVELS.put("Taming", 50);
-        SKILL_MAX_LEVELS.put("Hunting", 25);
+        SKILL_MAX_LEVELS.put("Hunting", 50);
     }
     
     /**

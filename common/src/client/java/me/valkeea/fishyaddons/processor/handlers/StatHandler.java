@@ -4,6 +4,7 @@ import me.valkeea.fishyaddons.processor.ChatHandler;
 import me.valkeea.fishyaddons.processor.ChatHandlerResult;
 import me.valkeea.fishyaddons.processor.ChatMessageContext;
 import me.valkeea.fishyaddons.tracker.DianaStats;
+import me.valkeea.fishyaddons.tracker.SafariStats;
 import me.valkeea.fishyaddons.tracker.SlayerStats;
 import me.valkeea.fishyaddons.tracker.fishing.ScStats;
 
@@ -28,14 +29,14 @@ public class StatHandler implements ChatHandler {
     public ChatHandlerResult handle(ChatMessageContext context) {
 
         try {
-            
-            if (DianaStats.getInstance().handleChat(context.getLowerCleanString())) return ChatHandlerResult.STOP;
+            var cleanRaw = context.getLowerCleanString();
+            SafariStats.handleChat(cleanRaw);
+            if (DianaStats.getInstance().handleChat(cleanRaw)) return ChatHandlerResult.STOP;
             if (handleSlayer(context.getCleanString())) return ChatHandlerResult.STOP;            
             return ChatHandlerResult.CONTINUE;
 
         } catch (Exception e) {
             System.err.println("[FishyAddons] Error in UserStats handler: " + e.getMessage());
-            e.printStackTrace();
             return ChatHandlerResult.SKIP;
         }
     }
@@ -54,6 +55,6 @@ public class StatHandler implements ChatHandler {
     
     @Override
     public boolean isEnabled() {
-        return ScStats.isEnabled() || DianaStats.isEnabled() || SlayerStats.isEnabled();
+        return ScStats.isEnabled() || DianaStats.isEnabled() || SlayerStats.isEnabled() || SafariStats.isEnabled();
     }
 }

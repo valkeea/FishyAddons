@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.WeakHashMap;
+import java.util.stream.IntStream;
 
 import org.jetbrains.annotations.Nullable;
 
@@ -86,8 +87,7 @@ public class FaColors {
                 map.entrySet().forEach(e -> global.put(e.getKey(), 
                         TextColor.fromRgb(Integer.parseInt(e.getValue(), 16))));
             }
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (Exception _) {
             useFallbackColors();
         }
     }
@@ -545,44 +545,39 @@ public class FaColors {
     }    
 
     public static Component tooltip(Component input) {
-        if (input.getContents() instanceof PlainTextContents plain) {
-            var str = plain.text();
-            List<Segment> segments = createSegments(str);
-            
-            boolean needsRecolor = segments.stream().anyMatch(seg -> seg.color != null || seg.fullStyle != null);
-            if (!needsRecolor && input.getSiblings().isEmpty()) return input;
-            
-            var result = Component.empty().setStyle(input.getStyle());
-            
-            for (var seg : segments) {
-                Style segStyle;
+        if (!(input.getContents() instanceof PlainTextContents plain)) return input;
 
-                if (seg.fullStyle != null) {
-                    segStyle = seg.fullStyle;
-                } else {
-                    segStyle = seg.color == null ? input.getStyle() : input.getStyle().withColor(seg.color);
-                }
+        var str = plain.text();
+        var segments = createSegments(str);
+        var siblings = input.getSiblings();
 
-                result.append(Component.literal(seg.text).setStyle(segStyle));
+        boolean needsRecolor = segments.stream()
+            .anyMatch(seg -> seg.color != null || seg.fullStyle != null);
+
+        List<Component> recoloredSib = siblings.isEmpty()
+            ? List.of()
+            : siblings.stream().map(FaColors::tooltip).toList();
+
+        boolean siblingsChanged = !siblings.isEmpty() && IntStream.range(0, siblings.size())
+            .anyMatch(i -> recoloredSib.get(i) != siblings.get(i));
+
+        if (!needsRecolor && !siblingsChanged) return input;
+        
+        var result = Component.empty().setStyle(input.getStyle());
+        for (var seg : segments) {
+            Style segStyle;
+
+            if (seg.fullStyle != null) {
+                segStyle = seg.fullStyle;
+            } else {
+                segStyle = seg.color == null ? input.getStyle() : input.getStyle().withColor(seg.color);
             }
-            
-            input.getSiblings().stream()
-                .map(FaColors::tooltip)
-                .forEach(result::append);
 
-            return result;
-
-        } else {
-
-            var result = input.copy();
-            result.getSiblings().clear();
-
-            input.getSiblings().stream()
-                .map(FaColors::tooltip)
-                .forEach(result::append);
-                
-            return result;
+            result.append(Component.literal(seg.text).setStyle(segStyle));
         }
+        
+        recoloredSib.forEach(result::append);
+        return result;
     }
 
     public static Component tooltipCached(Component input) {

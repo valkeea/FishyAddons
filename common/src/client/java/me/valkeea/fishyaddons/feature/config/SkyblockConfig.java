@@ -365,6 +365,13 @@ public class SkyblockConfig {
         description = {
             "Automatically chooses the confirm option to progress NPC dialogues.",
             "Affects most common dialogue types and Trevor the Trapper."
+        },
+        tooltip = {
+            "§cUAYOR",
+            "§fInstead of commands,",
+            "§fnow automates the",
+            "§fpacket associated with",
+            "§fdialogue prompts."
         }
     )
     private static boolean acceptNpc;

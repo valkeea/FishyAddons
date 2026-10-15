@@ -6,14 +6,17 @@ import java.util.stream.IntStream;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import me.valkeea.fishyaddons.feature.item.safeguard.FGUtil;
 import me.valkeea.fishyaddons.feature.item.safeguard.GuiHandler;
 import me.valkeea.fishyaddons.feature.skyblock.ItemPrice;
+import me.valkeea.fishyaddons.feature.skyblock.NpcDialogue;
 import me.valkeea.fishyaddons.feature.visual.FaColors;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 
@@ -44,6 +47,9 @@ public abstract class MixinScreen {
             originalTooltip.add(nbtIndex == -1 ? originalTooltip.size() : nbtIndex, Component.literal("§8§oFA Guarded"));
         }
 
+        var valueTt = ItemPrice.getTooltipLine(stack);
+        if (valueTt != null) originalTooltip.add(valueTt);        
+
         if (FaColors.shouldColor()) {
             
             for (int i = 0; i < originalTooltip.size(); i++) {
@@ -53,8 +59,10 @@ public abstract class MixinScreen {
                 if (recolored != original) originalTooltip.set(i, recolored);
             }
         }
+    }
 
-        var valueTt = ItemPrice.getTooltipLine(stack);
-        if (valueTt != null) originalTooltip.add(valueTt);        
+    @Inject(method = "defaultHandleGameClickEvent", at = @At("HEAD"))
+    private static void onGameClickEvent(ClickEvent event, Minecraft mc, Screen screen, CallbackInfo ci) {
+        NpcDialogue.onManualClick(event);
     }
 }

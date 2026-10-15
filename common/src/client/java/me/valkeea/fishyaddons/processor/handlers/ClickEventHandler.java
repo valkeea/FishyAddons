@@ -1,7 +1,7 @@
 package me.valkeea.fishyaddons.processor.handlers;
 
 import me.valkeea.fishyaddons.compat.McApi;
-import me.valkeea.fishyaddons.feature.skyblock.NcpDialogue;
+import me.valkeea.fishyaddons.feature.skyblock.NpcDialogue;
 import me.valkeea.fishyaddons.processor.ChatHandler;
 import me.valkeea.fishyaddons.processor.ChatHandlerResult;
 import me.valkeea.fishyaddons.processor.ChatMessageContext;
@@ -19,14 +19,14 @@ public class ClickEventHandler implements ChatHandler {
     }
     
     @Override
-    public boolean shouldHandle(ChatMessageContext context) {
-        return context.isSkyblockMessage() && canAccessChatScreen();
+    public boolean shouldHandle(ChatMessageContext ctx) {
+        return ctx.isSkyblockMessage() && canAccessChatScreen();
     }
     
     @Override
-    public ChatHandlerResult handle(ChatMessageContext context) {
+    public ChatHandlerResult handle(ChatMessageContext ctx) {
         try {
-            NcpDialogue.checkForCommands(context.getOriginalText(), context.getLowerCleanString());
+            NpcDialogue.checkForCommands(ctx.getOriginalText(), ctx.getLowerCleanString());
             return ChatHandlerResult.CONTINUE;
         } catch (Exception e) {
             System.err.println("[FishyAddons] Error in ClickEvents handler: " + e.getMessage());
@@ -41,6 +41,6 @@ public class ClickEventHandler implements ChatHandler {
     
     @Override
     public boolean isEnabled() {
-        return NcpDialogue.enabled();
+        return NpcDialogue.enabled();
     }
 }

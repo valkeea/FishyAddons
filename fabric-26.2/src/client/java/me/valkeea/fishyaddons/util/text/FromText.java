@@ -5,6 +5,7 @@ import java.util.function.Predicate;
 import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.ClickEvent.RunCommand;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent.ShowText;
@@ -58,12 +59,10 @@ public class FromText {
         Component text, @Nullable Predicate<TextColor> condition
     ) {
 
-        Style style = text.getStyle();
+        var style = text.getStyle();
         var textColor = style.getColor();
-        if (textColor != null) {
-            if (condition == null || condition.test(textColor)) {
-                return textColor;
-            }
+        if (textColor != null && (condition == null || condition.test(textColor))) {
+            return textColor;
         }
 
         for (Component sibling : text.getSiblings()) {
@@ -105,6 +104,24 @@ public class FromText {
 
         for (Component sibling : text.getSiblings()) {
             String found = findCommand(sibling);
+            if (found != null) {
+                return found;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Returns the first Custom clickevent or null if none found
+     */
+    public static @Nullable ClickEvent.Custom findCustomClickEvent(Component text) {
+        var event = text.getStyle().getClickEvent();
+        if (event instanceof ClickEvent.Custom custom) {
+            return custom;
+        }
+
+        for (Component sibling : text.getSiblings()) {
+            ClickEvent.Custom found = findCustomClickEvent(sibling);
             if (found != null) {
                 return found;
             }

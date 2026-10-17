@@ -5,6 +5,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import me.valkeea.fishyaddons.compat.McApi;
 import me.valkeea.fishyaddons.feature.item.safeguard.FGUtil;
 import me.valkeea.fishyaddons.util.ZoneUtils;
 import net.minecraft.client.player.LocalPlayer;
@@ -13,7 +14,7 @@ import net.minecraft.client.player.LocalPlayer;
 public class MixinClientPlayerEntity {
     @Inject(method = "drop(Z)Z", at = @At("HEAD"), cancellable = true)
     private void onDropSelectedItem(boolean entireStack, CallbackInfoReturnable<Boolean> cir) {
-        if (ZoneUtils.isInDungeon()) return;
+        if (ZoneUtils.isInDungeon() && !McApi.screenIsActive()) return;
 
         var player = (LocalPlayer) (Object) this;
 

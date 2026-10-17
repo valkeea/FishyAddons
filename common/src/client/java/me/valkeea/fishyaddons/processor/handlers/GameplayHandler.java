@@ -1,7 +1,5 @@
 package me.valkeea.fishyaddons.processor.handlers;
 
-import java.util.regex.Pattern;
-
 import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
 
@@ -15,10 +13,9 @@ import me.valkeea.fishyaddons.listener.WorldEvent;
 import me.valkeea.fishyaddons.processor.ChatHandler;
 import me.valkeea.fishyaddons.processor.ChatHandlerResult;
 import me.valkeea.fishyaddons.processor.ChatMessageContext;
+import me.valkeea.fishyaddons.util.ZoneUtils;
 
 public class GameplayHandler implements ChatHandler {
-    
-    private static final Pattern CATACOMBS_PATTERN = Pattern.compile("entered (MM )?The Catacombs");
     
     @Override
     public int getPriority() {
@@ -37,18 +34,18 @@ public class GameplayHandler implements ChatHandler {
     
     @Override
     public ChatHandlerResult handle(ChatMessageContext context) {
-        String message = context.getCleanString();
+        String msg = context.getCleanString();
         String lower = context.getLowerCleanString();
         try {
-            if (handleGamemodeDetection(message)) return ChatHandlerResult.STOP;
-            if (handleAreaChanges(message)) return ChatHandlerResult.STOP;
+            if (handleGamemodeDetection(msg)) return ChatHandlerResult.STOP;
+            if (handleAreaChanges(msg)) return ChatHandlerResult.STOP;
             if (handlePetInfo(context.getRawString())) return ChatHandlerResult.STOP;
-            if (handleChatMode(message)) return ChatHandlerResult.STOP;
+            if (handleChatMode(msg)) return ChatHandlerResult.STOP;
             if (handleDropCorrections(lower)) return ChatHandlerResult.STOP;
-            if (handleBeaconFrequency(message)) return ChatHandlerResult.STOP;
+            if (handleBeaconFrequency(msg)) return ChatHandlerResult.STOP;
             if (handleCakeTimer(context.getRawString())) return ChatHandlerResult.STOP;
             if (handleVial(lower)) return ChatHandlerResult.STOP;
-            if (handleWaypointChains(message)) return ChatHandlerResult.STOP;
+            if (handleWaypointChains(msg)) return ChatHandlerResult.STOP;
             return ChatHandlerResult.CONTINUE;
             
         } catch (Exception e) {
@@ -57,15 +54,14 @@ public class GameplayHandler implements ChatHandler {
         }
     }
     
-    private boolean handleAreaChanges(String message) {
-        var catacombsMatcher = CATACOMBS_PATTERN.matcher(message);
-        if (catacombsMatcher.find()) {
+    private boolean handleAreaChanges(String msg) {
+        if (msg.startsWith("[NPC] Mort: Here, I found this map when I first entered the dungeon.")) {
             WorldEvent.getInstance().bypass();
-            SkyblockAreas.setIsland(Island.DUNGEON);
+            ZoneUtils.startedDungeon();
             return true;
         }
         
-        if (message.contains("Glacite Mineshafts") && message.contains("entered")) {
+        if (msg.contains("Glacite Mineshafts") && msg.contains("entered")) {
             WorldEvent.getInstance().bypass();
             SkyblockAreas.setIsland(Island.MINESHAFT);
             return true;
@@ -74,15 +70,15 @@ public class GameplayHandler implements ChatHandler {
         return false;
     }
 
-    private boolean handleGamemodeDetection(String message) {
-        if (handleApiMessages(message)) return true;
+    private boolean handleGamemodeDetection(String msg) {
+        if (handleApiMessages(msg)) return true;
 
-        if (message.contains("Welcome to Hypixel SkyBlock!")) {
+        if (msg.contains("Welcome to Hypixel SkyBlock!")) {
             GameMode.confirm();
             return true;
         }
 
-        if (message.equals("You were spawned in Limbo.")) {
+        if (msg.equals("You were spawned in Limbo.")) {
             GameMode.leftSkyblock();
             return true;
         }
@@ -93,53 +89,53 @@ public class GameplayHandler implements ChatHandler {
         return me.valkeea.fishyaddons.tracker.profit.SackDropParser.notGain(s);
     }
 
-    private boolean handleBeaconFrequency(String message) {
-        if (message.contains("You adjusted the frequency of the Beacon!")) {
+    private boolean handleBeaconFrequency(String msg) {
+        if (msg.contains("You adjusted the frequency of the Beacon!")) {
             me.valkeea.fishyaddons.feature.skyblock.timer.ChatTimers.getInstance().beaconStart();
             return true;
         }
         return false;
     }
 
-    private boolean handleChatMode(String message) {
-        if (message.equals("You are not in a party and were moved to the ALL channel.") ||
-            message.equals("You must be in a party to join the party channel!") ||
-            message.equals("The party was disbanded because all invites expired and the party was empty.")) {
+    private boolean handleChatMode(String msg) {
+        if (msg.equals("You are not in a party and were moved to the ALL channel.") ||
+            msg.equals("You must be in a party to join the party channel!") ||
+            msg.equals("The party was disbanded because all invites expired and the party was empty.")) {
             GameChat.setChannel(GameChat.Channel.ALL);
             GameChat.partyStatus(false);
             return true;
         }
-        if (message.equals("You have joined the party channel.") ||
-            message.equals("You are already in the party channel.")) {
+        if (msg.equals("You have joined the party channel.") ||
+            msg.equals("You are already in the party channel.")) {
             GameChat.setChannel(GameChat.Channel.PARTY);
             return true;
         }
-        if (message.matches("You have joined .* party!") ||
-            message.matches(".* joined the party.") ||
-            message.startsWith("Created a public party! Players can join with")) {
+        if (msg.matches("You have joined .* party!") ||
+            msg.matches(".* joined the party.") ||
+            msg.startsWith("Created a public party! Players can join with")) {
             GameChat.partyStatus(true);
             return true;
         }
-        if (message.equals("You left the party.") ||
-            message.equals("You are not in a party right now.") ||
-            message.matches(".* disbanded the party!")) {
+        if (msg.equals("You left the party.") ||
+            msg.equals("You are not in a party right now.") ||
+            msg.matches(".* disbanded the party!")) {
             GameChat.partyStatus(false);
             return true;
         }
         return false;
     }
     
-    private boolean handlePetInfo(String rawMessage) {
-        return PetInfo.handleChat(rawMessage);
+    private boolean handlePetInfo(String raw) {
+        return PetInfo.handleChat(raw);
     }
 
-    private boolean handleCakeTimer(String rawMessage) {
-        return CakeTimer.getInstance().handleChat(rawMessage);
+    private boolean handleCakeTimer(String raw) {
+        return CakeTimer.getInstance().handleChat(raw);
     }
     
-    private boolean handleWaypointChains(String message) {
-        if (message.contains("Relics)") || message.contains("You've already found this relic!") ||
-            message.contains("You've already found all the relics!")) {
+    private boolean handleWaypointChains(String msg) {
+        if (msg.contains("Relics)") || msg.contains("You've already found this relic!") ||
+            msg.contains("You've already found all the relics!")) {
 
             me.valkeea.fishyaddons.feature.waypoints.WaypointChains.onRelicFound();
             return true;
@@ -152,11 +148,11 @@ public class GameplayHandler implements ChatHandler {
         return me.valkeea.fishyaddons.tracker.fishing.ScStats.getInstance().checkForVial(s);
     }
 
-    private boolean handleApiMessages(String message) {
-        if (message.startsWith("{\"server\":")) {
+    private boolean handleApiMessages(String msg) {
+        if (msg.startsWith("{\"server\":")) {
             
             try {
-                var jsonObject = JsonParser.parseString(message).getAsJsonObject();
+                var jsonObject = JsonParser.parseString(msg).getAsJsonObject();
                 String typeKey = "gametype";
                 
                 String gametype = null;

@@ -106,7 +106,7 @@ public class SkyblockAreas {
         setIsland(Island.NA);
     }
 
-    public static void setIslandFromSidebar(Island island) {
+    public static void setIslandDelayed(Island island) {
         synchronized (lock) {
             if (currentIsland.equals(island) && checked) return;
             checked = true;

@@ -6,15 +6,13 @@ import me.valkeea.fishyaddons.api.skyblock.GameMode;
 import me.valkeea.fishyaddons.api.skyblock.SkyblockAreas;
 import me.valkeea.fishyaddons.api.skyblock.SkyblockAreas.Island;
 import me.valkeea.fishyaddons.feature.skyblock.WeatherTracker;
-import me.valkeea.fishyaddons.listener.WorldEvent;
 import me.valkeea.fishyaddons.util.text.ScoreboardUtils;
 import me.valkeea.fishyaddons.util.text.TextUtils;
 import net.minecraft.client.Minecraft;
 
 public class ZoneUtils {
     private ZoneUtils() {}
-    private static boolean isDungeons = false;
-    private static boolean isLobby = false;
+    private static boolean isDungeonRun = false;
     private static boolean rainArea = false;
     private static boolean locQuery = false;
 
@@ -31,12 +29,11 @@ public class ZoneUtils {
     );
 
     public static void update() {
-        isLobby = false;
 
         var areaBuilder = new StringBuilder();
-        for (String line : ScoreboardUtils.getSidebarLines()) {
-            if (line != null && !line.isEmpty()) {
-                areaBuilder.append(line).append(" ");
+        for (String l : ScoreboardUtils.getSidebarLines()) {
+            if (l != null && !l.isEmpty()) {
+                areaBuilder.append(l).append(" ");
             }
         }
 
@@ -45,23 +42,8 @@ public class ZoneUtils {
         if (!area.isEmpty()) {
             area = area.replaceAll("[^a-zA-Z0-9\\s]", "");
             boolean hasCrimson = ciIndicators.stream().anyMatch(area::contains);
-            boolean hasCatacombs = area.contains("The Catacombs");
-            boolean hasTimeElapsed = area.contains("Time Elapsed");
-
-            if (hasCrimson) SkyblockAreas.setIslandFromSidebar(Island.CI);
-
-            if (hasCatacombs && hasTimeElapsed) {
-                isDungeons = true;
-                SkyblockAreas.setIslandFromSidebar(Island.DUNGEON);
-                WorldEvent.getInstance().reset();
-                
-            } else if (hasCatacombs) {
-                isDungeons = false;
-                isLobby = true;
-                WorldEvent.getInstance().reCheck(60);
-
-            } else {
-                isDungeons = false;
+            if (hasCrimson) {
+                SkyblockAreas.setIslandDelayed(Island.CI);
             }
         }
 
@@ -78,7 +60,7 @@ public class ZoneUtils {
             var l = TextUtils.stripColor(i).strip();
             Island area = parseArea(l);
             if (area != null) {
-                SkyblockAreas.setIslandFromSidebar(area);
+                SkyblockAreas.setIslandDelayed(area);
                 WeatherTracker.track();
                 rainArea = true;
                 return true;
@@ -108,17 +90,22 @@ public class ZoneUtils {
         }
     }
 
+    public static void startedDungeon() {
+        SkyblockAreas.setIslandDelayed(Island.DUNGEON);
+        isDungeonRun = true;
+    }
+
     public static boolean isInDungeon() {
-        return isDungeons;
+        return isDungeonRun;
     }
 
     public static boolean isDungeonInstance() {
-        return isDungeons || isLobby;
+        return SkyblockAreas.getIsland() == Island.DUNGEON;
     }
 
     public static void resetDungeon() {
-        if (isDungeons) {
-            isDungeons = false;
+        if (isDungeonRun) {
+            isDungeonRun = false;
         }
     }
 

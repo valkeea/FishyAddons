@@ -10,6 +10,7 @@ import me.valkeea.fishyaddons.command.CommandBuilderUtils;
 import me.valkeea.fishyaddons.feature.qol.NetworkMetrics;
 import me.valkeea.fishyaddons.feature.skyblock.WeatherTracker;
 import me.valkeea.fishyaddons.feature.waypoints.NpcLocation;
+import me.valkeea.fishyaddons.feature.waypoints.NpcWaypoints;
 import me.valkeea.fishyaddons.feature.waypoints.TempWaypoint;
 import me.valkeea.fishyaddons.tool.PlayerPosition;
 import me.valkeea.fishyaddons.tracker.SkillTracker;
@@ -382,7 +383,7 @@ public class FaRoot implements CommandHandler {
             }))
         .then(ClientCommands.literal("clear")
             .executes(ctx -> {
-                TempWaypoint.clearBeacons();
+                NpcWaypoints.clearBeacons();
                 return 1;
             }))           
         .executes(ctx -> {

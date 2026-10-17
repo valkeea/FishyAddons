@@ -40,7 +40,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.Vec3;
 
 @VCModule
 public class NpcLocation {
@@ -123,7 +122,7 @@ public class NpcLocation {
         }
 
         if (pos != null) {
-            TempWaypoint.setBeacon(pos, FishyMode.getThemeColor(), name, duration);
+            NpcWaypoints.setBeacon(pos, FishyMode.getThemeColor(), name, duration);
             FishyNotis.send("Set waypoint for NPC: " + name + " at " + pos.toShortString());
         } else {
             List<String> similar = new ArrayList<>();
@@ -154,7 +153,7 @@ public class NpcLocation {
             .append(ChatButton.create("fa npc clear", "Clear")));
 
         areaNpcs.forEach((name, pos) -> 
-            TempWaypoint.setBeacon(pos, FishyMode.getThemeColor(), name, duration));
+            NpcWaypoints.setBeacon(pos, FishyMode.getThemeColor(), name, duration));
     }
 
     private static void invalidArea() {
@@ -223,14 +222,13 @@ public class NpcLocation {
 
     private static void updateOrAdd(Player npc, String name) {
         var area = SkyblockAreas.getIsland().key();
-        var vec = new Vec3((int) npc.getX(), (int) npc.getY(), (int) npc.getZ());
-        var pos = BlockPos.containing(vec);
+        var pos = BlockPos.containing(npc.getX(), npc.getY(), npc.getZ());
 
         if (!knownNpcs.containsKey(area) || !knownNpcs.get(area).containsKey(name) || 
             !knownNpcs.get(area).get(name).equals(pos)) {
             scanned.computeIfAbsent(area, k -> new HashMap<>()).put(name, pos);
             FishyNotis.send("Saved NPC: " + name + " at " + pos.toShortString());
-            TempWaypoint.setBeacon(pos, FishyMode.getThemeColor(), name, duration);
+            NpcWaypoints.setBeacon(pos, FishyMode.getThemeColor(), name, duration);
             saveToFile();
         }
     }

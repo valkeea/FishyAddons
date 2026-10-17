@@ -59,8 +59,10 @@ public class Beacon {
         matrices.pushPose();
         matrices.translate(-camPos.x, -camPos.y, -camPos.z);
 
-        boolean wouldObstructView = client.player.position().distanceTo(Vec3.atCenterOf(beacon.getPos())) < 5.0;
-        if (!wouldObstructView) renderBeam(ctx, beacon, matrices);
+        if (beacon.renderBeam()) {
+            boolean wouldObstructView = client.player.position().distanceTo(Vec3.atCenterOf(beacon.getPos())) < 5.0;
+            if (!wouldObstructView) renderBeam(ctx, beacon, matrices);
+        }
 
         AABB box = new AABB(beacon.getPos());
         submitGeometry(ctx, matrices, QUADS_NO_DEPTH,

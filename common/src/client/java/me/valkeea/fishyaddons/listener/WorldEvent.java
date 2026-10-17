@@ -7,6 +7,7 @@ import me.valkeea.fishyaddons.feature.qol.NetworkMetrics;
 import me.valkeea.fishyaddons.feature.skyblock.PetInfo;
 import me.valkeea.fishyaddons.feature.skyblock.WeatherTracker;
 import me.valkeea.fishyaddons.feature.waypoints.NpcLocation;
+import me.valkeea.fishyaddons.feature.waypoints.NpcWaypoints;
 import me.valkeea.fishyaddons.feature.waypoints.TempWaypoint;
 import me.valkeea.fishyaddons.util.TabScanner;
 import me.valkeea.fishyaddons.util.ZoneUtils;
@@ -41,6 +42,7 @@ public class WorldEvent {
         SkyblockAreas.reset();
         ZoneUtils.resetDungeon();
         TempWaypoint.clearBeacons();
+        NpcWaypoints.clearBeacons();
         NpcLocation.clearCache();
         NetworkMetrics.reset();
         TabScanner.reset();

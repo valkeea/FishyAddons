@@ -34,8 +34,10 @@ public class Beacon {
         matrices.pushPose();
         matrices.translate(-camPos.x, -camPos.y, -camPos.z);
 
-        boolean wouldObstructView = client.player.position().distanceTo(beacon.getPos().getCenter()) < 5.0;
-        if (!wouldObstructView) renderBeam(ctx, beacon, matrices);
+        if (beacon.renderBeam()) {
+            boolean wouldObstructView = client.player.position().distanceTo(beacon.getPos().getCenter()) < 5.0;
+            if (!wouldObstructView) renderBeam(ctx, beacon, matrices);
+        }
 
         org.lwjgl.opengl.GL11.glDisable(org.lwjgl.opengl.GL11.GL_DEPTH_TEST);
         

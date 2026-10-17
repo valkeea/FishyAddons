@@ -6,7 +6,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
@@ -16,6 +15,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 
 import me.valkeea.fishyaddons.util.FishyNotis;
+import me.valkeea.fishyaddons.util.Threads;
 import me.valkeea.fishyaddons.util.text.TextUtils;
 import me.valkeea.fishyaddons.vconfig.annotation.VCInit;
 import me.valkeea.fishyaddons.vconfig.annotation.VCListener;
@@ -37,7 +37,7 @@ public class CakeTimer {
     private static boolean enabled = false;
     
     private final Map<String, Long> activeCakes = new HashMap<>();
-    private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+    private final ScheduledExecutorService scheduler = Threads.scheduler("FishyAddons-CakeTimer");
     private boolean scheduledCheck = false;
     
     private CakeTimer() {}
@@ -258,6 +258,10 @@ public class CakeTimer {
     
     public void shutdown() {
         saveTimers();
-        scheduler.shutdown();
+        stopScheduler();
+    }
+
+    public void stopScheduler() {
+        scheduler.shutdownNow();
     }
 }

@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -28,6 +27,7 @@ import me.valkeea.fishyaddons.hud.core.ElementRegistry;
 import me.valkeea.fishyaddons.hud.elements.segmented.EffectDisplay;
 import me.valkeea.fishyaddons.tool.RunDelayed;
 import me.valkeea.fishyaddons.util.FishyNotis;
+import me.valkeea.fishyaddons.util.Threads;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.Identifier;
 
@@ -43,7 +43,7 @@ public class EffectTimers {
     private static final String EFFECTS_KEY = "effects";
     private static final long WARN_EARLY = (5 * 60 * 1000);
 
-    private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+    private final ScheduledExecutorService scheduler = Threads.scheduler("FishyAddons-EffectTimers");
     private final Set<String> notifiedItems = new HashSet<>();
     private boolean scheduledCheck = false;
 
@@ -367,7 +367,11 @@ public class EffectTimers {
     public synchronized void shutdown() {
         pauseAll();
         save();
-        scheduler.shutdown();
+        stopScheduler();
+    }
+
+    public void stopScheduler() {
+        scheduler.shutdownNow();
     }
 
     private synchronized void pauseAll() {

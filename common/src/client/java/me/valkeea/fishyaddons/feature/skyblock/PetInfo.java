@@ -1,6 +1,5 @@
 package me.valkeea.fishyaddons.feature.skyblock;
 
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -8,6 +7,7 @@ import java.util.regex.Pattern;
 
 import me.valkeea.fishyaddons.api.skyblock.GameMode;
 import me.valkeea.fishyaddons.util.TabScanner;
+import me.valkeea.fishyaddons.util.Threads;
 import me.valkeea.fishyaddons.util.text.Color;
 import me.valkeea.fishyaddons.util.text.Enhancer;
 import me.valkeea.fishyaddons.vconfig.annotation.VCListener;
@@ -109,7 +109,7 @@ public class PetInfo {
     public static class ActivePet {
         private static Component l1;
         private static Component l2;
-        private static final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+        private static final ScheduledExecutorService scheduler = Threads.scheduler("FishyAddons-PetInfo");
         private static ScheduledFuture<?> pendingCombine = null;
         private static final long DEBOUNCE_MS = 50;
 
@@ -132,7 +132,7 @@ public class PetInfo {
         }
 
         public static void shutdown() {
-            scheduler.shutdown();
+            scheduler.shutdownNow();
         }        
 
         private static synchronized void scheduleCombine() {

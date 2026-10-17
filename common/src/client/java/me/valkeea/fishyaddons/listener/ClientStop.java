@@ -60,22 +60,28 @@ public class ClientStop {
     }
 
     private static void saveCakeTimer() {
+        var cake = me.valkeea.fishyaddons.feature.skyblock.timer.CakeTimer.getInstance();
         try {
             if (me.valkeea.fishyaddons.feature.skyblock.timer.CakeTimer.isEnabled()) {
-            me.valkeea.fishyaddons.feature.skyblock.timer.CakeTimer.getInstance().shutdown();
+                cake.shutdown();
             }
         } catch (Exception e) {
             System.err.println("ClientStop: Failed to shutdown CakeTimer: " + e.getMessage());
+        } finally {
+            cake.stopScheduler();
         }
     }
 
     private static void saveEffectTimers() {
+        var effects = me.valkeea.fishyaddons.feature.skyblock.timer.EffectTimers.getInstance();
         try {
             if (me.valkeea.fishyaddons.vconfig.api.Config.get(me.valkeea.fishyaddons.vconfig.api.BooleanKey.HUD_EFFECTS_ENABLED)) {
-                me.valkeea.fishyaddons.feature.skyblock.timer.EffectTimers.getInstance().shutdown();
+                effects.shutdown();
             }
         } catch (Exception e) {
             System.err.println("ClientStop: Failed to shutdown EffectTimers: " + e.getMessage());
+        } finally {
+            effects.stopScheduler();
         }
     }
 
@@ -90,8 +96,16 @@ public class ClientStop {
     }
 
     private static void shutdown() {
-        PriceUtil.shutdown();
-        ActivePet.shutdown();
+        try {
+            PriceUtil.shutdown();
+        } catch (Exception e) {
+            System.err.println("ClientStop: Failed to shutdown PriceUtil: " + e.getMessage());
+        }
+        try {
+            ActivePet.shutdown();
+        } catch (Exception e) {
+            System.err.println("ClientStop: Failed to shutdown ActivePet: " + e.getMessage());
+        }
     }
 
     private ClientStop() {}

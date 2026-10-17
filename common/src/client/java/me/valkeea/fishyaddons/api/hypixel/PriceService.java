@@ -8,13 +8,13 @@ import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 
 import com.google.gson.Gson;
 
+import me.valkeea.fishyaddons.util.Threads;
 import me.valkeea.fishyaddons.vconfig.api.Config;
 import me.valkeea.fishyaddons.vconfig.api.StringKey;
 import net.minecraft.network.chat.Component;
@@ -65,11 +65,7 @@ public class PriceService {
         this.bazaarCache = new ConcurrentHashMap<>();
         this.auctionCache = new ConcurrentHashMap<>();
         
-        this.scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
-            Thread t = new Thread(r, "PriceService-Scheduler");
-            t.setDaemon(true);
-            return t;
-        });
+        this.scheduler = Threads.scheduler("PriceService-Scheduler");
         
         long initialDelaySeconds = ThreadLocalRandom.current().nextLong(10, 60);
         
@@ -87,8 +83,8 @@ public class PriceService {
             TimeUnit.MINUTES
         );
         
-        new Thread(this::refreshBazaar, "Initial-Bazaar-Load").start();
-        new Thread(this::refreshAuctions, "Initial-Auction-Load").start();
+        Threads.startWorker("Initial-Bazaar-Load", this::refreshBazaar);
+        Threads.startWorker("Initial-Auction-Load", this::refreshAuctions);
     }
     
     // --- Configuration ---
@@ -245,7 +241,7 @@ public class PriceService {
             return;
         }
         
-        new Thread(this::refreshBazaar, "Manual-Bazaar-Refresh").start();
+        Threads.startWorker("Manual-Bazaar-Refresh", this::refreshBazaar);
     }
     
     /**
@@ -259,7 +255,7 @@ public class PriceService {
             return;
         }
         
-        new Thread(this::refreshAuctions, "Manual-Auction-Refresh").start();
+        Threads.startWorker("Manual-Auction-Refresh", this::refreshAuctions);
     }
     
     public void refreshAllAsync() {

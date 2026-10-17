@@ -1,7 +1,7 @@
 package me.valkeea.fishyaddons.feature.waypoints;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.jetbrains.annotations.Nullable;
 
@@ -21,18 +21,18 @@ import net.minecraft.world.phys.Vec3;
 @VCModule
 public class TempWaypoint {
     private TempWaypoint() {}
-    private static final List<BeaconData> beacons = new ArrayList<>();
-    private static final double HIDE_DISTANCE = 8.0;
+    private static final List<BeaconData> beacons = new CopyOnWriteArrayList<>();
+    private static final double HIDE_DIST_SQ = Math.pow(8.0, 2);
     private static final long GRACE_PERIOD_MS = 3000; 
 
-    private static BeaconData lastBeacon = null;
-    private static boolean hideNear = false;
+    private static volatile BeaconData lastBeacon = null;
+    private static boolean hideClose = false;
     private static long duration = IntKey.RENDER_COORD_MS.getDefault();
 
     @VCListener(value = BooleanKey.RENDER_COORD_HIDE_CLOSE, ints = IntKey.RENDER_COORD_MS)
     public static void refresh() {
         duration = Config.get(IntKey.RENDER_COORD_MS) * 1000L;
-        hideNear = Config.get(BooleanKey.RENDER_COORD_HIDE_CLOSE);
+        hideClose = Config.get(BooleanKey.RENDER_COORD_HIDE_CLOSE);
     }
 
     @VCInit
@@ -44,7 +44,7 @@ public class TempWaypoint {
             long now = System.currentTimeMillis();
             beacons.removeIf(beacon -> now - beacon.setTime > beacon.duration);
 
-            if (hideNear) {
+            if (hideClose) {
                 renderFar(context);
             } else {
                 renderAll(context);
@@ -58,31 +58,16 @@ public class TempWaypoint {
 
         Vec3 playerPos = client.player.position();
         long now = System.currentTimeMillis();
-        
-        beacons.removeIf(beacon -> {
-            Vec3 beaconCenter = new Vec3(
-                beacon.getPos().getX() + 0.5, 
-                beacon.getPos().getY() + 0.5, 
-                beacon.getPos().getZ() + 0.5
-            );
 
-            double distance = playerPos.distanceTo(beaconCenter);
-            
-            if (distance <= HIDE_DISTANCE) {
-                long beaconAge = now - beacon.getSetTime();
-                
-                if (beaconAge <= GRACE_PERIOD_MS) {
-                    Beacon.renderBeacon(context, beacon);
-                    return false;
-                } else {
-                    return true;
-                }
-                
-            } else {
-                Beacon.renderBeacon(context, beacon);
-                return false;
+        for (BeaconData beacon : beacons) {
+            double distanceSq = playerPos.distanceToSqr(Vec3.atCenterOf(beacon.getPos()));
+
+            if (distanceSq <= HIDE_DIST_SQ && now - beacon.getSetTime() > GRACE_PERIOD_MS) {
+                beacons.remove(beacon);
             }
-        });
+
+            Beacon.renderBeacon(context, beacon);
+        }
     }
     
     private static void renderAll(LevelRenderContext context) {
@@ -98,19 +83,23 @@ public class TempWaypoint {
     }
 
     /**
-     * Adds a beacon at the specified position with color and optional label.
+     * Adds a beacon at the specified position with color and optional label (dedup by position).
      * The position is converted to a centered BlockPos and empty titles are handled at render.
      */
     public static void setBeacon(BlockPos pos, int colorARGB, String displayLabel) {
-        beacons.add(new BeaconData(getActualPos(new Vec3(pos)), colorARGB, displayLabel));
-        lastBeacon = beacons.get(beacons.size() - 1);
+        addBeacon(new BeaconData(getActualPos(new Vec3(pos)), colorARGB, displayLabel));
     }
     
     public static void setBeacon(BlockPos pos, int colorARGB, String displayLabel, long customDuration) {
         var beacon = new BeaconData(getActualPos(new Vec3(pos)), colorARGB, displayLabel);
         beacon.setDuration(customDuration);
+        addBeacon(beacon);
+    }
+
+    private static void addBeacon(BeaconData beacon) {
+        beacons.removeIf(existing -> existing.pos.equals(beacon.pos));
         beacons.add(beacon);
-        lastBeacon = beacons.get(beacons.size() - 1);
+        lastBeacon = beacon;
     }
 
     /**
@@ -125,17 +114,13 @@ public class TempWaypoint {
     }
 
     public static void redrawLast() {
-        if (lastBeacon != null) {
-            beacons.add(new BeaconData(lastBeacon.pos, lastBeacon.color, lastBeacon.label));
-            lastBeacon = beacons.get(beacons.size() - 1);
+        BeaconData previous = lastBeacon;
+        if (previous != null) {
+            addBeacon(new BeaconData(previous.pos, previous.color, previous.label));
         }
     }
 
     public static void redraw(BlockPos pos, String title) {
-        var actualPos = getActualPos(new Vec3(pos));
-        
-        beacons.removeIf(beacon -> beacon.getPos().equals(actualPos));
-        
         int color = Config.get(IntKey.RENDER_COORD_COLOR);
         String label = (title != null && !title.isEmpty()) ? title : "";
         setBeacon(pos, color, label);
@@ -159,10 +144,22 @@ public class TempWaypoint {
             this.setTime = System.currentTimeMillis();
         }
 
+        private String cachedLabel = "";
+        private long lastLabelUpdate = 0;
+        private static final long LABEL_REFRESH_MS = 200;
+
         public BlockPos getPos() { return pos; }
-        public String getLabel() { return formatLabel(label); }
         public long getSetTime() { return setTime; }
         public int getColor() { return color; }        
+
+        public String getLabel() {
+            long now = System.currentTimeMillis();
+            if (now - lastLabelUpdate >= LABEL_REFRESH_MS) {
+                cachedLabel = formatLabel(label);
+                lastLabelUpdate = now;
+            }
+            return cachedLabel;
+        }
 
         public void setDuration(long duration) {
             this.duration = duration;

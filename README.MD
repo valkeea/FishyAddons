@@ -56,11 +56,12 @@
 ## Skyblock Features
 
 <details>
-<summary><b> Trackers & Displays</b> (8)</summary>
+<summary><b> Trackers & Displays</b> (9)</summary>
 
 - Skill XP Tracker / Display _/fa skill_
 - General Profit Tracker / Display (WIP) _/fp_
 - Collection Tracker + progress goals (items)
+- Safari Completion Tracker
 - Slayer XP Tracker _/fa slayer_
 - Diana Tracker (out of date)
 - Pet Display
@@ -117,7 +118,7 @@
 </details>
 
 <details>
-<summary><b>Items</b> (2)</summary>
+<summary><b>Items</b> (3)</summary>
 
 - UUID based item protection _/fg_ (Drop and GUI protection, configurable)
 - Slot locking and binding
@@ -149,7 +150,7 @@
 </details>
 
 <details>
-<summary><b>Render & Chat</b> (5)</summary>
+<summary><b>Render & Chat</b> (6)</summary>
 
 - Custom Sea Creature messages
 - Translucent water-like lava with a tint (Crimson Isles only)
@@ -181,10 +182,16 @@
 </details>
 
 <details>
-<summary><b>Resources</b> (2)</summary>
-
-- Transparent UI
-- HD font
-- Reorder (deprioritize) server resource packs on Hypixel
-
+<summary><b>Resources</b> (5)</summary>
+<ul>
+<li> Area Texture Overrides:
+  <ul>
+    <li>Cold Nether (Crimson Isles)</li>
+    <li>Dark End (The End)</li>
+  </ul>
+</li>  
+<li> Transparent UI</li>
+<li> HD font</li>
+<li> Reorder (deprioritize) server resource packs on Hypixel</li>
+</ul>
 </details>

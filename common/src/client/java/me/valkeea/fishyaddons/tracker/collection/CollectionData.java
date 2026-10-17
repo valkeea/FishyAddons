@@ -60,7 +60,7 @@ public class CollectionData {
         "jungle", "flaming", "star", "lump", "feather", "shard", "flesh", "potato",
         "mushrooms", "halfeaten", "bone", "spider egg", "nevermelt", "pixie", "spectre", "frog",
         "guts", "burning", "distillate", "shield", "ashes", "synthetic", "jewel", "zest", "hide",
-        "goblin", "juice", "salted", "cane", "beans", "cactus", "hunk", "gift", "key", "boot"
+        "goblin", "juice", "salted sunflower", "cane", "beans", "cactus", "hunk", "gift", "key", "boot"
     );
 
     static final Set<String> specialCrafts = Set.of(
@@ -108,7 +108,6 @@ public class CollectionData {
             }
         } catch (Exception e) {
             System.err.println("[CollectionTracker] Failed to load collections.json: " + e.getMessage());
-            e.printStackTrace();
         }
     }
 
@@ -538,7 +537,6 @@ public class CollectionData {
 
         } catch (Exception e) {
             System.err.println("[CollectionTracker] Failed to save data: " + e.getMessage());
-            e.printStackTrace();
         }
     }
 
@@ -581,7 +579,6 @@ public class CollectionData {
             }
         } catch (Exception e) {
             System.err.println("[CollectionTracker] Failed to load data: " + e.getMessage());
-            e.printStackTrace();
         }
     }
 

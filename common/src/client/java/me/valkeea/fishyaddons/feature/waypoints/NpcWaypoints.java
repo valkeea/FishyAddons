@@ -18,7 +18,7 @@ public class NpcWaypoints {
     // Keyed by NPC name
     private static final Map<String, NpcBeacon> beacons = new ConcurrentHashMap<>();
 
-    private static final double MAX_RENDER_DIST_SQ = Math.pow(200.0, 2);
+    private static final double MAX_RENDER_DIST_SQ = Math.pow(700.0, 2);
     private static final double HIDE_DIST_SQ = Math.pow(4.0, 2);
     private static final long SWEEP_INTERVAL_MS = 1000;
     private static long lastSweep = 0;

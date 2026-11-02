@@ -137,9 +137,9 @@ public class EqDisplay extends InteractiveHudElement {
     @Override
     protected boolean renderContent(HudDrawer drawer, Minecraft mc, HudElementState state) {
         var manager = getRegionManager();
-        if (!manager.hasRegions()) {
-            setupClickableRegions(manager, state);
-        }
+
+        manager.clear();
+        setupClickableRegions(manager, state);
 
         drawCustomContent(drawer, mc, state);
         return true;

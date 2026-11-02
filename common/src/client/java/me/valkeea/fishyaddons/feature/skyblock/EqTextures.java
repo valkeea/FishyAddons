@@ -121,19 +121,6 @@ public class EqTextures {
         }
         return eqTooltips.getOrDefault(slotIndex, List.of());
     }
-    
-    public static void clearAll() {
-        eqItemStacks.clear();
-        skullProfiles.clear();
-        eqTooltips.clear();
-        emptySlots.clear();
-
-        Map<Integer, String> itemStacks = ItemConfig.getAllEqItemStacks();
-
-        for (Integer slot : itemStacks.keySet()) {
-            ItemConfig.clearEquipmentSlot(slot);
-        }
-    }
 
     private static void loadSkullData() {
         try {

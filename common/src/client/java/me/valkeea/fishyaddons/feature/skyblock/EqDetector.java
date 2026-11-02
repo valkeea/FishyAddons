@@ -55,7 +55,7 @@ public class EqDetector {
     } 
     
     private static boolean isEqScreen(String title) {
-        return title.contains("Equipment") || title.contains("Loadouts");
+        return title.contains("Equipment") || title.contains(LD_SUFFIX);
     }
 
     private static int determineType(String title) {
@@ -95,8 +95,12 @@ public class EqDetector {
         if (activeCol < 0) {
             if (checkIfUnequipped(handler)) {
                 lastSeenStacks.clear();
-                EqTextures.clearAll();
-            } else return;
+                for (int row = 0; row < ARMOR_ROWS; row++) {
+                    EqTextures.saveEmptySlot(row);
+                }
+                lastActiveColumn = -1;
+            }
+            return;
         }
 
         for (int row = 0; row < ARMOR_ROWS; row++) {

@@ -3,6 +3,8 @@ package me.valkeea.fishyaddons.ui.widget;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import com.mojang.blaze3d.platform.InputConstants;
+
 import me.valkeea.fishyaddons.util.Keyboard;
 import me.valkeea.fishyaddons.vconfig.ui.widget.FaButton;
 import net.minecraft.client.input.KeyEvent;
@@ -47,7 +49,7 @@ public class ListeningWidget extends FaButton {
 
     @Override
     public boolean mouseClicked(MouseButtonEvent click, boolean doubled) {
-        if (listening && click.button() == 0 && this.isMouseOver(click.x(), click.y())) {
+        if (listening && click.button() == InputConstants.MOUSE_BUTTON_LEFT && this.isMouseOver(click.x(), click.y())) {
             keyName = "NONE";
             onKeySet.accept(keyName);
             this.setMessage(labelProvider.apply(keyName));

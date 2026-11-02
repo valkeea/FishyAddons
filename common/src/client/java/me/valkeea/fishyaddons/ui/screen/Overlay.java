@@ -41,7 +41,7 @@ public class Overlay extends Screen {
 
     @Override
     public boolean keyPressed(KeyEvent input) {
-        if (input.key() == 256) {
+        if (input.isEscape()) {
             McApi.setScreen(this.parent);
             return true;
         }

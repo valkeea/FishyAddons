@@ -1,6 +1,5 @@
 package me.valkeea.fishyaddons.mixin;
 
-import org.lwjgl.glfw.GLFW;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -8,6 +7,9 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import com.mojang.blaze3d.platform.InputConstants;
+
+import me.valkeea.fishyaddons.compat.McApi;
 import me.valkeea.fishyaddons.ui.list.ScRules;
 import me.valkeea.fishyaddons.ui.screen.AlertEditScreen;
 import net.minecraft.client.KeyboardHandler;
@@ -23,12 +25,12 @@ public abstract class MixinKeyboard {
 
         if (window != minecraft.getWindow().handle()) return;
 
-        var screen = minecraft.screen;
+        var screen = McApi.screen();
         if (!(screen instanceof ScRules) && !(screen instanceof AlertEditScreen)) return;
-        if (input.key() != GLFW.GLFW_KEY_F3) return;
+        if (input.key() != InputConstants.KEY_F3) return;
 
-        if (action == GLFW.GLFW_PRESS) {
-            minecraft.screen.keyPressed(new KeyEvent(input.key(), input.scancode(), input.modifiers()));
+        if (action == InputConstants.PRESS) {
+            screen.keyPressed(new KeyEvent(input.key(), input.scancode(), input.modifiers()));
         }
 
         ci.cancel();

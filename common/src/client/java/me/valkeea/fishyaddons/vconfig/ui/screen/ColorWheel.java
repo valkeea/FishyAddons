@@ -2,6 +2,7 @@ package me.valkeea.fishyaddons.vconfig.ui.screen;
 
 import java.util.function.Consumer;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.platform.NativeImage;
 
 import me.valkeea.fishyaddons.vconfig.api.Config;
@@ -576,7 +577,7 @@ public class ColorWheel extends Screen {
         double mouseY = click.y();
         int button = click.button();
 
-        if (button == 0) {
+        if (button == InputConstants.MOUSE_BUTTON_LEFT) {
             double dx = mouseX - wheelCenterX;
             double dy = mouseY - wheelCenterY;
             double distance = Math.sqrt(dx * dx + dy * dy);

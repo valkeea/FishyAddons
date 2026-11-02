@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
+import com.mojang.blaze3d.platform.InputConstants;
+
 import me.valkeea.fishyaddons.feature.qol.CopyChat;
 import me.valkeea.fishyaddons.tool.FishyMode;
 import me.valkeea.fishyaddons.util.text.TextUtils;
@@ -45,7 +47,7 @@ public class ClickableRegionManager {
                     region.invokeClick();
                     return true;
             }
-            if (button == 1 && region.isHovered(mouseX, mouseY) && region.getData() instanceof Component text) {
+            if (button == InputConstants.MOUSE_BUTTON_RIGHT && region.isHovered(mouseX, mouseY) && region.getData() instanceof Component text) {
                 CopyChat.toClipboard(TextUtils.stripColor(text.getString()));
                 return true;
             }
@@ -95,7 +97,7 @@ public class ClickableRegionManager {
         private List<Component> tooltip;
         
         public ClickableRegion(int x, int y, int width, int height, T data, Consumer<T> onClick) {
-            this(x, y, width, height, 0, data, onClick);
+            this(x, y, width, height, InputConstants.MOUSE_BUTTON_LEFT, data, onClick);
         }
         
         public ClickableRegion(int x, int y, int width, int height, int button, T data, Consumer<T> onClick) {

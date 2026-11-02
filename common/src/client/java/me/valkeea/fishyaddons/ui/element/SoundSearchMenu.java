@@ -3,6 +3,8 @@ package me.valkeea.fishyaddons.ui.element;
 import java.util.List;
 import java.util.function.Consumer;
 
+import com.mojang.blaze3d.platform.InputConstants;
+
 import me.valkeea.fishyaddons.vconfig.ui.widget.VCTextField;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.MouseButtonEvent;
@@ -52,7 +54,7 @@ public class SoundSearchMenu extends SearchMenu {
     public boolean mouseClicked(MouseButtonEvent click) {
         if (!isVisible()) return false;
 
-        if (click.button() == 1) {
+        if (click.button() == InputConstants.MOUSE_BUTTON_RIGHT) {
             return handleRightClick(click.x(), click.y());
         }
 
@@ -83,7 +85,8 @@ public class SoundSearchMenu extends SearchMenu {
         return false;
     }
     
-    private int[] calculateEntryHeights(int visibleEntries) {
+    @Override 
+    protected int[] calculateEntryHeights(int visibleEntries) {
 
         int[] entryHeights = new int[visibleEntries];
 

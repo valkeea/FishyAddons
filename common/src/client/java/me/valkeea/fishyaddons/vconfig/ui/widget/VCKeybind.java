@@ -1,5 +1,7 @@
 package me.valkeea.fishyaddons.vconfig.ui.widget;
 
+import com.mojang.blaze3d.platform.InputConstants;
+
 import me.valkeea.fishyaddons.util.Keyboard;
 import me.valkeea.fishyaddons.vconfig.ui.layout.Colors;
 import me.valkeea.fishyaddons.vconfig.ui.render.RenderUtils;
@@ -67,7 +69,7 @@ public class VCKeybind {
     }
 
     public boolean mouseClicked(MouseButtonEvent click, boolean doubled) {
-        if (click.button() != 0 || !hovered) return false;
+        if (click.button() != InputConstants.MOUSE_BUTTON_LEFT || !hovered) return false;
         if (listening || doubled) {
             setKey("NONE");
         }
@@ -80,7 +82,7 @@ public class VCKeybind {
 
         int keyCode = input.key();
         String newKey = me.valkeea.fishyaddons.util.Keyboard.getGlfwKeyName(keyCode);
-        if (keyCode == 256 || keyCode == 257) {
+        if (keyCode == InputConstants.KEY_ESCAPE || keyCode == InputConstants.KEY_RETURN) {
             listening = false;
             return true;
         }

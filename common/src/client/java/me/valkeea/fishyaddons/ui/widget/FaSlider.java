@@ -1,5 +1,7 @@
 package me.valkeea.fishyaddons.ui.widget;
 
+import com.mojang.blaze3d.platform.InputConstants;
+
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.input.MouseButtonEvent;
 
@@ -88,7 +90,7 @@ public class FaSlider {
         double mouseX = click.x();
         double mouseY = click.y();
         int button = click.button();
-        if (button == 0 && isMouseOver(mouseX, mouseY)) {
+        if (button == InputConstants.MOUSE_BUTTON_LEFT && isMouseOver(mouseX, mouseY)) {
             isDragging = true;
             updateValue(mouseX);
             return true;
@@ -97,7 +99,7 @@ public class FaSlider {
     }
     
     public boolean mouseReleased(MouseButtonEvent click) {
-        if (click.button() == 0 && isDragging) {
+        if (click.button() == InputConstants.MOUSE_BUTTON_LEFT && isDragging) {
             isDragging = false;
             return true;
         }
@@ -105,7 +107,7 @@ public class FaSlider {
     }
     
     public boolean mouseDragged(MouseButtonEvent click) {
-        if (isDragging && click.button() == 0) {
+        if (isDragging && click.button() == InputConstants.MOUSE_BUTTON_LEFT) {
             updateValue(click.x());
             return true;
         }

@@ -1,5 +1,7 @@
 package me.valkeea.fishyaddons.ui.screen;
 
+import com.mojang.blaze3d.platform.InputConstants;
+
 import me.valkeea.fishyaddons.compat.McApi;
 import me.valkeea.fishyaddons.feature.filter.FilterConfig;
 import me.valkeea.fishyaddons.feature.filter.FilterConfig.Rule;
@@ -193,7 +195,6 @@ public class FilterEditScreen extends Screen {
                                    
                 } catch (Exception e) {
                     System.err.println("[FishyAddons] Error rendering tooltip: " + e.getMessage());
-                    e.printStackTrace();
                     renderFallback(mouseX, mouseY, context);
                 }
             }
@@ -275,10 +276,10 @@ public class FilterEditScreen extends Screen {
         double mouseX = click.x();
         double mouseY = click.y();
 
-        if (formatField.isFocused() && (!formatField.isMouseOver(mouseX, mouseY) || click.button() != 0)) {
+        if (formatField.isFocused() && (!formatField.isMouseOver(mouseX, mouseY) || click.button() != InputConstants.MOUSE_BUTTON_LEFT)) {
             formatField.setFocused(false);
         }
-        if (overrideField.isFocused() && (!overrideField.isMouseOver(mouseX, mouseY) || click.button() != 0)) {
+        if (overrideField.isFocused() && (!overrideField.isMouseOver(mouseX, mouseY) || click.button() != InputConstants.MOUSE_BUTTON_LEFT)) {
             overrideField.setFocused(false);
         }
 
@@ -298,7 +299,7 @@ public class FilterEditScreen extends Screen {
 
     @Override
     public boolean keyPressed(KeyEvent input) {
-        if (input.key() == 256) {
+        if (input.isEscape()) {
             menuInteractionActive = false;
         }
         if (searchMenu != null && formatField.isFocused() && searchMenu.keyPressed(input)) {

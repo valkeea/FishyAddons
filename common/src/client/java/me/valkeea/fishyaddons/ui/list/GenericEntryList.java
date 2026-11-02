@@ -4,6 +4,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.mojang.blaze3d.platform.InputConstants;
+
 import me.valkeea.fishyaddons.compat.McApi;
 import me.valkeea.fishyaddons.ui.GuiUtil;
 import me.valkeea.fishyaddons.vconfig.ui.render.RenderUtils;
@@ -398,14 +400,13 @@ public abstract class GenericEntryList extends AbstractSelectionList<GenericEntr
         @Override
         public boolean keyPressed(KeyEvent input) {
             int keyCode = input.key();
-            int modifiers = input.modifiers();
-            if (keyCode == 257 || keyCode == 335) {
+            if (keyCode == InputConstants.KEY_RETURN || keyCode == InputConstants.KEY_NUMPADENTER) {
                 handleSave();
                 return true;
             }
 
-            if (keyCode == 258) {
-                boolean shift = (modifiers & 0x1) != 0;
+            if (keyCode == InputConstants.KEY_TAB) {
+                boolean shift = input.hasShiftDown();
 
                 List<AbstractWidget> widgets = new java.util.ArrayList<>();
 

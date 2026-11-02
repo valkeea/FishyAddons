@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
+import com.mojang.blaze3d.platform.InputConstants;
+
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 
@@ -110,7 +112,7 @@ public class HudButtonManager {
      * Buttons only respond to left-click.
      */
     public boolean handleClick(double mouseX, double mouseY, int button) {
-        if (button != 0) return false;
+        if (button != InputConstants.MOUSE_BUTTON_LEFT) return false;
         
         for (HudButton hudButton : buttons) {
             if (hudButton.isHovered(mouseX, mouseY)) {

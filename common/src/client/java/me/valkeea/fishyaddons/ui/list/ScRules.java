@@ -5,7 +5,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 
 import me.valkeea.fishyaddons.feature.filter.FilterConfig;
 import me.valkeea.fishyaddons.feature.filter.FilterConfig.Rule;
@@ -210,7 +210,7 @@ public class ScRules extends Screen {
             return true;
         }
         
-        if (input.key() == GLFW.GLFW_KEY_F3) {
+        if (input.key() == InputConstants.KEY_F3) {
             toggleFormatMenu();
             return true;
         }
@@ -317,7 +317,7 @@ public class ScRules extends Screen {
                     Component formattedPreview = Enhancer.parseFormattedText(previewText);
                     renderTooltip(context, mouseX, mouseY, formattedPreview, true);
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    System.err.println("Error rendering preview: " + e.getMessage());
                     renderTooltip(context, mouseX, mouseY, Component.literal("Error rendering preview"), false);
                 }
             }
@@ -645,7 +645,6 @@ public class ScRules extends Screen {
                 
             } catch (Exception e) {
                 System.err.println("[FishyAddons] Failed to save sea creature configuration: " + e.getMessage());
-                e.printStackTrace();
             }
         }
         

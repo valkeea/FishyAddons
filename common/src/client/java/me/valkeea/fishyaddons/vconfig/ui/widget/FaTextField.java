@@ -1,5 +1,7 @@
 package me.valkeea.fishyaddons.vconfig.ui.widget;
 
+import com.mojang.blaze3d.platform.InputConstants;
+
 import me.valkeea.fishyaddons.tool.FishyMode;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -53,8 +55,7 @@ public class FaTextField extends EditBox {
     @Override
     public boolean keyPressed(KeyEvent input) {
 
-        int modifiers = input.modifiers();
-        if ((modifiers & 2) != 0 && input.key() == 86) {
+        if (input.hasControlDownWithQuirk() && input.key() == InputConstants.KEY_V) {
             String clipboard = Minecraft.getInstance().keyboardHandler.getClipboard();
             return writeText(clipboard);
         }

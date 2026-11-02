@@ -4,6 +4,8 @@ import java.awt.Rectangle;
 import java.util.List;
 import java.util.function.Supplier;
 
+import com.mojang.blaze3d.platform.InputConstants;
+
 import me.valkeea.fishyaddons.tool.FishyMode;
 import me.valkeea.fishyaddons.util.text.Color;
 import me.valkeea.fishyaddons.util.text.TextUtils;
@@ -257,7 +259,7 @@ public class VCToggleMenu {
             if (click.x() >= menuX && click.x() <= menuX + scaledWidth && click.y() >= entryTop && click.y() <= entryBottom) {
 
                 var item = items.get(itemIndex);
-                clickAction(item, click.button() == 1);
+                clickAction(item, click.button() == InputConstants.MOUSE_BUTTON_RIGHT);
                 return true;
             }
             entryTop = entryBottom;
@@ -270,7 +272,7 @@ public class VCToggleMenu {
     public boolean keyPressed(KeyEvent input) {
         if (!visible) return false;
 
-        if (input.key() == 256) {
+        if (input.isEscape()) {
             visible = false;
             return true;
         }

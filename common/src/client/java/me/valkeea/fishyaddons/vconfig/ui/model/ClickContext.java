@@ -1,5 +1,6 @@
 package me.valkeea.fishyaddons.vconfig.ui.model;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.input.MouseButtonEvent;
 
 public class ClickContext {
@@ -31,6 +32,6 @@ public class ClickContext {
     }
     
     public boolean isLeftClick() {
-        return button == 0;
+        return button == InputConstants.MOUSE_BUTTON_LEFT;
     }
 }

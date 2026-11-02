@@ -127,7 +127,7 @@ public class MultiToggleControl extends AbstractUIControl {
     
     @Override
     public boolean handleKeyPress(KeyEvent input) {
-        if (activeDropdown != null && activeDropdown.isVisible() && input.input() == 256) {
+        if (activeDropdown != null && activeDropdown.isVisible() && input.isEscape()) {
             activeDropdown.setVisible(false);
             activeDropdown = null;
             return true;

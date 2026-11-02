@@ -8,7 +8,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 
 import me.valkeea.fishyaddons.hud.elements.custom.InfoDisplay;
 import me.valkeea.fishyaddons.tool.FishyMode;
@@ -1063,7 +1063,7 @@ public final class VCScreen extends AdjustedScreen {
     @Override
     public boolean keyPressed(KeyEvent input) {
 
-        if (input.key() == GLFW.GLFW_KEY_F && Keyboard.hasCtrlModifier(input)) {
+        if (input.key() == InputConstants.KEY_F && Keyboard.hasCtrlModifier(input)) {
             searchField.setFocused(true);
             setFocused(searchField);
             return true;
@@ -1074,20 +1074,20 @@ public final class VCScreen extends AdjustedScreen {
         }
 
         int keyCode = input.key();
-        if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
+        if (keyCode == InputConstants.KEY_ESCAPE) {
             handleEscapeKey();
             return true;
         }
 
         if (super.keyPressed(input)) return true;        
 
-        if (keyCode == GLFW.GLFW_KEY_DOWN) {
+        if (keyCode == InputConstants.KEY_DOWN) {
             var filtered = getAllFiltered();
             int maxVisible = layout.calcAllowedEntries(filtered, this::isSubEntry);
             scrollState.offset = layout.clampScrollOffset(scrollState.offset + 1, filtered.size(), maxVisible);
             return true;
 
-        } else if (keyCode == GLFW.GLFW_KEY_UP) {
+        } else if (keyCode == InputConstants.KEY_UP) {
             scrollState.offset = Math.max(scrollState.offset - 1, 0);
             return true;
         }

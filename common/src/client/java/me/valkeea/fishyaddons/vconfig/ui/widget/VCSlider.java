@@ -1,5 +1,7 @@
 package me.valkeea.fishyaddons.vconfig.ui.widget;
 
+import com.mojang.blaze3d.platform.InputConstants;
+
 import me.valkeea.fishyaddons.vconfig.ui.layout.Dimensions;
 import me.valkeea.fishyaddons.vconfig.ui.render.VCRenderContext;
 import net.minecraft.client.gui.Font;
@@ -128,7 +130,7 @@ public class VCSlider {
         double mouseX = click.x();
         double mouseY = click.y();
         int button = click.button();
-        if (button == 0 && isMouseOver(mouseX, mouseY)) {
+        if (button == InputConstants.MOUSE_BUTTON_LEFT && isMouseOver(mouseX, mouseY)) {
             isDragging = true;
             return true;
         }
@@ -136,7 +138,7 @@ public class VCSlider {
     }
     
     public boolean mouseReleased(MouseButtonEvent click) {
-        if (click.button() == 0 && isDragging) {
+        if (click.button() == InputConstants.MOUSE_BUTTON_LEFT && isDragging) {
             isDragging = false;
             updateValue(click.x(), true);
             return true;
@@ -145,7 +147,7 @@ public class VCSlider {
     }
     
     public boolean mouseDragged(MouseButtonEvent click) {
-        if (isDragging && click.button() == 0) {
+        if (isDragging && click.button() == InputConstants.MOUSE_BUTTON_LEFT) {
             updateValue(click.x(), usingSteps());
             return true;
         }

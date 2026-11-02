@@ -3,6 +3,8 @@ package me.valkeea.fishyaddons.ui.element;
 import java.util.List;
 import java.util.function.Consumer;
 
+import com.mojang.blaze3d.platform.InputConstants;
+
 import me.valkeea.fishyaddons.tool.FishyMode;
 import me.valkeea.fishyaddons.util.text.Color;
 import me.valkeea.fishyaddons.vconfig.ui.render.RenderUtils;
@@ -73,7 +75,7 @@ public class SearchMenu {
         }
     }
 
-    private int[] calculateEntryHeights(int visibleEntries) {
+    protected int[] calculateEntryHeights(int visibleEntries) {
         int[] entryHeights = new int[visibleEntries];
         for (int i = 0; i < visibleEntries; i++) {
             int entryIndex = i + scrollOffset;
@@ -159,7 +161,7 @@ public class SearchMenu {
     }
 
     public boolean keyPressed(KeyEvent input) {
-        if (input.key() == 256) {
+        if (input.isEscape()) {
             if (searchField.isFocused()) {
                 searchField.setFocused(false);
                 return true;
@@ -174,12 +176,12 @@ public class SearchMenu {
         if (scrollOffset > maxOffset) scrollOffset = maxOffset;
         if (scrollOffset < 0) scrollOffset = 0;
 
-        if (input.key() == 264) {
+        if (input.key() == InputConstants.KEY_DOWN) {
             if (scrollOffset < maxOffset) {
                 scrollOffset++;
                 return true;
             }
-        } else if (input.key() == 265 && scrollOffset > 0) {
+        } else if (input.key() == InputConstants.KEY_UP && scrollOffset > 0) {
             scrollOffset--;
             return true;
         }

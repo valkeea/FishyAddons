@@ -2,7 +2,7 @@ package me.valkeea.fishyaddons.ui.screen;
 
 import java.util.List;
 
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 
 import me.valkeea.fishyaddons.compat.McApi;
 import me.valkeea.fishyaddons.feature.qol.ChatAlert;
@@ -485,7 +485,7 @@ public class AlertEditScreen extends Screen {
             return true;
         }
 
-        if (input.key() == GLFW.GLFW_KEY_F3) {
+        if (input.key() == InputConstants.KEY_F3) {
             toggleFormatMenu(true);
             return true;
         }        

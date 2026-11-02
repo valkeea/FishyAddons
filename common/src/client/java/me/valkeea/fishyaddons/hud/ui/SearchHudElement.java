@@ -3,6 +3,8 @@ package me.valkeea.fishyaddons.hud.ui;
 import java.awt.Rectangle;
 import java.util.List;
 
+import com.mojang.blaze3d.platform.InputConstants;
+
 import me.valkeea.fishyaddons.compat.McApi;
 import me.valkeea.fishyaddons.feature.qol.ItemSearchOverlay;
 import me.valkeea.fishyaddons.hud.base.InteractiveHudElement;
@@ -183,9 +185,9 @@ public class SearchHudElement extends InteractiveHudElement {
             if (mouseX >= hudX && mouseX <= hudX + scaledWidth &&
                 mouseY >= hudY && mouseY <= hudY + scaledHeight) {
 
-                if (button == 0) return searchField.mouseClicked(click, doubled);
+                if (button == InputConstants.MOUSE_BUTTON_LEFT) return searchField.mouseClicked(click, doubled);
 
-                else if (button == 1) {
+                else if (button == InputConstants.MOUSE_BUTTON_RIGHT) {
                     overlayActive = !overlayActive;
                     return true;
                 }

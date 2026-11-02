@@ -3,6 +3,8 @@ package me.valkeea.fishyaddons.ui.element;
 import java.util.List;
 import java.util.function.Consumer;
 
+import com.mojang.blaze3d.platform.InputConstants;
+
 import me.valkeea.fishyaddons.util.text.Enhancer;
 import me.valkeea.fishyaddons.util.text.GradientRenderer;
 import me.valkeea.fishyaddons.vconfig.ui.render.RenderUtils;
@@ -316,7 +318,7 @@ public class TextFormatMenu {
         
         int keyCode = input.key();
         
-        if (keyCode == 256) {
+        if (keyCode == InputConstants.KEY_ESCAPE) {
             setVisible(false);
             return true;
         }
@@ -325,10 +327,10 @@ public class TextFormatMenu {
         int visibleEntries = Math.min(totalEntries, maxEntries);
         int maxOffset = Math.max(0, totalEntries - visibleEntries);
         
-        if (keyCode == 264) {
+        if (keyCode == InputConstants.KEY_DOWN) {
             scrollOffset = Math.min(scrollOffset + 1, maxOffset);
             return true;
-        } else if (keyCode == 265) {
+        } else if (keyCode == InputConstants.KEY_UP) {
             scrollOffset = Math.max(scrollOffset - 1, 0);
             return true;
         }

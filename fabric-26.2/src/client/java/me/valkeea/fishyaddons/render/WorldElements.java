@@ -44,8 +44,6 @@ public class WorldElements {
         matrices.mulPose(rotation);
         matrices.scale(finalScale, -finalScale, finalScale);
 
-        org.lwjgl.opengl.GL11.glEnable(org.lwjgl.opengl.GL11.GL_BLEND);
-        org.lwjgl.opengl.GL11.glBlendFunc(org.lwjgl.opengl.GL11.GL_SRC_ALPHA, org.lwjgl.opengl.GL11.GL_ONE_MINUS_SRC_ALPHA);
 
         Component parsed = Enhancer.parseFormattedText(text);
         

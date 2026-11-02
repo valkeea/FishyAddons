@@ -42,8 +42,6 @@ public class WorldElements {
         matrices.mulPose(rotation);
         matrices.scale(finalScale, -finalScale, finalScale);
 
-        org.lwjgl.opengl.GL11.glEnable(org.lwjgl.opengl.GL11.GL_BLEND);
-        org.lwjgl.opengl.GL11.glBlendFunc(org.lwjgl.opengl.GL11.GL_SRC_ALPHA, org.lwjgl.opengl.GL11.GL_ONE_MINUS_SRC_ALPHA);
 
         Component parsed = Enhancer.parseFormattedText(text);
         
@@ -76,8 +74,7 @@ public class WorldElements {
         matrices.popPose();
     }
 
-    protected static void boxOutline(PoseStack matrices, AABB box, VertexConsumer consumer, float r, float g, float b, float a) {
-        Matrix4f matrix = matrices.last().pose();
+    protected static void boxOutline(Matrix4f matrix, AABB box, VertexConsumer consumer, float r, float g, float b, float a) {
         float[] color = {r, g, b, a};
 
         double x1 = box.minX;
@@ -113,8 +110,7 @@ public class WorldElements {
                 .setLineWidth(1.0f);
     }
 
-    protected static void boxFill(PoseStack matrices, AABB box, VertexConsumer consumer, float r, float g, float b, float a) {
-        Matrix4f matrix = matrices.last().pose();
+    protected static void boxFill(Matrix4f matrix, AABB box, VertexConsumer consumer, float r, float g, float b, float a) {
         float[] color = {r, g, b, a};
 
         double x1 = box.minX;

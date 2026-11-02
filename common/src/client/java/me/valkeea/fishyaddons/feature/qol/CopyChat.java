@@ -2,10 +2,9 @@ package me.valkeea.fishyaddons.feature.qol;
 
 import java.util.List;
 
-import com.mojang.blaze3d.platform.InputConstants;
-
 import me.valkeea.fishyaddons.mixin.ChatHudAccessor;
 import me.valkeea.fishyaddons.util.FishyNotis;
+import me.valkeea.fishyaddons.util.Keyboard;
 import me.valkeea.fishyaddons.vconfig.annotation.VCListener;
 import me.valkeea.fishyaddons.vconfig.annotation.VCModule;
 import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
@@ -38,7 +37,7 @@ public class CopyChat {
             String text = extractVisible(line);
             List<GuiMessage.Line> visible = chat.getVisibleMessages();
 
-            if (shouldCopyLine(mc)) {
+            if (Keyboard.isShiftDown()) {
                 toClipboard(mc, text);
             } else {
                 toClipboard(mc, extractFull(visible, lineIdx));
@@ -46,14 +45,14 @@ public class CopyChat {
         }
     }
 
-    public static void toClipboard(Minecraft mc, String text) {
-        mc.keyboardHandler.setClipboard(text);
-        FishyNotis.ccNoti();
+    public static void toClipboard(Minecraft mc, String copied) {
+        mc.keyboardHandler.setClipboard(copied);
+        if (isNotiOn) FishyNotis.ccNoti(copied);
     }
 
-    public static void toClipboard(String text) {
-        Minecraft.getInstance().keyboardHandler.setClipboard(text);
-        FishyNotis.ccNoti();
+    public static void toClipboard(String copied) {
+        Minecraft.getInstance().keyboardHandler.setClipboard(copied);
+        if (isNotiOn) FishyNotis.ccNoti(copied);
     }
 
     private static int calcLineIndex(
@@ -102,13 +101,6 @@ public class CopyChat {
         });
 
         return sb.toString();
-    }
-
-    private static boolean shouldCopyLine(Minecraft mc) {
-        if (mc.options == null) return false;
-        var window = mc.getWindow();
-        int keyCode = mc.options.keyShift.getDefaultKey().getValue();
-        return InputConstants.isKeyDown(window, keyCode);
     }
 
     private static String extractFull(List<GuiMessage.Line> visible, int lineIdx) {

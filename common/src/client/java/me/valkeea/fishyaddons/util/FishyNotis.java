@@ -8,6 +8,7 @@ import me.valkeea.fishyaddons.vconfig.ui.render.VCText;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.HoverEvent.ShowText;
 import net.minecraft.network.chat.Style;
 
 public class FishyNotis {
@@ -107,9 +108,10 @@ public class FishyNotis {
         }
     }        
 
-    public static void ccNoti() {
-        if (!me.valkeea.fishyaddons.feature.qol.CopyChat.isNotiOn()) return;
-        send("Copied to clipboard");
+    public static void ccNoti(String copied) {
+        var event = new ShowText(Component.literal(copied).setStyle(Style.EMPTY.withColor(ChatFormatting.GRAY)));
+        var text = Component.literal("Copied to clipboard").withStyle(s -> s.withColor(ChatFormatting.GRAY).withHoverEvent(event));
+        send(text);
     }
 
     public static void bookNoti(Component styledItemName) {

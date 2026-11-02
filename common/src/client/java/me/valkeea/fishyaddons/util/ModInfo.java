@@ -12,6 +12,7 @@ import me.valkeea.fishyaddons.vconfig.api.StringKey;
 import net.minecraft.client.Minecraft;
 
 public class ModInfo {
+    private static final String MOD_URL = "https://modrinth.com/project/QOUIa2cU";    
     private static final int CLOSE_KEY = GLFW.GLFW_KEY_X;
     private static final int COPY_LINK_KEY = GLFW.GLFW_KEY_C;
     private static final boolean FOR_NEW = false;
@@ -77,8 +78,8 @@ public class ModInfo {
 
             boolean copyKeyDown = InputConstants.isKeyDown(window, COPY_LINK_KEY);
             if (wasPressed && !copyKeyDown) {
-                mc.keyboardHandler.setClipboard("https://modrinth.com/project/QOUIa2cU");
-                FishyNotis.ccNoti();
+                mc.keyboardHandler.setClipboard(MOD_URL);
+                FishyNotis.ccNoti(MOD_URL);
             }
             wasPressed = copyKeyDown;
         }

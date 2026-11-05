@@ -84,9 +84,22 @@ public class SlotHandler {
             return false;
         }
 
+        if (!handler.getCarried().isEmpty()) {
+            return true;
+        }
+
         int syncId = handler.containerId;
         var interactionManager = mc.gameMode;
         var player = mc.player;
+
+        if (isHotbar(boundSlotId)) {
+            interactionManager.handleContainerInput(syncId, invIndex, boundSlotId - HOTBAR_START, ContainerInput.SWAP, player);
+            return true;
+        }
+        if (isHotbar(invIndex)) {
+            interactionManager.handleContainerInput(syncId, boundSlotId, invIndex - HOTBAR_START, ContainerInput.SWAP, player);
+            return true;
+        }
 
         if (hasHoveredStack) {
             interactionManager.handleContainerInput(syncId, invIndex, 0, ContainerInput.PICKUP, player);
@@ -101,6 +114,12 @@ public class SlotHandler {
         }
 
         return true;
+    }
+
+    private static final int HOTBAR_START = 36;
+
+    private static boolean isHotbar(int slotId) {
+        return slotId >= HOTBAR_START && slotId < HOTBAR_START + 8;
     }
 
     // --- Lock/Unlock ---

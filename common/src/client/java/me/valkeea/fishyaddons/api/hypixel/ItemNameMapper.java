@@ -195,7 +195,7 @@ public class ItemNameMapper {
      * Check for known patterns that can be normalized to API IDs.
      */
     private static String getKnownPattern(String n) {
-        if (n.contains("GEMSTONE")) return n.replace("GEMSTONE", "GEM");
+        if (n.contains("GEMSTONE") && n.chars().filter(c -> c == '_').count() == 2) return n.replace("GEMSTONE", "GEM");
         if (n.contains("INGOT")) return n.replace("_INGOT", "");
         if (n.equals("POTATO") || n.equals("CARROT")) return n + "_ITEM";
         if (n.contains("MIRIA") || n.contains("AGATHA")) return n.replaceFirst("S_", "_");

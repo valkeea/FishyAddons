@@ -1,9 +1,12 @@
 package me.valkeea.fishyaddons.feature.skyblock;
 
+import java.text.NumberFormat;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
+
+import org.jetbrains.annotations.NotNull;
 
 import me.valkeea.fishyaddons.api.skyblock.GameMode;
 import me.valkeea.fishyaddons.util.TabScanner;
@@ -24,6 +27,7 @@ public class PetInfo {
     private PetInfo() {}
 
     private static boolean isOn = false;
+    private static boolean shortXp = false;
     private static boolean tablistReady = false;
     private static int color = 0;
 
@@ -31,10 +35,14 @@ public class PetInfo {
     private static Component directOverride = null;
 
     private static final Pattern AUTOPET_PATTERN = Pattern.compile(
-        "§cAutopet §eequipped your (§.\\[Lvl \\d+\\] (?:§.\\[§.\\d+§.⚔§.\\] )?(?:§.)+.+?)§e! §a§lVIEW RULE");    
+        "§cAutopet §eequipped your (§.\\[Lvl \\d+\\] (?:§.\\[§.\\d+§.⚔§.\\] )?(?:§.)+.+?)§e! §a§lVIEW RULE"); 
+
+    private static final Pattern SUMMON_PATTERN = Pattern.compile(
+        "You summoned your (.+) ?[!¡]?"
+    );
 
 
-    public static boolean handleChat(String s) {
+    public static boolean handleChat(String s, Component msg) {
         if (!isOn || !GameMode.skyblock()) return false;
 
         var directMatcher = AUTOPET_PATTERN.matcher(s);
@@ -45,16 +53,24 @@ public class PetInfo {
             return true;
         }
 
-        var summonPattern = Pattern.compile("You summoned your (.+) ?[!¡]?");
-        var summonMatcher = summonPattern.matcher(s);
-        if (summonMatcher.find()) {
-            if (l1Scanned == null) TabScanner.delayedScan();
+        if (SUMMON_PATTERN.matcher(s).find()) {
+
+            var name = msg.getSiblings().stream()
+                .filter(sib -> !sib.getString().contains("You summoned your"))
+                .findFirst()
+                .orElse(Component.literal(""));
+
+            l1Scanned = Component.empty().append(name);
+            setNewPet(l1Scanned);
+            clearOverride();
+            TabScanner.delayedScan();
+        
             return true;
         }
 
         if (s.contains("You despawned your")) {
-            Component msg = Component.literal("Despawned").setStyle(Style.EMPTY.withColor(0xFF808080));
-            setOverride(msg);
+            var despawned = Component.literal("Despawned").setStyle(Style.EMPTY.withColor(0xFF808080));
+            setOverride(despawned);
             clearInfo();
             return true;
         }
@@ -62,12 +78,13 @@ public class PetInfo {
     }
 
     @VCListener(
-        value = {BooleanKey.HUD_PET_ENABLED, BooleanKey.PET_INCLUDEXP},
+        value = {BooleanKey.HUD_PET_ENABLED, BooleanKey.PET_INCLUDEXP, BooleanKey.PET_SHORT_XP},
         ints = IntKey.HUD_PETXP_COLOR
     ) 
     public static void init() {
         isOn = Config.get(BooleanKey.HUD_PET_ENABLED);
         color = Config.get(IntKey.HUD_PETXP_COLOR);
+        shortXp = Config.get(BooleanKey.PET_SHORT_XP);
         ActivePet.forceUpdate();
     }    
 
@@ -158,6 +175,19 @@ public class PetInfo {
             setNewPet(merged);
         }
 
+        private static @NotNull String truncateXp(String raw) {
+            if (raw == null || raw.isEmpty()) return "";
+
+            var nf = NumberFormat.getCompactNumberInstance();
+            try {
+                var cleaned = raw.replaceAll(",|\\+| XP", "");
+                double value = Double.parseDouble(cleaned);
+                return nf.format(value);
+            } catch (NumberFormatException _) {
+                return raw;
+            }
+        }
+
         private static Component formatl2(Component line, int color) {
 
             var raw = line.getString().trim();
@@ -167,8 +197,18 @@ public class PetInfo {
                     .withColor(color));
             }
 
-            var tail = false;
+            return shortXp ? recolorXpSimple(raw, color) : recolorXp(raw, color);
+        }
+
+        private static Component recolorXpSimple(String raw, int color) {
+            raw = truncateXp(raw);
+            return Component.empty().append(Component.literal(raw).setStyle(Style.EMPTY.withColor(color)));
+        }
+
+        private static Component recolorXp(String raw, int color) {
+
             var result = Component.empty();
+            var tail = false;
 
             for (int i = 0; i < raw.length(); i++) {
                 char c = raw.charAt(i);

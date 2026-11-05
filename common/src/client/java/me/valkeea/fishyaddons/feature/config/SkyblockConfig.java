@@ -132,6 +132,14 @@ public class SkyblockConfig {
     private static boolean petIncludeXp;
 
     @UIToggle(
+        key = BooleanKey.PET_SHORT_XP,
+        name = "Short Pet XP Line",
+        description = "Truncate pet XP values (e.g. 10,100.1 -> 10k).",
+        parent = PET
+    )
+    private static boolean petShortXp;
+
+    @UIToggle(
         key = BooleanKey.ITEM_PRICE_TT,
         name = "*Item Price* Tooltip",
         description = "Add the lowest auction/bazaar (cached) price of an item to its tooltip if available."

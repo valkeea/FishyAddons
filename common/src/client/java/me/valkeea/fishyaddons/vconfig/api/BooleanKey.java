@@ -45,6 +45,7 @@ public enum BooleanKey implements ConfigKey<Boolean> {
     HUD_TIMER_ENABLED("timerHud", true),
     HUD_PET_ENABLED("petHud"),
     PET_INCLUDEXP("petXpCheck", true),
+    PET_SHORT_XP("petShortXp"),
     HUD_PROFIT_ENABLED("profitTrackerHud"),
     HUD_CENTURY_CAKE_ENABLED("centuryCakeHud"),
     HUD_CATCH_GRAPH_ENABLED("scGraphHud"),

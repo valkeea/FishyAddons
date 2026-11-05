@@ -7,7 +7,7 @@ public class SkyblockAreas {
     private SkyblockAreas() {}
 
     public enum Island {
-        CI("crimson_isle", false),
+        CI("crimson_isle", false, true),
         HUB("hub"),
         PRIVATE("private_island"),
         DH("dungeon_hub"),
@@ -23,7 +23,7 @@ public class SkyblockAreas {
         DEF("default"),
         GAL("galatea", false),
         TORRHUS("torrhus_canyon", false),
-        SAFARI("safari", false),
+        SAFARI("safari", false, true),
         BAYOU("backwater_bayou", false),
         JERRY("jerrys_workshop", false),
         DUNGEON("dungeon"),
@@ -37,15 +37,24 @@ public class SkyblockAreas {
 
         private final String key;
         private final boolean basic;
+        private final boolean hasRegions;
 
         Island(String key) {
             this.key = key;
             this.basic = true;
+            this.hasRegions = false;
         }
 
         Island(String key, boolean basic) {
             this.key = key;
             this.basic = basic;
+            this.hasRegions = false;
+        }
+
+        Island(String key, boolean basic, boolean hasRegions) {
+            this.key = key;
+            this.basic = basic;
+            this.hasRegions = hasRegions;
         }
 
         public String key() {
@@ -54,6 +63,10 @@ public class SkyblockAreas {
 
         public boolean isBasic() {
             return basic;
+        }
+
+        public boolean hasRegions() {
+            return hasRegions;
         }
 
         public String displayName() {

@@ -6,7 +6,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.jetbrains.annotations.Nullable;
 
-import me.valkeea.fishyaddons.api.skyblock.SkyblockAreas;
+import me.valkeea.fishyaddons.api.skyblock.IslandRegion;
 import me.valkeea.fishyaddons.api.skyblock.SkyblockAreas.Island;
 import me.valkeea.fishyaddons.event.impl.EnvironmentChangeEvent;
 import me.valkeea.fishyaddons.event.impl.FaEvents;
@@ -21,10 +21,8 @@ import me.valkeea.fishyaddons.vconfig.config.impl.StatConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.decoration.ArmorStand;
-import net.minecraft.world.phys.Vec3;
 
 public class ScStats {
-    private static final double POSITION_CHECK_THRESHOLD = 5.0;
     private static final String CRIMSON_PREFIX = "crimson_";     
     private static final String SINCE_PREFIX = "since_";
     private static final String JAWBUS_VIAL_KEY = "jawbus_since_vial";
@@ -59,11 +57,9 @@ public class ScStats {
     private int jawbusSinceVial = 0;
     private boolean loaded = false;  
 
-    private static Vec3 lastCheckedPosition = null;    
     private static boolean enabled = false;
     private static boolean countDh = false;
     private static boolean announce = false;
-    private static boolean isPlhlegPool = false;
     private static boolean isHotspot = false;
     private static boolean registered = false;
 
@@ -134,54 +130,12 @@ public class ScStats {
 
     public static Island getArea() { return area; }
     public static boolean isHspt() { return isHotspot; }
-    public static boolean isPool() { return isPlhlegPool; }
+    public static boolean isPool() { return IslandRegion.isPlayerInCrimsonPool(); }
 
     public static void resetHspt() {
         if (isHotspot) {
             isHotspot = false;
         }
-    }
-    
-    private static void checkPoolStatus() {
-        if (SkyblockAreas.isCrimson()) {
-            boolean currentPoolStatus = updatePoolStatus();
-            if (currentPoolStatus != isPlhlegPool) {
-                isPlhlegPool = currentPoolStatus;
-            }
-        }
-    }    
-    
-    private static boolean updatePoolStatus() {
-        var client = Minecraft.getInstance();
-
-        if (client.player == null) {
-            return false;
-        }
-        
-        var currentPos = client.player.position();
-        if (lastCheckedPosition != null) {
-
-            var distanceMoved = currentPos.distanceTo(lastCheckedPosition);
-            if (distanceMoved < POSITION_CHECK_THRESHOLD) {
-                return isPlhlegPool;
-            }
-        }
-        
-        lastCheckedPosition = currentPos;
-        return isPool3d(currentPos);
-    }
-    
-    private static boolean isPool3d(Vec3 pos) {
-        
-        double x = pos.x;
-        double y = pos.y;
-        double z = pos.z;
-        
-        boolean inPoolX = x >= -400 && x <= -355;
-        boolean inPoolY = y >= 66 && y <= 84;
-        boolean inPoolZ = z >= -725 && z <= -680;
-
-        return inPoolX && inPoolY && inPoolZ;
     }
 
     // --- Chat Handling ---
@@ -234,11 +188,6 @@ public class ScStats {
         }
 
         int increment = isDh && countDh ? 2 : 1;
-        
-        if (SkyblockAreas.isCrimson()) {
-            checkPoolStatus();
-        }
-
         Island currentArea = getCurrentAreaKey();
         
         StatConfig.beginBatch();
@@ -356,7 +305,7 @@ public class ScStats {
     public Island getCurrentAreaKey() {
 
         if (Island.CI.equals(area)) {
-            if (isPlhlegPool) {
+            if (isPool()) {
                 return Island.PLHLEGBLAST;
             } else if (isHotspot) {
                 return Island.CI_HOTSPOT;
@@ -439,6 +388,7 @@ public class ScStats {
     private StringBuilder buildCiStats(StringBuilder sb) {
 
         var ciSb = new StringBuilder(sb);
+        boolean isPlhlegPool = isPool();
 
         if (isHotspot) {
             ciSb.append("§8 - §cRagnarok: §b").append(getCounterFor(Sc.RAGNAROK));

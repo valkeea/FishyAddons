@@ -224,6 +224,31 @@ public abstract class BaseConfig {
         }
     }
 
+    /**
+     * Replace the current config with the contents of the given backup file and reload it.
+     * The current config is backed up first. Returns false if the backup is unreadable or invalid.
+     */
+    public synchronized boolean restoreFromFile(File source) {
+        try {
+            byte[] data = Files.readAllBytes(source.toPath());
+            JsonObject json = GSON.fromJson(new String(data, java.nio.charset.StandardCharsets.UTF_8), JsonObject.class);
+            if (!validate(json)) return false;
+
+            saveBackup();
+            Files.write(configFile.toPath(), data);
+            load();
+            return true;
+        } catch (Exception e) {
+            logError("Manual restore failed for " + source.getAbsolutePath(), e);
+            return false;
+        }
+    }
+
+    /** Directory containing dated backup folders. */
+    public File getBackupDir() {
+        return backupDir;
+    }
+
     private void deleteDirectory(File dir) {
         if (dir.isDirectory()) {
             File[] files = dir.listFiles();

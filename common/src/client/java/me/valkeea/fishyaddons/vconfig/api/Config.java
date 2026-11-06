@@ -131,6 +131,39 @@ public class Config {
         }
     }
 
+    /**
+     * Back up all configs, then reset every typed key to its default value.
+     * Custom {@link ConfigSection}s are left untouched.
+     * 
+     * @return the number of keys reset
+     */
+    public static int resetAllToDefaults() {
+        ensureInitialized();
+        saveBackup();
+
+        var configs = getConfigs().values();
+        configs.forEach(BaseConfig::incrementDepth);
+        int count = 0;
+        try {
+            for (var k : BooleanKey.values()) count += reset(k);
+            for (var k : IntKey.values()) count += reset(k);
+            for (var k : DoubleKey.values()) count += reset(k);
+            for (var k : StringKey.values()) count += reset(k);
+        } finally {
+            configs.forEach(BaseConfig::decrementDepthAndFlush);
+        }
+        return count;
+    }
+
+    private static <T> int reset(ConfigKey<T> key) {
+        try {
+            setValue(key, key.getDefault());
+            return 1;
+        } catch (UnsupportedOperationException | IllegalStateException _) {
+            return 0;
+        }
+    }
+
     public static void saveBackup() {
         ensureInitialized();
         if (provider instanceof FaConfigProvider prod) {

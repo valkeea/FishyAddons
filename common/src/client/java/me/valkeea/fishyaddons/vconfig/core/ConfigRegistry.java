@@ -368,10 +368,17 @@ public class ConfigRegistry {
             modules.removeAll(toRemove);
         }
 
+        initializeConfigValues();
+    }
+
+    /**
+     * Re-fire and sync all config listeners and auto-sync fields with their current values.
+     */
+    public static void initializeConfigValues() {
         registerFieldAutoSync();
         registerAndInitListeners();
     }
-    
+
     /**
      * If autoSync is enabled, keeps field values synchronized with their config keys
      */

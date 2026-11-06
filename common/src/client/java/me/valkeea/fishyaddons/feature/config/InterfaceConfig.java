@@ -1,6 +1,8 @@
 package me.valkeea.fishyaddons.feature.config;
 
 import me.valkeea.fishyaddons.tool.FishyMode;
+import me.valkeea.fishyaddons.ui.list.ConfigManager;
+import me.valkeea.fishyaddons.vconfig.annotation.UIRedirect;
 import me.valkeea.fishyaddons.vconfig.annotation.UISlider;
 import me.valkeea.fishyaddons.vconfig.annotation.VCListener;
 import me.valkeea.fishyaddons.vconfig.annotation.VCModule;
@@ -40,5 +42,20 @@ public class InterfaceConfig {
     @VCListener(ints = IntKey.THEME_MODE)
     public static void onThemeModeChanged(int newValue) {
         FishyMode.setTheme(newValue);
+    }
+
+    @UIRedirect(
+        name = "Reset or Restore *Settings*",
+        description = {
+            "Reset typed settings to their default values or restore config from a backup."
+        },
+        method = "openConfigManager",
+        buttonText = "Open",
+        order = 100
+    )
+    private static boolean resetOrRestore;
+
+    public static void openConfigManager() {
+        ScreenManager.navigateConfigScreen(new ConfigManager());
     }
 }

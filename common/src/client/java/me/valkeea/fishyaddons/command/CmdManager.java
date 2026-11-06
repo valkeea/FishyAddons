@@ -1,8 +1,12 @@
 package me.valkeea.fishyaddons.command;
 
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.brigadier.tree.CommandNode;
 
 import me.valkeea.fishyaddons.command.handler.CommandHandler;
 import me.valkeea.fishyaddons.command.handler.FaRoot;
@@ -40,12 +44,17 @@ public class CmdManager {
         builder
             .then(buildSubcommandRoot("profit", PROFIT_HANDLER))
             .then(buildSubcommandRoot("guard", GUARD_HANDLER))
-            .then(buildSubcommandRoot("waypoint", WAYPOINT_HANDLER))
+            .then(buildSubcommandRoot("waypoint", WAYPOINT_HANDLER));
 
+        Set<String> reservedNames = builder.getArguments().stream()
+            .map(CommandNode::getName)
+            .collect(Collectors.toSet());
+
+        builder
             .then(
                 ClientCommands.argument(
                     "query",
-                    StringArgumentType.greedyString()
+                    GatedGreedyString.excluding(reservedNames)
                 ).executes(context -> {
                     String query = StringArgumentType.getString(context, "query");
                     VCState.setSearchTo(query);

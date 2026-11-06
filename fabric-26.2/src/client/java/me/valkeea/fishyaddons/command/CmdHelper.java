@@ -21,39 +21,39 @@ public class CmdHelper {
     public static void sendSortedProtectedList() {
 
         String colorOrder = "4a956dbc\0";
-        List<Map.Entry<String, String>> entries = new ArrayList<>(ItemConfig.getProtectedUUIDs().entrySet());
+        List<Map.Entry<String, String>> items = new ArrayList<>(ItemConfig.getProtectedUUIDs().entrySet());
 
-        entries.sort((a, b) -> {
-            var aText = JsonUtil.deserializeText(a.getValue());
-            var bText = JsonUtil.deserializeText(b.getValue());
+        items.sort((a, b) -> {
+            var aName = JsonUtil.deserializeText(a.getValue());
+            var bName = JsonUtil.deserializeText(b.getValue());
 
-            char aColor = getFirstColorCode(aText);
-            char bColor = getFirstColorCode(bText);
+            char aColor = getFirstColorCode(aName);
+            char bColor = getFirstColorCode(bName);
 
-            int aIndex = colorOrder.indexOf(aColor);
-            int bIndex = colorOrder.indexOf(bColor);
+            int aIdx = colorOrder.indexOf(aColor);
+            int bIdx = colorOrder.indexOf(bColor);
 
-            if (aIndex == -1) aIndex = colorOrder.length();
-            if (bIndex == -1) bIndex = colorOrder.length();
-            if (aIndex != bIndex)  return Integer.compare(aIndex, bIndex);
+            if (aIdx == -1) aIdx = colorOrder.length();
+            if (bIdx == -1) bIdx = colorOrder.length();
+            if (aIdx != bIdx)  return Integer.compare(aIdx, bIdx);
 
-            var aAlpha = aText.getString();
-            var bAlpha = bText.getString();
+            var aAlpha = aName.getString();
+            var bAlpha = bName.getString();
             return aAlpha.compareToIgnoreCase(bAlpha);
         });
 
-        FishyNotis.send(Component.literal("Protected Items:").withStyle(ChatFormatting.AQUA));
+        FishyNotis.themed("§lProtected Items:\n");
         
-        for (Map.Entry<String, String> e : entries) {
+        if (items.isEmpty()) {
+            FishyNotis.notice("No items are currently protected."
+            + "\nUse /fg add while holding an item to add it to the protected list.");
 
-            var line = JsonUtil.deserializeText(e.getValue());
-            var btn = ChatButton.create("/fg remove " + e.getKey(), "Remove");
-
-            FishyNotis.alert(
-                Component.literal(" - ").withStyle(s -> s.withColor(0xFFAAAAAA))
-                .append(line).append(Component.literal(" "))
-                .append(btn)
-            );
+        } else {
+            items.forEach(i -> FishyNotis.alert(
+                ChatButton.create("/fg remove " + i.getKey(), "§7🗑")
+                .append(Component.literal(" "))
+                .append(JsonUtil.deserializeText(i.getValue()))
+            ));
         }
     }
 
@@ -102,7 +102,7 @@ public class CmdHelper {
             .withStyle(style -> style.withClickEvent(new net.minecraft.network.chat.ClickEvent.RunCommand(onAccept)).withColor(0xFFCCFFCC));
         var no = Component.literal("[No]")
             .withStyle(style -> style.withClickEvent(new net.minecraft.network.chat.ClickEvent.RunCommand(onDecline)).withColor(0xFFFF8080));
-        mc.player.sendSystemMessage(Component.literal(" ").append(yes).append(Component.literal(" ")).append(no));
+        FishyNotis.alert(Component.literal(" ").append(yes).append(Component.literal(" ")).append(no));
     }
     
     public static int checkGUI() {

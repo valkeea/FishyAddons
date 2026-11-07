@@ -5,8 +5,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import me.valkeea.fishyaddons.bridge.ParticleScaleAccessor;
-import me.valkeea.fishyaddons.feature.visual.ParticleVisuals;
+import me.valkeea.fishyaddons.feature.skyblock.EntityHighlight;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.CritParticle;
 import net.minecraft.client.particle.Particle;
@@ -19,18 +18,14 @@ public class MixinDamageParticleFactory {
 
     @SuppressWarnings("squid:S107")
     @Inject(method = "createParticle", at = @At("TAIL"))
-    private void onCreateParticle(SimpleParticleType parameters, ClientLevel level,
-                                    double d, double e, double f, double g, double h, double i,
-                                    RandomSource random, CallbackInfoReturnable<Particle> cir) {
+    private void faCreateParticle(SimpleParticleType params, ClientLevel level,
+                                    double x, double y, double z, double xAux, double yAux, double zAux,
+                                    RandomSource r, CallbackInfoReturnable<Particle> cir) {
 
-        if (level == null || parameters == null || !ParticleVisuals.getDmg()) return;
+        if (level == null || params == null) return;
                                   
-        if (parameters.getType() == ParticleTypes.CRIT) {
-            Particle p = cir.getReturnValue();
-
-            if (p instanceof ParticleScaleAccessor accessor) {
-                accessor.setParticleScale(ParticleVisuals.cachedScale());
-            }
+        if (params.getType() == ParticleTypes.CRIT) {
+            EntityHighlight.onCritParticle(level, x, y, z);
         }
     }
 }

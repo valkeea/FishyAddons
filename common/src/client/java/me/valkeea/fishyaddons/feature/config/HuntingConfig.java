@@ -74,5 +74,12 @@ public class HuntingConfig {
     )
     private static int floorDropHighlight;
 
+    @UIColorPicker(
+        key = IntKey.INVISIBUG_COLOR,
+        name = "Highlight *Invisibug*",
+        description = "Draw a box around Invisibugs on Galatea. (Set a color to enable)"       
+    )
+    private static int invisibugHighlight; 
+
     private HuntingConfig() {}
 }

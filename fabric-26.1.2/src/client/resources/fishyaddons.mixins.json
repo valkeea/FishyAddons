@@ -8,7 +8,6 @@
 		"MixinAreaParticleColor",
 		"MixinArmorStandEntityRenderer",
 		"MixinBar",
-		"MixinBillboardParticle",
 		"MixinChatFilter",
 		"MixinChatScreen",
 		"MixinClientCommonNetworkHandler",

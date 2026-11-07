@@ -9,11 +9,14 @@ import me.valkeea.fishyaddons.api.skyblock.IslandRegion;
 import me.valkeea.fishyaddons.api.skyblock.SafariData.SafariZone;
 import me.valkeea.fishyaddons.api.skyblock.SkyblockAreas;
 import me.valkeea.fishyaddons.compat.McApi;
+import me.valkeea.fishyaddons.event.impl.FaEvents;
+import me.valkeea.fishyaddons.vconfig.annotation.VCInit;
 import me.valkeea.fishyaddons.vconfig.annotation.VCListener;
 import me.valkeea.fishyaddons.vconfig.annotation.VCModule;
 import me.valkeea.fishyaddons.vconfig.api.IntKey;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.debug.DebugScreenEntries;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gizmos.GizmoStyle;
@@ -70,7 +73,27 @@ public class EntityHighlight {
         }
     };
 
-    private static final List<Highlighter> HIGHLIGHTERS = List.of(SAFARI);
+    private static final Highlighter GALATEA = new Highlighter() {
+        @Override
+        public boolean active() {
+            return !invisibugs.isEmpty();
+        }
+
+        @Override
+        public boolean scansEntities() {
+            return false;
+        }
+
+        @Override
+        public void begin(Frustum frustum, float partialTicks) {
+            for (var bug : invisibugs) {
+                var box = AABB.ofSize(bug.getPosition(partialTicks), BUG_BOX_SIZE, BUG_BOX_SIZE, BUG_BOX_SIZE);
+                draw(box, Vec3.ZERO, frustum, invisibugColor);
+            }
+        }
+    };
+
+    private static final List<Highlighter> HIGHLIGHTERS = List.of(SAFARI, GALATEA);
     private static final List<Highlighter> activeHighlighters = new ArrayList<>(HIGHLIGHTERS.size());
 
     public static void emit(Frustum frustum, float partialTicks) {
@@ -193,5 +216,48 @@ public class EntityHighlight {
 
     private static boolean isInHauntedZone() {
         return IslandRegion.getPlayerSafariZone() == SafariZone.HAUNTED;
+    }
+
+    // --- Galatea ---
+
+    private static final double BUG_BOX_SIZE = 0.5;
+    private static final double BUG_RADIUS = 5;
+
+    private static int invisibugColor;
+
+    private static final Set<Entity> invisibugs = new HashSet<>();
+
+    @VCListener(ints = IntKey.INVISIBUG_COLOR)
+    public static void onInvisibugColor(int color) {
+        invisibugColor = color;
+        clearInvisibugs();
+    }
+
+    @VCInit
+    public static void init() {
+        FaEvents.ENVIRONMENT_CHANGE.register(e -> clearInvisibugs());
+    }    
+
+    public static void onCritParticle(ClientLevel level, double x, double y, double z) {
+        if (invisibugColor == 0 || !SkyblockAreas.isGalatea()) return;
+
+        var r = BUG_RADIUS * 2;
+        var area = AABB.ofSize(new Vec3(x, y, z), r, r, r);
+        for (var s : level.getEntitiesOfClass(ArmorStand.class, area)) {
+            if (isInvisibug(s)) invisibugs.add(s);
+        }
+    }
+
+    private static boolean isInvisibug(ArmorStand s) {
+        var name = s.getCustomName();
+        return s.isInvisible() && s.getItemBySlot(EquipmentSlot.HEAD).isEmpty() && (name == null || name.getString().isBlank());
+    }
+
+    private static void clearInvisibugs() {
+        invisibugs.clear();
+    }
+
+    public static void onEntityRemoved(Entity entity) {
+        invisibugs.remove(entity);
     }
 }

@@ -15,7 +15,6 @@ public enum BooleanKey implements ConfigKey<Boolean> {
     FISHY_WATER("fishyWater"),
     FIRE_ANI("fireAni"),
     DEATH_ANI("deathAni"),
-    SCALE_CRIT("scaleCritParticles"),
     XP_COLOR_ON("xpColorEnabled"),
     XP_OUTLINE("xpOutline"),
     HD_FONT("hdFont"),
@@ -77,6 +76,7 @@ public enum BooleanKey implements ConfigKey<Boolean> {
     TRACK_SLAYER("trackSlayer"),
     TRACK_CRITTERS("trackCritters"),
     SAFARI_OWN_ZONE_ONLY("safariOwnZoneOnly", true),
+    SAFARI_ANNOUNCE("safariAnnounce", true),
     
     // Hotspots
     HOTSPOT_TRACK("trackHotspot"),

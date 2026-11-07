@@ -7,9 +7,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import me.valkeea.fishyaddons.util.text.Color;
 import me.valkeea.fishyaddons.vconfig.annotation.VCListener;
 import me.valkeea.fishyaddons.vconfig.annotation.VCModule;
-import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
 import me.valkeea.fishyaddons.vconfig.api.Config;
-import me.valkeea.fishyaddons.vconfig.api.DoubleKey;
 import me.valkeea.fishyaddons.vconfig.api.IntKey;
 
 @VCModule
@@ -20,8 +18,6 @@ public class ParticleVisuals {
     private static final float RANDOMIZATION_INTENSITY = 0.4f; 
       
     private static float[] rgb = null;
-    private static double dmgScale = 0.0;
-    private static boolean scaleDmg = false;
 
     static {
         COLOR_MAP.put(1, new float[]{0.4F, 1.0F, 1.0F}); // Aqua
@@ -61,14 +57,6 @@ public class ParticleVisuals {
         boolean green = (g > 0.5f && g > r && g > b);
 
         return red || yellow || black || green;
-    }    
-
-    public static float cachedScale() {
-        return (float) dmgScale;
-    }
-
-    public static boolean getDmg() {
-        return scaleDmg && me.valkeea.fishyaddons.api.skyblock.SkyblockAreas.isGalatea();
     }
 
     @VCListener(ints = IntKey.REDSTONE_COLOR)
@@ -81,11 +69,5 @@ public class ParticleVisuals {
     @VCListener(ints = IntKey.REDSTONE_COLOR_INDEX)
     public static void onIndexChanged(int newValue) {
         updateColor(newValue);
-    }    
-
-    @VCListener(value = BooleanKey.SCALE_CRIT, doubles = DoubleKey.DMG_SCALE)
-    public static void onScaleChanged() {
-        dmgScale = Config.get(DoubleKey.DMG_SCALE);
-        scaleDmg = Config.get(BooleanKey.SCALE_CRIT);
     }
 }

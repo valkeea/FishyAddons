@@ -365,18 +365,7 @@ public class SkyblockConfig {
             "hovered slots, peek and bypass block by holding shift."
         }
     )
-    private static String keyHideGui;    
-
-    @UIToggle(
-        key = BooleanKey.SCALE_CRIT,
-        name = "Scale Critical Hit Particles (*Invisibug*)",
-        description = "Increase the size of critical hit particles in Galatea."
-    )
-    @UISlider(
-        key = DoubleKey.DMG_SCALE,
-        min = 0.0, max = 1.0, format = "%.1fx"
-    )
-    private static boolean scaleCrits;
+    private static String keyHideGui;
 
     private SkyblockConfig() {}
 }

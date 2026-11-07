@@ -18,6 +18,7 @@ public enum IntKey implements ConfigKey<Integer> {
     SKY_COLOR("skyColor", 0x00000000),
     CRITTER_COLOR("critterColor"),
     FLOOR_DROP_COLOR("floorDropColor"),
+    INVISIBUG_COLOR("invisibugColor"),
     
     // Settings
     THEME_MODE("themeMode"),

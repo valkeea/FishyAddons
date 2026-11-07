@@ -14,6 +14,7 @@ import me.valkeea.fishyaddons.processor.ChatHandler;
 import me.valkeea.fishyaddons.processor.ChatHandlerResult;
 import me.valkeea.fishyaddons.processor.ChatMessageContext;
 import me.valkeea.fishyaddons.util.ZoneUtils;
+import net.minecraft.network.chat.Component;
 
 public class GameplayHandler implements ChatHandler {
     
@@ -33,17 +34,17 @@ public class GameplayHandler implements ChatHandler {
     }
     
     @Override
-    public ChatHandlerResult handle(ChatMessageContext context) {
-        String msg = context.getCleanString();
-        String lower = context.getLowerCleanString();
+    public ChatHandlerResult handle(ChatMessageContext ctx) {
+        String msg = ctx.getCleanString();
+        String lower = ctx.getLowerCleanString();
         try {
             if (handleGamemodeDetection(msg)) return ChatHandlerResult.STOP;
             if (handleAreaChanges(msg)) return ChatHandlerResult.STOP;
-            if (handlePetInfo(context.getRawString())) return ChatHandlerResult.STOP;
+            if (handlePetInfo(ctx.getRawString(), ctx.getOriginalText())) return ChatHandlerResult.STOP;
             if (handleChatMode(msg)) return ChatHandlerResult.STOP;
             if (handleDropCorrections(lower)) return ChatHandlerResult.STOP;
             if (handleBeaconFrequency(msg)) return ChatHandlerResult.STOP;
-            if (handleCakeTimer(context.getRawString())) return ChatHandlerResult.STOP;
+            if (handleCakeTimer(ctx.getRawString())) return ChatHandlerResult.STOP;
             if (handleVial(lower)) return ChatHandlerResult.STOP;
             if (handleWaypointChains(msg)) return ChatHandlerResult.STOP;
             return ChatHandlerResult.CONTINUE;
@@ -125,8 +126,8 @@ public class GameplayHandler implements ChatHandler {
         return false;
     }
     
-    private boolean handlePetInfo(String raw) {
-        return PetInfo.handleChat(raw);
+    private boolean handlePetInfo(String raw, Component msg) {
+        return PetInfo.handleChat(raw, msg);
     }
 
     private boolean handleCakeTimer(String raw) {

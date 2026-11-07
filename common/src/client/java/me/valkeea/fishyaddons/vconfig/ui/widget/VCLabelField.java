@@ -75,6 +75,10 @@ public class VCLabelField extends AbstractWidget {
         context.pose().popMatrix();
     }
 
+    public int getTextWidth() {
+        return (int) (this.textRenderer.width(text) * uiScale);
+    }
+
     @Override
     protected void updateWidgetNarration(net.minecraft.client.gui.narration.NarrationElementOutput builder) {
         // Access

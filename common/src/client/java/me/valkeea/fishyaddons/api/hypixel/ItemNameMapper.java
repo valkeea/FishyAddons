@@ -1,5 +1,7 @@
 package me.valkeea.fishyaddons.api.hypixel;
 
+import java.util.Arrays;
+
 public class ItemNameMapper {
     
     private static final String[] RARITIES = {"mythic", "legendary", "epic", "rare", "uncommon", "common"};
@@ -119,10 +121,11 @@ public class ItemNameMapper {
     /**
      * Convert enchantment name to API ID format: ENCHANTMENT_<NAME>
      */
-    private static String convertEnchantmentToApiId(String enchantName) {
-        return enchantName.replaceAll("[-\\s]+", "_").toUpperCase();
+    private static String convertEnchantmentToApiId(String name) {
+        if (name.contains(" VITALITY ")) name = newVitEnchant(name);     
+        return name.replaceAll("[-\\s]+", "_");
     }
-    
+
     // Display name cleanup (AH normalization)
     
     /**
@@ -200,5 +203,20 @@ public class ItemNameMapper {
         if (n.equals("POTATO") || n.equals("CARROT")) return n + "_ITEM";
         if (n.contains("MIRIA") || n.contains("AGATHA")) return n.replaceFirst("S_", "_");
         return null;
+    }
+
+    private static String newVitEnchant(String upper) {
+        
+        var parts = upper.split(" ");
+        var n = parts[parts.length - 1];
+        var enchant = String.join(" ", Arrays.copyOf(parts, parts.length - 1));
+
+        var type = switch (enchant) {
+            case "ENCHANTMENT VIVACIOUS VITALITY" -> "ENCHANTMENT FEROCIOUS MANA";
+            case "ENCHANTMENT VAMPIRIC VITALITY" -> "ENCHANTMENT MANA VAMPIRE";
+            default -> enchant.replaceFirst(" VITALITY", "").toUpperCase().trim() + " MANA";
+        };
+
+        return type + " " + n;
     }
 }

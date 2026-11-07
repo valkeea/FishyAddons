@@ -9,6 +9,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.jetbrains.annotations.Nullable;
 
+import me.valkeea.fishyaddons.api.hypixel.PriceService;
 import me.valkeea.fishyaddons.api.hypixel.PriceServiceManager;
 import net.minecraft.network.chat.Component;
 
@@ -158,17 +159,19 @@ public class TrackedItemData {
         
         double price = 0.0;
         var priceService = PriceServiceManager.getInstanceOrNull();
-        if (priceService != null) {
-            price = priceService.getPrice(normalizedName);
-        }
+        if (priceService == null) return 0.0;
         
+        price = priceService.getPrice(normalizedName);
+
         if (price <= 0) {
-            price = getEstimatedValue(normalizedName);
+            if (itemName.matches(".*\\b([1-9]|10)\\b$")) {
+                price = getBookPrice(normalizedName, priceService);
+            }
         }
         
-        return price;
-    }    
-    
+        return price <= 0 ? getEstimatedValue(normalizedName) : price;
+    }
+
     /**
      * Get prices for all tracked items.
      */
@@ -200,9 +203,20 @@ public class TrackedItemData {
         return results;
     }
 
-    private static double getEstimatedValue(String itemName) {
-        if (itemName.contains("shard")) return 1000.0;
+    private static double getBookPrice(String normalized, PriceService priceService) {
+        double price = 0.0;
+        var ultimate = "enchantment ultimate " + normalized;
+        price = priceService.getPrice(ultimate);
 
+        if (price <= 0) {
+            var enchantment = "enchantment " + normalized;
+            price = priceService.getPrice(enchantment);
+        }
+
+        return price;
+    }
+
+    private static double getEstimatedValue(String itemName) {
         // Npc prices
         switch (itemName.toLowerCase()) {
             case "enchanted book":

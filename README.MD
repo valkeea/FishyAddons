@@ -36,51 +36,64 @@
 
 <details>
 <summary><b>Misc</b> (3)</summary>
-
-- Inventory Search
-- Custom f5 (No front perspective)
-- Ping/TPS/FPS Display and command _/fa ping_
-
+<ul>
+<li> Inventory Search</li>
+<li> Custom f5 (No front perspective)</li>
+<li> Ping/TPS/FPS Display and command <i>/fa ping</i></li>
+</ul>
 </details>
 
 <details>
 <summary><b>Render Tweaks</b> (2)</summary>
-
-- Skip rendering entity death
-- Skip rendering fire on entities
-
+<ul>
+<li> Skip rendering entity death</li>
+<li> Skip rendering fire on entities</li>
+</ul>
 </details>
 
 ---
 
-## Skyblock Features
+<h2>Skyblock Features </h2>
 
 <details>
-<summary><b> Trackers & Displays</b> (9)</summary>
+<summary><b> Trackers & Displays</b> (8)</summary>
+<ul>
+<li> Skill XP Tracker / Display <i>/fa skill</i></li>
+<li> General Profit Tracker / Display (WIP) <i>/fp</i></li>
+<li> Collection Tracker + progress goals (items)</li>
+<li> Slayer XP Tracker <i>/fa slayer</i></li>
+<li> Diana Tracker (out of date)</li>
+<li> Pet Display</li>
+<li> Equipment Display</li>
+<li> Mob health Display</li>
+</ul>
+</details>
 
-- Skill XP Tracker / Display _/fa skill_
-- General Profit Tracker / Display (WIP) _/fp_
-- Collection Tracker + progress goals (items)
-- Safari Completion Tracker
-- Slayer XP Tracker _/fa slayer_
-- Diana Tracker (out of date)
-- Pet Display
-- Equipment Display
-- Mob health Display
-
+<details>
+<summary><b> Hunting</b> (3)</summary>
+<ul>
+<li> Safari Completion Tracker</li>
+<li> Safari Highlight:
+  <ul>
+    <li>Floor Drops</li>
+    <li>Critters</li>
+  </ul>
+</li>  
+<li> Invisibug Highlight</li>
+</ul>
 </details>
 
 <details>
 <summary><b> Timers & Alerts</b> (3)</summary>
-
-- Century Cake Display (shows next expiring)
-- Temporary Effects Display (Consumables)
-- Foraging Beacon alarm and Display
-
+<ul>
+<li> Century Cake Display (shows next expiring)</li>
+<li> Temporary Effects Display (Consumables)</li>
+<li> Foraging Beacon alarm and Display</li>
+</ul>
 </details>
 
 <details>
-<summary><b>Audio & Visual Tweaks</b> (6)</summary>
+<summary><b>Audio & Visual Tweaks</b> (5)</summary>
 <ul>
 <li> Scale and adjust held item rendering (size, animation intensity)</li>
 <li> Clean Wither Impact (disables particles and sound)</li>
@@ -94,7 +107,6 @@
   </ul>
 </li>  
 <li> Hide and block clicks on Skyblock gui buttons</li>
-<li> Scale and color crit particles on Galatea (invisibug)</li>  
 </ul>
 </details>
 
@@ -168,7 +180,7 @@
 <details>
 <summary><b>Chat & Text</b> (2)</summary>
 
-- Globat chat formatting for users(preset or use &[]|{}, example &[F58CCE>FFFFFF])
+- Globat chat formatting for users (preset or use &[]|{}, example &[F58CCE>FFFFFF])
 - Custom name / word colors (separate modwide and user-only lists)
 
 </details>
@@ -176,8 +188,7 @@
 <details>
 <summary><b>Particles & Effects</b> (1)</summary>
 
-- Custom Redstone particle color
-    TIP; enhances Jawbus laser, Flay ability and hotspots
+- Redstone particle color (alters Jawbus laser, Flay ability and hotspots)
 
 </details>
 

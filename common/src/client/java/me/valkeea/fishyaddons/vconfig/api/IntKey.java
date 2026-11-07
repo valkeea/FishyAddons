@@ -16,6 +16,8 @@ public enum IntKey implements ConfigKey<Integer> {
     RENDER_COORD_COLOR("renderCoordsColor", -5653771),
     INV_SEARCH_COLOR("searchOverlayColor", 0xFF000000),
     SKY_COLOR("skyColor", 0x00000000),
+    CRITTER_COLOR("critterColor"),
+    FLOOR_DROP_COLOR("floorDropColor"),
     
     // Settings
     THEME_MODE("themeMode"),

@@ -18,6 +18,7 @@
 		"MixinDamageParticleFactory",
 		"MixinEntityRenderer",
 		"MixinEntityRenderManager",
+		"MixinDebugRenderer",
 		"MixinFishingBobberEntityRenderer",
 		"MixinFluidStateModelSet",
 		"MixinGuiScreenChange",

@@ -32,7 +32,6 @@ public class McApi {
         return screen() != null;
     }
 
-
     // -- Misc --
 
     public static Item getLimeDye() {
@@ -41,7 +40,15 @@ public class McApi {
 
     public static Item getGrayDye() {
         return Items.DYE.gray();
-    }    
+    }
+
+    public static Item getPurpleShulker() {
+        return Items.DYED_SHULKER_BOX.purple();
+    }
+
+    public static Item getGreenShulker() {
+        return Items.DYED_SHULKER_BOX.green();
+    }
 
     private McApi() {}
 }

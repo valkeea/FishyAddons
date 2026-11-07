@@ -42,5 +42,13 @@ public class McApi {
         return Items.GRAY_DYE;
     }
 
+    public static Item getPurpleShulker() {
+        return Items.PURPLE_SHULKER_BOX;
+    }
+
+    public static Item getGreenShulker() {
+        return Items.GREEN_SHULKER_BOX;
+    }
+
     private McApi() {}
 }

@@ -8,6 +8,7 @@ public enum UICategory {
     QOL("General QoL", "QoL"),
     WAYPOINTS("Waypoints"),
     SKYBLOCK("Skyblock Features", "Skyblock"),
+    HUNTING("Hunting"),    
     AUDIO("Audio"),
     FISHING("Fishing"),
     FILTER("Chat Filter"),

@@ -1,5 +1,6 @@
 package me.valkeea.fishyaddons.listener;
 
+import me.valkeea.fishyaddons.api.skyblock.IslandRegion;
 import me.valkeea.fishyaddons.feature.qol.NetworkMetrics;
 import me.valkeea.fishyaddons.feature.skyblock.CatchAlert;
 import me.valkeea.fishyaddons.feature.skyblock.timer.ChatTimers;
@@ -37,6 +38,7 @@ public class ClientTick {
             NearbyEntities.tick();
             SkillTracker.getInstance().tick();
             CatchAlert.tick();
+            IslandRegion.tick();
             SafariStats.tick();
             ModInfo.tick();
 

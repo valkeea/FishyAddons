@@ -1,13 +1,11 @@
 package me.valkeea.fishyaddons.event;
 
-public class EventListener<T> {
-    public final T listener;
-    public final EventPriority priority;
-    public final EventPhase phase;
+final class EventListener<T> {
+    final T listener;
+    final EventPriority priority;
 
-    public EventListener(T listener, EventPriority priority, EventPhase phase) {
+    EventListener(T listener, EventPriority priority) {
         this.listener = listener;
         this.priority = priority;
-        this.phase = phase;
     }
 }

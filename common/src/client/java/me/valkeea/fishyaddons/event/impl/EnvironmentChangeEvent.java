@@ -5,7 +5,10 @@ import me.valkeea.fishyaddons.api.skyblock.SkyblockAreas;
 import me.valkeea.fishyaddons.api.skyblock.SkyblockAreas.Island;
 import me.valkeea.fishyaddons.event.BaseEvent;
 
-public class EnvironmentChangeEvent extends BaseEvent {
+/**
+ * Fired whenever gamemode or {@link SkyblockAreas.Island} changes.
+ */
+public final class EnvironmentChangeEvent extends BaseEvent {
     public final Island newIsland;
     public final boolean isInSkyblock;
     public final boolean gameModeChanged;

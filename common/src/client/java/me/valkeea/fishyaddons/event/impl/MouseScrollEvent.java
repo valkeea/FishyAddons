@@ -2,7 +2,7 @@ package me.valkeea.fishyaddons.event.impl;
 
 import me.valkeea.fishyaddons.event.BaseEvent;
 
-public class MouseScrollEvent extends BaseEvent {
+public final class MouseScrollEvent extends BaseEvent {
     public final double vertical;
     public final double mouseX;
     public final double mouseY;

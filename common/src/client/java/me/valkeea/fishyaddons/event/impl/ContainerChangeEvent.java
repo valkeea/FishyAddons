@@ -7,12 +7,12 @@ import net.minecraft.network.chat.Component;
 /**
  * Event triggered when the contents of a container change, or one is opened
  * */
-public class GuiChangeEvent extends BaseEvent {
+public final class ContainerChangeEvent extends BaseEvent {
     public final ContainerScreen screen;
     public final Component title;
     public final String titleString;
 
-    public GuiChangeEvent(ContainerScreen screen, Component title) {
+    public ContainerChangeEvent(ContainerScreen screen, Component title) {
         this.screen = screen;
         this.title = title;
         this.titleString = title == null ? "" : title.getString();

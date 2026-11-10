@@ -5,7 +5,7 @@ import me.valkeea.fishyaddons.processor.AnalysisCoordinator.AnalysisResult;
 import me.valkeea.fishyaddons.tracker.monitoring.ActivityMonitor;
 import me.valkeea.fishyaddons.tracker.monitoring.Currently;
 
-public class ScCatchEvent extends BaseEvent {
+public final class ScCatchEvent extends BaseEvent {
     public final boolean wasDh;
     public final String seaCreatureId;
 

@@ -5,7 +5,7 @@ import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 
-public class HudRenderEvent extends BaseEvent {
+public final class HudRenderEvent extends BaseEvent {
     private final GuiGraphicsExtractor context;
     private final DeltaTracker tickCounter;
     private final Minecraft client;

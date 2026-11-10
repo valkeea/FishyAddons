@@ -10,7 +10,7 @@ import net.minecraft.world.item.ItemStack;
  * Event triggered when a new container or inventory is opened,
  * or when the title of an already open container is updated
  */
-public class ScreenOpenEvent extends BaseEvent {
+public final class ScreenOpenEvent extends BaseEvent {
     public final ContainerScreen screen;
     public final Component title;
     public final String titleString;

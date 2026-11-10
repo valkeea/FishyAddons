@@ -2,7 +2,7 @@ package me.valkeea.fishyaddons.event.impl;
 
 import me.valkeea.fishyaddons.event.BaseEvent;
 
-public class XpGainEvent extends BaseEvent {
+public final class XpGainEvent extends BaseEvent {
     public final String skill;
     public final String progress;
 

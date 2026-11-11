@@ -3,10 +3,8 @@ package me.valkeea.fishyaddons.hud.ui;
 import java.util.List;
 
 import me.valkeea.fishyaddons.compat.McApi;
-import me.valkeea.fishyaddons.event.EventPhase;
-import me.valkeea.fishyaddons.event.EventPriority;
+import me.valkeea.fishyaddons.event.impl.HudClickEvent;
 import me.valkeea.fishyaddons.event.impl.FaEvents;
-import me.valkeea.fishyaddons.event.impl.MouseClickEvent;
 import me.valkeea.fishyaddons.tool.FishyMode;
 import me.valkeea.fishyaddons.tracker.collection.CollectionTracker;
 import me.valkeea.fishyaddons.tracker.collection.RecipeScanner;
@@ -27,7 +25,7 @@ public class GoalButton  {
     );
 
     private static void init() {
-        FaEvents.MOUSE_CLICK.register(GoalButton::setup, EventPriority.LOW, EventPhase.POST);
+        FaEvents.HUD_CLICK.register(GoalButton::setup);
     }
 
     private static void create(ContainerScreen gcs) {
@@ -38,7 +36,7 @@ public class GoalButton  {
         );
     }
 
-    private static void setup(MouseClickEvent e) {
+    private static void setup(HudClickEvent e) {
 
         var s = McApi.screen();
         if (btn != null && s instanceof ContainerScreen && btn.mouseClicked(e.click.x(), e.click.y())) {

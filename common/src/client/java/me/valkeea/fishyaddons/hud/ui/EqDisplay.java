@@ -5,7 +5,6 @@ import java.util.List;
 import it.unimi.dsi.fastutil.Pair;
 import me.valkeea.fishyaddons.api.skyblock.GameMode;
 import me.valkeea.fishyaddons.compat.McApi;
-import me.valkeea.fishyaddons.event.EventPhase;
 import me.valkeea.fishyaddons.event.EventPriority;
 import me.valkeea.fishyaddons.event.impl.FaEvents;
 import me.valkeea.fishyaddons.feature.skyblock.EqTextures;
@@ -14,7 +13,7 @@ import me.valkeea.fishyaddons.hud.core.ClickableRegionManager;
 import me.valkeea.fishyaddons.hud.core.HudDrawer;
 import me.valkeea.fishyaddons.hud.core.HudElementState;
 import me.valkeea.fishyaddons.hud.core.HudUtils;
-import me.valkeea.fishyaddons.mixin.HandledScreenAccessor;
+import me.valkeea.fishyaddons.mixin.AbstractContainerScreenAccessor;
 import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
 import me.valkeea.fishyaddons.vconfig.api.Config;
 import me.valkeea.fishyaddons.vconfig.api.IntKey;
@@ -64,11 +63,11 @@ public class EqDisplay extends InteractiveHudElement {
     }
 
     private void registerEvents() {
-        FaEvents.MOUSE_CLICK.register(e -> {
+        FaEvents.HUD_CLICK.register(e -> {
             if (instance.handleMouseClick(e.click)) {
                 e.setConsumed(true);
             }
-        }, EventPriority.NORMAL, EventPhase.PRE);
+        }, EventPriority.HIGH);
     }
 
     @Override
@@ -202,7 +201,7 @@ public class EqDisplay extends InteractiveHudElement {
         if (screen instanceof InventoryScreen inv) {
 
             var handler = inv.getMenu();
-            var hsa = (HandledScreenAccessor) inv;
+            var hsa = (AbstractContainerScreenAccessor) inv;
             int guiX = hsa.getX();
             int guiY = hsa.getY();
 

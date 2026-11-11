@@ -3,7 +3,7 @@ package me.valkeea.fishyaddons.util;
 import me.valkeea.fishyaddons.api.skyblock.Profile;
 import me.valkeea.fishyaddons.compat.McApi;
 import me.valkeea.fishyaddons.event.impl.FaEvents;
-import me.valkeea.fishyaddons.event.impl.GuiChangeEvent;
+import me.valkeea.fishyaddons.event.impl.ContainerChangeEvent;
 import me.valkeea.fishyaddons.event.impl.ScreenOpenEvent;
 import me.valkeea.fishyaddons.tool.RunDelayed;
 import net.minecraft.client.gui.screens.inventory.ContainerScreen;
@@ -28,13 +28,13 @@ public class ContainerScanner {
         FaEvents.SCREEN_CLOSE.register(e -> onScreenClose());
     }
 
-    public void onScreen(ScreenOpenEvent event) {
-        setUser(event);
-        updateGui(event.titleString);
+    public void onScreen(ScreenOpenEvent e) {
+        setUser(e);
+        updateGui(e.titleString);
     }
 
-    public void onInventory(GuiChangeEvent event) {
-        updateGui(event.titleString);
+    public void onInventory(ContainerChangeEvent e) {
+        updateGui(e.titleString);
     }
 
     public void onScreenClose() {
@@ -42,10 +42,10 @@ public class ContainerScanner {
     }    
 
     /** Username check - in Skyblock Menu the player head at slot 13 */
-    private void setUser(ScreenOpenEvent event) {
-        if (event.titleContains("SkyBlock Menu")) {
+    private void setUser(ScreenOpenEvent e) {
+        if (e.titleContains("SkyBlock Menu")) {
             var task = "username_init_" + System.currentTimeMillis();
-            RunDelayed.run(() -> Profile.initUsername(event.getStackAt(USERNAME_SLOT)), 200L, task);
+            RunDelayed.run(() -> Profile.initUsername(e.getStackAt(USERNAME_SLOT)), 200L, task);
         }
     }
 

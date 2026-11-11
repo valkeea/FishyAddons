@@ -8,7 +8,7 @@ import org.jetbrains.annotations.Nullable;
 import me.valkeea.fishyaddons.compat.McApi;
 import me.valkeea.fishyaddons.hud.core.HudElement;
 import me.valkeea.fishyaddons.hud.core.HudElementState;
-import me.valkeea.fishyaddons.mixin.HandledScreenAccessor;
+import me.valkeea.fishyaddons.mixin.AbstractContainerScreenAccessor;
 import me.valkeea.fishyaddons.tool.FishyMode;
 import me.valkeea.fishyaddons.tracker.collection.CollectionTracker;
 import net.minecraft.client.Minecraft;
@@ -58,7 +58,7 @@ public class UIFeedback implements HudElement {
         List<String> lines = message.lines().toList();
 
         if (x == null || y == null) {
-            var hsa = (HandledScreenAccessor) McApi.screen();
+            var hsa = (AbstractContainerScreenAccessor) McApi.screen();
             this.x = x != null ? x : hsa.getX() + 10 + hsa.getImageWidth() + 20;
             this.y = y != null ? y : hsa.getY() + hsa.getImageHeight() / 3;
 

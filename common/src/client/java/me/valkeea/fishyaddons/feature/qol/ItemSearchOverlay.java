@@ -3,39 +3,32 @@ package me.valkeea.fishyaddons.feature.qol;
 import java.util.HashSet;
 import java.util.Set;
 
-import me.valkeea.fishyaddons.event.EventPhase;
-import me.valkeea.fishyaddons.event.EventPriority;
+import me.valkeea.fishyaddons.event.EventGroup;
+import me.valkeea.fishyaddons.event.impl.ContainerKeyInputEvent;
 import me.valkeea.fishyaddons.event.impl.FaEvents;
 import me.valkeea.fishyaddons.hud.core.ElementRegistry;
 import me.valkeea.fishyaddons.hud.ui.SearchHudElement;
-import me.valkeea.fishyaddons.mixin.HandledScreenAccessor;
-import me.valkeea.fishyaddons.vconfig.annotation.UIColorPicker;
-import me.valkeea.fishyaddons.vconfig.annotation.UIContainer;
-import me.valkeea.fishyaddons.vconfig.annotation.UIHudRedirect;
-import me.valkeea.fishyaddons.vconfig.annotation.UISlider;
-import me.valkeea.fishyaddons.vconfig.annotation.UIToggle;
-import me.valkeea.fishyaddons.vconfig.annotation.VCInit;
+import me.valkeea.fishyaddons.mixin.AbstractContainerScreenAccessor;
 import me.valkeea.fishyaddons.vconfig.annotation.VCListener;
 import me.valkeea.fishyaddons.vconfig.annotation.VCModule;
 import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
 import me.valkeea.fishyaddons.vconfig.api.Config;
 import me.valkeea.fishyaddons.vconfig.api.DoubleKey;
 import me.valkeea.fishyaddons.vconfig.api.IntKey;
-import me.valkeea.fishyaddons.vconfig.core.UICategory;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.input.CharacterEvent;
-import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.world.item.ItemStack;
 
 @SuppressWarnings("squid:S6548")
-@VCModule(UICategory.QOL)
+@VCModule
 public class ItemSearchOverlay {
+    private static final EventGroup events = new EventGroup();
+    private final Set<Integer> matchingSlots = new HashSet<>();
 
     private static ItemSearchOverlay instance;
-    private SearchHudElement searchField;    
-    private Set<Integer> matchingSlots = new HashSet<>();
+    private SearchHudElement searchField;
     
     private String lastSearchTerm = "";
     private int lastHash = 0;
@@ -52,15 +45,30 @@ public class ItemSearchOverlay {
         }
     }
 
-    @VCInit
-    public static void init() {
-        FaEvents.SCREEN_MOUSE_CLICK.register(
-            event -> getInstance().handleMouseClicked(event.click, event.doubled),
-            EventPriority.HIGH, EventPhase.PRE
-        );
-
-        FaEvents.SCREEN_CLOSE.register(event -> getInstance().onScreenClose());
+    public static void register(boolean v) {
+        events.subscribe(v, () -> events.addAll(
+            () -> FaEvents.CONTAINER_CLICK.register(e -> getInstance().handleMouseClicked(e.click, e.doubled)),
+            () -> FaEvents.CONTAINER_KEY_INPUT.register(e -> getInstance().handleKeyPressed(e)),
+            () -> FaEvents.SCREEN_CLOSE.register(_ -> getInstance().onScreenClose())            
+        ));
     }
+
+    @VCListener(BooleanKey.INV_SEARCH)
+    private void onInvSearchChanged(boolean v) {
+        enabled = v;
+        if (!enabled) clearSearch();
+        register(enabled);
+    }
+
+    @VCListener(doubles = DoubleKey.INV_SEARCH_OPACITY)
+    private void onOpacityChanged(double v) {
+        opacity = v;
+    }
+
+    @VCListener(ints = IntKey.INV_SEARCH_COLOR)
+    private void onColorChanged(int v) {
+        color = v;
+    }    
 
     private void onScreenClose() {
         matchingSlots.clear();
@@ -100,6 +108,7 @@ public class ItemSearchOverlay {
         var instance = getInstance();
         instance.enabled = Config.get(BooleanKey.INV_SEARCH);
         instance.opacity = Config.get(DoubleKey.INV_SEARCH_OPACITY);
+        instance.color = Config.get(IntKey.INV_SEARCH_COLOR);
     }
 
     private boolean matchesSearch(ItemStack stack, String searchTerm) {
@@ -195,7 +204,7 @@ public class ItemSearchOverlay {
             return;
         }
         
-        var hsa = (HandledScreenAccessor) screen;
+        var hsa = (AbstractContainerScreenAccessor) screen;
         int guiX = hsa.getX();
         int guiY = hsa.getY();
 
@@ -227,18 +236,14 @@ public class ItemSearchOverlay {
         }
     }
     
-    public boolean handleKeyPressed(KeyEvent input) {
-        if (!isEnabled()) return false;
-        
-        if (searchField != null) {
-            return searchField.handleKeyPressed(input);
+    public void handleKeyPressed(ContainerKeyInputEvent e) {
+        if (isEnabled() && searchField != null && searchField.handleKeyPressed(e.input)) {
+            e.consumeWithTrue();
         }
-        return false;
     }
     
     public boolean handleCharTyped(CharacterEvent input) {
         if (!isEnabled()) return false;
-        
         if (searchField != null) {
             return searchField.handleCharTyped(input);
         }
@@ -267,59 +272,5 @@ public class ItemSearchOverlay {
     
     public void setSearchField(SearchHudElement field) {
         this.searchField = field;
-    }
-
-    private static final String INV_SEARCH = "Inventory Search";
-
-    @UIContainer(
-        name = INV_SEARCH,
-        order = 1,
-        description = {
-            "Scan your inventory items by name or lore.",
-            "Right-click the search field to toggle search mode."
-        }
-    )
-    private static final boolean INVSEARCH = false;
-
-    @UIToggle(
-        key = BooleanKey.INV_SEARCH,
-        name = "Main Toggle",
-        description = "Enables a HUD textfield for inventory search.",
-        parent = INV_SEARCH
-    )
-    @UIHudRedirect
-    private static boolean invSearchEnabled;
-
-    @UISlider(
-        key = DoubleKey.INV_SEARCH_OPACITY,
-        name = "Overlay Opacity",
-        description = "Adjust the darkness of the search overlay when highlighting items.",
-        min = 0.0, max = 1.0, format = "%.0f%%",
-        parent = INV_SEARCH
-    )
-    private static double invSearchOpacity;
-
-    @UIColorPicker(
-        key = IntKey.INV_SEARCH_COLOR,
-        name = "Overlay Color",
-        description = "The color of the rendered overlay.",
-        parent = INV_SEARCH
-    )
-    private static int invSearchColor;
-
-    @VCListener(BooleanKey.INV_SEARCH)
-    private void onInvSearchChanged(boolean newValue) {
-        enabled = newValue;
-        if (!newValue) clearSearch();
-    }
-
-    @VCListener(doubles = DoubleKey.INV_SEARCH_OPACITY)
-    private void onOpacityChanged(double newOpacity) {
-        opacity = newOpacity;
-    }
-
-    @VCListener(ints = IntKey.INV_SEARCH_COLOR)
-    private void onColorChanged(int newColor) {
-        color = newColor;
     }
 }

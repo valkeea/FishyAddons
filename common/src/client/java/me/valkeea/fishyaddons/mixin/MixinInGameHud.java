@@ -15,7 +15,6 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 
 @Mixin(Gui.class)
 public class MixinInGameHud {
-    
     @Shadow
     private Minecraft minecraft;
 
@@ -28,8 +27,7 @@ public class MixinInGameHud {
         )
     )
     private void onHudRender(GuiGraphicsExtractor gge, DeltaTracker tickCounter, CallbackInfo ci) {
-        
         var event = new HudRenderEvent(gge, tickCounter, minecraft, false);
-        FaEvents.HUD_RENDER.firePhased(event, listener -> listener.onHudRender(event));
+        FaEvents.HUD_RENDER.fire(event);
     }
 }

@@ -9,7 +9,8 @@ import com.mojang.blaze3d.platform.Window;
 
 import me.valkeea.fishyaddons.compat.McApi;
 import me.valkeea.fishyaddons.event.impl.FaEvents;
-import me.valkeea.fishyaddons.event.impl.MouseClickEvent;
+import me.valkeea.fishyaddons.event.impl.HudClickEvent;
+import me.valkeea.fishyaddons.event.impl.MouseInputEvent;
 import me.valkeea.fishyaddons.event.impl.MouseScrollEvent;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.MouseHandler;
@@ -22,7 +23,6 @@ public class MixinMouse {
 
     @Inject(method = "onScroll", at = @At("HEAD"))
     private void onMouseScrolled(long window, double horizontal, double vertical, CallbackInfo ci) {
-
         var mc = Minecraft.getInstance();
 
         double windowX = ((MouseAccessor)this).getX();
@@ -33,11 +33,17 @@ public class MixinMouse {
         double scaledY = windowY * w.getHeight() / (w.getGuiScale() * w.getScreenHeight());
         
         var event = new MouseScrollEvent(vertical, scaledX, scaledY);
-        FaEvents.MOUSE_SCROLL.firePhased(event, listener -> listener.onScroll(event));
+        FaEvents.MOUSE_SCROLL.fire(event);
     }
 
     @Inject(method = "onButton", at = @At("HEAD"))
     private void onMouseButton(long window, MouseButtonInfo input, int action, CallbackInfo ci) {
+        var mc = Minecraft.getInstance();
+        if (window == mc.getWindow().handle()) {
+            var transition = new MouseInputEvent(mc, McApi.screen(), input, action);
+            FaEvents.MOUSE_OBSERVE.broadcast(transition);
+        }
+        
         if (action != 1) return;
         if (!(McApi.isScreen(AbstractContainerScreen.class))) return;
 
@@ -48,8 +54,8 @@ public class MixinMouse {
         double scaledY = windowY * w.getHeight() / (w.getGuiScale() * w.getScreenHeight());
 
         var click = new MouseButtonEvent(scaledX, scaledY, input);
-        var event = new MouseClickEvent(click);
+        var event = new HudClickEvent(click);
         
-        FaEvents.MOUSE_CLICK.firePhased(event, listener -> listener.onClick(event));
-    }    
+        FaEvents.HUD_CLICK.broadcast(event);
+    }
 }

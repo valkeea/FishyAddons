@@ -4,7 +4,7 @@ import org.jetbrains.annotations.Nullable;
 
 import me.valkeea.fishyaddons.compat.McApi;
 import me.valkeea.fishyaddons.hud.core.HudUtils;
-import me.valkeea.fishyaddons.mixin.HandledScreenAccessor;
+import me.valkeea.fishyaddons.mixin.AbstractContainerScreenAccessor;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.screens.inventory.ContainerScreen;
@@ -64,7 +64,7 @@ public class IndexedButton {
             return;
         }
         
-        var hsa = (HandledScreenAccessor) cs;
+        var hsa = (AbstractContainerScreenAccessor) cs;
         
         int guiLeft = hsa.getX();
         int guiRight = hsa.getX() + hsa.getImageWidth();

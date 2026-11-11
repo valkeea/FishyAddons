@@ -13,7 +13,7 @@ public class ChatEvents {
 
     private static void scEvent(AnalysisResult r) {
         var event = new ScCatchEvent(r);
-        FaEvents.SEA_CREATURE_CATCH.firePhased(event, listener -> listener.onScCatch(event));
+        FaEvents.SEA_CREATURE_CATCH.fire(event);
     }    
 
 }

@@ -10,12 +10,11 @@ import me.valkeea.fishyaddons.event.impl.FaEvents;
 import me.valkeea.fishyaddons.event.impl.HudRenderEvent;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Hud;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.Hud;
 
 @Mixin(Hud.class)
 public class MixinInGameHud {
-    
     @Shadow
     private Minecraft minecraft;
 
@@ -29,6 +28,6 @@ public class MixinInGameHud {
     )
     private void onHudRender(GuiGraphicsExtractor gge, DeltaTracker dt, CallbackInfo ci) {
         var event = new HudRenderEvent(gge, dt, minecraft, false);
-        FaEvents.HUD_RENDER.firePhased(event, listener -> listener.onHudRender(event));
+        FaEvents.HUD_RENDER.fire(event);
     }
 }

@@ -9,12 +9,9 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
-import com.mojang.blaze3d.platform.InputConstants;
-
-import me.valkeea.fishyaddons.event.EventPhase;
 import me.valkeea.fishyaddons.event.EventPriority;
 import me.valkeea.fishyaddons.event.impl.FaEvents;
-import me.valkeea.fishyaddons.mixin.HandledScreenAccessor;
+import me.valkeea.fishyaddons.mixin.AbstractContainerScreenAccessor;
 import me.valkeea.fishyaddons.util.ContainerScanner;
 import me.valkeea.fishyaddons.util.Keyboard;
 import me.valkeea.fishyaddons.vconfig.annotation.VCInit;
@@ -23,7 +20,6 @@ import me.valkeea.fishyaddons.vconfig.annotation.VCModule;
 import me.valkeea.fishyaddons.vconfig.api.Config;
 import me.valkeea.fishyaddons.vconfig.api.StringKey;
 import me.valkeea.fishyaddons.vconfig.config.impl.ItemConfig;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.Slot;
@@ -40,11 +36,9 @@ public class GuiIcons {
 
     @VCInit
     public static void init() {
-        FaEvents.SCREEN_MOUSE_CLICK.register(event -> {
-            if (checkClick(event.hoveredSlot, event.click.button(), event.screen)) {
-                event.setConsumed(true);
-            }
-        }, EventPriority.LOWEST, EventPhase.POST);
+        FaEvents.CONTAINER_CLICK.register(e -> {
+            if (checkClick(e.hoveredSlot, e.click.button(), e.screen)) e.consumeWithTrue();
+        }, EventPriority.LOWEST);
         load();
     }
     
@@ -63,22 +57,11 @@ public class GuiIcons {
 
     private static boolean checkClick(Slot hovered, int button, AbstractContainerScreen<?> screen) {
         if (hovered == null || !anyBlocked()) return false;
-        if (handleIcons(hovered)) { return true; }
+        if (handleIcons(hovered)) return true;
 
-        if (handleShift(hovered.index)) {
-            int keyCode = 340;
-            var cl = Minecraft.getInstance();
-            
-            if (cl.options != null) {
-                keyCode = cl.options.keyShift.getDefaultKey().getValue();
-            }
-
-            boolean shiftDown = InputConstants.isKeyDown(cl.getWindow(), keyCode);
-
-            if (shiftDown) {
-                ((HandledScreenAccessor) screen).callOnMouseClick(hovered, hovered.index, button, ContainerInput.PICKUP);
-                return true;
-            }
+        if (handleShift(hovered.index) && Keyboard.isShiftDown()) {
+            ((AbstractContainerScreenAccessor) screen).callOnMouseClick(hovered, hovered.index, button, ContainerInput.PICKUP);
+            return true;
         }
         return false;
     }

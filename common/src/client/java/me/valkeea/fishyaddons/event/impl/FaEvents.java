@@ -8,6 +8,8 @@ import me.valkeea.fishyaddons.event.StoppableChannel;
 public final class FaEvents {
     /** Consuming exits the container click handling with the supplied result. */
     public static final ReturnableChannel<ContainerClickEvent, Boolean> CONTAINER_CLICK = new ReturnableChannel<>();
+    /** Consuming overrides the container screen's key handling with the supplied result. */
+    public static final ReturnableChannel<ContainerKeyInputEvent, Boolean> CONTAINER_KEY_INPUT = new ReturnableChannel<>();
 
     /** Consuming cancels vanilla keyboard handling for this input. */
     public static final CancellableChannel<KeyInputEvent> KEYBOARD_INPUT = new CancellableChannel<>();
@@ -21,7 +23,12 @@ public final class FaEvents {
     public static final StoppableChannel<ContainerChangeEvent> GUI_CHANGE = new StoppableChannel<>();
     public static final StoppableChannel<ScreenCloseEvent> SCREEN_CLOSE = new StoppableChannel<>();
     public static final StoppableChannel<ScreenOpenEvent> SCREEN_OPEN = new StoppableChannel<>();
+    public static final StoppableChannel<ScreenChangeEvent> SCREEN_CHANGE = new StoppableChannel<>();
 
+    /** Observed before cancellable keyboard input. */
+    public static final ObservationChannel<KeyInputEvent> KEYBOARD_OBSERVE = new ObservationChannel<>();
+    /** Observed mouse button transitions for the Minecraft window. */
+    public static final ObservationChannel<MouseInputEvent> MOUSE_OBSERVE = new ObservationChannel<>();
     /** Observed container mouse clicks. */
     public static final ObservationChannel<HudClickEvent> HUD_CLICK = new ObservationChannel<>();
 

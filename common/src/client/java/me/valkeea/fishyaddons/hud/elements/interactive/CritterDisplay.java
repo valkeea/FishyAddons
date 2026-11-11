@@ -5,8 +5,6 @@ import java.util.List;
 
 import me.valkeea.fishyaddons.api.skyblock.SkyblockAreas;
 import me.valkeea.fishyaddons.compat.McApi;
-import me.valkeea.fishyaddons.event.EventPhase;
-import me.valkeea.fishyaddons.event.EventPriority;
 import me.valkeea.fishyaddons.event.impl.FaEvents;
 import me.valkeea.fishyaddons.hud.base.InteractiveHudElement;
 import me.valkeea.fishyaddons.hud.core.HudButtonManager;
@@ -57,11 +55,11 @@ public class CritterDisplay extends InteractiveHudElement {
     }
 
     private void registerEvents() {
-        FaEvents.MOUSE_CLICK.register(e -> {
+        FaEvents.HUD_CLICK.register(e -> {
             if (instance.handleMouseClick(e.click)) {
                 e.setConsumed(true);
             }
-        }, EventPriority.NORMAL, EventPhase.POST);
+        });
     }
 
     @Override

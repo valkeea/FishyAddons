@@ -14,18 +14,17 @@ import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.screens.inventory.ContainerScreen;
 
 @Mixin(AbstractContainerScreen.class)
-public class MixinHandledScreenRender {
+public class MixinAbstractContainerScreenRender {
     
     @Inject(
         method = "extractRenderState",
         at = @At("TAIL")
     )
     private void renderElements(GuiGraphicsExtractor gge, int mouseX, int mouseY, float delta, CallbackInfo ci) {
-
         ScreenRenderContext.updateHoverState(mouseX, mouseY, ElementRegistry.getInteractiveElements());
         
         var screen = (AbstractContainerScreen<?>) (Object) this;
-        if (screen instanceof ContainerScreen gcs) GoalButton.render(gge, gcs, mouseX, mouseY);
+        if (screen instanceof ContainerScreen cs) GoalButton.render(gge, cs, mouseX, mouseY);
         
         ScreenRenderContext.renderHoveredElements(gge, Minecraft.getInstance());
     }

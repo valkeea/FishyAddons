@@ -7,6 +7,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import me.valkeea.fishyaddons.event.impl.FaEvents;
+import me.valkeea.fishyaddons.event.impl.ScreenChangeEvent;
 import me.valkeea.fishyaddons.event.impl.ScreenCloseEvent;
 import me.valkeea.fishyaddons.event.impl.ScreenOpenEvent;
 import me.valkeea.fishyaddons.hud.core.ScreenRenderContext;
@@ -25,12 +26,17 @@ public class MixinGuiScreenChange {
     @Inject(method = "setScreen", at = @At("HEAD"))
     private void onScreenChange(Screen newScreen, CallbackInfo ci) {
 
+        if (screen != newScreen) {
+            var change = new ScreenChangeEvent(screen, newScreen);
+            FaEvents.SCREEN_CHANGE.fire(change);
+        }
+
         var wasRelevantScreen = screen instanceof InventoryScreen || screen instanceof ContainerScreen;
         
         if (newScreen == null && wasRelevantScreen) {
             var oldTitle = screen.getTitle();
             var event = new ScreenCloseEvent(oldTitle);
-            FaEvents.SCREEN_CLOSE.firePhased(event, listener -> listener.onScreenClose(event));
+            FaEvents.SCREEN_CLOSE.fire(event);
             ScreenRenderContext.reset();
             return;
         } 
@@ -45,7 +51,7 @@ public class MixinGuiScreenChange {
 
         if (newCs != null) { // New screen is a container
             var event = new ScreenOpenEvent(newCs, newCs.getTitle());
-            FaEvents.SCREEN_OPEN.firePhased(event, listener -> listener.onScreenOpen(event));
+            FaEvents.SCREEN_OPEN.fire(event);
         }
 
         if (SearchHudElement.getInstance() != null) {

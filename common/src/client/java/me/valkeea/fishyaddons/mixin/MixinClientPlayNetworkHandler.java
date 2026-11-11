@@ -6,9 +6,9 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import me.valkeea.fishyaddons.compat.McApi;
+import me.valkeea.fishyaddons.event.impl.ContainerChangeEvent;
 import me.valkeea.fishyaddons.event.impl.FaEvents;
 import me.valkeea.fishyaddons.event.impl.GameMessageEvent;
-import me.valkeea.fishyaddons.event.impl.GuiChangeEvent;
 import me.valkeea.fishyaddons.feature.qol.NetworkMetrics;
 import me.valkeea.fishyaddons.feature.skyblock.CatchAlert;
 import me.valkeea.fishyaddons.tracker.profit.InventoryTracker;
@@ -66,9 +66,8 @@ public class MixinClientPlayNetworkHandler {
         if (!(screen instanceof ContainerScreen cs)) return;
 
         var title = cs.getTitle();
-
-        var event = new GuiChangeEvent(cs, title);
-        FaEvents.GUI_CHANGE.firePhased(event, listener -> listener.onGuiChange(event));
+        var event = new ContainerChangeEvent(cs, title);
+        FaEvents.GUI_CHANGE.fire(event);
     }
 
     @Inject(
@@ -79,8 +78,8 @@ public class MixinClientPlayNetworkHandler {
         if (packet == null || !Minecraft.getInstance().isSameThread()) return;
 
         var pristine = packet.content();
-        GameMessageEvent event = new GameMessageEvent(pristine, packet.overlay());
-        FaEvents.GAME_MESSAGE.firePhased(event, listener -> listener.onGameMessage(event));
+        var event = new GameMessageEvent(pristine, packet.overlay());
+        FaEvents.GAME_MESSAGE.fire(event);
     }
 
     @Inject(

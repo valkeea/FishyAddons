@@ -7,32 +7,32 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import com.mojang.blaze3d.platform.InputConstants;
-
 import me.valkeea.fishyaddons.compat.McApi;
-import me.valkeea.fishyaddons.ui.list.ScRules;
-import me.valkeea.fishyaddons.ui.screen.AlertEditScreen;
+import me.valkeea.fishyaddons.event.impl.FaEvents;
+import me.valkeea.fishyaddons.event.impl.KeyInputEvent;
 import net.minecraft.client.KeyboardHandler;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.input.KeyEvent;
 
 @Mixin(KeyboardHandler.class)
 public abstract class MixinKeyboard {
-    @Shadow @Final private Minecraft minecraft;
+    @Shadow
+    @Final
+    private Minecraft minecraft;
 
-    @Inject(method = "keyPress", at = @At("HEAD"), cancellable = true)
-    private void blockF3(long window, int action, KeyEvent input, CallbackInfo ci) {
+    @Inject(
+        method = "keyPress",
+        at = @At("HEAD"),
+        cancellable = true
+    )
+    private void faKeyPress(long handle, int action, KeyEvent input, CallbackInfo ci) {
+        if (handle != minecraft.getWindow().handle()) return;
+        var observed = new KeyInputEvent(minecraft, McApi.screen(), input, action);
+        FaEvents.KEYBOARD_OBSERVE.broadcast(observed);
+        
+        var cancellable = new KeyInputEvent(minecraft, McApi.screen(), input, action);
+        FaEvents.KEYBOARD_INPUT.fire(cancellable);
 
-        if (window != minecraft.getWindow().handle()) return;
-
-        var screen = McApi.screen();
-        if (!(screen instanceof ScRules) && !(screen instanceof AlertEditScreen)) return;
-        if (input.key() != InputConstants.KEY_F3) return;
-
-        if (action == InputConstants.PRESS) {
-            screen.keyPressed(new KeyEvent(input.key(), input.scancode(), input.modifiers()));
-        }
-
-        ci.cancel();
+        if (cancellable.isConsumed()) ci.cancel();
     }
 }

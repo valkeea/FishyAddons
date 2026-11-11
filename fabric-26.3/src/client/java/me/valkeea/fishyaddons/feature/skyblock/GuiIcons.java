@@ -11,10 +11,9 @@ import java.util.Set;
 
 import com.mojang.blaze3d.platform.InputConstants;
 
-import me.valkeea.fishyaddons.event.EventPhase;
 import me.valkeea.fishyaddons.event.EventPriority;
 import me.valkeea.fishyaddons.event.impl.FaEvents;
-import me.valkeea.fishyaddons.mixin.HandledScreenAccessor;
+import me.valkeea.fishyaddons.mixin.AbstractContainerScreenAccessor;
 import me.valkeea.fishyaddons.util.ContainerScanner;
 import me.valkeea.fishyaddons.util.Keyboard;
 import me.valkeea.fishyaddons.vconfig.annotation.VCInit;
@@ -40,11 +39,9 @@ public class GuiIcons {
 
     @VCInit
     public static void init() {
-        FaEvents.SCREEN_MOUSE_CLICK.register(e -> {
-            if (checkClick(e.hoveredSlot, e.click.button(), e.screen)) {
-                e.setConsumed(true);
-            }
-        }, EventPriority.LOWEST, EventPhase.POST);
+        FaEvents.CONTAINER_CLICK.register(e -> {
+            if (checkClick(e.hoveredSlot, e.click.button(), e.screen)) e.consumeWithTrue();
+        }, EventPriority.LOWEST);
         load();
     }
     
@@ -63,22 +60,13 @@ public class GuiIcons {
 
     private static boolean checkClick(Slot hovered, int button, AbstractContainerScreen<?> screen) {
         if (hovered == null || !anyBlocked()) return false;
-        if (handleIcons(hovered)) { return true; }
+        if (handleIcons(hovered)) return true;
 
-        if (handleShift(hovered.index)) {
-            int keyCode = InputConstants.KEY_LSHIFT;
-            var mc = Minecraft.getInstance();
-            
-            if (mc.options != null) {
-                keyCode = mc.options.keyShift.getDefaultKey().getValue();
-            }
-
-            boolean shiftDown = InputConstants.isKeyDown(keyCode);
-
-            if (shiftDown) {
-                ((HandledScreenAccessor) screen).callOnMouseClick(hovered, hovered.index, toContainerButton(button), ContainerInput.PICKUP);
-                return true;
-            }
+        if (handleShift(hovered.index) && Keyboard.isShiftDown()) {
+            ((AbstractContainerScreenAccessor) screen).callOnMouseClick(
+                hovered, hovered.index, toContainerButton(button), ContainerInput.PICKUP
+            );
+            return true;
         }
         return false;
     }

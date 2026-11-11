@@ -103,7 +103,7 @@ public class SkyblockAreas {
             checked = true;
             currentIsland = island;
             var event = new EnvironmentChangeEvent(currentIsland);
-            FaEvents.ENVIRONMENT_CHANGE.firePhased(event, listener -> listener.onEnvironmentChange(event));
+            FaEvents.ENVIRONMENT_CHANGE.fire(event);
         }
     }
 
@@ -125,7 +125,7 @@ public class SkyblockAreas {
             checked = true;
             currentIsland = island;
             var event = new EnvironmentChangeEvent(currentIsland);
-            FaEvents.ENVIRONMENT_CHANGE.firePhased(event, listener -> listener.onEnvironmentChange(event));
+            FaEvents.ENVIRONMENT_CHANGE.fire(event);
         }
     }
 

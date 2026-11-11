@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import me.valkeea.fishyaddons.compat.McApi;
-import me.valkeea.fishyaddons.event.EventPhase;
 import me.valkeea.fishyaddons.event.EventPriority;
 import me.valkeea.fishyaddons.event.impl.FaEvents;
 import me.valkeea.fishyaddons.hud.base.InteractiveHudElement;
@@ -92,18 +91,18 @@ public class CollectionDisplay extends InteractiveHudElement {
     }
 
     private void registerEvents() {
-        FaEvents.MOUSE_CLICK.register(event -> {
-            if (mouseClicked(event.click) 
-                || instance.handleMouseClick(event.click)) {
-                event.setConsumed(true);
+        FaEvents.HUD_CLICK.register(e -> {
+            if (mouseClicked(e.click) 
+                || instance.handleMouseClick(e.click)) {
+                e.setConsumed(true);
             }
-        }, EventPriority.HIGH, EventPhase.PRE);    
+        });    
         
-        FaEvents.MOUSE_SCROLL.register(event -> {
-            if (handleMouseScroll(event.mouseX, event.mouseY, event.vertical)) {
-                event.setConsumed(true);
+        FaEvents.MOUSE_SCROLL.register(e -> {
+            if (handleMouseScroll(e.mouseX, e.mouseY, e.vertical)) {
+                e.setConsumed(true);
             }
-        }, EventPriority.LOW, EventPhase.NORMAL);
+        }, EventPriority.LOW);
     }
     
     @Override

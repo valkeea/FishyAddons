@@ -4,8 +4,8 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import me.valkeea.fishyaddons.event.impl.ContainerChangeEvent;
 import me.valkeea.fishyaddons.event.impl.FaEvents;
-import me.valkeea.fishyaddons.event.impl.GuiChangeEvent;
 import me.valkeea.fishyaddons.feature.item.safeguard.SlotHandler;
 
 /**
@@ -19,29 +19,28 @@ public class InventorySnapshot {
         FaEvents.GUI_CHANGE.register(InventorySnapshot::onGuiOpen);
     }
 
-    private static void onGuiOpen(GuiChangeEvent event) {
+    private static void onGuiOpen(ContainerChangeEvent e) {
         if (!SackDropParser.isEnabled()) return;
 
-        if (event.titleContains("sack")) {
+        if (e.titleContains("sack")) {
 
-            var newSlotContent = scan(event);
+            var newSlotContent = scan(e);
             compare(newSlotContent);
             lastSnapshot = newSlotContent;
         }
     }
 
-    private static Map<Integer, SlotContent> scan(GuiChangeEvent event) {
+    private static Map<Integer, SlotContent> scan(ContainerChangeEvent e) {
 
-        var screenHandler = event.screen.getMenu();
-
+        var screenHandler = e.screen.getMenu();
         return IntStream.range(0, screenHandler.slots.size())
             .filter(i -> {
-                int idx = SlotHandler.remap(event.screen, i);
+                int idx = SlotHandler.remap(e.screen, i);
                 return idx != -1 && screenHandler.slots.get(i).hasItem();
             })
             .boxed()
             .collect(Collectors.toMap(
-                i -> SlotHandler.remap(event.screen, i),
+                i -> SlotHandler.remap(e.screen, i),
                 i -> new SlotContent(
                     screenHandler.slots.get(i).getItem().getHoverName().getString(),
                     screenHandler.slots.get(i).getItem().getCount()

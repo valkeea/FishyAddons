@@ -75,7 +75,7 @@ public class GameMode {
     public static void sbEvent(boolean isInSkyblock) {
         if (INSTANCE.isInSkyblock == isInSkyblock) return;
         var event = new EnvironmentChangeEvent(isInSkyblock);
-        FaEvents.ENVIRONMENT_CHANGE.firePhased(event, listener -> listener.onEnvironmentChange(event));
+        FaEvents.ENVIRONMENT_CHANGE.fire(event);
     }
 
     public static void leftSkyblock() {

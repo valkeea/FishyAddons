@@ -63,7 +63,7 @@ public class XpHandler implements ChatHandler {
             
             try {
                 var event = new XpGainEvent(skillName, progressInfo);
-                FaEvents.XP_GAIN.firePhased(event, listener -> listener.onXpGain(event));
+                FaEvents.XP_GAIN.fire(event);
                 return true;
 
             } catch (NumberFormatException _) {

@@ -9,7 +9,7 @@ import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.Slot;
 
 @Mixin(AbstractContainerScreen.class)
-public interface HandledScreenAccessor {
+public interface AbstractContainerScreenAccessor {
     @Invoker("slotClicked")
     void callOnMouseClick(Slot slot, int slotId, int button, ContainerInput containerInput);
 

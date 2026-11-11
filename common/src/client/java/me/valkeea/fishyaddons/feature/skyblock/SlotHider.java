@@ -9,8 +9,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
-import com.mojang.blaze3d.platform.InputConstants;
-
 import me.valkeea.fishyaddons.event.EventPriority;
 import me.valkeea.fishyaddons.event.impl.FaEvents;
 import me.valkeea.fishyaddons.mixin.AbstractContainerScreenAccessor;
@@ -22,14 +20,13 @@ import me.valkeea.fishyaddons.vconfig.annotation.VCModule;
 import me.valkeea.fishyaddons.vconfig.api.Config;
 import me.valkeea.fishyaddons.vconfig.api.StringKey;
 import me.valkeea.fishyaddons.vconfig.config.impl.ItemConfig;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.Slot;
 
 @VCModule
-public class GuiIcons {
-    private GuiIcons() {}
+public class SlotHider {
+    private SlotHider() {}
     
     private static final Set<String> screenNames = new HashSet<>();
     private static final Map<String, Set<Integer>> screenSlotMap = new HashMap<>();
@@ -47,10 +44,10 @@ public class GuiIcons {
     
     private static void load() {
         screenNames.clear();
-        screenNames.addAll(ItemConfig.getGuiIconsScreenNames());
+        screenNames.addAll(ItemConfig.getSlotHiderScreenNames());
         
         screenSlotMap.clear();
-        Map<String, Set<Integer>> loaded = ItemConfig.getGuiIconsScreenSlotMap();
+        Map<String, Set<Integer>> loaded = ItemConfig.getSlotHiderScreenSlotMap();
         for (var entry : loaded.entrySet()) {
             screenSlotMap.put(entry.getKey(), new HashSet<>(entry.getValue()));
         }
@@ -63,19 +60,10 @@ public class GuiIcons {
         if (handleIcons(hovered)) return true;
 
         if (handleShift(hovered.index) && Keyboard.isShiftDown()) {
-            ((AbstractContainerScreenAccessor) screen).callOnMouseClick(
-                hovered, hovered.index, toContainerButton(button), ContainerInput.PICKUP
-            );
+            ((AbstractContainerScreenAccessor) screen).callOnMouseClick(hovered, hovered.index, button, ContainerInput.PICKUP);
             return true;
         }
         return false;
-    }
-
-    // Container clicks use 0 = left, 1 = right, while mouse events use SDL button numbers
-    private static int toContainerButton(int mouseButton) {
-        if (mouseButton == InputConstants.MOUSE_BUTTON_LEFT) return 0;
-        if (mouseButton == InputConstants.MOUSE_BUTTON_RIGHT) return 1;
-        return mouseButton;
     }
 
     private static boolean handleIcons(Slot hovered) {
@@ -134,23 +122,23 @@ public class GuiIcons {
             if (slots.isEmpty()) {
                 screenSlotMap.remove(key);
                 screenNames.removeIf(name -> name.equalsIgnoreCase(screenName));
-                ItemConfig.removeGuiIconsScreen(screenName);
+                ItemConfig.removeSlotHiderScreen(screenName);
             } else {
-                ItemConfig.removeGuiIconsSlot(screenName, slotId);
+                ItemConfig.removeSlotHiderSlot(screenName, slotId);
             }
 
         } else {
             if (!screenNames.contains(screenName)) {
                 screenNames.add(screenName);
-                ItemConfig.addGuiIconsScreen(screenName);
+                ItemConfig.addSlotHiderScreen(screenName);
             }
             screenSlotMap.computeIfAbsent(key, k -> new HashSet<>()).add(slotId);
-            ItemConfig.addGuiIconsSlot(screenName, slotId);
+            ItemConfig.addSlotHiderSlot(screenName, slotId);
         }
         
         refresh();
         refreshSlots(screenName);
-        ItemConfig.saveGuiIcons();     
+        ItemConfig.saveSlotHider();     
     }
 
     /**

@@ -83,7 +83,7 @@ public class ItemConfig extends BaseConfig {
         
         loadSlotData(json);
         loadEquipmentData(json);
-        loadGuiIconsConfig(json);
+        loadSlotHiderConfig(json);
     }
     
     @Override
@@ -92,7 +92,7 @@ public class ItemConfig extends BaseConfig {
         protectedItems.saveToJson(json);
         saveSlotData(json);
         saveEquipmentData(json);
-        saveGuiIconsConfig(json);
+        saveSlotHiderConfig(json);
     }
     
     private void loadSlotData(JsonObject json) {
@@ -203,7 +203,7 @@ public class ItemConfig extends BaseConfig {
         }
     }
     
-    private void loadGuiIconsConfig(JsonObject json) {
+    private void loadSlotHiderConfig(JsonObject json) {
         if (json.has(GUI_ICONS_SCREENS)) {
             JsonElement element = json.get(GUI_ICONS_SCREENS);
             if (element.isJsonArray()) {
@@ -222,7 +222,7 @@ public class ItemConfig extends BaseConfig {
         }
     }
     
-    private void saveGuiIconsConfig(JsonObject json) {
+    private void saveSlotHiderConfig(JsonObject json) {
         if (!guiIconsScreenNames.getValues().isEmpty()) {
             List<String> screenNamesList = new ArrayList<>(guiIconsScreenNames.getValues().keySet());
             json.add(GUI_ICONS_SCREENS, GSON.toJsonTree(screenNamesList));
@@ -338,13 +338,13 @@ public class ItemConfig extends BaseConfig {
         return result;
     }
     
-    // --- GuiIcons ---
+    // --- SlotHider ---
     
-    public static synchronized Set<String> getGuiIconsScreenNames() {
+    public static synchronized Set<String> getSlotHiderScreenNames() {
         return new HashSet<>(INSTANCE.guiIconsScreenNames.getValues().keySet());
     }
     
-    public static synchronized Map<String, Set<Integer>> getGuiIconsScreenSlotMap() {
+    public static synchronized Map<String, Set<Integer>> getSlotHiderScreenSlotMap() {
         Map<String, Set<Integer>> copy = new HashMap<>();
         for (Map.Entry<String, Set<Integer>> e : INSTANCE.guiIconsScreenSlotMap.getValues().entrySet()) {
             copy.put(e.getKey(), new HashSet<>(e.getValue()));
@@ -352,13 +352,13 @@ public class ItemConfig extends BaseConfig {
         return copy;
     }
     
-    public static synchronized void addGuiIconsScreen(String screenName) {
+    public static synchronized void addSlotHiderScreen(String screenName) {
         if (screenName != null && !screenName.isEmpty()) {
             INSTANCE.guiIconsScreenNames.set(screenName, true);
         }
     }
     
-    public static synchronized void removeGuiIconsScreen(String screenName) {
+    public static synchronized void removeSlotHiderScreen(String screenName) {
         if (screenName != null) {
             INSTANCE.guiIconsScreenNames.getValues().keySet()
                 .removeIf(name -> name.equalsIgnoreCase(screenName));
@@ -368,7 +368,7 @@ public class ItemConfig extends BaseConfig {
         }
     }
     
-    public static synchronized void addGuiIconsSlot(String screenName, int slotId) {
+    public static synchronized void addSlotHiderSlot(String screenName, int slotId) {
         if (screenName != null && !screenName.isEmpty()) {
             String key = screenName.toLowerCase(java.util.Locale.ROOT);
             Set<Integer> slots = INSTANCE.guiIconsScreenSlotMap.get(key);
@@ -380,7 +380,7 @@ public class ItemConfig extends BaseConfig {
         }
     }
     
-    public static synchronized void removeGuiIconsSlot(String screenName, int slotId) {
+    public static synchronized void removeSlotHiderSlot(String screenName, int slotId) {
         if (screenName != null) {
             String key = screenName.toLowerCase(java.util.Locale.ROOT);
             Set<Integer> slots = INSTANCE.guiIconsScreenSlotMap.get(key);
@@ -393,7 +393,7 @@ public class ItemConfig extends BaseConfig {
         }
     }
     
-    public static void saveGuiIcons() {
+    public static void saveSlotHider() {
         INSTANCE.requestSave();
     }
 }

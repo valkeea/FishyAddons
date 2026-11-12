@@ -3,10 +3,9 @@ package me.valkeea.fishyaddons.feature.item.safeguard;
 import java.util.HashMap;
 import java.util.Map;
 
-import me.valkeea.fishyaddons.event.EventPhase;
 import me.valkeea.fishyaddons.event.EventPriority;
 import me.valkeea.fishyaddons.event.impl.FaEvents;
-import me.valkeea.fishyaddons.event.impl.ScreenClickEvent;
+import me.valkeea.fishyaddons.event.impl.ContainerClickEvent;
 import me.valkeea.fishyaddons.tool.ItemData;
 import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
 import me.valkeea.fishyaddons.vconfig.api.Config;
@@ -21,31 +20,29 @@ public class GuiHandler {
     private static final int MAX_CACHE_SIZE = 200;
 
     public static void init() {
-        FaEvents.SCREEN_MOUSE_CLICK.register(event -> {
-            if (handleClick(event)) {
-                event.setConsumed(true);
-            }
-        }, EventPriority.HIGH, EventPhase.PRE);
+        FaEvents.CONTAINER_CLICK.register(e -> {
+            if (checkForBlocked(e)) e.consumeWithTrue();
+        }, EventPriority.HIGH);
     }
 
-    private static boolean handleClick(ScreenClickEvent event) {
+    private static boolean checkForBlocked(ContainerClickEvent e) {
 
         var mc = Minecraft.getInstance();
         ItemStack stack;
         int slotId = -1;
 
-        if (event.hoveredSlot != null) {
-            stack = event.hoveredSlot.getItem();
-            slotId = event.hoveredSlot.index;
+        if (e.hoveredSlot != null) {
+            stack = e.hoveredSlot.getItem();
+            slotId = e.hoveredSlot.index;
         } else {
             stack = mc.player.containerMenu.getCarried();
         }
 
         if (stack == null || stack.isEmpty() || !isProtectedCached(stack)) return false;
-        if (!(event.screen instanceof ContainerScreen cs)) return false;
+        if (!(e.screen instanceof ContainerScreen cs)) return false;
         
         if (BlacklistMatcher.isBlacklistedGUI(cs) && Config.get(BooleanKey.FG_GUI_PROTECTION)) {
-            int remapped = SlotHandler.remap(event.screen, slotId);
+            int remapped = SlotHandler.remap(e.screen, slotId);
             if (remapped != -1) {
                 FGUtil.triggerProtection();
                 return true;

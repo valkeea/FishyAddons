@@ -5,9 +5,9 @@ import java.util.Map;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 
-import me.valkeea.fishyaddons.feature.qol.ChatReplacement;
-import me.valkeea.fishyaddons.feature.qol.CommandAlias;
-import me.valkeea.fishyaddons.feature.qol.KeyShortcut;
+import me.valkeea.fishyaddons.feature.qol.input.ChatReplacement;
+import me.valkeea.fishyaddons.feature.qol.input.CommandAlias;
+import me.valkeea.fishyaddons.feature.qol.input.KeyShortcut;
 import me.valkeea.fishyaddons.vconfig.config.BaseConfig;
 import me.valkeea.fishyaddons.vconfig.config.ConfigSection;
 

@@ -33,7 +33,7 @@ public class Keyboard {
         Map.entry("NONUSBACKSLASH", "WORLD_1"));
 
     // Config stores GLFW mouse button indices; SDL uses 1 = left, 2 = middle, 3 = right, 4/5 = side.
-    private static final int[] GLFW_TO_SDL_BUTTON = {1, 3, 2, 4, 5};
+    private static final int[] GLFW_TO_SDL_BUTTON = {1, 3, 2, 4, 5, 6, 7, 8};
 
     static {
         String prefix = "SDL_SCANCODE_";
@@ -78,8 +78,15 @@ public class Keyboard {
         }
     }
 
-    /** Converts an SDL button (from a click event) to the stored binding string, or null. */
-    public static String sdlButtonToMouseBinding(int sdlButton) {
+    public static boolean isKeyDown(int keyCode) {
+        return InputConstants.isKeyDown(keyCode);
+    }    
+
+    public static int mouseBindingToButton(String key) {
+        return mouseBindingToSdlButton(key);
+    }
+
+    public static String mouseButtonToBinding(int sdlButton) {
         for (int i = 0; i < GLFW_TO_SDL_BUTTON.length; i++) {
             if (GLFW_TO_SDL_BUTTON[i] == sdlButton) return "MOUSE" + i;
         }

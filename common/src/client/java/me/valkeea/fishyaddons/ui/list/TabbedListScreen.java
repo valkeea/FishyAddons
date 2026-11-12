@@ -3,10 +3,10 @@ package me.valkeea.fishyaddons.ui.list;
 import java.util.List;
 import java.util.Map;
 
-import me.valkeea.fishyaddons.feature.qol.ChatReplacement;
-import me.valkeea.fishyaddons.feature.qol.CommandAlias;
 import me.valkeea.fishyaddons.feature.qol.FishyPresets;
-import me.valkeea.fishyaddons.feature.qol.KeyShortcut;
+import me.valkeea.fishyaddons.feature.qol.input.ChatReplacement;
+import me.valkeea.fishyaddons.feature.qol.input.CommandAlias;
+import me.valkeea.fishyaddons.feature.qol.input.KeyShortcut;
 import me.valkeea.fishyaddons.ui.GuiUtil;
 import me.valkeea.fishyaddons.ui.element.DropdownMenu;
 import me.valkeea.fishyaddons.ui.element.FishyPopup;
@@ -97,25 +97,25 @@ public class TabbedListScreen extends Screen {
         int y = height - 30;
         
         addRenderableWidget(new FaButton(x, y, w, h,
-            Component.literal("Back").withStyle(style -> style.withColor(0xFFB0B0B0)),
+            Component.literal("Back").withStyle(s -> s.withColor(0xFFB0B0B0)),
             b -> ScreenManager.openConfigScreen()
         ));
         x += w;
 
         addRenderableWidget(new FaButton(x, y, w, h,
-            Component.literal("Close").withStyle(style -> style.withColor(0xFFB0B0B0)),
+            Component.literal("Close").withStyle(s -> s.withColor(0xFFB0B0B0)),
             b -> this.onClose()
         ));
         x += w;
 
         addRenderableWidget(new FaButton(x, y, w, h,
-            Component.literal("Load Preset").withStyle(style -> style.withColor(0xFFE2CAE9)),
+            Component.literal("Load Preset").withStyle(s -> s.withColor(0xFFE2CAE9)),
             b -> showPresetDropdown()
         ));
         x += w;
 
         addRenderableWidget(new FaButton(x, y, w, h,
-            Component.literal("Save Preset").withStyle(style -> style.withColor(0xFFB0FFB0)),
+            Component.literal("Save Preset").withStyle(s -> s.withColor(0xFFB0FFB0)),
             b -> showSavePresetPopup()
         ));
 
@@ -270,7 +270,7 @@ public class TabbedListScreen extends Screen {
             return;
         }
 
-        int dropdownX = width / 2 + 205;
+        int dropdownX = width / 2 + 85;
         int dropdownY = height - 40 - (suffixes.size() * 14) / 2;
         presetDropdown = new DropdownMenu(
             suffixes, dropdownX, dropdownY, 100, 14,

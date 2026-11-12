@@ -1,4 +1,4 @@
-package me.valkeea.fishyaddons.feature.qol;
+package me.valkeea.fishyaddons.feature.qol.input;
 
 import java.util.Map;
 
@@ -9,24 +9,24 @@ import me.valkeea.fishyaddons.vconfig.api.Config;
 import me.valkeea.fishyaddons.vconfig.config.impl.ShortcutsConfig;
 
 @VCModule
-public class ChatReplacement {
+public final class ChatReplacement {
     private ChatReplacement() {}
     private static boolean enabled = false;
-    private static Map<String, String> cached = Map.of();
+    private static Map<String, String> config = Map.of();
 
     @VCListener(BooleanKey.CHAT_REPLACEMENTS)
     public static void refresh() {
         enabled = Config.get(BooleanKey.CHAT_REPLACEMENTS);
-        cached = Map.copyOf(ShortcutsConfig.getChat());
+        config = Map.copyOf(ShortcutsConfig.getChat());
     }
 
     public static String apply(String message) {
         if (!enabled) return message;
 
         var result = message;
-        for (Map.Entry<String, String> entry : cached.entrySet()) {
-            if (ShortcutsConfig.isChatToggled(entry.getKey()) && result.contains(entry.getKey())) {
-                result = result.replace(entry.getKey(), entry.getValue());
+        for (var e : config.entrySet()) {
+            if (ShortcutsConfig.isChatToggled(e.getKey()) && result.contains(e.getKey())) {
+                result = result.replace(e.getKey(), e.getValue());
             }
         }
         

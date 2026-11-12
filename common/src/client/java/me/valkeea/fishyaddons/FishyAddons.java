@@ -6,8 +6,8 @@ import me.valkeea.fishyaddons.api.skyblock.GameChat;
 import me.valkeea.fishyaddons.command.CmdManager;
 import me.valkeea.fishyaddons.feature.filter.FilterConfig;
 import me.valkeea.fishyaddons.feature.item.safeguard.BlacklistManager;
-import me.valkeea.fishyaddons.feature.qol.FishyKeys;
 import me.valkeea.fishyaddons.feature.qol.FishyPresets;
+import me.valkeea.fishyaddons.feature.qol.input.ContextBoundary;
 import me.valkeea.fishyaddons.feature.waypoints.WaypointChains;
 import me.valkeea.fishyaddons.hud.core.ElementRegistry;
 import me.valkeea.fishyaddons.hud.ui.FishyToast;
@@ -64,7 +64,7 @@ public class FishyAddons implements ClientModInitializer {
         FishyPresets.ensureDefaultPresets();
         WaypointChains.init();
         
-        FishyKeys.register();        
+        ContextBoundary.register();        
         GuiScheduler.register();
         CmdManager.register();
         BlacklistManager.init(); 
@@ -74,8 +74,9 @@ public class FishyAddons implements ClientModInitializer {
             PlaySound.PROTECT_TRIGGER_EVENT
         );
 
+        var category = KeyMapping.Category.register(Identifier.fromNamespaceAndPath("fishyaddons", "mod_keybinds"));
         var mainKey = KeyMappingHelper.registerKeyMapping(
-            new KeyMapping("Open Config", InputConstants.Type.KEYSYM, 240, KeyMapping.Category.register(Identifier.fromNamespaceAndPath("fishyaddons", "mod_keybinds")))
+            new KeyMapping("key.fishyaddons.config", InputConstants.Type.KEYSYM, InputConstants.UNKNOWN.getValue(), category)
         );
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {

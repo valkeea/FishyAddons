@@ -1,8 +1,8 @@
 package me.valkeea.fishyaddons.feature.item.safeguard;
 
-import me.valkeea.fishyaddons.event.EventPhase;
 import me.valkeea.fishyaddons.event.EventPriority;
 import me.valkeea.fishyaddons.event.impl.FaEvents;
+import me.valkeea.fishyaddons.event.impl.ContainerClickEvent;
 import me.valkeea.fishyaddons.tool.PlaySound;
 import me.valkeea.fishyaddons.util.ContainerScanner;
 import me.valkeea.fishyaddons.util.Keyboard;
@@ -19,15 +19,17 @@ public class SlotHandler {
     private SlotHandler() {}
 
     public static void init() {
-        FaEvents.SCREEN_MOUSE_CLICK.register(e -> {
-            if (e.hoveredSlot != null &&
-                (isLockedClick(e.screen, e.hoveredSlot) ||
-                 isBoundClick(e.screen, e.hoveredSlot, e.hoveredSlot.index, remap(e.screen, e.hoveredSlot.index)))) {
-                e.setConsumed(true);
-            }
-        }, EventPriority.HIGHEST, EventPhase.PRE);
+        FaEvents.CONTAINER_CLICK.register(SlotHandler::onClick, EventPriority.HIGHEST);
     }
 
+    private static void onClick(ContainerClickEvent e) {
+        if (e.hoveredSlot == null) return;
+        if (isLockedClick(e.screen, e.hoveredSlot) ||
+            isBoundClick(e.screen, e.hoveredSlot, e.hoveredSlot.index, remap(e.screen, e.hoveredSlot.index))) {
+            e.consumeWithTrue();
+        }
+    }
+    
     private static boolean isLockedClick(AbstractContainerScreen<?> screen, Slot hovered) {
         if (!FGUtil.isKeyBound()) return false;
         int index = hovered.index;

@@ -1,8 +1,8 @@
 package me.valkeea.fishyaddons.listener;
 
 import me.valkeea.fishyaddons.api.skyblock.GameChat;
-import me.valkeea.fishyaddons.feature.qol.ChatReplacement;
-import me.valkeea.fishyaddons.feature.qol.CommandAlias;
+import me.valkeea.fishyaddons.feature.qol.input.ChatReplacement;
+import me.valkeea.fishyaddons.feature.qol.input.CommandAlias;
 import net.fabricmc.fabric.api.client.message.v1.ClientSendMessageEvents;
 
 public class ModifyChat {
@@ -13,7 +13,7 @@ public class ModifyChat {
         ClientSendMessageEvents.MODIFY_COMMAND.register(cmd -> {
             trackChatMode(cmd);
             
-            String remapped = CommandAlias.getActualCommand("/" + cmd.trim());
+            String remapped = CommandAlias.apply("/" + cmd.trim());
             if (remapped != null && remapped.startsWith("/")) {
                 return remapped.substring(1);
             }

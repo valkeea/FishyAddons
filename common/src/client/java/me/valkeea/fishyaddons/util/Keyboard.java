@@ -47,7 +47,29 @@ public class Keyboard {
         } catch (Exception _) {
             return -1;
         }
-    }        
+    }
+
+    public static boolean isKeyDown(int keyCode) {
+        return InputConstants.isKeyDown(Minecraft.getInstance().getWindow(), keyCode);
+    }
+
+    public static int mouseBindingToButton(String key) {
+        try {
+            int button = Integer.parseInt(key.substring(5).trim());
+            return button >= GLFW.GLFW_MOUSE_BUTTON_1 && button <= GLFW.GLFW_MOUSE_BUTTON_LAST ? button : -1;
+        } catch (NumberFormatException _) {
+            return -1;
+        }
+    }
+
+    public static String mouseButtonToBinding(int button) {
+        if (button < GLFW.GLFW_MOUSE_BUTTON_1 || button > GLFW.GLFW_MOUSE_BUTTON_LAST) return null;
+        return "MOUSE" + button;
+    }
+
+    public static boolean isMouseButtonDown(int button) {
+        return GLFW.glfwGetMouseButton(Minecraft.getInstance().getWindow().handle(), button) == GLFW.GLFW_PRESS;
+    }
 
     public static String getDisplayNameFor(String key) {
         if (key == null) return "";

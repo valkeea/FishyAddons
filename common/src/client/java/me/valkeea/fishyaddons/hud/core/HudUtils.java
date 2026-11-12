@@ -90,6 +90,15 @@ public class HudUtils {
             return String.format("%.0f", coins);
         }
     }
+
+    /**
+     * Format time as MM:SS
+     */
+    public static String formatTime(long seconds) {
+        long minutes = seconds / 60;
+        long remainingSeconds = seconds % 60;
+        return String.format("%02d:%02d", minutes, remainingSeconds);
+    }
     
     /**
      * Calculate scaled dimensions

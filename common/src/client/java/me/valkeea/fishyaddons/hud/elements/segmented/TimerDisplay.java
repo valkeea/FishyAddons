@@ -2,7 +2,9 @@ package me.valkeea.fishyaddons.hud.elements.segmented;
 
 import me.valkeea.fishyaddons.feature.skyblock.timer.ChatTimers;
 import me.valkeea.fishyaddons.hud.base.SegmentedTextElement;
+import me.valkeea.fishyaddons.hud.core.HudUtils;
 import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
+import net.minecraft.network.chat.Component;
 
 public class TimerDisplay extends SegmentedTextElement {
     
@@ -12,7 +14,7 @@ public class TimerDisplay extends SegmentedTextElement {
             "Beacon: ",
             5, 5,
             12,
-            0xC8D9C0,
+            0xFFC8D9C0,
             false,
             false
         );
@@ -25,23 +27,17 @@ public class TimerDisplay extends SegmentedTextElement {
     }
 
     @Override
-    protected Component[] getComponents() {
+    protected Pair[] getContent() {
         long secondsLeft = ChatTimers.getInstance().getBeaconTimer();
-        if (secondsLeft < 0) return new Component[0];
+        if (secondsLeft < 0) return new Pair[0];
         
-        var label = net.minecraft.network.chat.Component.literal("Beacon:");
-        var value = net.minecraft.network.chat.Component.literal(" " + formatTime(secondsLeft));
+        var label = Component.literal("Beacon:");
+        var value = Component.literal(" " + HudUtils.formatTime(secondsLeft));
         int labelColor = getCachedState().color;
         int valueColor = 0xFFFFFFFF;
         
-        return new Component[] {
-            new Component(label, value, labelColor, valueColor, 0)
+        return new Pair[] {
+            new Pair(label, value, labelColor, valueColor)
         };
-    }
-    
-    private static String formatTime(long seconds) {
-        long minutes = seconds / 60;
-        long remainingSeconds = seconds % 60;
-        return String.format("%02d:%02d", minutes, remainingSeconds);
     }
 }

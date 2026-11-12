@@ -8,6 +8,7 @@ import me.valkeea.fishyaddons.hud.base.SegmentedTextElement;
 import me.valkeea.fishyaddons.util.text.Color;
 import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
 import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
 
 public class NetworkDisplay extends SegmentedTextElement {
     
@@ -29,8 +30,8 @@ public class NetworkDisplay extends SegmentedTextElement {
     }
 
     @Override
-    protected Component[] getComponents() {
-        if (!shouldRender()) return new Component[0];
+    protected Pair[] getContent() {
+        if (!shouldRender()) return new Pair[0];
 
         var mc = Minecraft.getInstance();
         int ping = NetworkMetrics.getPing();
@@ -40,50 +41,50 @@ public class NetworkDisplay extends SegmentedTextElement {
         boolean showTps = NetworkMetrics.shouldDisplay(BooleanKey.METRICS_SHOW_TPS);
         boolean showFps = NetworkMetrics.shouldDisplay(BooleanKey.METRICS_SHOW_FPS);
 
-        if (!isEditingMode() && !showPing && !showTps && !showFps) return new Component[0];
-        if (!isEditingMode() && showPing && ping < 0) return new Component[0];
+        if (!isEditingMode() && !showPing && !showTps && !showFps) return new Pair[0];
+        if (!isEditingMode() && showPing && ping < 0) return new Pair[0];
 
-        return buildComponents(showPing, showTps, showFps, ping, fps);
+        return buildContent(showPing, showTps, showFps, ping, fps);
     }
     
-    private Component[] buildComponents(boolean showPing, boolean showTps, boolean showFps, int ping, int fps) {
-        List<Component> components = new ArrayList<>();
+    private Pair[] buildContent(boolean showPing, boolean showTps, boolean showFps, int ping, int fps) {
+        List<Pair> content = new ArrayList<>();
         int labelColor = getCachedState().color;
         int valueColor = Color.brighten(labelColor, 0.7f);
         
         if (showPing || isEditingMode()) {
-            addPing(components, ping, labelColor, valueColor, showPing);
+            addPing(content, ping, labelColor, valueColor, showPing);
         }
         
         if (showTps || isEditingMode()) {
-            addTps(components, labelColor, valueColor, showTps);
+            addTps(content, labelColor, valueColor, showTps);
         }
         
         if (showFps || isEditingMode()) {
-            addFps(components, fps, labelColor, valueColor, showFps);
+            addFps(content, fps, labelColor, valueColor, showFps);
         }
         
-        return components.toArray(new Component[0]);
+        return content.toArray(new Pair[0]);
     }
     
-    private void addPing(List<Component> components, int ping, int labelColor, int valueColor, boolean showPing) {
-        net.minecraft.network.chat.Component pingLabel = net.minecraft.network.chat.Component.literal("Ping:");
-        net.minecraft.network.chat.Component pingValue = net.minecraft.network.chat.Component.literal(ping >= 0 ? " " + ping + " ms" : " ?");
-        int pingValueColor = showPing ? valueColor : 0x808080;
-        components.add(new Component(pingLabel, pingValue, labelColor, pingValueColor));
+    private void addPing(List<Pair> content, int ping, int labelColor, int valueColor, boolean showPing) {
+        var pingLabel = Component.literal("Ping:");
+        var pingValue = Component.literal(ping >= 0 ? " " + ping + " ms" : " ?");
+        int pingValueColor = showPing ? valueColor : 0x80808080;
+        content.add(new Pair(pingLabel, pingValue, labelColor, pingValueColor));
     }
     
-    private void addTps(List<Component> components, int labelColor, int valueColor, boolean showTps) {
-        net.minecraft.network.chat.Component tpsLabel = net.minecraft.network.chat.Component.literal("TPS:");
-        net.minecraft.network.chat.Component tpsValue = net.minecraft.network.chat.Component.literal(" " + NetworkMetrics.getTpsString());
-        int tpsValueColor = showTps ? valueColor : 0x808080;
-        components.add(new Component(tpsLabel, tpsValue, labelColor, tpsValueColor));
+    private void addTps(List<Pair> content, int labelColor, int valueColor, boolean showTps) {
+        var tpsLabel = Component.literal("TPS:");
+        var tpsValue = Component.literal(" " + NetworkMetrics.getTpsString());
+        int tpsValueColor = showTps ? valueColor : 0x80808080;
+        content.add(new Pair(tpsLabel, tpsValue, labelColor, tpsValueColor));
     }
 
-    private void addFps(List<Component> components, int fps, int labelColor, int valueColor, boolean showFps) {
-        net.minecraft.network.chat.Component fpsLabel = net.minecraft.network.chat.Component.literal("FPS:");
-        net.minecraft.network.chat.Component fpsValue = net.minecraft.network.chat.Component.literal(" " + fps);
-        int fpsValueColor = showFps ? valueColor : 0x808080;
-        components.add(new Component(fpsLabel, fpsValue, labelColor, fpsValueColor));
+    private void addFps(List<Pair> content, int fps, int labelColor, int valueColor, boolean showFps) {
+        var fpsLabel = Component.literal("FPS:");
+        var fpsValue = Component.literal(" " + fps);
+        int fpsValueColor = showFps ? valueColor : 0x80808080;
+        content.add(new Pair(fpsLabel, fpsValue, labelColor, fpsValueColor));
     }
 }

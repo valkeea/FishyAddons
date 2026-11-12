@@ -4,6 +4,7 @@ import me.valkeea.fishyaddons.hud.core.HudDrawer;
 import me.valkeea.fishyaddons.hud.core.HudElementState;
 import me.valkeea.fishyaddons.vconfig.api.BooleanKey;
 import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
 
 /**
  * Elements with multi-component text display (label + value pairs)
@@ -19,12 +20,12 @@ public abstract class SegmentedTextElement extends BaseHudElement {
 
     @Override
     protected final boolean renderContent(HudDrawer drawer, Minecraft mc, HudElementState state) {
-        Component[] components = getComponents();
+        Pair[] components = getContent();
         if (components == null || components.length == 0) return false;
 
         int xOffset = 0;
         for (int i = 0; i < components.length; i++) {
-            Component comp = components[i];
+            Pair comp = components[i];
             if (comp == null) continue;
             
             if (comp.label != null) {
@@ -46,12 +47,12 @@ public abstract class SegmentedTextElement extends BaseHudElement {
 
     @Override
     protected final int calculateContentWidth(Minecraft mc) {
-        Component[] components = getComponents();
+        Pair[] components = getContent();
         if (components == null || components.length == 0) return 100;
 
         int totalWidth = 0;
         for (int i = 0; i < components.length; i++) {
-            Component comp = components[i];
+            Pair comp = components[i];
             if (comp == null) continue;
             
             if (comp.label != null) {
@@ -76,19 +77,19 @@ public abstract class SegmentedTextElement extends BaseHudElement {
     /**
      * Return the components to display. Each component can have a label, value, and colors.
      */
-    protected abstract Component[] getComponents();
+    protected abstract Pair[] getContent();
 
     /**
      * Represents a label-value pair component
      */
-    protected static class Component {
-        public final net.minecraft.network.chat.Component label;
-        public final net.minecraft.network.chat.Component value;
+    protected static class Pair {
+        public final Component label;
+        public final Component value;
         public final int labelColor;
         public final int valueColor;
         public final int spacing;
 
-        public Component(net.minecraft.network.chat.Component label, net.minecraft.network.chat.Component value, int labelColor, int valueColor, int spacing) {
+        public Pair(Component label, Component value, int labelColor, int valueColor, int spacing) {
             this.label = label;
             this.value = value;
             this.labelColor = labelColor;
@@ -96,7 +97,7 @@ public abstract class SegmentedTextElement extends BaseHudElement {
             this.spacing = spacing;
         }
         
-        public Component(net.minecraft.network.chat.Component label, net.minecraft.network.chat.Component value, int labelColor, int valueColor) {
+        public Pair(Component label, Component value, int labelColor, int valueColor) {
             this(label, value, labelColor, valueColor, 10);
         }
     }

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import me.valkeea.fishyaddons.feature.item.safeguard.BlacklistManager;
+import me.valkeea.fishyaddons.feature.item.safeguard.DropProtection;
 import me.valkeea.fishyaddons.feature.item.safeguard.GuiHandler;
 import me.valkeea.fishyaddons.feature.item.safeguard.SlotHandler;
 import me.valkeea.fishyaddons.vconfig.annotation.UIContainer;
@@ -25,7 +26,18 @@ public class ItemConfig {
     public static void init() {
         GuiHandler.init();
         SlotHandler.init();
+        DropProtection.init();
     }
+
+    @UIKeybind(
+        key = StringKey.KEY_SKULL_PREVIEW,
+        name = "Skull Preview",
+        description = {
+            "Tap the key while hovering a skull in a container, then tap it again",
+            "after closing the container to preview it on your player model."
+        }
+    )
+    private static String skullPreview;    
 
     private static final String FG = "Item *Safeguard*";
 

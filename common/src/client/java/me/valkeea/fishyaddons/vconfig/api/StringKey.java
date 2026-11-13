@@ -9,6 +9,7 @@ import me.valkeea.fishyaddons.vconfig.config.ConfigFile;
 public enum StringKey implements ConfigKey<String> {
 
     KEY_LOCK_SLOT("lockKey", "NONE"),
+    KEY_SKULL_PREVIEW("skullPreviewKey", "NONE"),
     PRICE_TYPE("priceType", "sellPrice"),
     KEY_HIDE_GUI("lockGuiSlotKey", "NONE"),
     INFO_ID("infoId"),

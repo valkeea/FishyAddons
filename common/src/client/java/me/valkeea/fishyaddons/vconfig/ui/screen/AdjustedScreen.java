@@ -18,6 +18,7 @@ public abstract class AdjustedScreen extends Screen {
      * Applied after undoing Minecraft's GUI scale transformation.
      */
     protected float uiScale;
+    protected int guiScale;
     
     /**
      * Raw window width in actual pixels.
@@ -38,15 +39,16 @@ public abstract class AdjustedScreen extends Screen {
     @Override
     protected void init() {
         super.init();
-        
+
         var window = minecraft.getWindow();
         rawWidth = window.getWidth();
         rawHeight = window.getHeight();
         
         uiScale = calculateUIScale(rawWidth, rawHeight);
+        guiScale = minecraft.getWindow().getGuiScale();
         
         width = (int)(rawWidth / uiScale);
-        height = (int)(rawHeight / uiScale);
+        height = (int)(rawHeight / uiScale);  
     }
     
     /**
@@ -61,20 +63,19 @@ public abstract class AdjustedScreen extends Screen {
     }
     
     @Override
-    public final void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
-        var matrices = context.pose();
+    public final void extractRenderState(GuiGraphicsExtractor gge, int mX, int mY, float delta) {
+        var matrices = gge.pose();
         matrices.pushMatrix();
         
         try {
-            double guiScale = minecraft.getWindow().getGuiScale();
-
             matrices.scale(1.0f / (float)guiScale, 1.0f / (float)guiScale);
             matrices.scale(uiScale, uiScale);
 
-            int adjustedMouseX = (int)(mouseX * guiScale / uiScale);
-            int adjustedMouseY = (int)(mouseY * guiScale / uiScale);
+            int adjustedMouseX = (int)(mX * guiScale / uiScale);
+            int adjustedMouseY = (int)(mY * guiScale / uiScale);
             
-            renderContent(context, adjustedMouseX, adjustedMouseY, delta);
+            extractContent(gge, adjustedMouseX, adjustedMouseY, delta);
+            gge.extractDeferredElements(adjustedMouseX, adjustedMouseY, delta);
             
         } finally {
             matrices.popMatrix();
@@ -86,11 +87,11 @@ public abstract class AdjustedScreen extends Screen {
      * 
      * @param context Draw context with transformed matrices
      * @param mouseX Mouse X in transformed coordinate space
-     * @param mouseY Mouse Y in transformed coordinate space
+     * @param mY Mouse Y in transformed coordinate space
      * @param delta Frame delta time
      */
-    protected void renderContent(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
-        super.extractRenderState(context, mouseX, mouseY, delta);
+    protected void extractContent(GuiGraphicsExtractor gge, int mouseX, int mY, float delta) {
+        super.extractRenderState(gge, mouseX, mY, delta);
     }
     
     @Override
@@ -108,23 +109,21 @@ public abstract class AdjustedScreen extends Screen {
     @Override
     public boolean mouseDragged(MouseButtonEvent click, double offsetX, double offsetY) {
         MouseButtonEvent adjusted = adjustMouseClick(click);
-        double guiScale = minecraft.getWindow().getGuiScale();
         double adjustedOffsetX = offsetX * guiScale / uiScale;
         double adjustedOffsetY = offsetY * guiScale / uiScale;
         return super.mouseDragged(adjusted, adjustedOffsetX, adjustedOffsetY);
     }
     
     @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
-        double guiScale = minecraft.getWindow().getGuiScale();
-        double adjustedMouseX = mouseX * guiScale / uiScale;
-        double adjustedMouseY = mouseY * guiScale / uiScale;
+    public boolean mouseScrolled(double mX, double mY, double horizontalAmount, double verticalAmount) {
+        double adjustedMouseX = mX * guiScale / uiScale;
+        double adjustedMouseY = mY * guiScale / uiScale;
+
         return super.mouseScrolled(adjustedMouseX, adjustedMouseY, horizontalAmount, verticalAmount);
     }
     
     // Adjust a Click's coordinates from raw screen space to the adjusted UI space
     private MouseButtonEvent adjustMouseClick(MouseButtonEvent click) {
-        double guiScale = minecraft.getWindow().getGuiScale();
         double adjustedX = click.x() * guiScale / uiScale;
         double adjustedY = click.y() * guiScale / uiScale;
         
@@ -147,7 +146,7 @@ public abstract class AdjustedScreen extends Screen {
     }
 
     @Override
-    public void extractBackground(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+    public void extractBackground(GuiGraphicsExtractor context, int mX, int mY, float delta) {
         // Handled manually in renderContent
     }    
 }

@@ -16,7 +16,7 @@ public final class UIScaleCalculator {
      * @return The relative UI scale based on user preference and screen size, clamped to absolute bounds
      */
     public static float calculateUIScale(int screenWidth) {
-        float w = screenWidth;   
+        float w = (float) screenWidth;   
         double userPreference = Config.get(DoubleKey.MOD_UI_SCALE);
         float uiPanelW = Dimensions.TOTAL_LIST_WIDTH;
         float minRatio = 2.5f;

@@ -25,6 +25,7 @@
 		"MixinFluidStateModelSet",
 		"MixinGuiScreenChange",
 		"MixinFogRenderer",
+		"MixinGuiGraphicsExtractor",
 		"MixinHeldItemRenderer",
 		"MixinHumanoidMobRenderer",
 		"MixinInGameHud",

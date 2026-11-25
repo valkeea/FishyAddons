@@ -138,7 +138,7 @@ public class SearchHudElement extends InteractiveHudElement {
         searchField.extractRenderState(context, mouseX, mouseY, 0);
 
         if (overlayActive) {
-            GuiUtil.wireRect(
+            GuiUtil.wireBox(
                 context, hudX - 2, hudY - 2, scaledWidth + 4,
                 scaledHeight + 4, FishyMode.getThemeColor()
             );

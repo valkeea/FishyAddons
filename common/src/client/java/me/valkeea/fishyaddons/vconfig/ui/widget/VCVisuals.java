@@ -1,8 +1,9 @@
 package me.valkeea.fishyaddons.vconfig.ui.widget;
 
+import me.valkeea.fishyaddons.util.text.Color;
 import me.valkeea.fishyaddons.vconfig.ui.layout.Colors;
 
-public class VCVisuals {
+public final class VCVisuals {
     private VCVisuals() {}
     private static int themeColor = 0xFFE2CAE9;
     
@@ -60,5 +61,12 @@ public class VCVisuals {
 
     protected static int borderHex2(boolean hovered) {
         return applyStateAlpha(hovered);
+    }
+
+    /**
+     * Theme-aware background (greyed out)
+     */
+    protected static int screenBg() {
+        return Color.desaturateAndDarken(themeColor, 0.5f);
     }
 }

@@ -72,7 +72,7 @@ public class Keyboard {
     }
 
     public static String getDisplayNameFor(String key) {
-        if (key == null) return "";
+        if (key == null || key.isBlank()) return "";
 
         if (key.startsWith("GLFW_KEY_KP_")) {
             return key.replace("GLFW_KEY_KP_", "Num ");
@@ -145,4 +145,9 @@ public class Keyboard {
         int keyCode = mc.options.keyShift.getDefaultKey().getValue();
         return InputConstants.isKeyDown(mc.getWindow(), keyCode);
     }
+
+    public static boolean isInvalidKey(String key) {
+        return key.isBlank() || key.equalsIgnoreCase("NONE")
+            || key.equals("MOUSE0") || key.equals("MOUSE1");
+    }    
 }

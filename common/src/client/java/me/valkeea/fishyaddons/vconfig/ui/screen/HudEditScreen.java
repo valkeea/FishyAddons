@@ -25,9 +25,10 @@ import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 
 public class HudEditScreen extends Screen {
-    private static final String OUTLINE = "Outline"; 
+    private static final String OUTLINE = "Outline";
+    private final String targetElementName;   
+     
     private Screen parent;
-    private String targetElementName;
     private VCPopup popup = null;
     private HudElement dragging = null;
     private HudElement selectedElement = null;
@@ -184,7 +185,7 @@ public class HudEditScreen extends Screen {
                     this.popup = new VCPopup(
                         Component.literal("Alert color is set in the alert editor!"),
                         "Back", () -> {
-                            McApi.setScreen(HudEditScreen.this);
+                            McApi.setScreen(this);
                             this.popup = null;
                         },
                         "GO", () -> {
@@ -287,7 +288,7 @@ public class HudEditScreen extends Screen {
         for (HudElement e : ElementRegistry.getConfigurable()) {
             e.setEditingMode(true);
             e.render(context, mc, mouseX, mouseY);
-            GuiUtil.wireRect(context, e.getBounds(mc), 0x80FFFFFF);
+            GuiUtil.wireBox(context, e.getBounds(mc), 0x80FFFFFF);
         }
 
         UIFeedback.getInstance().render(context, mc, mouseX, mouseY);

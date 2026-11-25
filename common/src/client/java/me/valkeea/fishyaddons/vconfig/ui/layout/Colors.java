@@ -1,7 +1,7 @@
 package me.valkeea.fishyaddons.vconfig.ui.layout;
 
 public final class Colors {
-    public static final int BRIGHT_GRAY = -3355444;        // 0xFFCCCCCC
+    public static final int BRIGHT_GRAY = -3355444;             // 0xFFCCCCCC
     public static final int SUB_DESCRIPTION_TEXT = -3881788;    // 0xFFC4C4C4
     public static final int BACKGROUND_GRADIENT = 134217728;    // 0x08000000
     public static final int SUB_ENTRY_BG = 805306368;           // 0x30000000
@@ -15,6 +15,8 @@ public final class Colors {
     public static final int ENABLED_GREEN = -3342388;           // 0xFFCCCC99
     public static final int DISABLED_RED = -32640;              // 0xFFFF9999
     public static final int AQUA = -8388652;                    // 0xFF7FDDFF
+    public static final int WHITE = 553648127;                  // 0x20FFFFFF
+    public static final int NONE = 0;                           // 0x00000000
 
     private Colors() {}    
 }

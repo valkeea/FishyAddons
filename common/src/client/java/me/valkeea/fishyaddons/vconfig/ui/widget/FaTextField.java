@@ -7,13 +7,12 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.EditBox;
-import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 
-public class FaTextField extends EditBox {
+public class FaTextField extends EditBox implements ValueHolder {
     private static final String THEME = FishyMode.themeName();    
     private static final Identifier BG_TEXTURE = Identifier.fromNamespaceAndPath("fishyaddons", "textures/gui/default/textbg.png");
     private static final Identifier BG_TEXTURE_FOCUS = Identifier.fromNamespaceAndPath("fishyaddons", "textures/gui/" + THEME + "/textbg_highlighted.png");
@@ -24,10 +23,20 @@ public class FaTextField extends EditBox {
     }
 
     @Override
-    public void extractWidgetRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+    public void set(String value) {
+        this.setValue(value);
+    }
+
+    @Override
+    public String get() {
+        return this.getValue();
+    }
+
+    @Override
+    public void extractWidgetRenderState(GuiGraphicsExtractor gge, int mouseX, int mouseY, float delta) {
         var texture = this.isFocused() ? BG_TEXTURE_FOCUS : BG_TEXTURE;
 
-        context.blit(
+        gge.blit(
             RenderPipelines.GUI_TEXTURED,
             texture,
             this.getX(), this.getY(),
@@ -46,7 +55,7 @@ public class FaTextField extends EditBox {
 
         this.setY(adjustedY);        
         this.setX(adjustedX);      
-        super.extractWidgetRenderState(context, mouseX, mouseY, delta);
+        super.extractWidgetRenderState(gge, mouseX, mouseY, delta);
         this.setY(originalY);
         this.setX(originalX);
         this.setBordered(oldDrawsBackground);
@@ -54,7 +63,6 @@ public class FaTextField extends EditBox {
 
     @Override
     public boolean keyPressed(KeyEvent input) {
-
         if (input.hasControlDownWithQuirk() && input.key() == InputConstants.KEY_V) {
             String clipboard = Minecraft.getInstance().keyboardHandler.getClipboard();
             return writeText(clipboard);
@@ -72,14 +80,6 @@ public class FaTextField extends EditBox {
             this.setValue(newText);
             this.moveCursorTo(cursorPos + text.length(), false);
             return true;
-        }
-        return false;
-    }    
-    
-    @Override
-    public boolean charTyped(CharacterEvent input) {
-        if (this.isFocused() && this.canConsumeInput()) {
-            return super.charTyped(input);
         }
         return false;
     }

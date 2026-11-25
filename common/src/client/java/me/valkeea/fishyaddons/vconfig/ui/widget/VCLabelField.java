@@ -8,13 +8,14 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.Identifier;
 
-public class VCLabelField extends AbstractWidget {
+public class VCLabelField extends AbstractWidget implements ValueHolder {
     private static final Identifier BG_TEXTURE = Identifier.fromNamespaceAndPath("fishyaddons", "textures/gui/default/textbg.png");
     private final Font textRenderer;    
     private String text;
     private float uiScale;
     private boolean exists = true;
     private boolean drawsBg = true;
+    private int maxLength = 256;
 
     public VCLabelField(Font tr, int x, int y, int width, int height, MutableComponent initialText) {
         super(x, y, width, height, initialText);
@@ -22,9 +23,24 @@ public class VCLabelField extends AbstractWidget {
         this.text = initialText.getString();
     }
 
+    public void setMaxLength(int maxLength) {
+        this.maxLength = maxLength;
+    }
+
     public void setText(String text) {
+        if (text.length() > maxLength) {
+            text = text.substring(0, maxLength);
+        }
         this.text = text;
         this.setMessage(Component.literal(text));
+    }
+
+    public void set(String value) {
+        setText(value);
+    }
+
+    public String get() {
+        return getText();
     }
 
     public String getText() {

@@ -445,12 +445,12 @@ public final class VCScreen extends AdjustedScreen {
     // --- Rendering ---
     
     @Override
-    protected void renderContent(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+    protected void extractContent(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
 
         clearPerFrameCache();
         context.blurBeforeThisStratum();
         RenderUtils.gradient(context, 0, 0, width, height, Colors.BACKGROUND_GRADIENT);        
-        super.renderContent(context, mouseX, mouseY, delta);
+        super.extractContent(context, mouseX, mouseY, delta);
 
         int y = Dimensions.HEADER_Y;
 

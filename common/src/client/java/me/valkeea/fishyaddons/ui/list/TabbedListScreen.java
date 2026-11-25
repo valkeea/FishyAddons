@@ -1,367 +1,544 @@
 package me.valkeea.fishyaddons.ui.list;
 
-import java.util.List;
 import java.util.Map;
+
+import com.mojang.blaze3d.platform.InputConstants;
 
 import me.valkeea.fishyaddons.feature.qol.FishyPresets;
 import me.valkeea.fishyaddons.feature.qol.input.ChatReplacement;
 import me.valkeea.fishyaddons.feature.qol.input.CommandAlias;
 import me.valkeea.fishyaddons.feature.qol.input.KeyShortcut;
-import me.valkeea.fishyaddons.ui.GuiUtil;
-import me.valkeea.fishyaddons.ui.element.DropdownMenu;
-import me.valkeea.fishyaddons.ui.element.FishyPopup;
+import me.valkeea.fishyaddons.ui.element.ChoicePopup;
+import me.valkeea.fishyaddons.util.Keyboard;
 import me.valkeea.fishyaddons.vconfig.config.impl.ShortcutsConfig;
 import me.valkeea.fishyaddons.vconfig.ui.manager.ScreenManager;
+import me.valkeea.fishyaddons.vconfig.ui.render.RenderUtils;
 import me.valkeea.fishyaddons.vconfig.ui.render.VCText;
 import me.valkeea.fishyaddons.vconfig.ui.widget.FaButton;
 import me.valkeea.fishyaddons.vconfig.ui.widget.FaTextField;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.components.EditBox;
-import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.input.CharacterEvent;
+import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.components.Tooltip;
+import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.input.KeyEvent;
-import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 
-public class TabbedListScreen extends Screen {
+public final class TabbedListScreen extends DynamicListScreen {
     public enum Tab { COMMANDS, KEYBINDS, CHAT }
     private Tab currentTab = Tab.COMMANDS;
-    private AliasEntryList commandEntryList;
-    private KeybindEntryList keybindEntryList;
-    private ChatEntryList chatEntryList;
-    private static final String HEADER = "Aliases, Keybinds, Chat Replacement";
 
-    protected boolean addingNewEntry = false;
-    protected FishyPopup fishyPopup = null;
-    private DropdownMenu presetDropdown;
+    private AliasEntryList cmdList;
+    private KeybindEntryList keyList;
+    private ChatEntryList chatList;
 
-    private EditBox presetNameField;
+    private static final int HEADERH = 20;
+
+    private static final int TBW = 80;
+    private static final int OFFSET = 30;
+    private static final int INW = 100;
+    private static final int OUTW = 230;
+    private static final int BTNW = 60;
+    private static final int GAP = 10;
+    private static final int TOGGLEW = 40; 
+    private static final int LIST_END_OFF = OFFSET * 2;
+    private static final int LIST_Y = HEADERH + OFFSET + 40;
+
+    protected int bBtnY;
+    private boolean isAdding;
 
     public TabbedListScreen(Tab tab) {
-        super(Component.literal(HEADER));
+        super(VCText.header("Aliases, Keybinds, Chat Replacement", null));
         this.currentTab = tab;
     }
 
     @Override
-    protected void init() {
-        int listWidth = 550;
-        int listHeight = height - 120;
-        int listY = 90;
+    public boolean isAdding() {
+        return isAdding;
+    }
 
-        int w = 80;
-        int h = 20;
+    @Override
+    public void setAdding(boolean state) {
+        isAdding = state;
+    }
+
+    private GenericEntryList<String> getActiveList() {
+        return switch (currentTab) {
+            case COMMANDS -> cmdList;
+            case KEYBINDS -> keyList;
+            case CHAT -> chatList;
+        };
+    }    
+
+    @Override
+    protected void init() {
+        super.init();
+
+        var settings = createSettings();
+
+        int h = settings.elH();
+        int w = TBW;
         int tabBtnY = 40;
 
-        // Tab buttons
-        int tx = width / 2 - w - w / 2 - h;
-
+        int tabW = w * 3 + h * 2;
+        int tx = width / 2 - tabW / 2;
         addRenderableWidget(new FaButton(tx, tabBtnY, w, h,
-            Component.literal("Commands"),
+            text("Commands"),
             btn -> switchTab(Tab.COMMANDS))
         );
         tx += w + h;
 
         addRenderableWidget(new FaButton(tx, tabBtnY, w, h,
-            Component.literal("Keybinds"),
+            text("Keybinds"),
             btn -> switchTab(Tab.KEYBINDS))
         );
         tx += w + h;
 
         addRenderableWidget(new FaButton(tx, tabBtnY, w, h,
-            Component.literal("Chat"),
+            text("Chat"),
             btn -> switchTab(Tab.CHAT))
         );
 
-        // Lists
-        commandEntryList = new AliasEntryList(Minecraft.getInstance(), listWidth, listHeight, listY, 24, this);
-        keybindEntryList = new KeybindEntryList(Minecraft.getInstance(), listWidth, listHeight, listY, 24, this);
-        chatEntryList = new ChatEntryList(Minecraft.getInstance(), listWidth, listHeight, listY, 24, this);
+        var mc = Minecraft.getInstance();
+        cmdList = new AliasEntryList(mc, settings, this);
+        keyList = new KeybindEntryList(mc, settings, this);
+        chatList = new ChatEntryList(mc, settings, this);
 
-        commandEntryList.setPosition((width - listWidth) / 2, listY);
-        keybindEntryList.setPosition((width - listWidth) / 2, listY);        
-        chatEntryList.setPosition((width - listWidth) / 2, listY);
-
-        commandEntryList.refreshWithAdd();
-        keybindEntryList.refreshWithAdd();
-        chatEntryList.refreshWithAdd();
+        cmdList.setPosition(settings.listX(), settings.listY());
+        keyList.setPosition(settings.listX(), settings.listY());        
+        chatList.setPosition(settings.listX(), settings.listY());
             
-        addRenderableWidget(commandEntryList);
-        addRenderableWidget(keybindEntryList);
-        addRenderableWidget(chatEntryList);
+        addRenderableWidget(cmdList);
+        addRenderableWidget(keyList);
+        addRenderableWidget(chatList);
         
-        updateTabVisibility();
+        updateTabVisibility();       
 
         int x = width / 2 - w;
-        int y = height - 30;
-        
-        addRenderableWidget(new FaButton(x, y, w, h,
-            Component.literal("Back").withStyle(s -> s.withColor(0xFFB0B0B0)),
+        bBtnY = settings.listY() + settings.listH() + 2;
+
+        addRenderableWidget(new FaButton(x, bBtnY, w, h,
+            styled("Back", 0xFFB0B0B0),
             b -> ScreenManager.openConfigScreen()
         ));
-        x += w;
 
-        addRenderableWidget(new FaButton(x, y, w, h,
-            Component.literal("Close").withStyle(s -> s.withColor(0xFFB0B0B0)),
+        x += w;
+        addRenderableWidget(new FaButton(x, bBtnY, w, h,
+            styled("Close", 0xFFB0B0B0),
             b -> this.onClose()
         ));
+
         x += w;
+        addPresetButtons(x, bBtnY, TOGGLEW, h,
+            this::getTypeForTab,
+            (suffix, override) -> {
+                var list = getActiveList();
+                loadPresetForCurrentTab(suffix, override);
+                list.repopulate();
+                list.onRefresh();
+            }, this::saveCurrentTabAsPreset
+        );
 
-        addRenderableWidget(new FaButton(x, y, w, h,
-            Component.literal("Load Preset").withStyle(s -> s.withColor(0xFFE2CAE9)),
-            b -> showPresetDropdown()
-        ));
-        x += w;
+        this.minecraft.execute(getActiveList()::repopulate);
+    }
 
-        addRenderableWidget(new FaButton(x, y, w, h,
-            Component.literal("Save Preset").withStyle(s -> s.withColor(0xFFB0FFB0)),
-            b -> showSavePresetPopup()
-        ));
+    protected GenericEntryList.EntryConfig createSettings() {
+        int listW = getListW();     
+        int listX = (width - listW) / 2;
+        
+        return new GenericEntryList.EntryConfig(
+            listX, LIST_Y, listW, getListH(), OFFSET,
+            20, 24, INW, OUTW, BTNW, GAP, true
+        );
+    }
 
-        this.minecraft.execute(this::refreshEntryList);
+    protected int getListH() {
+        return height - LIST_END_OFF - LIST_Y;
+    }
+
+    private int getListW() {
+        return INW + OUTW + BTNW * 2 + GAP * 6 + TOGGLEW + OFFSET * 2;
+    }
+
+    @Override
+    public void extractContent(GuiGraphicsExtractor gge, int mX, int mY, float delta) {
+        super.extractContent(gge, mX, mY, delta);
+        gge.centeredText(font, getTitle(), width / 2, HEADERH, 0xFFFFFFFF);
+        renderPresets(gge, mX, mY);
     }
 
     private void switchTab(Tab tab) {
         this.currentTab = tab;
-        if (fishyPopup != null) {
-            fishyPopup = null;
-        }
+        setAdding(false);
+        setOverlay(null);
+        this.setFocused(null);        
         updateTabVisibility();
-        this.minecraft.execute(this::refreshEntryList);
-        this.setFocused(null);
+        this.minecraft.execute(getActiveList()::repopulate);
     }
 
     private void updateTabVisibility() {
-        if (commandEntryList != null) commandEntryList.visible = (currentTab == Tab.COMMANDS);
-        if (keybindEntryList != null) keybindEntryList.visible = (currentTab == Tab.KEYBINDS);
-        if (chatEntryList != null) chatEntryList.visible = (currentTab == Tab.CHAT);
+        if (cmdList != null) cmdList.visible = (currentTab == Tab.COMMANDS);
+        if (keyList != null) keyList.visible = (currentTab == Tab.KEYBINDS);
+        if (chatList != null) chatList.visible = (currentTab == Tab.CHAT);
     }
 
-    protected void refreshEntryList() {
-        switch (currentTab) {
-            case COMMANDS -> commandEntryList.refreshWithAdd();
-            case KEYBINDS -> keybindEntryList.refreshWithAdd();
-            case CHAT -> chatEntryList.refreshWithAdd();
-        }
+    // A bit hacky but realistically these wont change
+    private FishyPresets.PresetType getTypeForTab() {
+        return FishyPresets.PresetType.valueOf(currentTab.name());
     }
 
-    @Override
-    public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
-        super.extractRenderState(context, mouseX, mouseY, delta);
+    private void loadPresetForCurrentTab(String suffix, boolean override) {
+        var type = getTypeForTab();
+        var map = FishyPresets.loadStringPreset(type, suffix);
+        if (map == null) return;
 
-        var title = VCText.header(HEADER, null);
-        GuiUtil.drawScaledCenteredText(context, font, title, width / 2, 20, 0xFFFFFFFF, 1.0f);
-
-        if (presetDropdown != null && presetDropdown.isVisible()) {
-            presetDropdown.render(context, this, mouseX, mouseY);
-        }
-
-        if (fishyPopup == null) {
-            findAndDrawTooltip(context);
-        } else {
-            fishyPopup.render(context, this.font, mouseX, mouseY, delta);
-            if (presetNameField != null) {
-                presetNameField.setX(fishyPopup.getX() + (fishyPopup.getWidth() - presetNameField.getWidth()) / 2);
-                presetNameField.setY(fishyPopup.getY() + 35);
-                presetNameField.extractRenderState(context, mouseX, mouseY, delta);
-            }            
-        }
-    }
-
-    private void findAndDrawTooltip(GuiGraphicsExtractor context) {
-        var activeList = getActiveList();
-        activeList.getGuideText(context, this.font, width - 710, 85);
-        for (var entry : activeList.children()) {
-            if (entry instanceof GenericEntryList.GenericEntry ge && ge.pendingTooltip != null) {
-                GuiUtil.fishyTooltip(context, this.font, ge.tooltipLines != null ? ge.tooltipLines : List.of(Component.literal(ge.pendingTooltip)), ge.tooltipX, ge.tooltipY);
-                break;
-            }
-        }
-    }
-
-    @Override
-    public boolean mouseClicked(MouseButtonEvent click, boolean doubled) {
-        if (fishyPopup != null && presetNameField != null && presetNameField.mouseClicked(click, doubled)) {
-            presetNameField.setFocused(true);
-            this.setFocused(presetNameField);
-            return true;
-        }
-
-        if (presetDropdown != null && presetDropdown.isVisible()) {
-            return handlePresetClicks(click);
-        }
-
-        if (fishyPopup != null) {
-            return fishyPopup.mouseClicked(click, doubled);
-        }
-
-        if (currentTab == Tab.COMMANDS) {
-            if (commandEntryList.handleMouseClicked(click, this)) return true;
-        } else if (currentTab == Tab.KEYBINDS) {
-            if (keybindEntryList.handleMouseClicked(click, this)) return true;
-        } else if (currentTab == Tab.CHAT && chatEntryList.handleMouseClicked(click, this)) {
-            return true;
-        }
-        
-        return super.mouseClicked(click, doubled);
-    }
-
-    private boolean handlePresetClicks(MouseButtonEvent click) {
-        if (presetDropdown.mouseClicked(click)) return true;
-        
-        int x = presetDropdown.getX(); 
-        int y = presetDropdown.getY(); 
-        int w = presetDropdown.getWidth();
-        int h = presetDropdown.getEntryHeight() * presetDropdown.getEntries().size();
-
-        if (!(click.x() >= x && click.x() <= x + w && click.y() >= y && click.y() <= y + h)) {
-            presetDropdown.setVisible(false);
-            return true;
-        }
-        return false;
-    }
-
-    @Override
-    public boolean keyPressed(KeyEvent input) {
-        if (fishyPopup != null && presetNameField != null) {
-            return presetNameField.keyPressed(input);
-        }
-        var entry = getActiveList().getFocused();
-        if (entry != null) {
-            if (entry.outputField.isFocused() && entry.outputField.keyPressed(input)) return true;
-            if (entry.inputWidget instanceof EditBox field && field.isFocused() && field.keyPressed(input)) return true;
-            if (entry.inputWidget instanceof Button btn && btn.isFocused() && btn.keyPressed(input)) return true;
-            if (entry.keyPressed(input)) return true;
-        }
-        return super.keyPressed(input);
-    }
-
-    @Override
-    public boolean charTyped(CharacterEvent chr) {
-        if (fishyPopup != null && presetNameField != null) {
-            return presetNameField.charTyped(chr);
-        }
-        var entry = getActiveList().getFocused();
-        if (entry != null) {
-            if (entry.outputField.isFocused() && entry.outputField.charTyped(chr)) return true;
-            if (entry.inputWidget instanceof EditBox field && field.isFocused() && field.charTyped(chr)) return true;
-            if (entry.inputWidget instanceof Button btn && btn.isFocused() && btn.charTyped(chr)) return true;
-        }
-        return super.charTyped(chr);
-    }
-
-    public void showFishyPopup(Component title, Component continueButtonText, Runnable onContinue, Component discardButtonText, Runnable onDiscard) {
-        this.fishyPopup = new FishyPopup(title, continueButtonText, onContinue, discardButtonText, onDiscard);
-        this.fishyPopup.init(this.width, this.height);
-    }
-
-    private void showPresetDropdown() {
-        var type = switch (currentTab) {
-            case COMMANDS -> FishyPresets.PresetType.COMMANDS;
-            case KEYBINDS -> FishyPresets.PresetType.KEYBINDS;
-            case CHAT -> FishyPresets.PresetType.CHAT;
-        };
-        
-        List<String> suffixes = FishyPresets.listPresetSuffixes(type);
-
-        if (suffixes.isEmpty()) {
-            showFishyPopup(Component.literal("No presets found for this tab."), Component.literal("OK"), () -> fishyPopup = null, Component.literal(""), () -> {});
-            return;
-        }
-
-        int dropdownX = width / 2 + 85;
-        int dropdownY = height - 40 - (suffixes.size() * 14) / 2;
-        presetDropdown = new DropdownMenu(
-            suffixes, dropdownX, dropdownY, 100, 14,
-            suffix -> {
-                loadPresetForCurrentTab(suffix);
-                refreshEntryList();
-                refreshCache();
-                presetDropdown.setVisible(false);
-            }
-        );
-    }
-
-    private void refreshCache() {
-        switch (currentTab) {
-            case COMMANDS -> CommandAlias.refresh();
-            case KEYBINDS -> KeyShortcut.refresh();
-            case CHAT -> ChatReplacement.refresh();
-        }
-    }
-
-    private GenericEntryList getActiveList() {
-        return switch (currentTab) {
-            case COMMANDS -> commandEntryList;
-            case KEYBINDS -> keybindEntryList;
-            case CHAT -> chatEntryList;
-        };
-    }
-
-    private void loadPresetForCurrentTab(String suffix) {
-        switch (currentTab) {
-            case COMMANDS -> {
-                Map<String, String> map = FishyPresets.loadStringPreset(FishyPresets.PresetType.COMMANDS, suffix);
-                if (map != null) {
-                    ShortcutsConfig.getAliases().putAll(map);
-                    commandEntryList.refreshWithAdd();
-                }
-            }
-            case KEYBINDS -> {
-                Map<String, String> map = FishyPresets.loadStringPreset(FishyPresets.PresetType.KEYBINDS, suffix);
-                if (map != null) {
-                    ShortcutsConfig.getKeybinds().putAll(map);
-                    keybindEntryList.refreshWithAdd();
-                }
-            }
-            case CHAT -> {
-                Map<String, String> map = FishyPresets.loadStringPreset(FishyPresets.PresetType.CHAT, suffix);
-                if (map != null) {
-                    ShortcutsConfig.getChat().putAll(map);
-                    chatEntryList.refreshWithAdd();
-                }
-            }
-        }
+        var list = getActiveList();
+        if (override) list.getConfig().clear();
+        list.getConfig().putAll(map);
         ShortcutsConfig.save();
-    }
 
-    private void showSavePresetPopup() {
-        presetNameField = new FaTextField(this.font, this.width / 2 - 60,
-        this.height / 2, 120, 20, Component.literal("Preset Name"));
-        presetNameField.setMaxLength(32);
-        presetNameField.setValue("");
-        this.setFocused(presetNameField);
-
-        showFishyPopup(
-            Component.literal("Enter preset name:"),
-            Component.literal("Save"),
-            () -> {
-                String suffix = presetNameField.getValue().trim();
-                if (!suffix.isEmpty()) {
-                    saveCurrentTabAsPreset(suffix);
-                }
-                fishyPopup = null;
-                this.removeWidget(presetNameField);
-                presetNameField = null;
-            },
-            Component.literal("Cancel"),
-            () -> {
-                fishyPopup = null;
-                this.removeWidget(presetNameField);
-                presetNameField = null;
-            }
-        );
+        if (override) list.setScrollAmount(0);
+        getActiveList().repopulate();
     }
 
     private void saveCurrentTabAsPreset(String suffix) {
-        switch (currentTab) {
-            case COMMANDS -> FishyPresets.saveStringPreset(
-                FishyPresets.PresetType.COMMANDS, suffix, ShortcutsConfig.getAliases());
-            case KEYBINDS -> FishyPresets.saveStringPreset(
-                FishyPresets.PresetType.KEYBINDS, suffix, ShortcutsConfig.getKeybinds());
-            case CHAT -> FishyPresets.saveStringPreset(
-                FishyPresets.PresetType.CHAT, suffix, ShortcutsConfig.getChat());
+        FishyPresets.saveStringPreset(getTypeForTab(), suffix, getActiveList().getConfig());
+    }
+
+    protected class GenericEntry extends GenericEntryList.Entry<String> {
+        private FaTextField output;
+
+        public GenericEntry(String input, GenericEntryList<String> list, boolean isNew) {
+            super(list, input, isNew);
         }
+
+        final void initialize(String input, String output) {
+            createInputWidget(input);
+            createOutputField(output);
+            createButtons();
+            setSize(list.getRowWidth(), list.settings.entryH());
+        }
+
+        AbstractWidget outputWidget() {
+            return widgets.get(1);
+        }
+
+        @Override
+        protected String getOutput() {
+            return output.get();
+        }
+
+        @Override
+        protected void updateOutput(String out) {
+            this.output.update(out);
+        }
+
+        void createInputWidget(String input) {
+            var in = new FaTextField(minecraft.font, 0, 0, list.settings.inW(), list.settings.elH(), Component.empty());
+            in.setMaxLength(256);
+            in.set(input);
+            in.setBordered(false);
+            if (input.length() > 31) in.setTooltip(getTooltipLines(input));
+            if (isNew) in.setFocused(true);
+            setInputWidget(in);
+        }        
+
+        void createOutputField(String output) {
+            var out = new FaTextField(
+                list.mc.font,
+                0, 0, list.settings.outW(), list.settings.elH(),
+                text("Command")
+            );
+            out.setMaxLength(256);
+            out.set(output);
+            out.setBordered(false);
+            if (output.length() > 31) out.setTooltip(getTooltipLines(output));
+            this.output = out;
+            widgets.add(out);
+        }
+
+        void createButtons() {
+            var save = new FaButton(
+                0, 0, list.settings.btnW(), list.settings.elH(),
+                styled("Save", 0xFF808080),
+                b ->  list.saveFocused(this)
+            );
+            widgets.add(save);
+
+            var del = new FaButton(
+                0, 0, list.settings.btnW(), list.settings.elH(),
+                styled("Delete", 0xFF808080),
+                b -> delete()
+            );
+            widgets.add(del);
+            
+            boolean toggled = list.isEntryToggled(getInput());
+            var toggle = new FaButton.Toggle(
+                0, 0, 40, list.settings.elH(),
+                b -> toggle(),
+                toggled
+            ) {};
+            widgets.add(toggle);            
+        }
+
+        Tooltip getTooltipLines(String text) {
+            int lineLength = 64;
+            var t = Component.empty();
+            for (int i = 0; i < text.length(); i += lineLength) {
+                t = t.append(text(text.substring(i, Math.min(i + lineLength, text.length()))));
+            }
+            return Tooltip.create(t);
+        }
+
+        @Override 
+        public void extractContent(GuiGraphicsExtractor gge, int mX, int mY, boolean hovered, float delta) {
+            this.setHovered(hovered);
+            int x = getX();
+            int y = getY();
+
+            renderInputWidget(gge, x, y, mX, mY, delta);
+            renderOutputWidget(gge, x, y, mX, mY, delta);
+            renderButtons(gge, x, y, mX, mY, delta);
+        }
+
+        void renderInputWidget(GuiGraphicsExtractor gge, int x, int y, int mX, int mY, float delta) {
+            if (inputWidget() instanceof FaTextField) RenderUtils.border(gge, x, y, list.settings.inW(), list.settings.elH(), 0xFF555555);
+            inputWidget().setPosition(x, y);
+            inputWidget().extractRenderState(gge, mX, mY, delta);
+        }
+
+        void renderOutputWidget(GuiGraphicsExtractor gge, int x, int y, int mX, int mY, float delta) {
+            x = x + list.settings.inW() + list.settings.gap();
+            RenderUtils.border(gge, x, y, list.settings.outW(), list.settings.elH(), 0xFF555555);
+            outputWidget().setPosition(x, y);
+            outputWidget().extractRenderState(gge, mX, mY, delta);
+        }
+
+        void renderButtons(GuiGraphicsExtractor gge, int x, int y, int mX, int mY, float delta) {
+            x = x + list.settings.inW() + list.settings.outW() + list.settings.gap() * 2;
+            int btnGap = 65;
+            var saveBtn = widgets.get(2);
+            saveBtn.setPosition(x, y);
+            saveBtn.extractRenderState(gge, mX, mY, delta);
+
+            x += btnGap;
+            
+            var delBtn = widgets.get(3);
+            delBtn.setPosition(x, y);
+            delBtn.extractRenderState(gge, mX, mY, delta);
+
+            x += btnGap;
+            var toggleBtn = widgets.get(4);
+            toggleBtn.setPosition(x, y);
+            toggleBtn.extractRenderState(gge, mX, mY, delta);
+        }  
+
+        @Override
+        public boolean keyPressed(KeyEvent input) {
+            if (saveOnEnter(input, outputWidget()) || unfocusOnEscape(input)) return true;
+            var w = findFirst(wg -> wg.isFocused());
+            if (input.key() == InputConstants.KEY_TAB) return handleTabKey(w);
+            return w != null && w.keyPressed(input);
+        }
+
+        boolean handleTabKey(GuiEventListener w) {
+            if (w == inputWidget()) return swap(inputWidget(), outputWidget());
+            else if (w == outputWidget()) return swap(outputWidget(), inputWidget());
+            return false;
+        }
+
+        boolean swap(GuiEventListener a, GuiEventListener b) {
+            if (a != null) a.setFocused(false);
+            if (b != null) b.setFocused(true);
+            return true;
+        }
+    }
+
+    private class KeybindEntry extends GenericEntry {
+        KeybindEntry(String in, KeybindEntryList list, boolean isNew) {
+            super(in, list, isNew);
+        }
+
+        @Override
+        protected void createInputWidget(String in) {
+            var w = new FaButton.Keybind(
+                0, 0, list.settings.inW(), list.settings.elH(), in, b -> {}
+            ) {
+                private final KeybindEntry entry = KeybindEntry.this;
+
+                protected boolean onMouseClick(int btn) {
+                    if (isListening()) {
+                        if (entry.isNew) list.invalidPopup(entry);
+                        else setListening(false);
+                        return true;
+                    } else {
+                        setListening(true);
+                        return true;
+                    }
+                }
+
+                protected boolean newMouseKey(int btn) {
+                    var newKey = Keyboard.mouseButtonToBinding(btn);
+                    if (newKey == null && list.screen != null) {
+                        ChoicePopup.set(
+                            "Unsupported mouse button.",
+                            text("OK"), () -> {
+                                list.screen.setOverlay(null);
+                                setListening(false);
+                        }, text(""), () -> {}, null, list.screen
+                        );
+                        return true;
+                    }
+                    onChange(newKey);
+                    return true;
+                }
+
+                protected void onChange(String newKey) {
+                    set(newKey);
+                    if (!entry.isNew) list.saveFocused(entry);
+                    else outputWidget().setFocused(true);
+                    setListening(false);
+                }
+
+                @Override
+                public void setListening(boolean listening) {
+                    super.setListening(listening);
+                    entry.setInterceptsInput(listening);                    
+                }
+
+                @Override
+                public boolean isHovered() {
+                    return this.isListening() || super.isHovered();
+                }
+            };
+            if (isNew) w.setListening(true);
+            setInputWidget(w);
+        }
+
+        @Override
+        protected void renderInputWidget(GuiGraphicsExtractor gge, int x, int y, int mX, int mY, float delta) {
+            inputWidget().setPosition(x, y);
+            inputWidget().extractRenderState(gge, mX, mY, delta);
+        }        
+
+    }    
+
+    private final class AliasEntryList extends GenericEntryList<String> {
+        public AliasEntryList(Minecraft mc, GenericEntryList.EntryConfig settings, DynamicListScreen screen) {
+            super(mc, settings, screen);
+        }
+
+        @Override public Map<String, String> getConfig() { return ShortcutsConfig.getAliases();}
+        @Override public boolean isEntryToggled(String key) { return ShortcutsConfig.isAliasToggled(key);}
+        @Override public void removeEntry(String key) { ShortcutsConfig.removeAlias(key);}
+        @Override public void toggleEntry(String key, boolean toggled) { ShortcutsConfig.toggleAlias(key, toggled);}
+        @Override public void setEntry(String key, String v) { ShortcutsConfig.setAlias(key, v);}
+        @Override public void onRefresh() { CommandAlias.refresh();}
+
+        @Override
+        protected Entry<String> createNewEntry(String in, String out, boolean isNew) {
+            var entry = new GenericEntry(in, this, isNew);
+            entry.initialize(in, out);
+            return entry;
+        }
+
+        @Override
+        public boolean isValidEntry(String key, String v) {
+            return key.startsWith("/") && v.startsWith("/") &&
+                !key.replaceFirst("/", "").isBlank() && !v.replaceFirst("/","").isBlank();
+        }    
+
+        @Override
+        public String[] getGuideText() {
+            return new String[] {"Alias", "Executed Command"};
+        }
+
+        @Override
+        public String getInvalidMsg() {
+            return "Both alias and command must\nstart with '/' and cannot be empty.\n ";
+        }    
+
+        @Override public String getAddButtonText() { return "+ Add Command";}
+        @Override public String getDefaultInput() { return "/";}
+        @Override public String getDefaultOutput() { return "/";}
+    }
+
+    private final class KeybindEntryList extends GenericEntryList<String> {
+        public KeybindEntryList(Minecraft mc, GenericEntryList.EntryConfig settings, DynamicListScreen screen) {
+            super(mc, settings, screen);
+        }
+        
+        @Override
+        protected GenericEntry createNewEntry(String in, String out, boolean isNew) {
+            var entry = new KeybindEntry(in, this, isNew);
+            entry.initialize(in, out);
+            return entry;
+        }
+
+        @Override public Map<String, String> getConfig() { return ShortcutsConfig.getKeybinds();}
+        @Override public boolean isEntryToggled(String key) { return ShortcutsConfig.isKeybindToggled(key);}
+        @Override public void setEntry(String key, String v) { ShortcutsConfig.setKeybind(key, v);}
+        @Override public void removeEntry(String key) { ShortcutsConfig.removeKeybind(key);}
+        @Override public void toggleEntry(String key, boolean toggled) { ShortcutsConfig.toggleKeybind(key, toggled);}
+        @Override public void onRefresh() { KeyShortcut.refresh();}
+
+        @Override
+        public boolean isValidEntry(String key, String v) {
+            return !v.replaceFirst("/", "").isBlank() && !invalidKey(key);
+        }
+
+        @Override
+        public String[] getGuideText() {
+            return new String[] { "Keybind", "Executed Command" };
+        }
+
+        @Override
+        public String getInvalidMsg() {
+            return "Neither key nor command can be empty.";
+        }
+
+        @Override public String getAddButtonText() { return "+ Add Keybind";}
+        @Override public String getDefaultInput() { return "NONE";}
+        @Override public String getDefaultOutput() { return "/";}
+
+        boolean invalidKey(String key) {
+            return Keyboard.isInvalidKey(key) && !key.equalsIgnoreCase(FaButton.Keybind.PROMPT);
+        }        
+    }
+
+    private final class ChatEntryList extends GenericEntryList<String> {
+        public ChatEntryList(Minecraft mc, GenericEntryList.EntryConfig settings, DynamicListScreen screen) {
+            super(mc, settings, screen);
+        }
+
+        @Override public Map<String, String> getConfig() { return ShortcutsConfig.getChat();}
+        @Override public boolean isEntryToggled(String key) { return ShortcutsConfig.isChatToggled(key);}
+        @Override public void toggleEntry(String key, boolean toggled) { ShortcutsConfig.toggleChat(key, toggled);}
+        @Override public void setEntry(String key, String v) { ShortcutsConfig.setChat(key, v);}
+        @Override public void removeEntry(String key) { ShortcutsConfig.removeChat(key);}
+        @Override public void onRefresh() { ChatReplacement.refresh();}
+
+        @Override
+        protected Entry<String> createNewEntry(String in, String out, boolean isNew) {
+            var entry = new GenericEntry(in, this, isNew);
+            entry.initialize(in, out);
+            return entry;
+        }    
+
+        @Override
+        public boolean isValidEntry(String key, String v) { return !key.isBlank();}
+
+        @Override
+        public String[] getGuideText() {
+            return new String[] {"Detected String", "Replaced in chat with:"};
+        }
+
+        @Override
+        public String getInvalidMsg() {
+            return "Detected string cannot be empty.";
+        }
+
+        @Override public String getAddButtonText() { return "+ New Replacement";}
+        @Override public String getDefaultOutput() { return "";}
     }
 }

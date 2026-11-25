@@ -30,26 +30,34 @@ public class DropdownMenu {
         this.onSelect = onSelect;
     }
 
-    public void render(GuiGraphicsExtractor context, Screen screen, int mouseX, int mouseY) {
+    public void render(GuiGraphicsExtractor gge, Screen screen, int mouseX, int mouseY) {
         if (!visible) return;
 
-        context.nextStratum();
+        int theme = Color.mulRGB(FishyMode.getThemeColor(), 0.3f);
+        var tr = screen.getFont();
+        gge.nextStratum();
 
         for (int i = 0; i < entries.size(); i++) {
 
             int entryY = y + i * entryHeight;
             boolean hovered = mouseX >= x && mouseX <= x + width && mouseY >= entryY && mouseY <= entryY + entryHeight;
 
-            int themeColor = Color.mulRGB(FishyMode.getThemeColor(), 0.3f);
-            int bgColor = hovered ? themeColor : 0xEE121212;
-            int textColor = hovered ? 0xFF000000 : themeColor;
+            int bgColor = hovered ? theme : 0xEE121212;
+            int textColor = hovered ? 0xFF000000 : theme;
 
-            context.pose().pushMatrix();      
-            context.fill(x, entryY, x + width, entryY + entryHeight, bgColor);
-            context.text(screen.getFont(), entries.get(i), x + 6, entryY + (entryHeight - 8) / 2, textColor, false);
-            context.pose().popMatrix();
+            var l = entries.get(i);
+            int renderW = width;
+            if (hovered) {
+                hoveredIndex = i;
+                int w = tr.width(l);
+                if (w > renderW) renderW = w;
+            }            
 
-            if (hovered) hoveredIndex = i;
+            gge.pose().pushMatrix();      
+            gge.fill(x, entryY, x + renderW, entryY + entryHeight, bgColor);
+            gge.text(tr, l, x + 6, entryY + (entryHeight - 8) / 2, textColor, false);
+            gge.pose().popMatrix();
+
         }
     }
 
@@ -68,6 +76,11 @@ public class DropdownMenu {
 
         visible = false;
         return false;
+    }
+
+    public boolean isMouseOver(double mouseX, double mouseY) {
+        int h = y + entries.size() * entryHeight;
+        return mouseX >= x && mouseX <= x + width && mouseY >= y && mouseY <= h;
     }
 
     public void setVisible(boolean visible) { this.visible = visible; }

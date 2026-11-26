@@ -59,7 +59,7 @@ public class AlertConfig extends BaseConfig {
     public static boolean isChatAlertToggled(String key) {
         AlertData data = INSTANCE.chatAlerts.getValues().get(key);
         if (data != null) return data.isToggled();
-        return INSTANCE.chatAlerts.isToggled(key);
+        return false;
     }
 
     public static boolean isTitleActive(String key) {

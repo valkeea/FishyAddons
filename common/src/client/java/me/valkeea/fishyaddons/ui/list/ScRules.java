@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 import com.mojang.blaze3d.platform.InputConstants;
 
@@ -11,38 +12,36 @@ import me.valkeea.fishyaddons.feature.filter.FilterConfig;
 import me.valkeea.fishyaddons.feature.filter.FilterConfig.Rule;
 import me.valkeea.fishyaddons.feature.filter.RuleFactory;
 import me.valkeea.fishyaddons.feature.filter.RuleFactory.SeaCreatureData.CreatureConfig;
-import me.valkeea.fishyaddons.ui.GuiUtil;
 import me.valkeea.fishyaddons.ui.element.TextFormatMenu;
 import me.valkeea.fishyaddons.util.text.Enhancer;
-import me.valkeea.fishyaddons.vconfig.ui.layout.UIScaleCalculator;
 import me.valkeea.fishyaddons.vconfig.ui.manager.ScreenManager;
 import me.valkeea.fishyaddons.vconfig.ui.render.VCText;
+import me.valkeea.fishyaddons.vconfig.ui.screen.AdjustedScreen;
 import me.valkeea.fishyaddons.vconfig.ui.widget.FaButton;
 import me.valkeea.fishyaddons.vconfig.ui.widget.VCButton;
 import me.valkeea.fishyaddons.vconfig.ui.widget.VCLabelField;
 import me.valkeea.fishyaddons.vconfig.ui.widget.VCTextField;
 import me.valkeea.fishyaddons.vconfig.ui.widget.VCVisuals;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.input.MouseButtonInfo;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
 
-public class ScRules extends Screen {
-    private static final String TITLE_TEXT = "Sea Creature Messages";
+public final class ScRules extends AdjustedScreen {
     private static final String F3_TEXT = "§7Click a field and press F3 to apply formats...";
 
-    private static float uiScale;
-    private static int entryH;
-    private static int entryW;
-    private static int btnW;
-    private static int fieldW;
-    private static int nameW;
-    private static int prefixW;
-    private static int fieldH;
-    private static int btnH;
+    private static final int NAMEW = 120;
+    private static final int PREFIXW = 150;
+    private static final int BTNW = 40;
+    private static final int BTNH = 20;    
+    private static final int FIELDW = 330;
+    private static final int FIELDH = 20;
+    private static final int ENTRYH = 28;
+    private static final int ENTRYW = NAMEW + PREFIXW + FIELDW + 3 * BTNW;
 
     private final List<Entry> entries = new ArrayList<>();
     
@@ -60,18 +59,19 @@ public class ScRules extends Screen {
     private static final long TOOLTIP_DELAY = 250;
 
     public ScRules() {
-        super(Component.literal(TITLE_TEXT));
-    }  
+        super(VCText.header("Sea Creature Messages", Style.EMPTY.withBold(true)));
+    } 
 
     @Override
     protected void init() {
+        super.init();
+
         if (!FilterConfig.areScRulesLoaded()) {
             FilterConfig.refreshScRules();
         }
         
         entries.clear();        
         this.clearWidgets();
-        calcDimensions(UIScaleCalculator.calculateUIScaleLegacy(), this.width);
 
         var allCreatures = FilterConfig.getSeaCreatureData();
         var categories = FilterConfig.getSeaCreatureCategories();
@@ -82,7 +82,6 @@ public class ScRules extends Screen {
         for (var creature : allCreatures) {
 
             String ruleName = "sc_" + creature.id();
-
             if (!creature.category().equals(currentCategory)) {
                 currentCategory = creature.category();
                 String categoryDisplay = currentCategory.substring(0, 1).toUpperCase() + currentCategory.substring(1);
@@ -115,44 +114,40 @@ public class ScRules extends Screen {
         int listTop = 40;
         int listBottom = this.height - 60;
         int listHeight = listBottom - listTop;
-        maxVisibleEntries = Math.max(1, listHeight / entryH);
+        maxVisibleEntries = Math.max(1, listHeight / ENTRYH);
         int maxScroll = Math.max(0, totalEntries - maxVisibleEntries);
         scrollOffset = Math.clamp(scrollOffset, 0, maxScroll);
         if (scrollOffset > maxScroll) scrollOffset = maxScroll;
         if (scrollOffset < 0) scrollOffset = 0;  
 
         var backButton = new FaButton(
-            this.width / 2 - entryW / 2 + btnW, this.height - 40, btnW, btnH,
+            this.width / 2 - ENTRYW / 2 + BTNW, this.height - 40, BTNW, BTNH,
             Component.literal("Back").withStyle(style -> style.withColor(0xFF808080)),
             btn -> ScreenManager.openConfigScreen()
         );
-        backButton.setUIScale(uiScale);
         this.addRenderableWidget(backButton);
 
         var closeButton = new FaButton(
-            this.width / 2 - entryW / 2 + btnW * 2, this.height - 40, btnW, btnH,
+            this.width / 2 - ENTRYW / 2 + BTNW * 2, this.height - 40, BTNW, BTNH,
             Component.literal("Close").withStyle(style -> style.withColor(0xFF808080)),
             btn -> this.onClose()
         );
-        closeButton.setUIScale(uiScale);
         this.addRenderableWidget(closeButton);
         
         formatTip = new VCLabelField(
-            this.font, this.width / 2 - fieldW / 2, this.height - 40, nameW * 2, fieldH, Component.literal(F3_TEXT));
-        formatTip.setUIScale(uiScale);
+            this.font, this.width / 2 - FIELDW / 2, this.height - 40, NAMEW * 2, FIELDH, Component.literal(F3_TEXT));
+        formatTip.setUIScale(1.0f);
         formatTip.setBg(false);
         this.addRenderableWidget(formatTip);
 
         formatMenu = new TextFormatMenu(
-            Math.max(0, this.width / 2 - entryW / 2 - nameW - btnW), listTop, nameW,
+            Math.max(0, this.width / 2 - ENTRYW / 2 - NAMEW - BTNW), listTop, NAMEW,
             this::insertAtCaret,
-            Math.min(uiScale, 1.0f)
+            1.0f
         );
 
         int availableHeight = listBottom - listTop;
-        float menuUiScale = Math.min(uiScale, 1.0f);
-        int scaledEntryHeight = (int)(fieldH * menuUiScale);
-        int maxEntriesByHeight = availableHeight / scaledEntryHeight;
+        int maxEntriesByHeight = availableHeight / FIELDH;
         formatMenu.setMaxEntries(maxEntriesByHeight);
     }
 
@@ -188,9 +183,7 @@ public class ScRules extends Screen {
                 focusedField = entry.prefixField;
                 lastFocusedField = focusedField;
             }
-            if (focusedField != null) {
-                break;
-            }
+            if (focusedField != null) break;
         }
         
         if (focusedField == null && lastFocusedField != null) {
@@ -198,9 +191,7 @@ public class ScRules extends Screen {
             focusedField.setFocused(true);
         }
         
-        if (focusedField != null) {
-            apply(focusedField, format);
-        }
+        if (focusedField != null) apply(focusedField, format);
         formatMenu.setVisible(false);
     }
     
@@ -225,14 +216,14 @@ public class ScRules extends Screen {
         field.setValue(newText);
         field.moveCursorTo(caretPos + format.length(), false);
             
-        for (Entry entry : entries) {
-            if (entry.overrideField == field) {
-                entry.replacementText = newText;
-                entry.modified = true;
+        for (Entry e : entries) {
+            if (e.overrideField == field) {
+                e.replacementText = newText;
+                e.modified = true;
                 return;
-            } else if (entry.prefixField == field) {
-                entry.prefixText = newText;
-                entry.modified = true;
+            } else if (e.prefixField == field) {
+                e.prefixText = newText;
+                e.modified = true;
                 return;
             }
         }
@@ -243,82 +234,59 @@ public class ScRules extends Screen {
     public void tick() {
         super.tick();
         
-        for (Entry entry : entries) {
-            if (entry.overrideField != null && entry.overrideField.isFocused()) {
-                lastFocusedField = entry.overrideField;
-            } else if (entry.prefixField != null && entry.prefixField.isFocused()) {
-                lastFocusedField = entry.prefixField;
+        for (Entry e : entries) {
+            if (e.overrideField != null && e.overrideField.isFocused()) {
+                lastFocusedField = e.overrideField;
+            } else if (e.prefixField != null && e.prefixField.isFocused()) {
+                lastFocusedField = e.prefixField;
             }
-            if (lastFocusedField != null) {
-                break;
-            }
+            if (lastFocusedField != null) break;
         }
     }
     
     private void toggleFormatMenu() {
         VCTextField focusedField = null;
-        for (var entry : entries) {
-            if (entry.overrideField != null && entry.overrideField.isFocused()) {
-                focusedField = entry.overrideField;
-            } else if (entry.prefixField != null && entry.prefixField.isFocused()) {
-                focusedField = entry.prefixField;
+        for (Entry e : entries) {
+            if (e.overrideField != null && e.overrideField.isFocused()) {
+                focusedField = e.overrideField;
+            } else if (e.prefixField != null && e.prefixField.isFocused()) {
+                focusedField = e.prefixField;
             }
-            if (focusedField != null) {
-                break;
-            }
+            if (focusedField != null) break;
         }
 
         if (formatMenu != null) {
             boolean shouldShow = !formatMenu.isVisible();
             formatMenu.setVisible(shouldShow);
-            if (shouldShow) {
-                formatTip.setText("§7Press F3 to apply formats...");
-            } else {
-                formatTip.setText(F3_TEXT);
-            }
+            if (shouldShow) formatTip.setText("§7Press F3 to apply formats...");
+            else formatTip.setText(F3_TEXT);
         }
-    }
-
-    private static void calcDimensions(float scale, int width) {
-        uiScale = Math.clamp(scale, 0.7f, 1.2f);
-        nameW = (int) (120 * uiScale);
-        prefixW = (int) (150 * uiScale);
-        btnW = (int) (40 * uiScale);
-        fieldW = (int) (330 * uiScale);
-        fieldH = (int) (20 * uiScale);
-        btnH = (int) (20 * uiScale);
-        entryH = (int) (28 * uiScale);
-        entryW = Math.clamp(nameW + prefixW + fieldW + (long)(3 * btnW), 0, width - btnW * 2);
     }
 
     @Override
-    public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
-        super.extractRenderState(context, mouseX, mouseY, delta);
-
-        var title = VCText.header(TITLE_TEXT, Style.EMPTY.withBold(true));
-
-        GuiUtil.drawScaledCenteredText(
-        context, this.font, title, this.width / 2, 15, 0xFF55FFFF, uiScale - 0.1f);
+    public void extractContent(GuiGraphicsExtractor gge, int mX, int mY, float delta) {
+        super.extractContent(gge, mX, mY, delta);
+        gge.blurBeforeThisStratum();
+        gge.centeredText(this.font,getTitle(), this.width / 2, 15, 0xFF55FFFF);
           
-        addList(context);
-
+        addList(gge);
         if (formatMenu != null && formatMenu.isVisible()) {
-            formatMenu.render(context, this, mouseX, mouseY);
+            formatMenu.render(gge, this, mX, mY);
         }
 
-        tryTooltip(context, mouseX, mouseY);
+        tryTooltip(gge, mX, mY);
     }
 
-    private void tryTooltip(GuiGraphicsExtractor context, int mouseX, int mouseY) {
+    private void tryTooltip(GuiGraphicsExtractor gge, int mX, int mY) {
         if (shouldShowTooltip()) {
             String previewText = buildPreview();
             if (!previewText.isEmpty()) {
                 try {
-                    Component formattedPreview = Enhancer.parseFormattedText(previewText);
-                    renderTooltip(context, mouseX, mouseY, formattedPreview, true);
+                    var tt = Enhancer.parseFormattedText(previewText);
+                    renderTooltip(gge, mX, mY, tt, true);
                 } catch (Exception e) {
                     System.err.println("Error rendering preview: " + e.getMessage());
-                    renderTooltip(context, mouseX, mouseY, Component.literal("Error rendering preview"), false);
+                    renderTooltip(gge, mX, mY, Component.literal("Error rendering preview"), false);
                 }
             }
         }
@@ -345,50 +313,38 @@ public class ScRules extends Screen {
         return previewText;
     }
 
-    private void renderTooltip(GuiGraphicsExtractor context, int mouseX, int mouseY, Component text, boolean success) {
+    private void renderTooltip(GuiGraphicsExtractor gge, int mX, int mY, Component text, boolean success) {
         if (hoveredEntry.overrideField == null || hoveredEntry.prefixField == null) { return; }
-        int tooltipWidth = Math.min(400, this.font.width(text) + 20);
-        int tooltipHeight = fieldH;
-        int tooltipX = hoveredEntry.prefixField.getX();
-        int tooltipY = hoveredEntry.overrideField.getY() - fieldH - 5;
+        int ttW = Math.min(400, this.font.width(text) + 20);
+        int ttH = FIELDH;
+        int ttX = hoveredEntry.prefixField.getX();
+        int ttY = hoveredEntry.overrideField.getY() - FIELDH - 5;
 
-        if (tooltipX + tooltipWidth > this.width) {
-            tooltipX = mouseX - tooltipWidth - 10;
-        }
-        
-        if (tooltipY < 0) {
-            tooltipY = mouseY + 20;
-        }
+        if (ttX + ttW > this.width) ttX = mX - ttW - 10;
+        if (ttY < 0) ttY = mY + 20;
 
-        int gap = 6 * (int)uiScale;
-
-        context.fill(tooltipX, tooltipY,
-                tooltipX + tooltipWidth, tooltipY + tooltipHeight + gap,
-                0xFF171717);
-
-        context.text(this.font, text,
-                tooltipX, tooltipY + tooltipHeight / 3, success ? 0xFFFFFFFF : 0xFFFF8080, true);
+        int gap = 6;
+        gge.fill(ttX, ttY, ttX + ttW, ttY + ttH + gap, 0xFF171717);
+        gge.text(this.font, text, ttX, ttY + ttH / 3, success ? 0xFFFFFFFF : 0xFFFF8080, true);
     }
 
 
     @Override
-    public void mouseMoved(double mouseX, double mouseY) {
-        super.mouseMoved(mouseX, mouseY);
+    public void mouseMoved(double mX, double mY) {
+        super.mouseMoved(mX, mY);
+        var adjusted = adjustClick(
+            new MouseButtonEvent(mX, mY,
+                new MouseButtonInfo(InputConstants.MOUSE_BUTTON_LEFT, 0)
+        ));
         
         Entry newHoveredEntry = null;
         int startIdx = scrollOffset;
         int endIdx = Math.min(startIdx + maxVisibleEntries, entries.size());
         
         for (int i = startIdx; i < endIdx; i++) {
-            Entry entry = entries.get(i);
-            if (!entry.isHeader && entry.overrideField != null && entry.overrideField.isVisible() &&
-                isInside(entry.overrideField.getX(), entry.overrideField.getY(),
-                         entry.overrideField.getWidth(), entry.overrideField.getHeight(), 
-                         mouseX, mouseY) || (entry.prefixField != null && entry.prefixField.isVisible() &&
-                isInside(entry.prefixField.getX(), entry.prefixField.getY(),
-                         entry.prefixField.getWidth(), entry.prefixField.getHeight(), 
-                         mouseX, mouseY))) {
-                newHoveredEntry = entry;
+            Entry e = entries.get(i);
+            if (!e.isHeader && e.isPreviewEntry(adjusted.x(), adjusted.y())) {
+                newHoveredEntry = e;
                 break;
             }
         }
@@ -399,11 +355,11 @@ public class ScRules extends Screen {
         }
     }
 
-    private void addList(GuiGraphicsExtractor context) {
+    private void addList(GuiGraphicsExtractor gge) {
         int listTop = 40;
         int listBottom = this.height - 60;
         int listHeight = listBottom - listTop;
-        maxVisibleEntries = Math.max(1, listHeight / entryH);
+        maxVisibleEntries = Math.max(1, listHeight / ENTRYH);
         int totalEntries = entries.size();
         int y = listTop;
         int startIdx = scrollOffset;
@@ -412,28 +368,28 @@ public class ScRules extends Screen {
         for (int i = 0; i < entries.size(); i++) {
             if (i >= startIdx && i < endIdx) {
                 Entry entry = entries.get(i);
-                entry.setPosition(this.width / 2 - entryW / 2, y);
+                entry.setPosition(this.width / 2 - ENTRYW / 2, y);
                 entry.setVisible(true);
-                y += entryH;
+                y += ENTRYH;
             } else {
                 entries.get(i).setVisible(false);
             }
         }
 
         if (totalEntries > maxVisibleEntries) {
-            int scrollX = Math.clamp(this.width / 2 + entryW / 2 + (long)20, 0, this.width - 10);
-            renderScrollIndicator(context, scrollX, listTop, listHeight, totalEntries);
+            int scrollX = Math.clamp(this.width / 2 + ENTRYW / 2 + (long)20, 0, this.width - 10);
+            renderScrollIndicator(gge, scrollX, listTop, listHeight, totalEntries);
         }
     }
 
-    private void renderScrollIndicator(GuiGraphicsExtractor context, int x, int y, int listHeight, int totalEntries) {
+    private void renderScrollIndicator(GuiGraphicsExtractor gge, int x, int y, int listHeight, int totalEntries) {
         int scrollbarWidth = 4;
-        context.fill(x, y, x + scrollbarWidth, y + listHeight, 0x44000000);
+        gge.fill(x, y, x + scrollbarWidth, y + listHeight, 0x44000000);
         if (totalEntries > maxVisibleEntries) {
-            int thumbHeight = Math.max((int)(10 * uiScale), (maxVisibleEntries * listHeight) / totalEntries);
+            int thumbHeight = Math.max(10, (maxVisibleEntries * listHeight) / totalEntries);
             int thumbY = y + (scrollOffset * (listHeight - thumbHeight)) / (totalEntries - maxVisibleEntries);
-            context.fill(x + 1, thumbY, x + scrollbarWidth - 1, thumbY + thumbHeight, VCVisuals.getThemeColor());
-            context.fill(x + 1, thumbY + thumbHeight - 1, x + scrollbarWidth - 1, thumbY + thumbHeight, 0xFF000000);
+            gge.fill(x + 1, thumbY, x + scrollbarWidth - 1, thumbY + thumbHeight, VCVisuals.getThemeColor());
+            gge.fill(x + 1, thumbY + thumbHeight - 1, x + scrollbarWidth - 1, thumbY + thumbHeight, 0xFF000000);
         }
     }
 
@@ -455,8 +411,8 @@ public class ScRules extends Screen {
         return new Entry(categoryName, "", null, null, false, true);
     }
 
-    private static boolean isInside(int x, int y, int w, int h, double mouseX, double mouseY) {
-        return mouseX >= x && mouseX < x + w && mouseY >= y && mouseY < y + h;
+    private static boolean isInside(int x, int y, int w, int h, double mX, double mY) {
+        return mX >= x && mX < x + w && mY >= y && mY < y + h;
     }
 
     private class Entry {
@@ -488,9 +444,9 @@ public class ScRules extends Screen {
             this.isEnabled = isEnabled;
             this.isHeader = isHeader;
             
-            this.nameField = new VCLabelField(ScRules.this.font, 0, offScreenY, nameW, fieldH, Component.literal("Mob"));
+            this.nameField = new VCLabelField(ScRules.this.font, 0, offScreenY, NAMEW, FIELDH, Component.literal("Mob"));
             this.nameField.setText(creatureName);
-            this.nameField.setUIScale(uiScale);
+            this.nameField.setUIScale(1.0f);
             
             if (isHeader) {
                 this.overrideField = null;
@@ -499,13 +455,12 @@ public class ScRules extends Screen {
                 this.saveBtn = null;
                 this.nameField.setText("§b§l" + creatureName);
                 this.nameField.setBg(false);
-                this.nameField.setWidth(entryW / 2);
+                this.nameField.setWidth(ENTRYW / 2);
             } else {
-                this.overrideField = new VCTextField(ScRules.this.font, 0, offScreenY, fieldW, fieldH, Component.literal("Override text"));   
+                this.overrideField = new VCTextField(ScRules.this.font, 0, offScreenY, FIELDW, FIELDH, Component.literal("Override text"));   
                 this.overrideField.setValue(currentReplacement);
                 this.overrideField.setEditable(true);
                 this.overrideField.setMaxLength(200);        
-                this.overrideField.setUIScale(uiScale);
                 this.overrideField.setFocused(false);
 
                 this.overrideField.setResponder(text -> {
@@ -516,12 +471,11 @@ public class ScRules extends Screen {
                 String initialPrefixText = existingRule != null ? existingRule.getDhPrefix() : "";
                 if (initialPrefixText == null) initialPrefixText = "";
                 this.prefixText = initialPrefixText;
-                this.prefixField = new VCTextField(ScRules.this.font, 0, offScreenY, prefixW, fieldH, Component.literal("Prefix"));
+                this.prefixField = new VCTextField(ScRules.this.font, 0, offScreenY, PREFIXW, FIELDH, Component.literal("Prefix"));
                 this.prefixField.setValue(initialPrefixText);
                 this.prefixField.setEditable(true);
                 this.prefixField.setMaxLength(100);
                 this.prefixField.moveCursorTo(0, false);
-                this.prefixField.setUIScale(uiScale);
                 this.prefixField.setFocused(false);
 
                 this.prefixField.setResponder(text -> {
@@ -530,14 +484,14 @@ public class ScRules extends Screen {
                 });
 
                 this.saveBtn = VCButton.createNavigationButton(
-                    0, offScreenY, btnW, fieldH,
+                    0, offScreenY, BTNW, FIELDH,
                     Component.literal("Save"),
                     btn -> saveChanges(),
-                    uiScale - 0.1f
+                    1.0f
                 );
 
                 this.toggleBtn = VCButton.createMcToggle(
-                    0, offScreenY, btnW, fieldH,
+                    0, offScreenY, BTNW, FIELDH,
                     this.isEnabled,
                     btn -> {
                         this.isEnabled = !this.isEnabled;
@@ -545,81 +499,73 @@ public class ScRules extends Screen {
                         VCButton.updateButtonState(btn, this.isEnabled);
                         saveChanges();
                     },
-                    uiScale - 0.1f
+                    1.0f
                 );
             }
         }
+
+        private void visitWidgets(Consumer<AbstractWidget> visitor) {
+            if (prefixField != null) visitor.accept(prefixField);
+            if (overrideField != null) visitor.accept(overrideField);
+            if (saveBtn != null) visitor.accept(saveBtn);
+            if (toggleBtn != null) visitor.accept(toggleBtn);                      
+        }  
 
         public void setPosition(int x, int y) {
             this.nameField.setX(x);
             this.nameField.setY(y);
             
             if (!isHeader) {
-                this.prefixField.setX(x + nameW);
-                this.prefixField.setY(y);
-                this.overrideField.setX(x + nameW + prefixW);
-                this.overrideField.setY(y);
-                this.saveBtn.setX(x + fieldW + nameW + prefixW);
-                this.saveBtn.setY(y);
-                this.toggleBtn.setX(x + fieldW + btnW + nameW + prefixW);
-                this.toggleBtn.setY(y);
+                x += NAMEW;
+                this.prefixField.setX(x);
+                x += PREFIXW;
+                this.overrideField.setX(x);
+                x += FIELDW;
+                this.saveBtn.setX(x);
+                x += BTNW;
+                this.toggleBtn.setX(x);
+                visitWidgets(wg -> wg.setY(y));
             }
         }
 
         public void setVisible(boolean visible) {
             this.nameField.setVisible(visible);
-            
-            if (!isHeader) {
-                this.overrideField.setVisible(visible);
-                this.prefixField.setVisible(visible);
-                this.saveBtn.visible = visible;
-                this.toggleBtn.visible = visible;
-            }
+            if (!isHeader) visitWidgets(wg -> wg.visible = visible);
         }
 
         public void addToScreen() {
             ScRules.this.addRenderableWidget(this.nameField);
-            
-            if (!isHeader) {
-                if (this.overrideField != null) ScRules.this.addRenderableWidget(this.overrideField);
-                if (this.prefixField != null) ScRules.this.addRenderableWidget(this.prefixField);
-                if (this.toggleBtn != null) ScRules.this.addRenderableWidget(this.toggleBtn);
-                if (this.saveBtn != null) ScRules.this.addRenderableWidget(this.saveBtn);
-            }
+            if (!isHeader) visitWidgets(wg -> ScRules.this.addRenderableWidget(wg));
         }
 
         public boolean mouseClicked(MouseButtonEvent click) {
-            if (isHeader) {
-                return false;
-            }
+            if (isHeader)  return false;
 
-            double mouseX = click.x();
-            double mouseY = click.y();
+            double mX = click.x();
+            double mY = click.y();
 
-            if (!isInside(overrideField.getX(), overrideField.getY(), overrideField.getWidth(), overrideField.getHeight(), mouseX, mouseY)) {
-                overrideField.setFocused(false);
-            }
+            if (!overrideField.isMouseOver(mX, mY)) overrideField.setFocused(false);
+            if (!prefixField.isMouseOver(mX, mY)) prefixField.setFocused(false);
 
-            if (!isInside(prefixField.getX(), prefixField.getY(), prefixField.getWidth(), prefixField.getHeight(), mouseX, mouseY)) {
-                prefixField.setFocused(false);
-            }
-
-            if (isInside(saveBtn.getX(), saveBtn.getY(), saveBtn.getWidth(), saveBtn.getHeight(), mouseX, mouseY)) {
+            if (saveBtn.isMouseOver(mX, mY)) {
                 saveBtn.onPress(click);
                 return true;
             }
 
-            if (isInside(toggleBtn.getX(), toggleBtn.getY(), toggleBtn.getWidth(), toggleBtn.getHeight(), mouseX, mouseY)) {
+            if (toggleBtn.isMouseOver(mX, mY)) {
                 toggleBtn.onPress(click);
                 return true;
             }
             return false;
         }
 
+        public boolean isPreviewEntry(double mX, double mY) {
+            return (overrideField != null && overrideField.isMouseOver(mX, mY) && overrideField.isVisible()) ||
+                (prefixField != null && prefixField.isMouseOver(mX, mY) && prefixField.isVisible());
+        }
+
         private void saveChanges() {
-            if (isHeader) {
-                return;
-            }
+            if (isHeader) return;
             
             try {
                 String ruleName = "sc_" + this.creatureData.id();
@@ -670,48 +616,43 @@ public class ScRules extends Screen {
 
     @Override
     public boolean mouseClicked(MouseButtonEvent click, boolean doubled) {
-        if (handleMenu(click)) {
-            return true;
-        }
-        if (handleScrollbar(click.x(), click.y())) {
-            return true;
-        }
+        var adjusted = adjustClick(click);
+        if (handleMenu(adjusted)) return true;
+        if (handleScrollbar(adjusted.x(), adjusted.y())) return true;
 
         int startIdx = scrollOffset;
         int endIdx = Math.min(startIdx + maxVisibleEntries, entries.size());
 
         for (int i = startIdx; i < endIdx; i++) {
             Entry entry = entries.get(i);
-            if (entry.mouseClicked(click)) {
-                handleEntryFocus(entry, click.x(), click.y());
+            if (entry.mouseClicked(adjusted)) {
+                handleEntryFocus(entry, adjusted.x(), adjusted.y());
                 return false;
             }
         }
         return super.mouseClicked(click, doubled);
     }
 
-    private void handleEntryFocus(Entry entry, double mouseX, double mouseY) {
+    private void handleEntryFocus(Entry entry, double mX, double mY) {
         if (entry.overrideField != null && entry.overrideField.isFocused()) {
             lastFocusedField = entry.overrideField;
-            unfocusIfOutside(entry.overrideField, mouseX, mouseY);
+            unfocusIfOutside(entry.overrideField, mX, mY);
         }
         if (entry.prefixField != null && entry.prefixField.isFocused()) {
             lastFocusedField = entry.prefixField;
-            unfocusIfOutside(entry.prefixField, mouseX, mouseY);
+            unfocusIfOutside(entry.prefixField, mX, mY);
         }
     }
 
-    private void unfocusIfOutside(VCTextField field, double mouseX, double mouseY) {
-        if (!isInside(field.getX(), field.getY(), field.getWidth(), field.getHeight(), mouseX, mouseY)) {
+    private void unfocusIfOutside(VCTextField field, double mX, double mY) {
+        if (!isInside(field.getX(), field.getY(), field.getWidth(), field.getHeight(), mX, mY)) {
             field.setFocused(false);
         }
     }
 
     private boolean handleMenu(MouseButtonEvent click) {
         if (formatMenu != null && formatMenu.isVisible()) {
-            if (formatMenu.mouseClicked(click)) {
-                return true;
-            }
+            if (formatMenu.mouseClicked(click)) return true;
             formatMenu.setVisible(false);
             formatTip.setText(F3_TEXT);
             return false;
@@ -719,26 +660,26 @@ public class ScRules extends Screen {
         return false;
     }
 
-    private boolean handleScrollbar(double mouseX, double mouseY) {
+    private boolean handleScrollbar(double mX, double mY) {
         int listTop = 40;
         int listBottom = this.height - 60;
         int listHeight = listBottom - listTop;
-        int scrollbarX = this.width / 2 + entryW / 2 + 20;
-        int scrollbarWidth = Math.max(4, (int)(8 * uiScale));
+        int scrollbarX = this.width / 2 + ENTRYW / 2 + 20;
+        int scrollbarWidth = 8;
         int totalEntries = entries.size();
 
         if (totalEntries > maxVisibleEntries
-            && mouseX >= scrollbarX && mouseX <= scrollbarX + scrollbarWidth
-            && mouseY >= listTop && mouseY <= listTop + listHeight) {
-            int thumbHeight = Math.max((int)(10 * uiScale), (maxVisibleEntries * listHeight) / totalEntries);
+            && mX >= scrollbarX && mX <= scrollbarX + scrollbarWidth
+            && mY >= listTop && mY <= listTop + listHeight) {
+            int thumbHeight = Math.max(10, (maxVisibleEntries * listHeight) / totalEntries);
             int thumbY = listTop + (scrollOffset * (listHeight - thumbHeight)) / (totalEntries - maxVisibleEntries);
-            if (mouseY >= thumbY && mouseY <= thumbY + thumbHeight) {
+            if (mY >= thumbY && mY <= thumbY + thumbHeight) {
                 isDraggingScrollbar = true;
-                scrollKnobOffset = (int)mouseY - thumbY;
+                scrollKnobOffset = (int)mY - thumbY;
             } else {
                 isDraggingScrollbar = true;
                 scrollKnobOffset = thumbHeight / 2;
-                double trackClickY = mouseY - listTop - scrollKnobOffset;
+                double trackClickY = mY - listTop - scrollKnobOffset;
                 double scrollPercent = trackClickY / (listHeight - thumbHeight);
                 int newScrollOffset = (int)(scrollPercent * (totalEntries - maxVisibleEntries));
                 scrollOffset = Math.clamp(newScrollOffset, 0, totalEntries - maxVisibleEntries);
@@ -755,8 +696,9 @@ public class ScRules extends Screen {
     }
 
     @Override
-    public boolean mouseDragged(MouseButtonEvent click, double offsetX, double offsetY) {
-        if (formatMenu != null && formatMenu.isVisible() && formatMenu.mouseDragged(click)) {
+    public boolean mouseDragged(MouseButtonEvent click, double h, double v) {
+        var adjusted = adjustClick(click);
+        if (formatMenu != null && formatMenu.isVisible() && formatMenu.mouseDragged(adjusted)) {
             return true;
         }
         if (isDraggingScrollbar) {
@@ -764,27 +706,27 @@ public class ScRules extends Screen {
             int listBottom = this.height - 60;
             int listHeight = listBottom - listTop;
             int totalEntries = entries.size();
-            int thumbHeight = Math.max((int)(10 * uiScale), (maxVisibleEntries * listHeight) / totalEntries);
-            int mouseThumbY = (int)click.y() - listTop - scrollKnobOffset;
+            int thumbHeight = Math.max(10, (maxVisibleEntries * listHeight) / totalEntries);
+            int mouseThumbY = (int)adjusted.y() - listTop - scrollKnobOffset;
             double scrollPercent = mouseThumbY / (double)(listHeight - thumbHeight);
             int newScrollOffset = (int)(scrollPercent * (totalEntries - maxVisibleEntries));
             scrollOffset = Math.clamp(newScrollOffset, 0, totalEntries - maxVisibleEntries);
             return true;
         }
-        return super.mouseDragged(click, offsetX, offsetY);
+        return super.mouseDragged(click, h, v);
     }
 
     @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
+    public boolean mouseScrolled(double mX, double mY, double h, double v) {
         if (formatMenu != null && formatMenu.isVisible()) {
-            return formatMenu.mouseScrolled(verticalAmount);
+            return formatMenu.mouseScrolled(v);
         }
         int totalEntries = entries.size();
         if (totalEntries > maxVisibleEntries) {
-            scrollOffset -= (int)Math.signum(verticalAmount);
+            scrollOffset -= (int)Math.signum(v);
             scrollOffset = Math.clamp(scrollOffset, 0, totalEntries - maxVisibleEntries);
             return true;
         }
-        return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
+        return super.mouseScrolled(mX, mY, h, v);
     }
 }

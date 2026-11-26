@@ -2,26 +2,23 @@ package me.valkeea.fishyaddons.ui.list;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import me.valkeea.fishyaddons.compat.McApi;
 import me.valkeea.fishyaddons.feature.visual.FaColors;
 import me.valkeea.fishyaddons.vconfig.config.impl.ColorConfig;
 import me.valkeea.fishyaddons.vconfig.ui.manager.ScreenManager;
 import me.valkeea.fishyaddons.vconfig.ui.render.VCText;
+import me.valkeea.fishyaddons.vconfig.ui.screen.AdjustedScreen;
 import me.valkeea.fishyaddons.vconfig.ui.screen.ColorWheel;
 import me.valkeea.fishyaddons.vconfig.ui.widget.FaButton;
 import me.valkeea.fishyaddons.vconfig.ui.widget.VCTextField;
 import me.valkeea.fishyaddons.vconfig.ui.widget.VCVisuals;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 
-public class CustomFaColors extends Screen {
-
-    private static final float UI_SCALE = 1.0f;  
+public class CustomFaColors extends AdjustedScreen {
     private static final int ENTRY_HEIGHT = 28;
     private static final int ENTRY_WIDTH = 300;
     private static final int COLOR_BTN_WIDTH = 40;
@@ -41,17 +38,19 @@ public class CustomFaColors extends Screen {
     private int scrollKnobOffset = 0;
 
     private AddEntry addEntry = null;    
-    private Button addBtn = null;
+    private AbstractWidget addBtn = null;
 
     public CustomFaColors() {
-        super(Component.literal("User Color Overrides"));
+        super(VCText.header("User Color Overrides", null));
     }
 
     @Override
     protected void init() {
+        super.init();
         entries.clear();
         this.clearWidgets();
-        for (Map.Entry<String, Integer> entry : ColorConfig.getFaC().entrySet()) {
+
+        for (var entry : ColorConfig.getFaC().entrySet()) {
             Entry e = new Entry(entry.getKey(), entry.getValue());
             entries.add(e);
             this.addRenderableWidget(e.nameField);
@@ -101,10 +100,10 @@ public class CustomFaColors extends Screen {
     }
 
     @Override
-    public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
-        super.extractRenderState(context, mouseX, mouseY, delta);
-
-        context.text(this.font, VCText.header("User Color Overrides", null),
+    public void extractContent(GuiGraphicsExtractor gge, int mX, int mY, float delta) {
+        super.extractContent(gge, mX, mY, delta);
+        gge.blurBeforeThisStratum();
+        gge.text(this.font, getTitle(),
             this.width / 2 - 80, 15, 0xFF55FFFF, false);
 
         int listTop = 40;
@@ -142,34 +141,33 @@ public class CustomFaColors extends Screen {
         }
 
         if (totalEntries > maxVisibleEntries) {
-            renderScrollIndicator(context, this.width / 2 + ENTRY_WIDTH / 2, listTop, listHeight, totalEntries);
+            renderScrollIndicator(gge, this.width / 2 + ENTRY_WIDTH / 2, listTop, listHeight, totalEntries);
         }
     }
 
-    private void renderScrollIndicator(GuiGraphicsExtractor context, int x, int y, int listHeight, int totalEntries) {
+    private void renderScrollIndicator(GuiGraphicsExtractor gge, int x, int y, int listHeight, int totalEntries) {
         int scrollbarWidth = 3;
-        context.fill(x, y, x + scrollbarWidth, y + listHeight, 0x44000000);
+        gge.fill(x, y, x + scrollbarWidth, y + listHeight, 0x44000000);
         if (totalEntries > maxVisibleEntries) {
-            int thumbHeight = Math.max((int)(10 * UI_SCALE), (maxVisibleEntries * listHeight) / totalEntries);
+            int thumbHeight = Math.max(10, (maxVisibleEntries * listHeight) / totalEntries);
             int thumbY = y + (scrollOffset * (listHeight - thumbHeight)) / (totalEntries - maxVisibleEntries);
-            context.fill(x + 1, thumbY, x + scrollbarWidth - 1, thumbY + thumbHeight, VCVisuals.getThemeColor());
-            context.fill(x + 1, thumbY + thumbHeight - 1, x + scrollbarWidth - 1, thumbY + thumbHeight, 0xFF000000);
+            gge.fill(x + 1, thumbY, x + scrollbarWidth - 1, thumbY + thumbHeight, VCVisuals.getThemeColor());
+            gge.fill(x + 1, thumbY + thumbHeight - 1, x + scrollbarWidth - 1, thumbY + thumbHeight, 0xFF000000);
         }
     }  
 
     private class AddEntry {
         private final VCTextField nameField;
         private int color = 0xFFFFB8E4;
-        private Button colorBtn;
-        private Button saveBtn;
-        private Button cancelBtn;
+        private AbstractWidget colorBtn;
+        private AbstractWidget saveBtn;
+        private AbstractWidget cancelBtn;
 
         public AddEntry() {
             this.nameField = new VCTextField(CustomFaColors.this.font, 0, 0, FIELD_WIDTH, FIELD_HEIGHT, Component.literal("Name"));
             this.nameField.setValue("");
             this.nameField.setEditable(true);
             this.nameField.setMaxLength(32);
-            this.nameField.setUIScale(UI_SCALE);
             this.nameField.setFocused(true);
             CustomFaColors.this.setFocused(this.nameField);   
 
@@ -256,28 +254,29 @@ public class CustomFaColors extends Screen {
 
     @Override
     public boolean mouseClicked(MouseButtonEvent click, boolean doubled) {
+        var adjusted = adjustClick(click);
 
-        double mouseX = click.x();
-        double mouseY = click.y();
+        double mX = adjusted.x();
+        double mY = adjusted.y();
 
         int listTop = 40;
         int listBottom = this.height - 60;
         int listHeight = listBottom - listTop;
         int scrollbarX = this.width / 2 + ENTRY_WIDTH;
-        int scrollbarWidth = Math.max(4, (int)(8 * UI_SCALE));
+        int scrollbarWidth = 8;
         int totalEntries = entries.size() + (addMode ? 1 : 0);
 
-        if (totalEntries > maxVisibleEntries && mouseX >= scrollbarX && mouseX <= scrollbarX + scrollbarWidth && mouseY >= listTop && mouseY <= listTop + listHeight) {
-            int thumbHeight = Math.max((int)(10 * UI_SCALE), (maxVisibleEntries * listHeight) / totalEntries);
+        if (totalEntries > maxVisibleEntries && mX >= scrollbarX && mX <= scrollbarX + scrollbarWidth && mY >= listTop && mY <= listTop + listHeight) {
+            int thumbHeight = Math.max(10, (maxVisibleEntries * listHeight) / totalEntries);
             int thumbY = listTop + (scrollOffset * (listHeight - thumbHeight)) / (totalEntries - maxVisibleEntries);
 
-            if (mouseY >= thumbY && mouseY <= thumbY + thumbHeight) {
+            if (mY >= thumbY && mY <= thumbY + thumbHeight) {
                 isDraggingScrollbar = true;
-                scrollKnobOffset = (int)mouseY - thumbY;
+                scrollKnobOffset = (int)mY - thumbY;
             } else {
                 isDraggingScrollbar = true;
                 scrollKnobOffset = thumbHeight / 2;
-                double trackClickY = mouseY - listTop - scrollKnobOffset;
+                double trackClickY = mY - listTop - scrollKnobOffset;
                 double scrollPercent = trackClickY / (listHeight - thumbHeight);
                 int newScrollOffset = (int)(scrollPercent * (totalEntries - maxVisibleEntries));
                 scrollOffset = Math.clamp(newScrollOffset, 0, totalEntries - maxVisibleEntries);
@@ -305,31 +304,31 @@ public class CustomFaColors extends Screen {
     }
 
     @Override
-    public boolean mouseDragged(MouseButtonEvent click, double offsetX, double offsetY) {
+    public boolean mouseDragged(MouseButtonEvent click, double h, double v) {
         if (isDraggingScrollbar) {
             int listTop = 40;
             int listBottom = this.height - 60;
             int listHeight = listBottom - listTop;
             int totalEntries = entries.size() + (addMode ? 1 : 0);
-            int thumbHeight = Math.max((int)(10 * UI_SCALE), (maxVisibleEntries * listHeight) / totalEntries);
-            int mouseThumbY = (int)click.y() - listTop - scrollKnobOffset;
+            int thumbHeight = Math.max(10, (maxVisibleEntries * listHeight) / totalEntries);
+            int mouseThumbY = (int)adjustClick(click).y() - listTop - scrollKnobOffset;
             double scrollPercent = mouseThumbY / (double)(listHeight - thumbHeight);
             int newScrollOffset = (int)(scrollPercent * (totalEntries - maxVisibleEntries));
             scrollOffset = Math.clamp(newScrollOffset, 0, totalEntries - maxVisibleEntries);
             return true;
         }
-        return super.mouseDragged(click, offsetX, offsetY);
+        return super.mouseDragged(click, h, v);
     }
 
     @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
+    public boolean mouseScrolled(double mX, double mY, double h, double v) {
         int totalEntries = entries.size() + (addMode ? 1 : 0);
         if (totalEntries > maxVisibleEntries) {
-            scrollOffset -= (int)Math.signum(verticalAmount);
+            scrollOffset -= (int)Math.signum(v);
             scrollOffset = Math.clamp(scrollOffset, 0, totalEntries - maxVisibleEntries);
             return true;
         }
-        return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
+        return super.mouseScrolled(mX, mY, h, v);
     }
 
     @Override
@@ -340,12 +339,13 @@ public class CustomFaColors extends Screen {
     }
 
     private class Entry {
+        private final AbstractWidget colorBtn;
+        private final AbstractWidget delBtn;        
         private final VCTextField nameField;
+        
         private int color;
         private String originalName;
         private int originalColor;
-        private final Button colorBtn;
-        private Button delBtn;
         private boolean changed = false;
 
         public Entry(String name, int color) {
@@ -356,7 +356,6 @@ public class CustomFaColors extends Screen {
             this.nameField.setValue(name);
             this.nameField.setEditable(true);
             this.nameField.setMaxLength(32);
-            this.nameField.setUIScale(UI_SCALE);
             this.nameField.setFocused(false);
             this.colorBtn = new FaButton(
                 0, 0, COLOR_BTN_WIDTH, FIELD_HEIGHT,

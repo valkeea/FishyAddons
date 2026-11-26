@@ -8,28 +8,26 @@ import me.valkeea.fishyaddons.feature.item.animations.HeldItems;
 import me.valkeea.fishyaddons.tool.FishyMode;
 import me.valkeea.fishyaddons.ui.GuiUtil;
 import me.valkeea.fishyaddons.ui.widget.FaSlider;
-import me.valkeea.fishyaddons.vconfig.ui.layout.UIScaleCalculator;
 import me.valkeea.fishyaddons.vconfig.ui.manager.ScreenManager;
 import me.valkeea.fishyaddons.vconfig.ui.render.RenderUtils;
 import me.valkeea.fishyaddons.vconfig.ui.render.VCText;
+import me.valkeea.fishyaddons.vconfig.ui.screen.AdjustedScreen;
 import me.valkeea.fishyaddons.vconfig.ui.widget.FaButton;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 
-public class HeldItemScreen extends Screen {
-    private final int theme;
-    private final float scale;    
-    private int btnW;
-    private int toggleW;
-    private int btnH;
-    private int labelW;
-    private int centerOffset;
-    private int sliderW;
-    private int gap;
-    private int columnW;
-    private int spacing;    
+public class HeldItemScreen extends AdjustedScreen {
+    private final int theme;   
+    private static final short SPACING = 15;
+    private static final short BTNW = 45;
+    private static final short TOGGLEW = 150;
+    private static final short BTNH = 15;
+    private static final short LABELW = 45;
+    private static final short CENTEROFFSET = 20;
+    private static final short SLIDERW = 55;
+    private static final short GAP = 10;
+    private static final short COLUMNW = SLIDERW + LABELW + GAP * 2 + 30;  
     private FaButton doneBtn;
 
     private static final String DOUBLE_FORMAT = "%.2f";
@@ -57,55 +55,36 @@ public class HeldItemScreen extends Screen {
     public HeldItemScreen() {
         super(Component.literal("Held Item Animations"));
         this.theme = FishyMode.getThemeColor();
-        this.scale = UIScaleCalculator.calculateUIScaleLegacy();
     }
-
-    private void calcDimensions() {
-        spacing = (int) (20 * scale);
-        btnW = (int) (60 * scale);
-        toggleW = (int) (200 * scale);
-        btnH = (int) (20 * scale);
-        labelW = (int) (60 * scale);
-        centerOffset = (int) (30 * scale);
-        sliderW = (int) (70 * scale);
-        gap = (int) (10 * scale);
-        columnW = sliderW + labelW + gap * 2 + (int) (40 * scale);
-    }    
     
     @Override
     protected void init() {
         super.init();
-        
+        sliders.clear();
         int centerX = this.width / 2;
         int startY = 40;
         int currentY = startY;
-
-        calcDimensions();
         
-        sliders.clear();
-        
-        var handBtn = new FaButton(centerX - toggleW / 2, currentY, toggleW, btnH,
+        var handBtn = new FaButton(centerX - TOGGLEW / 2, currentY, TOGGLEW, BTNH,
             GuiUtil.onOffLabel("Separate Hands", HeldItems.isSeparateHandSettings()), 
             button -> {
                 HeldItems.setSeparateHandSettings(!HeldItems.isSeparateHandSettings());
                 button.setMessage(GuiUtil.onOffLabel("Separate Hands", HeldItems.isSeparateHandSettings()));
                 rebuildWidgets();
             });
-        handBtn.setUIScale(scale);
         addRenderableWidget(handBtn);
 
         if (HeldItems.isSeparateHandSettings()) {
-            var copyBtn = new FaButton(centerX - toggleW / 2, currentY + (int) (25 * scale), toggleW, btnH,
-                Component.literal("Clone Global Settings to Both Hands"), 
+            var copyBtn = new FaButton(centerX - TOGGLEW / 2, currentY + 25, TOGGLEW, BTNH,
+                Component.literal("Clone Main to Both Hands"), 
                 button -> {
                     HeldItems.cloneGlobal();
                     rebuildWidgets();
                 });
-            copyBtn.setUIScale(scale);
             addRenderableWidget(copyBtn);
         }
 
-        currentY += spacing * 3;
+        currentY += SPACING * 3;
         
         if (!HeldItems.isSeparateHandSettings()) {
             currentY = addCentralizedSliders(centerX, currentY);
@@ -113,35 +92,32 @@ public class HeldItemScreen extends Screen {
             currentY = addThreeColumnLayout(centerX, currentY);
         }
 
-        currentY += spacing;
+        currentY += SPACING;
 
-        var backBtn = new FaButton(centerX - btnW - btnW / 2, currentY, btnW, btnH,
+        var backBtn = new FaButton(centerX - BTNW - BTNW / 2, currentY, BTNW, BTNH,
             Component.literal("Back"), button -> 
             onClose()
         );
-        backBtn.setUIScale(scale);
         addRenderableWidget(backBtn);
 
-        var resetBtn = new FaButton(centerX - btnW / 2, currentY, btnW, btnH,
+        var resetBtn = new FaButton(centerX - BTNW / 2, currentY, BTNW, BTNH,
             Component.literal("Reset"), button -> {
             HeldItems.reset();
             rebuildWidgets();
         });
-        resetBtn.setUIScale(scale);
         addRenderableWidget(resetBtn);
 
-        doneBtn = new FaButton(centerX + btnW / 2, currentY, btnW, btnH,
+        doneBtn = new FaButton(centerX + BTNW / 2, currentY, BTNW, BTNH,
             Component.literal("Done"), button -> 
             onClose()
         );
-        doneBtn.setUIScale(scale);
         addRenderableWidget(doneBtn);
     }
 
     private int addCentralizedSliders(int centerX, int currentY) {
 
         // Position sliders  
-        int x = centerX + centerOffset / 2;
+        int x = centerX + CENTEROFFSET / 2;
         currentY = addSlider("Position X", x, currentY, true,
             HeldItems.getPosOffsetX(), -2.0, 2.0, DOUBLE_FORMAT,
             HeldItems.createSetter(HeldItems::setPosOffsetX));
@@ -182,8 +158,8 @@ public class HeldItemScreen extends Screen {
 
     private int addThreeColumnLayout(int centerX, int currentY) {
 
-        int leftX = centerX - columnW / 2 - gap; 
-        int rightX = centerX + columnW / 2 + gap;
+        int leftX = centerX - COLUMNW / 2 - GAP; 
+        int rightX = centerX + COLUMNW / 2 + GAP;
         int handStartY = currentY;
         
         // Offhand (left)
@@ -230,8 +206,8 @@ public class HeldItemScreen extends Screen {
 
         // Global settings (center)
         int maxHandY = Math.max(offHandY, mainHandY);
-        int globalY = maxHandY + spacing;
-        int globalX = centerX + centerOffset / 2;
+        int globalY = maxHandY + SPACING;
+        int globalX = centerX + CENTEROFFSET / 2;
 
         globalY = addSlider("Scale", globalX, globalY, true,
             HeldItems.getScale(), 0.1, 3.0, DOUBLE_FORMAT,
@@ -253,52 +229,51 @@ public class HeldItemScreen extends Screen {
                          double currentValue, double minValue, double maxValue, String format,
                          DoubleConsumer setter) {
                   
-        int labelWidth = labelW;
-        int sliderX = center ? columnCenterX - sliderW / 2 + centerOffset / 2 : columnCenterX - sliderW / 2;
-        int labelX = columnCenterX - labelWidth - sliderW / 2 - gap;
+        int labelWidth = LABELW;
+        int sliderX = center ? columnCenterX - SLIDERW / 2 + CENTEROFFSET / 2 : columnCenterX - SLIDERW / 2;
+        int labelX = columnCenterX - labelWidth - SLIDERW / 2 - GAP;
 
         var slider = new FaSlider(sliderX, currentY, currentValue, minValue, maxValue, format, setter::accept);
-        slider.setUIScale(scale);
-
         sliders.add(new TransformSlider(slider, label, labelX, currentY, center));
 
-        return currentY + spacing;
+        return currentY + SPACING;
     }
     
     @Override
-    public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+    public void extractContent(GuiGraphicsExtractor gge, int mX, int mY, float delta) {
 
-        int bgBottom = doneBtn.getY() + doneBtn.getHeight() + spacing;
+        int bgBottom = doneBtn.getY() + doneBtn.getHeight() + SPACING;
         short bgTop = 15;
-        short bgWidth = (short)(HeldItems.isSeparateHandSettings() ? columnW * 3 : columnW * 1.5);
+        short bgWidth = (short)(HeldItems.isSeparateHandSettings() ? COLUMNW * 3 : COLUMNW * 1.5);
         short bgLeft = (short)(this.width / 2 - bgWidth / 2);
 
-        context.fill(bgLeft - 5, bgTop - 5, bgLeft + bgWidth + 5, bgBottom + 5, 0x80000000); 
-        RenderUtils.gradient(context, bgLeft, bgTop, bgWidth, bgBottom - bgTop, 0x88000000);
+        gge.fill(bgLeft - 5, bgTop - 5, bgLeft + bgWidth + 5, bgBottom + 5, 0x80000000); 
+        RenderUtils.gradient(gge, bgLeft, bgTop, bgWidth, bgBottom - bgTop, 0x88000000);
 
-        super.extractRenderState(context, mouseX, mouseY, delta);
+        super.extractContent(gge, mX, mY, delta);
 
         var title = VCText.header("Held Item Animations", null);
-        GuiUtil.drawScaledCenteredText(context, this.font, title, this.width / 2, 20, 0xFFFFFFFF, scale);
+        gge.centeredText(this.font, title, this.width / 2, 20, 0xFFFFFFFF);
 
 
         for (TransformSlider tfs : sliders) {
 
             String valueText = tfs.slider.getPercentageText();
-            int labelX = tfs.center ? tfs.x - centerOffset : tfs.x;
-            int w = tfs.center ? this.labelW + centerOffset + gap : this.labelW;
-            int valueX = labelX + w + sliderW + gap * 2;
+            int labelX = tfs.center ? tfs.x - CENTEROFFSET : tfs.x;
+            int w = tfs.center ? LABELW + CENTEROFFSET + GAP : LABELW;
+            int valueX = labelX + w + SLIDERW + GAP * 2;
 
-            GuiUtil.drawScaledText(context, this.font, tfs.label, labelX, tfs.y + 2, theme, scale);
-            tfs.slider.render(context, mouseX, mouseY);
-            GuiUtil.drawScaledText(context, this.font, valueText, valueX, tfs.y + 2, theme, scale);
+            gge.text(this.font, tfs.label, labelX, tfs.y + 2, theme);
+            tfs.slider.render(gge, mX, mY);
+            gge.text(this.font, valueText, valueX, tfs.y + 2, theme);
         }
     }
     
     @Override
     public boolean mouseClicked(MouseButtonEvent click, boolean doubled) {
+        var adjusted = adjustClick(click);
         for (TransformSlider tfs : sliders) {
-            if (tfs.slider.mouseClicked(click)) {
+            if (tfs.slider.mouseClicked(adjusted)) {
                 return true;
             }
         }
@@ -307,8 +282,9 @@ public class HeldItemScreen extends Screen {
     
     @Override
     public boolean mouseReleased(MouseButtonEvent click) {
+        var adjusted = adjustClick(click);
         for (TransformSlider tfs : sliders) {
-            if (tfs.slider.mouseReleased(click)) {
+            if (tfs.slider.mouseReleased(adjusted)) {
                 return true;
             }
         }
@@ -317,14 +293,15 @@ public class HeldItemScreen extends Screen {
     }
     
     @Override
-    public boolean mouseDragged(MouseButtonEvent click, double offsetX, double offsetY) {
+    public boolean mouseDragged(MouseButtonEvent click, double h, double v) {
+        var adjusted = adjustClick(click);
         for (TransformSlider tfs : sliders) {
-            if (tfs.slider.mouseDragged(click)) {
+            if (tfs.slider.mouseDragged(adjusted)) {
                 return true;
             }
         }
 
-        return super.mouseDragged(click, offsetX, offsetY);
+        return super.mouseDragged(click, h, v);
     }
     
     @Override
@@ -334,7 +311,7 @@ public class HeldItemScreen extends Screen {
     }
 
     @Override
-    public void extractBackground(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+    public void extractBackground(GuiGraphicsExtractor gge, int mX, int mY, float delta) {
         // no blur to make preview clearer
     }     
 }

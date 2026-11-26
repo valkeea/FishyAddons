@@ -1,714 +1,334 @@
 package me.valkeea.fishyaddons.ui.list;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 
 import me.valkeea.fishyaddons.compat.McApi;
+import me.valkeea.fishyaddons.feature.qol.ChatAlert;
 import me.valkeea.fishyaddons.feature.qol.FishyPresets;
-import me.valkeea.fishyaddons.ui.GuiUtil;
-import me.valkeea.fishyaddons.ui.element.DropdownMenu;
+import me.valkeea.fishyaddons.tool.FishyMode;
 import me.valkeea.fishyaddons.ui.screen.AlertEditScreen;
+import me.valkeea.fishyaddons.util.text.Enhancer;
 import me.valkeea.fishyaddons.vconfig.config.impl.AlertConfig;
 import me.valkeea.fishyaddons.vconfig.config.impl.AlertConfig.AlertData;
 import me.valkeea.fishyaddons.vconfig.ui.layout.Colors;
-import me.valkeea.fishyaddons.vconfig.ui.layout.UIScaleCalculator;
 import me.valkeea.fishyaddons.vconfig.ui.manager.ScreenManager;
 import me.valkeea.fishyaddons.vconfig.ui.render.VCText;
-import me.valkeea.fishyaddons.vconfig.ui.render.VCTooltip;
 import me.valkeea.fishyaddons.vconfig.ui.widget.FaButton;
-import me.valkeea.fishyaddons.vconfig.ui.widget.VCButton;
-import me.valkeea.fishyaddons.vconfig.ui.widget.VCLabelField;
-import me.valkeea.fishyaddons.vconfig.ui.widget.VCPopup;
+import me.valkeea.fishyaddons.vconfig.ui.widget.FaTextField;
 import me.valkeea.fishyaddons.vconfig.ui.widget.VCTextField;
-import me.valkeea.fishyaddons.vconfig.ui.widget.VCVisuals;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.components.Tooltip;
+import net.minecraft.client.input.KeyEvent;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.Style;
 
-public class ChatAlerts extends Screen {
+public class ChatAlerts extends DynamicListScreen {
     private static final String TITLE_TEXT = "Chat Alerts";
+    private static final int BTNW = 40;
+    private static final int DELBTNW = 20;
+    private static final int FIELDW = 450;
+    private static final int ELH = 20;
+    private static final int OFFSET = 30;
+    private static final int ENTRYH = 28;
+    private static final int ENTRYW = FIELDW + BTNW * 2 + DELBTNW * 2;
+    private static final int LISTY = OFFSET * 2;
+    private static final int LISTEND = OFFSET * 2;
 
-    private static float uiScale;
-    private static int entryH;
-    private static int entryW;
-    private static int btnW;
-    private static int delBtnW;
-    private static int fieldW;
-    private static int fieldH;
-    private static int btnH;
+    private boolean isAdding;
 
-    private final List<Entry> entries = new ArrayList<>();
-
-    private boolean isDraggingScrollbar = false;
-    private boolean addMode = false;
-    private int scrollOffset = 0;
-    private int maxVisibleEntries = 0;
-    private int uploadBtnX = 0;
-    private int uploadBtnY = 0;
-    private int downloadBtnX = 0;
-    private int downloadBtnY = 0;
-    private int scrollKnobOffset = 0;
-
-    private Screen parent;    
-    private AddEntry addEntry = null;
-    private FaButton addBtn = null;
-    private DropdownMenu presetDropdown;
-    private VCPopup popup = null;
-    private VCTextField presetNameField = null;
-    private VCTextField searchField = null;
+    private AlertList list;
     private String searchQuery = "";
-    private VCTooltip downloadTooltip = null;
-    private VCTooltip uploadTooltip = null;  
 
     public ChatAlerts() {
-        super(Component.literal(TITLE_TEXT));
-        parent = ScreenManager.getConfigOrCurrent();        
+        super(VCText.header(TITLE_TEXT, null));      
     }
 
     @Override
-    protected void init() {
+    public boolean isAdding() {
+        return isAdding;
+    }
 
-        entries.clear();        
-        this.clearWidgets();
-        calcDimensions(UIScaleCalculator.calculateUIScaleLegacy());
+    @Override
+    public void setAdding(boolean state) {
+        isAdding = state;
+    }   
 
-        for (Map.Entry<String, AlertData> entry : AlertConfig.getChatAlerts().entrySet()) {
-            Entry e = new Entry(entry.getKey());
-            entries.add(e);
-            e.addToScreen();
-        }
+    @Override
+    protected void init() {       
+        super.init();
+        int searchY = LISTY - ELH;
+        int bBtnY = this.height - ELH - OFFSET;
 
-        int searchY = 40 + (entryH - fieldH) / 2;
+        var settings = createSettings();
+        list = new AlertList(minecraft, settings, this);
+        
+        list.setPosition(settings.listX(), settings.listY());
+        addRenderableWidget(list);
 
-        searchField = new VCTextField(
-            this.font, this.width / 2 - entryW / 2,
-            searchY, fieldW + delBtnW + btnW * 2, (int) (fieldH / 1.5),
-            Component.literal("Search")
+        int centerX = this.width / 2;
+        var sf = new VCTextField(
+            this.font, settings.listX() + settings.offset(),
+            searchY, FIELDW + DELBTNW + BTNW * 2, ELH,
+            text(searchQuery)
         );
 
-        searchField.setValue(searchQuery);
-        searchField.setMaxLength(100);
-        searchField.setUIScale(uiScale * 0.7f);
-        searchField.setCustomBgColor(Colors.TRANSPARENT);
-        searchField.setHint(Component.literal("§8§oSearch entries...").withStyle(style -> style.withColor(0xFF808080)));
-        searchField.setResponder(text -> {
-            searchQuery = text;
-            scrollOffset = 0;
+        sf.setMaxLength(100);
+        sf.setDrawsCustomBg(false);
+        sf.setHint(styled("§oSearch...", Colors.DISABLED_GREY));
+        sf.setValue(searchQuery);
+        list.filter(searchQuery);
+        sf.setResponder(s -> {
+            list.setScrollAmount(0);
+            list.filter(s);
+            searchQuery = s;
         });
-        this.addRenderableWidget(searchField);
+        this.addRenderableWidget(sf);
 
-        int listTop = 40 + entryH;
-        int listBottom = this.height - 60;
-        int listHeight = listBottom - listTop;
-
-        maxVisibleEntries = Math.max(1, listHeight / entryH);
-        int totalEntries = getFilteredEntries().size() + (addMode ? 1 : 0);
-        int maxScroll = Math.max(0, totalEntries - maxVisibleEntries);
-        scrollOffset = Math.clamp(scrollOffset, 0, maxScroll);
-
-        if (scrollOffset > maxScroll || (addMode && scrollOffset < totalEntries - maxVisibleEntries)) scrollOffset = maxScroll;
-        if (scrollOffset < 0) scrollOffset = 0;
-        if (!addMode) {
-            int addBtnY = this.height - 40;
-            addBtn = new FaButton(
-                this.width / 2 - entryW / 2, addBtnY, btnW, btnH,
-                Component.literal("Add").withStyle(style -> style.withColor(0xFFCCFFCC)),
-                btn -> {
-                    if (entries.size() >= maxVisibleEntries) {
-                        scrollOffset = entries.size() - maxVisibleEntries + 1;
-                    }
-                    addMode = true;
-                    addEntry = new AddEntry();
-                    this.addRenderableWidget(addEntry.keyField);
-                    this.addRenderableWidget(addEntry.saveBtn);
-                    this.addRenderableWidget(addEntry.cancelBtn);
-                    this.removeWidget(addBtn);
-                }
-            );
-            addBtn.setUIScale(uiScale);
-            this.addRenderableWidget(addBtn);
-        }      
-
+        int x = centerX - BTNW;
         var backButton = new FaButton(
-            this.width / 2 - entryW / 2 + btnW, this.height - 40, btnW, btnH,
-            Component.literal("Back").withStyle(style -> style.withColor(Colors.CLOSE_BUTTON_TEXT)),
+            x, bBtnY, BTNW, ELH,
+            text("Back"),
             btn -> ScreenManager.openConfigScreen() 
         );
-        backButton.setUIScale(uiScale);
         this.addRenderableWidget(backButton);
 
+        x += BTNW;
         var closeButton = new FaButton(
-            this.width / 2 - entryW / 2 + btnW * 2, this.height - 40, btnW, btnH,
-            Component.literal("Close").withStyle(style -> style.withColor(Colors.CLOSE_BUTTON_TEXT)),
+            x, bBtnY, BTNW, ELH,
+            text("Close"),
             btn -> this.onClose()
         );
-        closeButton.setUIScale(uiScale);
         this.addRenderableWidget(closeButton);
 
-        downloadBtnX = this.width / 2 + entryW / 2 - btnW * 2;
-        downloadBtnY = this.height - 40;
-        this.addRenderableWidget(new FaButton(
-            downloadBtnX, downloadBtnY, btnW, btnH,
-            Component.literal("📁⤒").withStyle(style -> style.withBold(true).withColor(0xFFE2CAE9)),
-            b -> showPresetDropdown(downloadBtnX, downloadBtnY)
-        ));
+        x += BTNW;
+        addPresetButtons(x, bBtnY, BTNW, ELH,
+            () -> FishyPresets.PresetType.ALERT,
+            (suffix, override) -> {
+                loadPreset(suffix, override);
+                list.repopulate();
+                list.onRefresh();
+            }, this::savePreset);
 
-        uploadBtnX = this.width / 2 + entryW / 2 - btnW;
-        uploadBtnY = this.height - 40;
-        this.addRenderableWidget(new FaButton(
-            uploadBtnX, uploadBtnY, btnW, btnH,
-            Component.literal("📁⤓").withStyle(style -> style.withBold(true).withColor(0xFFB0FFB0)),
-            b -> presetPopup()
-        ));
+        this.minecraft.execute(list::repopulate);        
+    }
 
-        downloadTooltip = new VCTooltip(
-            Arrays.asList(
-                Component.literal("Download From File:"),
-                Component.literal("- §8Format: preset.alert.<name>.json"),
-                Component.literal("- §8All presets are stored in config/fishyaddons/preset"),
-                Component.literal("  §8and can be re-downloaded"),
-                Component.literal("  §8'example' contains the proper json structure"),
-                Component.literal("- §dTip: §7To update fishing alerts, re-download 'fishing'")
-            ),
-            VCVisuals.getThemeColor(),
-            uiScale
+    private GenericEntryList.EntryConfig createSettings() {
+        int listW = ENTRYW + OFFSET * 3;     
+        int listX = (width - listW) / 2;
+        int listH = height - LISTEND - LISTY;
+        
+        return new GenericEntryList.EntryConfig(
+            listX, LISTY, listW, listH, OFFSET,
+            ELH, ENTRYH, FIELDW, 0, BTNW, 0, true
         );
-
-        uploadTooltip = new VCTooltip(
-            Arrays.asList(
-                Component.literal("Save as Preset:"),
-                Component.literal("- §8Creates a working preset with all current alerts."),
-                Component.literal("- §8Can be shared with others or saved for later use")
-            ),
-            VCVisuals.getThemeColor(),
-            uiScale
-        );
-    }
-
-    private static void calcDimensions(float scale) {
-        uiScale = Math.clamp(scale, 0.7f, 1.3f);
-        entryH = (int) (28 * uiScale);
-        entryW = (int) (600 * uiScale);
-        btnW = (int) (40 * uiScale);
-        delBtnW = (int) (20 * uiScale);
-        fieldW = (int) (480 * uiScale);
-        fieldH = (int) (20 * uiScale);
-        btnH = (int) (20 * uiScale);
-    }
-
-    @Override
-    public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
-        super.extractRenderState(context, mouseX, mouseY, delta);
-
-        if (entries.isEmpty()) {
-            int y = this.height / 2;
-            int x = this.width / 2;
-            int lineHeight = 15;
-            y += lineHeight * 2;
-            String[] instructions = {
-                TITLE_TEXT,
-                " -§7Add strings you want to be alerted on.",
-                " -§7After adding, click 'Edit' to configure optional title, chat msg and sound alarms.",
-                " -§7You can share configs by dropping files in fishyaddons/preset.",
-                " -§dIf you add a chat filter, the original message should be used as a trigger!",
-            };
-            for (String instruction : instructions) {
-                Component text = Component.literal(instruction);
-                GuiUtil.drawScaledCenteredText(context, this.font, text.getString(),
-                    x, y, 0xFF55FFFF, uiScale - 0.1f);
-                y += lineHeight;
-            }
-        } else {
-            GuiUtil.drawScaledCenteredText(
-                context, this.font, VCText.header(TITLE_TEXT, Style.EMPTY.withBold(true)), this.width / 2, 15, 0xFF55FFFF, uiScale - 0.1f);
-        }
-
-        if (presetDropdown != null && presetDropdown.isVisible()) {
-            presetDropdown.render(context, this, mouseX, mouseY);
-        }        
-        addList(context);
-
-        if (popup != null) {          
-            popup.render(context, this.font, mouseX, mouseY, delta);
-        }
-
-        if (popup != null && presetNameField != null) {
-            presetNameField.setY(popup.getY() + 30);
-            presetNameField.extractRenderState(context, mouseX, mouseY, delta);
-        }
-
-        if (isInside(downloadBtnX, downloadBtnY, btnW, btnH, mouseX, mouseY)) {
-            downloadTooltip.renderAuto(context, this.font, downloadBtnX - 60, downloadBtnY - 60, this.width, this.height);
-        }
-
-        if (isInside(uploadBtnX, uploadBtnY, btnW, btnH, mouseX, mouseY)) {
-            uploadTooltip.renderAuto(context, this.font, uploadBtnX - 60, uploadBtnY - 60, this.width, this.height);
-        }
-    }
-
-    private void addList(GuiGraphicsExtractor context) {
-        int listTop = 40 + entryH;
-        int listBottom = this.height - 60;
-        int listHeight = listBottom - listTop;
-        maxVisibleEntries = Math.max(1, listHeight / entryH);
-
-        List<Entry> filtered = getFilteredEntries();
-        int totalEntries = filtered.size() + (addMode ? 1 : 0);
-        int y = listTop;
-        int startIdx = scrollOffset;
-        int endIdx = Math.min(startIdx + maxVisibleEntries, filtered.size());
-
-        for (Entry e : entries) {
-            e.setVisible(false);
-        }
-
-        for (int i = startIdx; i < endIdx; i++) {
-            Entry e = filtered.get(i);
-            e.setPosition(this.width / 2 - entryW / 2, y);
-            e.setVisible(true);
-            y += entryH;
-        }
-
-        if (totalEntries > maxVisibleEntries) {
-            renderScrollIndicator(context, this.width / 2 + entryW / 2 + 20, listTop, listHeight, totalEntries);
-        }
-
-        if (addMode && addEntry != null) {
-            addEntry.updateVisibility();
-            if (endIdx == filtered.size()) {
-                addEntry.setPosition(this.width / 2 - entryW / 2, y);
-            }
-        }
-        if (addBtn != null && !addMode) {
-            int addBtnY = this.height - 40;
-            addBtn.setX(this.width / 2 - entryW / 2);
-            addBtn.setY(addBtnY);
-        }
-    }
-
-    private List<Entry> getFilteredEntries() {
-        String query = searchQuery == null ? "" : searchQuery.trim().toLowerCase();
-        if (query.isEmpty()) {
-            return entries;
-        }
-        List<Entry> filtered = new ArrayList<>();
-        for (Entry e : entries) {
-            if (e.keyField.getText().toLowerCase().contains(query)) {
-                filtered.add(e);
-            }
-        }
-        return filtered;
-    }
-
-    private void renderScrollIndicator(GuiGraphicsExtractor context, int x, int y, int listHeight, int totalEntries) {
-        int scrollbarWidth = 4;
-        context.fill(x, y, x + scrollbarWidth, y + listHeight, 0x44000000);
-        if (totalEntries > maxVisibleEntries) {
-            int thumbHeight = Math.max((int)(10 * uiScale), (maxVisibleEntries * listHeight) / totalEntries);
-            int thumbY = y + (scrollOffset * (listHeight - thumbHeight)) / (totalEntries - maxVisibleEntries);
-            context.fill(x + 1, thumbY, x + scrollbarWidth - 1, thumbY + thumbHeight, VCVisuals.getThemeColor());
-            context.fill(x + 1, thumbY + thumbHeight - 1, x + scrollbarWidth - 1, thumbY + thumbHeight, 0xFF000000);
-        }
-    }
-
-    private static boolean isInside(int x, int y, int w, int h, double mouseX, double mouseY) {
-        return mouseX >= x && mouseX < x + w && mouseY >= y && mouseY < y + h;
     }    
 
-    private class AddEntry {
-        private final VCTextField keyField;
-        private Button saveBtn;
-        private Button cancelBtn;
-
-        public AddEntry() {
-            final int offScreenY = -1000;
-            
-            this.keyField = new VCTextField(ChatAlerts.this.font, 0, offScreenY, fieldW, fieldH, Component.literal("Key"));
-            this.keyField.setBordered(false);
-            this.keyField.setValue("");
-            this.keyField.setEditable(true);
-            this.keyField.setMaxLength(100);
-            this.keyField.setUIScale(uiScale);
-            this.keyField.setFocused(true);
-            this.keyField.setHint(Component.literal("Detected String...").withStyle(style -> style.withColor(0xFF808080)));
-            ChatAlerts.this.setFocused(this.keyField);
-
-            this.saveBtn = new FaButton(
-                0, offScreenY, delBtnW, fieldH,
-                Component.literal("✔").withStyle(s -> s.withColor(0xCCFFCC)),
-                btn -> {
-                    String key = this.keyField.getValue().trim();
-                    if (!checkForDupes(key)) {
-                        return;
-                    }
-                    if (!key.isEmpty()) {
-                        AlertConfig.setChatAlert(key, new AlertData());
-                        abortEntry();
-                    }
-                }
-            );
-
-            this.cancelBtn = new FaButton(
-                0, offScreenY, delBtnW, fieldH,
-                Component.literal("❌").withStyle(s -> s.withColor(0xFFFF8080)),
-                btn -> abortEntry()
-            );
-        }
-
-        public void abortEntry() {
-            addMode = false;
-            ChatAlerts.this.removeWidget(this.keyField);
-            ChatAlerts.this.removeWidget(this.saveBtn);
-            ChatAlerts.this.removeWidget(this.cancelBtn);
-            ChatAlerts.this.init();
-        }
-
-        public void setPosition(int x, int y) {
-            this.keyField.setX(x);
-            this.keyField.setY(y);
-            this.saveBtn.setX(x + fieldW);
-            this.saveBtn.setY(y);
-            this.cancelBtn.setX(x + fieldW + delBtnW);
-            this.cancelBtn.setY(y);
-        }
-
-        public void updateVisibility() {
-            if (this.keyField.visible) {
-                this.keyField.setVisible(false);
-                this.saveBtn.visible = false;
-                this.cancelBtn.visible = false;
-            }
-            setVisible(true);
-        }
-
-        public void setVisible(boolean visible) {
-            this.keyField.setVisible(visible);
-            this.saveBtn.visible = visible;
-            this.cancelBtn.visible = visible;
-        }
-
-        private boolean checkForDupes(String key) {
-            for (Entry entry : entries) {
-                if (entry.keyField.getText().trim().equals(key)) {
-                    dupePopup(entry.keyField.getText().trim());
-                    return false;
-                }
-            }
-            return true;
-        }
-    }
-
-    private class Entry {
-        private final VCLabelField keyField;
-        private final Button editBtn;
-        private Button delBtn;
-        private Button toggleBtn;
-
-        public Entry(String key) {
-            final int offScreenY = -1000;
-            
-            this.keyField = new VCLabelField(ChatAlerts.this.font, 0, offScreenY, fieldW, fieldH, Component.literal("Key"));
-            this.keyField.setText(key);
-            this.keyField.setUIScale(uiScale);
-            this.keyField.setFocused(false);
-            this.editBtn = VCButton.createNavigationButton(
-                0, offScreenY, btnW, fieldH,
-                Component.literal("Edit").withStyle(s -> s.withColor(0xFFE2CAE9)),
-                btn -> {
-                    AlertData data = AlertConfig.getChatAlerts().get(key);
-                    McApi.setScreen(new AlertEditScreen(key, data));
-                },
-                uiScale - 0.1f
-            );
-
-            this.delBtn = VCButton.createNavigationButton(
-                0, offScreenY, delBtnW, fieldH,
-                Component.literal("🗑").setStyle(Style.EMPTY.withColor(0xFF808080)),
-                btn -> {
-                    AlertConfig.removeChatAlert(key);
-                    entries.remove(this);
-                    ChatAlerts.this.removeWidget(this.keyField);
-                    ChatAlerts.this.removeWidget(this.editBtn);
-                    ChatAlerts.this.removeWidget(this.delBtn);
-                    ChatAlerts.this.removeWidget(this.toggleBtn);
-                    ChatAlerts.this.init();
-                }, uiScale
-            );
-
-            boolean state = AlertConfig.isChatAlertToggled(key);
-            this.toggleBtn = VCButton.createMcToggle(
-                0, offScreenY, btnW, fieldH,
-                state,
-                btn -> {
-                    AlertConfig.toggleChatAlert(key, !state);
-                    ChatAlerts.this.init();
-                },
-                uiScale - 0.1f
-            );
-        }
-
-        public void setPosition(int x, int y) {
-            this.keyField.setX(x);
-            this.keyField.setY(y);
-            this.editBtn.setX(x + fieldW);
-            this.editBtn.setY(y);
-            this.toggleBtn.setX(x + fieldW + btnW);
-            this.toggleBtn.setY(y);
-            this.delBtn.setX(x + fieldW + btnW * 2);
-            this.delBtn.setY(y);
-        }
-
-        public void setVisible(boolean visible) {
-            this.keyField.setVisible(visible);
-            this.editBtn.visible = visible;
-            this.delBtn.visible = visible;
-            this.toggleBtn.visible = visible;
-        }
-
-        public void addToScreen() {
-            ChatAlerts.this.addRenderableWidget(this.keyField);
-            ChatAlerts.this.addRenderableWidget(this.editBtn);
-            ChatAlerts.this.addRenderableWidget(this.delBtn);
-            ChatAlerts.this.addRenderableWidget(this.toggleBtn);
-        }
-
-        public boolean mouseClicked(MouseButtonEvent click) {
-
-            double mouseX = click.x();
-            double mouseY = click.y();
-            
-            if (isInside(keyField.getX(), keyField.getY(), keyField.getWidth(), keyField.getHeight(), mouseX, mouseY)) {
-                return true;
-            }
-            if (isInside(editBtn.getX(), editBtn.getY(), editBtn.getWidth(), editBtn.getHeight(), mouseX, mouseY)) {
-                editBtn.onPress(click);
-                return true;
-            }
-            if (isInside(delBtn.getX(), delBtn.getY(), delBtn.getWidth(), delBtn.getHeight(), mouseX, mouseY)) {
-                delBtn.onPress(click);
-                return true;
-            }
-            if (isInside(toggleBtn.getX(), toggleBtn.getY(), toggleBtn.getWidth(), toggleBtn.getHeight(), mouseX, mouseY)) {
-                toggleBtn.onPress(click);
-                return true;
-            }
-            return false;
-        }
-    }
-
     @Override
-    public boolean mouseClicked(MouseButtonEvent click, boolean doubled) {
-        if (popup != null && presetNameField != null && presetNameField.mouseClicked(click, doubled)) {
-            presetNameField.setFocused(true);
-            this.setFocused(presetNameField);
-            return true;
-        }
-
-        if (presetDropdown != null && presetDropdown.isVisible()) {
-            if (presetDropdown.mouseClicked(click)) return true;
-            int x = presetDropdown.getX(); 
-            int y = presetDropdown.getY(); 
-            int w = presetDropdown.getWidth();
-            int h = presetDropdown.getEntryHeight() * presetDropdown.getEntries().size();
-            if (!(click.x() >= x && click.x() <= x + w && click.y() >= y && click.y() <= y + h)) {
-                presetDropdown.setVisible(false);
-                return true;
-            }
-        }
-
-        if (popup != null) {
-            return popup.mouseClicked(click);
-        }
-
-        if (handleScrollbar(click.x(), click.y())) {
-            return true;
-        }
-
-        if (searchField != null && !searchField.mouseClicked(click, doubled)) {
-            searchField.setFocused(false);
-        }
-
-        List<Entry> filtered = getFilteredEntries();
-        int startIdx = scrollOffset;
-        int endIdx = Math.min(startIdx + maxVisibleEntries, filtered.size());
-        for (int i = startIdx; i < endIdx; i++) {
-            if (filtered.get(i).mouseClicked(click)) {
-                return false;
-            }
-        }
-
-        return super.mouseClicked(click, doubled);
+    public void extractContent(GuiGraphicsExtractor gge, int mX, int mY, float delta) {
+        super.extractContent(gge, mX, mY, delta);
+        if (list.isEmpty()) extractInstructions(gge);
+        else gge.centeredText(this.font, getTitle(), this.width / 2, 15, 0xFF55FFFF);
+        renderPresets(gge, mX, mY);
     }
 
-    private boolean handleScrollbar(double mouseX, double mouseY) {
+    private void extractInstructions(GuiGraphicsExtractor gge) {
+        int y = this.height / 2;
+        int x = this.width / 2;
+        int lineH = 15;
 
-        int listTop = 40 + entryH;
-        int listBottom = this.height - 60;
-        int listHeight = listBottom - listTop;
-        int scrollbarX = this.width / 2 + entryW / 2 + 20;
-        int scrollbarWidth = Math.max(4, (int)(8 * uiScale));
-        int totalEntries = getFilteredEntries().size() + (addMode ? 1 : 0);
-
-        if (totalEntries > maxVisibleEntries && mouseX >= scrollbarX && mouseX <= scrollbarX + scrollbarWidth
-            && mouseY >= listTop && mouseY <= listTop + listHeight) {
-
-            int thumbHeight = Math.max((int)(10 * uiScale), (maxVisibleEntries * listHeight) / totalEntries);
-            int thumbY = listTop + (scrollOffset * (listHeight - thumbHeight)) / (totalEntries - maxVisibleEntries);
-
-            if (mouseY >= thumbY && mouseY <= thumbY + thumbHeight) {
-                isDraggingScrollbar = true;
-                scrollKnobOffset = (int)mouseY - thumbY;
-
-            } else {
-                isDraggingScrollbar = true;
-                scrollKnobOffset = thumbHeight / 2;
-                double trackClickY = mouseY - listTop - scrollKnobOffset;
-                double scrollPercent = trackClickY / (listHeight - thumbHeight);
-                int newScrollOffset = (int)(scrollPercent * (totalEntries - maxVisibleEntries));
-                scrollOffset = Math.clamp(newScrollOffset, 0, totalEntries - maxVisibleEntries);
-            }
-
-            return true;
-        }
-
-        return false;
-    }        
-
-    @Override
-    public boolean mouseReleased(MouseButtonEvent click) {
-        isDraggingScrollbar = false;
-        return super.mouseReleased(click);
-    }
-
-    @Override
-    public boolean mouseDragged(MouseButtonEvent click, double offsetX, double offsetY) {
-        if (isDraggingScrollbar) {
-            int listTop = 40 + entryH;
-            int listBottom = this.height - 60;
-            int listHeight = listBottom - listTop;
-            int totalEntries = getFilteredEntries().size() + (addMode ? 1 : 0);
-            int thumbHeight = Math.max((int)(10 * uiScale), (maxVisibleEntries * listHeight) / totalEntries);
-            int mouseThumbY = (int)click.y() - listTop - scrollKnobOffset;
-            double scrollPercent = mouseThumbY / (double)(listHeight - thumbHeight);
-            int newScrollOffset = (int)(scrollPercent * (totalEntries - maxVisibleEntries));
-            scrollOffset = Math.clamp(newScrollOffset, 0, totalEntries - maxVisibleEntries);
-            return true;
-        }
-        return super.mouseDragged(click, offsetX, offsetY);
-    }
-
-    @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
-        int totalEntries = getFilteredEntries().size() + (addMode ? 1 : 0);
-        if (totalEntries > maxVisibleEntries) {
-            scrollOffset -= (int)Math.signum(verticalAmount);
-            scrollOffset = Math.clamp(scrollOffset, 0, totalEntries - maxVisibleEntries);
-            return true;
-        }
-        return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
-    }
-
-    private void showPresetDropdown(int btnX, int btnY) {
-        List<String> suffixes = FishyPresets.listPresetSuffixes(FishyPresets.PresetType.ALERT);
-
-        if (suffixes.isEmpty()) {
-            popup(Component.literal("No presets found for this tab."), "OK", () -> popup = null, "", () -> {});
-            return;
-        }
-        
-        int entryHeight = (int)(uiScale * 18);
-        int dropdownX = btnX;
-        int dropdownY = btnY - btnH - (suffixes.size() * entryHeight) / 2;
-
-        presetDropdown = new DropdownMenu(
-            suffixes, dropdownX, dropdownY, 100, entryHeight,
-            suffix -> {
-                loadPreset(suffix);
-                init();
-                presetDropdown.setVisible(false);
-            }
-        );
-    }
-
-    private void loadPreset(String suffix) {
-        Map<String, AlertConfig.AlertData> map = FishyPresets.loadAlertPreset(suffix);
-        if (map != null) {
-            AlertConfig.setAlerts(map);
-            init();
+        y += lineH * 2;
+        String[] instructions = {
+            TITLE_TEXT,
+            " -§7Add strings you want to be alerted on.",
+            " -§7After adding, click 'Edit' to configure optional title, chat msg and sound alarms.",
+            " -§7You can share configs by dropping files in fishyaddons/preset.",
+            " -§dIf you add a chat filter, the original message should be used as a trigger!",
+        };
+        for (String i : instructions) {
+            var line = text(i);
+            gge.centeredText(this.font, line.getString(),
+                x, y, 0xFF55FFFF);
+            y += lineH;
         }
     }
 
-    public void popup(Component title, String continueButtonText, Runnable onContinue, String discardButtonText, Runnable onDiscard) {
-        popup = new VCPopup(
-			title,
-			discardButtonText,
-            onDiscard::run,
-			continueButtonText,
-            onContinue::run,
-            uiScale
-        );
-        this.popup.init(this.font, this.width, this.height);
-    }
+    private void loadPreset(String suffix, boolean override) {
+        var map = FishyPresets.loadAlertPreset(suffix);
+        if (map == null) return;
 
-    private void presetPopup() {
-        presetNameField = new VCTextField(this.font, this.width / 2 - 60,
-            this.height / 2 - 35, 120, 20, Component.literal("Preset Name"));
+        if (override) list.getConfig().clear();
+        list.getConfig().putAll(map);
+        AlertConfig.setAlerts(map);
 
-        presetNameField.setMaxLength(15);
-        presetNameField.setValue("");
-        this.setFocused(presetNameField);
-
-        this.popup = new VCPopup(
-            Component.literal("Enter preset name:"),
-            "Cancel", () -> {
-                this.removeWidget(presetNameField);
-                presetNameField = null;
-                this.popup = null;
-            },
-            "Save", () -> {
-            String suffix = presetNameField.getValue().trim();
-            if (!suffix.isEmpty()) {
-                savePreset(suffix);
-            }
-            popup = null;
-            this.removeWidget(presetNameField);
-            presetNameField = null;
-        },
-        1.0f
-        );
-        this.popup.init(this.font, this.width, this.height);
-    }
-
-    public void dupePopup(String input) {
-
-        String truncated = input.length() > 7 ? input.substring(0, 7) + "..." : input;
-
-        this.popup = new VCPopup(
-            Component.literal("Entry with key '" + truncated + "' already exists!"),
-            "Continue Editing", () -> this.popup = null,
-            "Discard Entry", () -> {
-                if (addEntry != null) {
-                    addEntry.abortEntry();
-                }
-                this.popup = null;
-            },
-            1.0f
-        );
-        this.popup.init(this.font, this.width, this.height);
-    }
+        if (override) list.setScrollAmount(0);
+        list.repopulate();
+    }     
 
     private void savePreset(String suffix) {
-        FishyPresets.saveAlertPreset(
-                suffix, AlertConfig.getChatAlerts());
+        FishyPresets.saveAlertPreset(suffix, AlertConfig.getChatAlerts());
     }
 
-    @Override
-    public void onClose() {
-        McApi.setScreen(parent);
+    protected class AlertEntry extends GenericEntryList.Entry<AlertData> {
+        private AlertData data;
+
+        public AlertEntry(String input, AlertData output, GenericEntryList<AlertData> list, boolean isNew) {
+            super(list, input, isNew);
+            this.data = output;
+            createInputWidget(input);
+            createButtons();
+            setSize(list.getRowWidth(), list.settings.entryH());
+        }
+
+        void createInputWidget(String input) {
+            var in = new FaTextField(minecraft.font, 0, 0, list.settings.inW(), list.settings.elH(), Component.empty());
+            in.setMaxLength(256);
+            in.set(input);
+            if (input.length() > 90) in.setTooltip(getTooltipLines(input));
+            if (isNew) in.setFocused(true);
+            setInputWidget(in);
+        }
+
+        @Override
+        public AlertData getOutput() {
+            return this.data;
+        }
+
+        @Override
+        protected void updateOutput(AlertData output) {
+            this.data = output;
+        }
+
+        void createButtons() {
+            var edit = new FaButton.Trigger(
+                0, 0, list.settings.btnW(), list.settings.elH(),
+                list.styled("Edit", FishyMode.getThemeColor()),
+                b -> {
+                    McApi.setScreen(new AlertEditScreen(getInput(), getOutput()));
+                }
+            ) {};
+            edit.setTooltip(getDataTooltip());
+            widgets.add(edit);
+
+            var save = new FaButton(
+                0, 0, list.settings.btnW(), list.settings.elH(),
+                list.styled("Save", Colors.DISABLED_GREY),
+                b ->  list.saveFocused(this)
+            );
+            widgets.add(save);
+
+            var del = new FaButton(
+                0, 0, list.settings.btnW() / 2, list.settings.elH(),
+                list.styled("🗑", Colors.DISABLED_GREY),
+                b -> delete()
+            );
+            del.setTooltip(Tooltip.create(styled("Delete Alert", Colors.DISABLED_GREY)));
+            widgets.add(del);
+            
+            boolean toggled = data.isToggled();
+            var toggle = new FaButton.Toggle(
+                0, 0, list.settings.btnW() / 2, list.settings.elH(),
+                b -> {
+                    if (isNew) data.setToggled(!data.isToggled());
+                    else toggle();
+                },
+                toggled
+            ) {};
+            widgets.add(toggle);
+        }
+
+        Tooltip getTooltipLines(String text) {
+            int lineLength = 100;
+            var t = Component.empty();
+            for (int i = 0; i < text.length(); i += lineLength) {
+                t = t.append(text(text.substring(i, Math.min(i + lineLength, text.length()))));
+            }
+            return Tooltip.create(t);
+        }
+
+        Tooltip getDataTooltip() {
+            var title = Enhancer.hasFormattingCodes(data.getOnscreen())
+                ? Enhancer.parseFormattedText(data.getOnscreen())
+                : styled(data.getOnscreen(), data.getColor());
+
+            var msg = (data.getMsg().isEmpty() ? "" : "\n§7Message:§8 " + data.getMsg()) + "\n";
+            var styledTitle = Component.literal("§7Title: ").append(title);
+            var soundId = (data.getSoundId().isEmpty() ? "" : "\n§7Sound ID:§8 " + data.getSoundId());
+
+            var tt = Component.literal(msg).append(styledTitle).append(text(soundId
+                + "\n§7Volume:§8 " + data.getVolume()
+                + "\n§7Toggled:§8 " + data.isToggled()
+                + (data.isStartsWith() ? "\n Exact Match" : "\nMatched Anywhere")));
+
+            return Tooltip.create(tt);
+        }
+
+        @Override 
+        public void extractContent(GuiGraphicsExtractor gge, int mX, int mY, boolean hovered, float delta) {
+            this.setHovered(hovered);
+            int x = getX();
+            int y = getY();
+
+            inputWidget().setPosition(x, y);
+            x = x + list.settings.inW();
+            int btnGap = list.settings.btnW();
+            var editBtn = widgets.get(1);
+            editBtn.setPosition(x, y);
+
+            x += btnGap;
+            var saveBtn = widgets.get(2);
+            saveBtn.setPosition(x, y);
+
+            x += btnGap;
+            var delBtn = widgets.get(3);
+            delBtn.setPosition(x, y);
+
+            x += btnGap / 2;
+            var toggleBtn = widgets.get(4);
+            toggleBtn.setPosition(x, y);
+
+            widgets.forEach(wg -> wg.extractRenderState(gge, mX, mY, delta));
+        }
+
+        @Override
+        public boolean keyPressed(KeyEvent input) {
+            if (saveOnEnter(input, inputWidget()) || unfocusOnEscape(input)) return true;
+            var focused = findFirst(AbstractWidget::isFocused);
+            return focused != null && focused.keyPressed(input);
+        }
+    }
+
+    private final class AlertList extends GenericEntryList<AlertData> {
+        public AlertList(Minecraft mc, GenericEntryList.EntryConfig settings, DynamicListScreen screen) {
+            super(mc, settings, screen);
+        }
+
+        @Override public Map<String, AlertData> getConfig() { return AlertConfig.getChatAlerts();}
+        @Override public boolean isEntryToggled(String key) { return AlertConfig.isChatAlertToggled(key);}
+        @Override public void toggleEntry(String key, boolean toggled) { AlertConfig.toggleChatAlert(key, toggled);}
+        @Override public void setEntry(String key, AlertData v) { AlertConfig.setChatAlert(key, v);}
+        @Override public void removeEntry(String key) { AlertConfig.removeChatAlert(key);}
+        @Override public void onRefresh() { ChatAlert.refresh(); }
+
+        @Override
+        protected Entry<AlertData> createNewEntry(String in, AlertData out, boolean isNew) {
+            return new AlertEntry(in, out, this, isNew);
+        }    
+
+        @Override
+        public boolean isValidEntry(String key, AlertData v) { return !key.isBlank();}
+
+        @Override
+        public String[] getGuideText() {
+            return new String[] {""};
+        }
+
+        @Override
+        public String getInvalidMsg() {
+            return "Detected string cannot be empty.";
+        }
+
+        @Override public String getAddButtonText() { return "+ New Alert";}
+        @Override public AlertData getDefaultOutput() { return new AlertData();}
     }
 }

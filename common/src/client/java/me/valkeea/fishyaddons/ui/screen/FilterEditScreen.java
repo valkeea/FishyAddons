@@ -7,7 +7,9 @@ import me.valkeea.fishyaddons.feature.filter.FilterConfig;
 import me.valkeea.fishyaddons.feature.filter.FilterConfig.Rule;
 import me.valkeea.fishyaddons.ui.element.TextFormatMenu;
 import me.valkeea.fishyaddons.util.text.Enhancer;
+import me.valkeea.fishyaddons.vconfig.ui.layout.Colors;
 import me.valkeea.fishyaddons.vconfig.ui.render.VCText;
+import me.valkeea.fishyaddons.vconfig.ui.screen.AdjustedScreen;
 import me.valkeea.fishyaddons.vconfig.ui.widget.FaButton;
 import me.valkeea.fishyaddons.vconfig.ui.widget.VCPopup;
 import me.valkeea.fishyaddons.vconfig.ui.widget.VCTextField;
@@ -19,19 +21,26 @@ import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
 
-public class FilterEditScreen extends Screen {
+public class FilterEditScreen extends AdjustedScreen {
+    private static final int FIELDW = 300;
+    private static final int ELH = 20;
+    private static final int CONTENTW = FIELDW + FIELDW / 2;
     private final Screen parent;
     private final Rule initialData;
-    private String filterKey;
+    private final String filterKey;
 
     private TextFormatMenu searchMenu;
-    private boolean menuInteractionActive = false;
     private VCTextField keyField;
     private VCTextField overrideField;
     private VCTextField formatField;
 
+    private boolean menuInteractionActive = false;    
+
     public FilterEditScreen(String key, Rule data, Screen parent) {
-        super(Component.literal("Configure Chat Overrides"));
+        super(VCText.header(
+            "FishyAddons Chat Filters and Overrides",
+            Style.EMPTY.withBold(true))
+        );
         this.parent = parent;
         this.filterKey = key;
         this.initialData = data != null ? data : new FilterConfig.Rule(
@@ -41,26 +50,24 @@ public class FilterEditScreen extends Screen {
 
     @Override
     protected void init() {
+        super.init();
         int centerX = this.width / 2;
         int centerY = this.height / 2 - 10;
 
-        int w = 300;
-        int h = 20;
-
-        int x = centerX - w / 2;
+        int x = centerX - CONTENTW / 2;
         int y = centerY + 50;        
 
-        keyField = new VCTextField(this.font, x, y, w, h, Component.literal("Key"));
+        keyField = new VCTextField(this.font, x, y, FIELDW, ELH, Component.literal("Key"));
         keyField.setMaxLength(100);
         keyField.setValue(filterKey);
         this.addRenderableWidget(keyField);
 
-        overrideField = new VCTextField(this.font, x, y + 40, w, h, Component.literal("Chat message"));
+        overrideField = new VCTextField(this.font, x, y + 40, FIELDW, ELH, Component.literal("Chat message"));
         overrideField.setMaxLength(100);
         overrideField.setValue(initialData.getReplacement());
         this.addRenderableWidget(overrideField);
 
-        formatField = new VCTextField(this.font, x + w, y + 40, w / 2, h, Component.literal("Text Format Autofill"));
+        formatField = new VCTextField(this.font, x + FIELDW, y + 40, FIELDW / 2, ELH, Component.literal("Text Formats"));
         this.addRenderableWidget(formatField);
 
         int sx = formatField.getX();
@@ -77,14 +84,14 @@ public class FilterEditScreen extends Screen {
         int menuHeight = this.height - (sy + actualEntryHeight) - 20;
         searchMenu.setMaxEntries(menuHeight / actualEntryHeight);
 
-        this.addRenderableWidget(new FaButton(x + w / 2, formatField.getY() + 80, 80, 20,
+        this.addRenderableWidget(new FaButton(x + FIELDW / 2, formatField.getY() + 80, 80, 20,
             Component.literal("Save").withStyle(style -> style.withColor(0xFFE2CAE9)),
             btn -> {
             save();
             onClose();
         }));
 
-        this.addRenderableWidget(new FaButton(x + w / 2 - 80, formatField.getY() + 80, 80, 20,
+        this.addRenderableWidget(new FaButton(x + FIELDW / 2 - 80, formatField.getY() + 80, 80, 20,
             Component.literal("Cancel").withStyle(style -> style.withColor(0xFFE2CAE9)),
             btn -> onClose()
         ));
@@ -97,7 +104,7 @@ public class FilterEditScreen extends Screen {
             String newText = currentText.substring(0, caretPos) + format + currentText.substring(caretPos);
             overrideField.setValue(newText);
             overrideField.moveCursorTo(caretPos + format.length(), false);
-            overrideField.setFocused(true);
+            this.setFocused(overrideField);
 
         if (searchMenu != null) {
             searchMenu.setVisible(false);
@@ -138,100 +145,81 @@ public class FilterEditScreen extends Screen {
 	}    
 
     @Override
-    public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
-        super.extractRenderState(context, mouseX, mouseY, delta);
-        renderGuideText(context);
+    public void extractContent(GuiGraphicsExtractor gge, int mX, int mY, float delta) {
+        super.extractContent(gge, mX, mY, delta);
+        gge.blurBeforeThisStratum();
+
+        int centerX = this.width / 2;
+        int x = centerX - CONTENTW / 2;        
+        renderGuideText(gge, x);
 
         if (searchMenu != null) {
             boolean fieldActive = formatField.isFocused();
-            if (fieldActive) {
-                menuInteractionActive = true;
-            }
+            if (fieldActive) menuInteractionActive = true;
             searchMenu.setVisible(fieldActive || menuInteractionActive);
             if (searchMenu.isVisible()) {
-                searchMenu.render(context, parent, mouseX, mouseY);
+                searchMenu.render(gge, parent, mX, mY);
             }
         }
 
-        int centerX = this.width / 2;
         int centerY = this.height / 2 - 10;
-        int w = 300; 
-        int x = centerX - w / 2;
-        int y = centerY + 40;    
+        int y = centerY + 40;
+        int color = Colors.CLOSE_BUTTON_TEXT;
 
-        context.text(this.font, "Filtered Message (Clean String)", x, y, 0xFF808080, false);
-        context.text(this.font, "Override (Formatted)", x, y + 40, 0xFF808080, false);
-        context.text(this.font, "Text Format (Autofill)", x + w, y + 40, 0xFF808080, false);
+        gge.text(this.font, "Filtered Message (Clean String)", x, y, color, false);
+        gge.text(this.font, "Override (Formatted)", x, y + 40, color, false);
+        gge.text(this.font, "Text Format (Click)", x + FIELDW, y + 40, color, false);
 
-        checkTooltip(context, mouseX, mouseY);
+        checkTooltip(gge, mX, mY);
     }
 
-    private void checkTooltip(GuiGraphicsExtractor context, int mouseX, int mouseY) {
-        if (overrideField != null && overrideField.isMouseOver(mouseX, mouseY)) {
+    private void checkTooltip(GuiGraphicsExtractor gge, int mX, int mY) {
+        if (overrideField != null && overrideField.isMouseOver(mX, mY)) {
             
             String previewText = overrideField.getValue().trim();
             if (!previewText.isEmpty()) {
 
                 try {
-                    Component formattedPreview = Enhancer.parseFormattedText(previewText);
-                    int tooltipWidth = Math.min(400, this.font.width(formattedPreview) + 20);
-                    int tooltipHeight = overrideField.getHeight();
-                    int tooltipX = overrideField.getX();
-                    int tooltipY = overrideField.getY() + tooltipHeight + 5;
+                    var tt = Enhancer.parseFormattedText(previewText);
+                    int ttW = Math.min(400, this.font.width(tt) + 20);
+                    int ttH = overrideField.getHeight();
+                    int ttX = overrideField.getX();
+                    int ttY = overrideField.getY() + ttH + 5;
                     
-                    if (tooltipX + tooltipWidth > this.width) {
-                        tooltipX = mouseX - tooltipWidth - 10;
-                    }
-                    if (tooltipY < 0) {
-                        tooltipY = mouseY + 20;
-                    }
-                    
-                    context.fill(tooltipX, tooltipY, 
-                               tooltipX + tooltipWidth + 6, tooltipY + tooltipHeight + 4, 
-                               0xFF171717);
-                    
-                    context.text(this.font, formattedPreview, 
-                                   tooltipX + 3, tooltipY + tooltipHeight / 3, 0xFFFFFFFF, true);
+                    if (ttX + ttW > this.width) ttX = mX - ttW - 10;
+                    if (ttY < 0) ttY = mY + 20;
+                    gge.fill(ttX, ttY, ttX + ttW + 6, ttY + ttH + 4, 0xFF171717);
+                    gge.text(this.font, tt, ttX + 3, ttY + ttH / 3, 0xFFFFFFFF, true);
                                    
                 } catch (Exception e) {
                     System.err.println("[FishyAddons] Error rendering tooltip: " + e.getMessage());
-                    renderFallback(mouseX, mouseY, context);
+                    renderFallback(mX, mY, gge);
                 }
             }
         }
     }
 
-    private void renderFallback(int mouseX, int mouseY, GuiGraphicsExtractor context) {
+    private void renderFallback(int mX, int mY, GuiGraphicsExtractor gge) {
         String errorText = "Error rendering preview";
-        int tooltipWidth = Math.min(400, this.font.width(errorText) + 20);
-        int tooltipHeight = 20;
-        int tooltipX = mouseX + 10;
-        int tooltipY = mouseY - tooltipHeight - 10;
-        if (tooltipX + tooltipWidth > this.width) {
-            tooltipX = mouseX - tooltipWidth - 10;
-        }
-        if (tooltipY < 0) {
-            tooltipY = mouseY + 20;
-        }
+        int ttW = Math.min(400, this.font.width(errorText) + 20);
+        int ttH = 20;
+        int ttX = mX + 10;
+        int ttY = mY - ttH - 10;
+        if (ttX + ttW > this.width) ttX = mX - ttW - 10;
+        if (ttY < 0) ttY = mY + 20;
                     
-        context.fill(tooltipX - 5, tooltipY - 5, 
-                    tooltipX + tooltipWidth + 5, tooltipY + tooltipHeight + 5, 
-                    0xFF171717);
-        context.text(this.font, Component.literal(errorText), 
-                    tooltipX + 5, tooltipY + 10, 0xFFFF8080, true);
+        gge.fill(ttX - 5, ttY - 5, ttX + ttW + 5, ttY + ttH + 5,0xFF171717);
+        gge.text(this.font, Component.literal(errorText),
+            ttX + 5, ttY + 10, 0xFFFF8080, true);
     }
 
-    public void renderGuideText(GuiGraphicsExtractor context) {
-        int x = this.width / 2 - 150;
+    public void renderGuideText(GuiGraphicsExtractor gge, int x) {
         int y = this.height / 2 - 175;
-        int lineHeight = 15;
+        int lineH = 15;
 
-        Component title = VCText.header("FishyAddons Chat Filters and Overrides", Style.EMPTY.withBold(true));
+        gge.text(this.font, getTitle(), x, y, 0xFFFFFFFF);            
 
-        context.text(this.font, title, x, y, 0xFFFFFFFF);            
-
-        y += lineHeight * 2;
-                
+        y += lineH * 2; 
         String[] instructions = {
             " The First field is required to successfully create a rule!",
             " Leaving the override field empty results in the message being removed.",
@@ -239,95 +227,94 @@ public class FilterEditScreen extends Screen {
             "- Text Formats -",
             " • §7Search for formats and click to insert at caret position.",
             "   §7You can also type them manually.",
-            " • §7For all codes, custom or legacy, '&' and '§' can be used interchangeably.",
-            " • §7All legacy formatting is available but INCOMPATIBLE with RGB/Gradients.",
+            " • §7For all codes, '&' and the section symbol can be used interchangeably.",
+            " • §7All legacy formatting is available (&l, &6..).",
             "- Custom Formats -",
             " • §7&[hexcode>hexcode...] §8for gradients",
             " • §7&{hexcode} §8for solid RGB colors",
         };
 
-        for (String instruction : instructions) {
-            if (instruction.isEmpty()) {
-                y += lineHeight / 2;
+        for (var line : instructions) {
+            if (line.isEmpty()) {
+                y += lineH / 2;
                 continue;
             }
 
             var format = ChatFormatting.GRAY;
-            if (instruction.startsWith(" •") || instruction.matches("\\d+\\..*")) {
+            if (line.startsWith(" •") || line.matches("\\d+\\..*")) {
                 format = ChatFormatting.AQUA;
-            } else if (instruction.contains("-")) {
+            } else if (line.contains("-")) {
                 format = ChatFormatting.DARK_AQUA;
-            } else if (instruction.startsWith(" The")) {
+            } else if (line.startsWith(" The")) {
                 format = ChatFormatting.DARK_GRAY;
             }
      
-            Component text = Component.literal(instruction).withStyle(format);
-            context.text(this.font, text, x, y, 0xFFFFFFFF);
-            y += lineHeight;
+            var text = Component.literal(line).withStyle(format);
+            gge.text(this.font, text, x, y, 0xFFFFFFFF);
+            y += lineH;
         }              
     }   
 
     @Override
     public boolean mouseClicked(MouseButtonEvent click, boolean doubled) {
-        if (searchMenu != null && searchMenu.isVisible() && searchMenu.mouseClicked(click)) {
+        var adjusted = adjustClick(click);
+        if (searchMenu != null && searchMenu.isVisible() && searchMenu.mouseClicked(adjusted)) {
             return true;
         }
 
-        double mouseX = click.x();
-        double mouseY = click.y();
+        double mX = adjusted.x();
+        double mY = adjusted.y();
 
-        if (formatField.isFocused() && (!formatField.isMouseOver(mouseX, mouseY) || click.button() != InputConstants.MOUSE_BUTTON_LEFT)) {
-            formatField.setFocused(false);
+        if (click.button() != InputConstants.MOUSE_BUTTON_LEFT) {
+            if (formatField.isFocused() && !formatField.isMouseOver(mX, mY)) formatField.setFocused(false);
+            if (overrideField.isFocused() && !overrideField.isMouseOver(mX, mY)) overrideField.setFocused(false);
         }
-        if (overrideField.isFocused() && (!overrideField.isMouseOver(mouseX, mouseY) || click.button() != InputConstants.MOUSE_BUTTON_LEFT)) {
-            overrideField.setFocused(false);
-        }
+        
+        checkMenuInteraction(mX, mY);
+        
+        boolean r = super.mouseClicked(click, doubled);
+        if (!r && !menuInteractionActive) this.setFocused(null);
+        return r;
+    }
 
+    private void checkMenuInteraction(double mX, double mY) {
         if (searchMenu != null && searchMenu.isVisible()) {
-            boolean clickedOnField = formatField.isMouseOver(mouseX, mouseY) || 
-                                   overrideField.isMouseOver(mouseX, mouseY) || 
-                                   keyField.isMouseOver(mouseX, mouseY);
-            boolean clickedOnMenu = searchMenu.isMouseOver((int)mouseX, (int)mouseY);
+            boolean clickedOnField = formatField.isMouseOver(mX, mY) || 
+                                   overrideField.isMouseOver(mX, mY) || 
+                                   keyField.isMouseOver(mX, mY);
+            boolean clickedOnMenu = searchMenu.isMouseOver((int)mX, (int)mY);
             
             if (!clickedOnField && !clickedOnMenu) {
                 menuInteractionActive = false;
             }
         }
-        
-        return super.mouseClicked(click, doubled);
     }
 
     @Override
     public boolean keyPressed(KeyEvent input) {
-        if (input.isEscape()) {
-            menuInteractionActive = false;
-        }
+        if (input.isEscape()) menuInteractionActive = false;
         if (searchMenu != null && formatField.isFocused() && searchMenu.keyPressed(input)) {
             return true;
         }
-        if (overrideField.isFocused()) {
-            return overrideField.keyPressed(input);
-        }        
-        if (formatField.isFocused() && formatField.keyPressed(input)) {
-            return true;
-        }
+        if (overrideField.isFocused()) return overrideField.keyPressed(input);
+        if (formatField.isFocused() && formatField.keyPressed(input)) return true;
         return super.keyPressed(input);
     }
 
     @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
+    public boolean mouseScrolled(double mX, double mY, double horizontalAmount, double verticalAmount) {
         if (searchMenu != null && searchMenu.isVisible()) {
             return searchMenu.mouseScrolled(verticalAmount);
         }
-        return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
+        return super.mouseScrolled(mX, mY, horizontalAmount, verticalAmount);
     }
 
     @Override 
-    public boolean mouseDragged(MouseButtonEvent click, double offsetX, double offsetY) {
-        if (searchMenu != null && searchMenu.isVisible() && searchMenu.mouseDragged(click)) {
+    public boolean mouseDragged(MouseButtonEvent click, double h, double v) {
+        if (searchMenu != null && searchMenu.isVisible() && searchMenu.mouseDragged(adjustClick(click))) {
             return true;
         }
-        return super.mouseDragged(click, offsetX, offsetY);
+        return super.mouseDragged(click, h, v);
     }
 
     @Override
